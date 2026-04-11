@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* arrow trái + phải */
+.ant-carousel .slick-prev,
+.ant-carousel .slick-next {
+  color: white !important;
+  background: black;
+  padding: 10px 0px !important;      
+  font-size: 24px;             
+}
+
+/* icon bên trong */
+.ant-carousel .slick-prev::before,
+.ant-carousel .slick-next::before {
+  color: red !important;
+}
