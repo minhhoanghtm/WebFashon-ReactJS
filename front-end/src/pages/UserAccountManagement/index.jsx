@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   getUserOrdersApi,
   getUserProfileApi,
@@ -38,6 +39,11 @@ const orderStatusMap = {
   delivered: "Đã giao",
   cancelled: "Đã hủy",
 };
+
+const orderStatusOptions = Object.entries(orderStatusMap).map(([value, label]) => ({
+  value,
+  label,
+}));
 
 const paymentMethodMap = {
   cod: "Thanh toán khi nhận hàng",
@@ -80,10 +86,12 @@ const normalizeProfilePayload = (profileForm, shippingForm, currentProfile) => (
 });
 
 const UserAccountManagement = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("profile");
   const [profile, setProfile] = useState(null);
   const [orders, setOrders] = useState([]);
   const [orderItems, setOrderItems] = useState([]);
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState("all");
   const [profileForm, setProfileForm] = useState(profileDefaultForm);
   const [shippingForm, setShippingForm] = useState(shippingDefaultForm);
   const [passwordForm, setPasswordForm] = useState(passwordDefaultForm);
@@ -141,6 +149,20 @@ const UserAccountManagement = () => {
     fetchAccountData();
   }, []);
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabFromQuery = searchParams.get("tab");
+
+    if (location.pathname === "/orders") {
+      setActiveTab("orders");
+      return;
+    }
+
+    if (tabFromQuery && ["profile", "orders", "address", "password"].includes(tabFromQuery)) {
+      setActiveTab(tabFromQuery);
+    }
+  }, [location.pathname, location.search]);
+
   const ordersWithItems = useMemo(() => {
     return orders
       .filter((order) => order.user_id === profile?._id)
@@ -150,6 +172,14 @@ const UserAccountManagement = () => {
         items: orderItems.filter((item) => item.order_id === order._id),
       }));
   }, [orderItems, orders, profile?._id]);
+
+  const filteredOrdersWithItems = useMemo(() => {
+    if (selectedOrderStatus === "all") {
+      return ordersWithItems;
+    }
+
+    return ordersWithItems.filter((order) => order.status === selectedOrderStatus);
+  }, [ordersWithItems, selectedOrderStatus]);
 
   const handleProfileChange = ({ target }) => {
     const { name, value } = target;
@@ -472,13 +502,43 @@ const UserAccountManagement = () => {
                     Lịch Sử Mua Hàng
                   </h1>
 
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedOrderStatus("all")}
+                      className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition ${
+                        selectedOrderStatus === "all"
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-300 bg-white text-slate-700 hover:border-slate-900 hover:text-slate-900"
+                      }`}
+                    >
+                      Tất cả
+                    </button>
+                    {orderStatusOptions.map((status) => (
+                      <button
+                        key={status.value}
+                        type="button"
+                        onClick={() => setSelectedOrderStatus(status.value)}
+                        className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition ${
+                          selectedOrderStatus === status.value
+                            ? "border-orange-500 bg-orange-500 text-white"
+                            : "border-slate-300 bg-white text-slate-700 hover:border-orange-500 hover:text-orange-500"
+                        }`}
+                      >
+                        {status.label}
+                      </button>
+                    ))}
+                  </div>
+
                   <div className="mt-10 grid gap-4">
-                    {ordersWithItems.length === 0 ? (
+                    {filteredOrdersWithItems.length === 0 ? (
                       <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-10 text-center text-slate-500">
-                        Chưa có đơn hàng nào.
+                        {selectedOrderStatus === "all"
+                          ? "Chưa có đơn hàng nào."
+                          : "Không có đơn hàng nào ở trạng thái này."}
                       </div>
                     ) : (
-                      ordersWithItems.map((order) => (
+                      filteredOrdersWithItems.map((order) => (
                         <article
                           key={order._id}
                           className="rounded-3xl border border-slate-200 bg-slate-50 p-6"

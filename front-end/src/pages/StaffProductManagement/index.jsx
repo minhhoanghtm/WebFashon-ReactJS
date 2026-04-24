@@ -10,13 +10,12 @@ import {
 
 const defaultFormData = {
   name: "",
-  displayProductText: "",
+  displayProduct: [],
   category_id: "",
   description: "",
   old_price: "",
   new_price: "",
   sold: "",
-  rating: "",
   is_active: true,
 };
 
@@ -26,30 +25,33 @@ const formatCurrency = (value) =>
 const getCategoryName = (categories, categoryId) =>
   categories.find((item) => item._id === categoryId)?.name || "Chưa phân loại";
 
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
 const toFormData = (product) => ({
   name: product.name || "",
-  displayProductText: product.displayProduct?.join("\n") || "",
+  displayProduct: product.displayProduct || [],
   category_id: product.category_id || "",
   description: product.description || "",
   old_price: product.old_price ?? "",
   new_price: product.new_price ?? "",
   sold: product.sold ?? "",
-  rating: product.rating ?? "",
   is_active: product.is_active ?? true,
 });
 
 const normalizePayload = (formData) => ({
   name: formData.name.trim(),
-  displayProduct: formData.displayProductText
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean),
+  displayProduct: formData.displayProduct,
   category_id: formData.category_id,
   description: formData.description.trim(),
   old_price: Number(formData.old_price),
   new_price: Number(formData.new_price),
   sold: Number(formData.sold || 0),
-  rating: Number(formData.rating || 0),
   is_active: Boolean(formData.is_active),
 });
 
@@ -165,6 +167,41 @@ const StaffProductManagement = () => {
     }));
   };
 
+  const handleImageChange = async ({ target }) => {
+    const files = Array.from(target.files || []);
+
+    if (files.length === 0) {
+      return;
+    }
+
+    const invalidFile = files.find((file) => !file.type.startsWith("image/"));
+
+    if (invalidFile) {
+      setErrorMessage("Vui lòng chỉ chọn file hình ảnh cho ảnh mẫu sản phẩm.");
+      return;
+    }
+
+    try {
+      const imageDataUrls = await Promise.all(files.map(readFileAsDataUrl));
+      setFormData((prev) => ({
+        ...prev,
+        displayProduct: [...prev.displayProduct, ...imageDataUrls],
+      }));
+      setErrorMessage("");
+    } catch {
+      setErrorMessage("Không thể đọc file ảnh đã chọn.");
+    } finally {
+      target.value = "";
+    }
+  };
+
+  const handleRemoveImage = (imageIndex) => {
+    setFormData((prev) => ({
+      ...prev,
+      displayProduct: prev.displayProduct.filter((_, index) => index !== imageIndex),
+    }));
+  };
+
   const handleEditProduct = (product) => {
     setEditingProductId(product._id);
     setIsFormOpen(true);
@@ -219,12 +256,6 @@ const StaffProductManagement = () => {
       setErrorMessage(
         "Vui lòng nhập đầy đủ tên, danh mục, ảnh và giá sản phẩm.",
       );
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (payload.rating < 0 || payload.rating > 5) {
-      setErrorMessage("Rating chỉ hợp lệ trong khoảng 0 đến 5.");
       setIsSubmitting(false);
       return;
     }
@@ -366,9 +397,10 @@ const StaffProductManagement = () => {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-orange-100"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-orange-200 bg-white text-xl font-medium leading-none text-slate-700 transition hover:bg-orange-100"
+                aria-label="Đóng form"
               >
-                Đóng form
+                ×
               </button>
             </div>
 
@@ -411,14 +443,45 @@ const StaffProductManagement = () => {
                 <span className="text-sm font-medium text-slate-700">
                   Ảnh sản phẩm
                 </span>
-                <textarea
-                  name="displayProductText"
-                  value={formData.displayProductText}
-                  onChange={handleInputChange}
-                  rows="3"
-                  placeholder="Mỗi dòng là 1 image url"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-orange-400"
-                />
+                <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center transition hover:border-orange-400 hover:bg-orange-50/40">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Chọn ảnh mẫu từ máy
+                  </span>
+                  <span className="mt-1 text-sm text-slate-500">
+                    Cho phép chọn nhiều ảnh
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+
+                {formData.displayProduct.length > 0 ? (
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {formData.displayProduct.map((image, index) => (
+                      <div
+                        key={`${index}-${image.slice(0, 30)}`}
+                        className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                      >
+                        <img
+                          src={image}
+                          alt={`Ảnh sản phẩm ${index + 1}`}
+                          className="h-40 w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="w-full border-t border-slate-200 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                        >
+                          Xóa ảnh
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </label>
 
               <label className="grid gap-2 lg:col-span-2">
@@ -472,22 +535,6 @@ const StaffProductManagement = () => {
                   min="0"
                   name="sold"
                   value={formData.sold}
-                  onChange={handleInputChange}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-orange-400"
-                />
-              </label>
-
-              <label className="grid gap-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Đánh giá (Rating)
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  max="5"
-                  step="0.1"
-                  name="rating"
-                  value={formData.rating}
                   onChange={handleInputChange}
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-orange-400"
                 />

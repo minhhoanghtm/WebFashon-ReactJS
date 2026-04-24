@@ -11,68 +11,77 @@ import VerifyOTP from "../pages/VerifyOTP";
 import ResetPassword from "../pages/ResetPassword";
 import DashboardUser from "@/pages/DashboardUser/DashboardUser";
 import DashboardAdmin from "@/pages/DashboardAdmin/DashboardAdmin";
+import Checkout from "@/pages/Checkout";
 
 export const routes = [
-    {
-        path: "/",
-        element: <Home />
-    },
-    {
-        path: "user/dashboard",
-        element: <DashboardUser />
-    },
-    {
-        path: "admin/dashboard",
-        element: <DashboardAdmin />
-    },
-    {
-        path: "/login",
-        element: <Login />,
-        layout: false
-    },
-    {
-        path: "/register",
-        element: <Register />,
-        layout: false
-    },
-    {
-        path: "/reset-password",
-        element: <ResetPassword />,
-        layout: false
-    },
-    {
-        path: "/verify-otp",
-        element: <VerifyOTP />,
-        layout: false
-    },
-    {
-        path: "/verify-otp",
-        element: <VerifyOTP />,
-        layout: false
-    },
-    {
-        path: "/reset-password",
-        element: <ResetPassword />,
-        layout: false
-    },
-    {
-        path: "/admin/accounts",
-        element: <AdminUserManagement />
-    },
-    {
-        path: "/account/profile",
-        element: <UserAccountManagement />
-    },
-    {
-        path: "/staff/products",
-        element: <StaffProductManagement />
-    },
-    {
-        path: "/products",
-        element: <ProductSearch />
-    },
-    {
-        path: "/products/:id",
-        element: <ProductDetail />
-    }
+  {
+    path: "/",
+    element: <Home />,
+  },
+  {
+    path: "user/dashboard",
+    element: <DashboardUser />,
+  },
+  {
+    path: "admin/dashboard",
+    element: <DashboardAdmin />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+    layout: false,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+    layout: false,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPassword />,
+    layout: false,
+  },
+  {
+    path: "/verify-otp",
+    element: <VerifyOTP />,
+    layout: false,
+  },
+  {
+    path: "/verify-otp",
+    element: <VerifyOTP />,
+    layout: false,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPassword />,
+    layout: false,
+  },
+  {
+    path: "/admin/accounts",
+    element: <AdminUserManagement />,
+  },
+  {
+    path: "/account/profile",
+    element: <UserAccountManagement />,
+  },
+  {
+    path: "/orders",
+    element: <UserAccountManagement />,
+  },
+  {
+    path: "/staff/products",
+    element: <StaffProductManagement />,
+  },
+  {
+    path: "/products",
+    element: <ProductSearch />,
+  },
+  {
+    path: "/products/:id",
+    element: <ProductDetail />,
+  },
+  {
+    path: "/checkout",
+    element: <Checkout />,
+  },
 ];
