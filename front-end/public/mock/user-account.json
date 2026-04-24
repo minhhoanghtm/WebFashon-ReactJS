@@ -1,0 +1,19 @@
+{
+  "_id": "user-profile-01",
+  "userName": "nam.nguyen",
+  "passWord": "Nam@123456",
+  "fullName": "Nguyễn Văn Nam",
+  "address": [
+    {
+      "fullName": "Nguyễn Văn Nam",
+      "phone": "0912345678",
+      "city": "TP. Hồ Chí Minh",
+      "district": "Gò Vấp",
+      "detail": "25 Nguyễn Văn Nghi"
+    }
+  ],
+  "role": "user",
+  "avatar_url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80",
+  "createdAt": "2026-03-20T08:00:00.000Z",
+  "updatedAt": "2026-04-11T09:30:00.000Z"
+}

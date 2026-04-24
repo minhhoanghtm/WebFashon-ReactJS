@@ -1,0 +1,116 @@
+[
+  {
+    "_id": "user-admin-01",
+    "userName": "admin404",
+    "passWord": "Admin@123",
+    "fullName": "Nguyễn Minh Quân",
+    "address": [
+      {
+        "fullName": "Nguyễn Minh Quân",
+        "phone": "0901234567",
+        "city": "TP. Hồ Chí Minh",
+        "district": "Quận 3",
+        "detail": "12 Võ Văn Tần"
+      }
+    ],
+    "role": "admin",
+    "avatar_url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80",
+    "createdAt": "2026-03-12T09:00:00.000Z",
+    "updatedAt": "2026-04-10T09:00:00.000Z"
+  },
+  {
+    "_id": "user-admin-02",
+    "userName": "linh.admin",
+    "passWord": "Linh@456",
+    "fullName": "Trần Hải Linh",
+    "address": [
+      {
+        "fullName": "Trần Hải Linh",
+        "phone": "0912345678",
+        "city": "Hà Nội",
+        "district": "Cầu Giấy",
+        "detail": "88 Duy Tân"
+      }
+    ],
+    "role": "admin",
+    "avatar_url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80",
+    "createdAt": "2026-02-18T07:30:00.000Z",
+    "updatedAt": "2026-04-09T08:15:00.000Z"
+  },
+  {
+    "_id": "user-user-01",
+    "userName": "ngocpham",
+    "passWord": "Ngoc@123",
+    "fullName": "Phạm Thị Ngọc",
+    "address": [
+      {
+        "fullName": "Phạm Thị Ngọc",
+        "phone": "0981112233",
+        "city": "Đà Nẵng",
+        "district": "Hải Châu",
+        "detail": "45 Nguyễn Văn Linh"
+      }
+    ],
+    "role": "user",
+    "avatar_url": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=600&q=80",
+    "createdAt": "2026-03-28T03:10:00.000Z",
+    "updatedAt": "2026-04-08T10:20:00.000Z"
+  },
+  {
+    "_id": "user-user-02",
+    "userName": "hoangvu",
+    "passWord": "Vu@987",
+    "fullName": "Lê Hoàng Vũ",
+    "address": [
+      {
+        "fullName": "Lê Hoàng Vũ",
+        "phone": "0938123456",
+        "city": "TP. Hồ Chí Minh",
+        "district": "Bình Thạnh",
+        "detail": "20 Điện Biên Phủ"
+      }
+    ],
+    "role": "user",
+    "avatar_url": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80",
+    "createdAt": "2026-04-01T11:40:00.000Z",
+    "updatedAt": "2026-04-07T05:45:00.000Z"
+  },
+  {
+    "_id": "user-user-03",
+    "userName": "maianh.shop",
+    "passWord": "MaiAnh@222",
+    "fullName": "Đỗ Mai Anh",
+    "address": [
+      {
+        "fullName": "Đỗ Mai Anh",
+        "phone": "0977332211",
+        "city": "Hà Nội",
+        "district": "Đống Đa",
+        "detail": "55 Thái Hà"
+      }
+    ],
+    "role": "user",
+    "avatar_url": "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=600&q=80",
+    "createdAt": "2026-03-22T10:25:00.000Z",
+    "updatedAt": "2026-04-06T14:30:00.000Z"
+  },
+  {
+    "_id": "user-user-04",
+    "userName": "truongpham",
+    "passWord": "Truong@555",
+    "fullName": "Phạm Đức Trường",
+    "address": [
+      {
+        "fullName": "Phạm Đức Trường",
+        "phone": "0965221100",
+        "city": "Cần Thơ",
+        "district": "Ninh Kiều",
+        "detail": "17 Trần Hưng Đạo"
+      }
+    ],
+    "role": "user",
+    "avatar_url": "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=600&q=80",
+    "createdAt": "2026-04-04T06:20:00.000Z",
+    "updatedAt": "2026-04-10T12:00:00.000Z"
+  }
+]

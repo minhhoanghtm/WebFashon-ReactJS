@@ -1,18 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "../assets/logo.png";
 import { FaSearch, FaShoppingBag } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { Badge } from "antd";
 import { MdOutlineAccountCircle } from "react-icons/md";
 import { Dropdown } from "antd";
+
 const Header = () => {
   const [search, setSearch] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolling = window.scrollY > 0;
+      setIsScrolled(isScrolling);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   
   const items = [
     {
       key: "1",
-      label: <Link to="/profile">Tài khoản</Link>,
+      label: <Link to="/account/profile">Tài khoản</Link>,
     },
     {
       key: "2",
@@ -28,9 +40,13 @@ const Header = () => {
     },
   ];
   return (
-    <div className="flex justify-between items-center h-16 min-w-min bg-gray-800 text-white px-5">
+    <div className={`sticky top-0 z-50 flex justify-between items-center h-16 min-w-min px-5 transition-all duration-300 ${
+      isScrolled ? "bg-black bg-opacity-30 backdrop-blur-md shadow-lg" : "bg-gray-800"
+    } text-white`}>
       {/* Image  */}
-      <img src={logo} alt="404Studio" className="h-full" />
+      <Link to="/" className="h-full flex items-center" >
+        <img src={logo} alt="404Studio" className="h-12 w-auto object-contain"/>
+      </Link>
       {/* Navigation  */}
       <div>
         {search ? (
@@ -46,9 +62,15 @@ const Header = () => {
           </div>
         ) : (
           <menu className="flex gap-6">
-            <li className="hover:underline">Home</li>
-            <li className="hover:underline">About</li>
-            <li className="hover:underline">Contact</li>
+            <Link to="/">
+              <li className="hover:underline">Home</li>
+            </Link>
+            <Link to="/about">
+              <li className="hover:underline">About</li>
+            </Link>
+            <Link to="/contact">
+              <li className="hover:underline">Contact</li>
+            </Link>
           </menu>
         )}
       </div>

@@ -1,0 +1,247 @@
+{
+  "categories": [
+    {
+      "_id": "cat-tee",
+      "name": "Ao thun",
+      "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80",
+      "slug": "ao-thun"
+    },
+    {
+      "_id": "cat-shirt",
+      "name": "Ao so mi",
+      "image": "https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=900&q=80",
+      "slug": "ao-so-mi"
+    },
+    {
+      "_id": "cat-jacket",
+      "name": "Ao khoac",
+      "image": "https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=900&q=80",
+      "slug": "ao-khoac"
+    },
+    {
+      "_id": "cat-jeans",
+      "name": "Quan jeans",
+      "image": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=900&q=80",
+      "slug": "quan-jeans"
+    },
+    {
+      "_id": "cat-trousers",
+      "name": "Quan tay",
+      "image": "https://images.unsplash.com/photo-1506629905607-4b3d2d4e5c88?auto=format&fit=crop&w=900&q=80",
+      "slug": "quan-tay"
+    },
+    {
+      "_id": "cat-short",
+      "name": "Quan short",
+      "image": "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?auto=format&fit=crop&w=900&q=80",
+      "slug": "quan-short"
+    }
+  ],
+  "products": [
+    {
+      "_id": "prod-oversize-01",
+      "name": "Ao thun oversize Essential",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-tee",
+      "slug": "ao-thun-oversize-essential",
+      "description": "Form rong, vai mem, phu hop ban hang online va tai cua hang.",
+      "old_price": 320000,
+      "new_price": 259000,
+      "sold": 128,
+      "rating": 4.6,
+      "is_active": true,
+      "createdAt": "2026-04-01T08:30:00.000Z",
+      "updatedAt": "2026-04-08T10:00:00.000Z"
+    },
+    {
+      "_id": "prod-shirt-02",
+      "name": "Ao so mi Oxford Basic",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-shirt",
+      "slug": "ao-so-mi-oxford-basic",
+      "description": "Chat lieu day vua, de phoi voi quan tay hoac jeans.",
+      "old_price": 540000,
+      "new_price": 469000,
+      "sold": 74,
+      "rating": 4.4,
+      "is_active": true,
+      "createdAt": "2026-03-26T02:15:00.000Z",
+      "updatedAt": "2026-04-04T09:20:00.000Z"
+    },
+    {
+      "_id": "prod-jacket-03",
+      "name": "Ao khoac bomber Street",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-jacket",
+      "slug": "ao-khoac-bomber-street",
+      "description": "Bomber phong cach streetwear, co lot trong nhe, mac duoc ca nam lan nu.",
+      "old_price": 890000,
+      "new_price": 749000,
+      "sold": 39,
+      "rating": 4.8,
+      "is_active": false,
+      "createdAt": "2026-03-18T14:45:00.000Z",
+      "updatedAt": "2026-04-02T05:10:00.000Z"
+    },
+    {
+      "_id": "prod-tee-04",
+      "name": "Ao thun graphic Mono Line",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-tee",
+      "slug": "ao-thun-graphic-mono-line",
+      "description": "Ao thun in hinh toi gian, phoi mau de ban va de tu van cho khach.",
+      "old_price": 360000,
+      "new_price": 299000,
+      "sold": 96,
+      "rating": 4.5,
+      "is_active": true,
+      "createdAt": "2026-04-06T08:00:00.000Z",
+      "updatedAt": "2026-04-09T08:00:00.000Z"
+    },
+    {
+      "_id": "prod-shirt-05",
+      "name": "Ao so mi linen Summer",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-shirt",
+      "slug": "ao-so-mi-linen-summer",
+      "description": "Vai linen nhe, hop cho mua nong va phong cach resort.",
+      "old_price": 590000,
+      "new_price": 519000,
+      "sold": 51,
+      "rating": 4.3,
+      "is_active": true,
+      "createdAt": "2026-03-29T03:15:00.000Z",
+      "updatedAt": "2026-04-07T03:15:00.000Z"
+    },
+    {
+      "_id": "prod-jacket-06",
+      "name": "Ao khoac denim Washed Blue",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-jacket",
+      "slug": "ao-khoac-denim-washed-blue",
+      "description": "Denim xanh wash nhe, phu hop phoi layer cho look casual.",
+      "old_price": 920000,
+      "new_price": 798000,
+      "sold": 33,
+      "rating": 4.7,
+      "is_active": true,
+      "createdAt": "2026-03-24T11:20:00.000Z",
+      "updatedAt": "2026-04-03T11:20:00.000Z"
+    },
+    {
+      "_id": "prod-jeans-07",
+      "name": "Quan jeans straight fit Urban",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-jeans",
+      "slug": "quan-jeans-straight-fit-urban",
+      "description": "Dang straight fit de mac, mau xanh dam ban chay quanh nam.",
+      "old_price": 690000,
+      "new_price": 599000,
+      "sold": 112,
+      "rating": 4.6,
+      "is_active": true,
+      "createdAt": "2026-04-02T07:40:00.000Z",
+      "updatedAt": "2026-04-10T07:40:00.000Z"
+    },
+    {
+      "_id": "prod-jeans-08",
+      "name": "Quan jeans baggy Vintage Fade",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-jeans",
+      "slug": "quan-jeans-baggy-vintage-fade",
+      "description": "Form baggy trend, wash bac nhe, hop khach tre.",
+      "old_price": 760000,
+      "new_price": 649000,
+      "sold": 67,
+      "rating": 4.5,
+      "is_active": false,
+      "createdAt": "2026-03-21T05:30:00.000Z",
+      "updatedAt": "2026-04-01T05:30:00.000Z"
+    },
+    {
+      "_id": "prod-trousers-09",
+      "name": "Quan tay slim Office Pro",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1506629905607-4b3d2d4e5c88?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-trousers",
+      "slug": "quan-tay-slim-office-pro",
+      "description": "Dang slim gon, chat vai mem, phu hop di lam va su kien.",
+      "old_price": 620000,
+      "new_price": 559000,
+      "sold": 85,
+      "rating": 4.4,
+      "is_active": true,
+      "createdAt": "2026-03-30T01:10:00.000Z",
+      "updatedAt": "2026-04-09T01:10:00.000Z"
+    },
+    {
+      "_id": "prod-trousers-10",
+      "name": "Quan tay relaxed Premium",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-trousers",
+      "slug": "quan-tay-relaxed-premium",
+      "description": "Ong dung nhe, nhin sang hon, de tu van cho khach cong so.",
+      "old_price": 680000,
+      "new_price": 615000,
+      "sold": 44,
+      "rating": 4.2,
+      "is_active": true,
+      "createdAt": "2026-03-27T09:50:00.000Z",
+      "updatedAt": "2026-04-08T09:50:00.000Z"
+    },
+    {
+      "_id": "prod-short-11",
+      "name": "Quan short kaki Daily Wear",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-short",
+      "slug": "quan-short-kaki-daily-wear",
+      "description": "Quan short de ban quanh nam, tui sau sau va de phoi do.",
+      "old_price": 390000,
+      "new_price": 329000,
+      "sold": 153,
+      "rating": 4.7,
+      "is_active": true,
+      "createdAt": "2026-04-05T12:00:00.000Z",
+      "updatedAt": "2026-04-10T12:00:00.000Z"
+    },
+    {
+      "_id": "prod-short-12",
+      "name": "Quan short thun Sport Flex",
+      "displayProduct": [
+        "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "category_id": "cat-short",
+      "slug": "quan-short-thun-sport-flex",
+      "description": "Chat thun co gian, hop khach can su thoai mai va van dong.",
+      "old_price": 340000,
+      "new_price": 289000,
+      "sold": 119,
+      "rating": 4.5,
+      "is_active": true,
+      "createdAt": "2026-04-07T06:25:00.000Z",
+      "updatedAt": "2026-04-10T06:25:00.000Z"
+    }
+  ]
+}

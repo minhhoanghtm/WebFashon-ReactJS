@@ -1,10 +1,17 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  userName: {
+  // userName: {
+  //   type: String,
+  //   required: true,
+  //   trim: true,
+  // },
+  email: {
     type: String,
     required: true,
+    unique: true,
     trim: true,
+    lowercase: true,
   },
   passWord: {
     type: String,
@@ -15,13 +22,6 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  address: [{
-    fullName: String,
-    phone: String,
-    city: String,
-    district: String,
-    detail: String
-  }],
   role: {
     type: String,
     enum: ["user", "admin"],
