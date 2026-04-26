@@ -6,13 +6,13 @@ import ProductDetail from "../pages/ProductDetail";
 import ProductSearch from "../pages/ProductSearch";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import ForgotPassword from "../pages/ForgotPassword";
 import VerifyOTP from "../pages/VerifyOTP";
 import ResetPassword from "../pages/ResetPassword";
 import DashboardUser from "@/pages/DashboardUser/DashboardUser";
 import DashboardAdmin from "@/pages/DashboardAdmin/DashboardAdmin";
 import Checkout from "@/pages/Checkout";
 import Cart from "@/pages/Cart";
+import Order from "@/pages/Order";
 
 export const routes = [
   {
@@ -67,7 +67,7 @@ export const routes = [
   },
   {
     path: "/orders",
-    element: <UserAccountManagement />,
+    element: <Order />,
   },
   {
     path: "/staff/products",

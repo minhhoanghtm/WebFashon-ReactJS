@@ -344,7 +344,6 @@ const UserAccountManagement = () => {
   }
   const menuItems = [
     { id: "profile", label: "Thông Tin Cá Nhân" },
-    { id: "orders", label: "Lịch Sử Mua Hàng" },
     { id: "address", label: "Thông Tin Giao Hàng" },
     { id: "password", label: "Đổi Mật Khẩu" },
   ];
@@ -496,118 +495,6 @@ const UserAccountManagement = () => {
                 </div>
               ) : null}
 
-              {activeTab === "orders" ? (
-                <div>
-                  <h1 className="text-4xl font-bold uppercase text-slate-900">
-                    Lịch Sử Mua Hàng
-                  </h1>
-
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedOrderStatus("all")}
-                      className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition ${
-                        selectedOrderStatus === "all"
-                          ? "border-slate-900 bg-slate-900 text-white"
-                          : "border-slate-300 bg-white text-slate-700 hover:border-slate-900 hover:text-slate-900"
-                      }`}
-                    >
-                      Tất cả
-                    </button>
-                    {orderStatusOptions.map((status) => (
-                      <button
-                        key={status.value}
-                        type="button"
-                        onClick={() => setSelectedOrderStatus(status.value)}
-                        className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition ${
-                          selectedOrderStatus === status.value
-                            ? "border-orange-500 bg-orange-500 text-white"
-                            : "border-slate-300 bg-white text-slate-700 hover:border-orange-500 hover:text-orange-500"
-                        }`}
-                      >
-                        {status.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mt-10 grid gap-4">
-                    {filteredOrdersWithItems.length === 0 ? (
-                      <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-10 text-center text-slate-500">
-                        {selectedOrderStatus === "all"
-                          ? "Chưa có đơn hàng nào."
-                          : "Không có đơn hàng nào ở trạng thái này."}
-                      </div>
-                    ) : (
-                      filteredOrdersWithItems.map((order) => (
-                        <article
-                          key={order._id}
-                          className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
-                        >
-                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                            <div>
-                              <p className="text-sm uppercase tracking-[0.16em] text-orange-500">
-                                Mã đơn: {order._id}
-                              </p>
-                              <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                {orderStatusMap[order.status] || order.status}
-                              </h3>
-                              <p className="mt-2 text-sm text-slate-500">
-                                Ngày đặt: {formatDate(order.createdAt)}
-                              </p>
-                              <p className="mt-1 text-sm text-slate-500">
-                                Thanh toán: {paymentMethodMap[order.payment_method] || order.payment_method}
-                              </p>
-                              <p className="mt-1 text-sm text-slate-500">
-                                Giao tới: {order.shipping_address}
-                              </p>
-                            </div>
-                            <div className="text-left lg:text-right">
-                              <p className="text-sm text-slate-500">Tổng đơn</p>
-                              <p className="mt-1 text-2xl font-bold text-slate-900">
-                                {formatCurrency(order.total_price)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="mt-5 grid gap-3">
-                            {order.items.map((item) => (
-                              <div
-                                key={item._id}
-                                className="grid gap-3 rounded-2xl bg-white p-4 md:grid-cols-[72px_1fr_auto]"
-                              >
-                                <img
-                                  src={item.product_image}
-                                  alt={item.product_name}
-                                  className="h-[72px] w-[72px] rounded-2xl object-cover"
-                                />
-                                <div>
-                                  <p className="font-semibold text-slate-900">
-                                    {item.product_name}
-                                  </p>
-                                  <p className="mt-1 text-sm text-slate-500">
-                                    Số lượng: {item.quantity}
-                                  </p>
-                                  <p className="mt-1 text-sm text-slate-500">
-                                    Mã sản phẩm: {item.product_id}
-                                  </p>
-                                </div>
-                                <div className="text-left md:text-right">
-                                  <p className="font-semibold text-slate-900">
-                                    {formatCurrency(item.price)}
-                                  </p>
-                                  <p className="mt-1 text-sm text-slate-500">
-                                    Variant: {item.variant_id || "Không có"}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </article>
-                      ))
-                    )}
-                  </div>
-                </div>
-              ) : null}
 
               {activeTab === "address" ? (
                 <div>
