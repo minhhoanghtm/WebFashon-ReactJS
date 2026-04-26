@@ -4,9 +4,10 @@ import {
   initializeUserAccountApi,
 } from "../../api/userAccountApi";
 import {
-  getAllProductApi,
-  initializeProductManagementApi,
-} from "../../api/productManagementApi";
+  getCartApi,
+  initializeCartApi,
+} from "../../api/cartApi";
+import { Link } from "react-router-dom";
 
 const paymentOptions = [
   {
@@ -58,28 +59,25 @@ const CheckoutPage = () => {
       try {
         await Promise.all([
           initializeUserAccountApi(),
-          initializeProductManagementApi(),
+          initializeCartApi(),
         ]);
 
-        const [profileResponse, productResponse] = await Promise.all([
+        const [profileResponse, cartResponse] = await Promise.all([
           getUserProfileApi(),
-          getAllProductApi(),
+          getCartApi(),
         ]);
 
         const profileData = await profileResponse.json();
-        const productData = await productResponse.json();
+        const cartData = await cartResponse.json();
 
-        const previewItems = (productData || [])
-          .filter((item) => item.is_active)
-          .slice(0, 3)
-          .map((item, index) => ({
+        const previewItems = (cartData.cartItems || []).map((item) => ({
             _id: item._id,
-            name: item.name,
-            image: item.displayProduct?.[0] || "",
-            price: item.new_price,
-            oldPrice: item.old_price,
-            quantity: index === 0 ? 2 : 1,
-            variant: index === 0 ? "Den / Size L" : "Mac dinh",
+            name: item.product?.name || "Sản phẩm",
+            image: item.product?.displayProduct?.[0] || "",
+            price: item.price,
+            oldPrice: item.product?.old_price || item.price,
+            quantity: item.quantity,
+            variant: item.variant_id ? item.variant_id.replaceAll("-", " ") : "Mặc định",
           }));
 
         setCheckoutItems(previewItems);
@@ -140,6 +138,19 @@ const CheckoutPage = () => {
       ) : error ? (
         <div className="rounded-[2rem] border border-red-200 bg-red-50 px-6 py-4 text-red-600 shadow-sm">
           {error}
+        </div>
+      ) : checkoutItems.length === 0 ? (
+        <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+          <p className="text-xl font-semibold text-slate-900">Chưa có sản phẩm để thanh toán</p>
+          <p className="mt-3 text-slate-500">
+            Hãy quay lại giỏ hàng để thêm sản phẩm trước khi checkout.
+          </p>
+          <Link
+            to="/cart"
+            className="mt-6 inline-flex rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-orange-500"
+          >
+            Quay lại giỏ hàng
+          </Link>
         </div>
       ) : (
         <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">

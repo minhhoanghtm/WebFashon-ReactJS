@@ -12,6 +12,7 @@ import ResetPassword from "../pages/ResetPassword";
 import DashboardUser from "@/pages/DashboardUser/DashboardUser";
 import DashboardAdmin from "@/pages/DashboardAdmin/DashboardAdmin";
 import Checkout from "@/pages/Checkout";
+import Cart from "@/pages/Cart";
 
 export const routes = [
   {
@@ -83,5 +84,9 @@ export const routes = [
   {
     path: "/checkout",
     element: <Checkout />,
+  },
+  {
+    path: "/cart",
+    element: <Cart />,
   },
 ];
