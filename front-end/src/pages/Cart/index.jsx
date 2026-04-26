@@ -15,7 +15,11 @@ const getVariantLabel = (variantId) => {
     return "Mặc định";
   }
 
-  return variantId.replaceAll("-", " ");
+  if (typeof variantId === "object") {
+    return [variantId.color, variantId.size].filter(Boolean).join(" - ");
+  }
+
+  return String(variantId).replaceAll("-", " ");
 };
 
 const CartPage = () => {
@@ -49,7 +53,8 @@ const CartPage = () => {
 
   const summary = useMemo(() => {
     const subtotal = cartItems.reduce(
-      (total, item) => total + Number(item.price || 0) * Number(item.quantity || 0),
+      (total, item) =>
+        total + Number(item.price || 0) * Number(item.quantity || 0),
       0,
     );
     const shippingFee = subtotal >= 800000 || subtotal === 0 ? 0 : 30000;
@@ -72,7 +77,9 @@ const CartPage = () => {
     setError("");
 
     try {
-      const response = await updateCartItemApi(item._id, { quantity: nextQuantity });
+      const response = await updateCartItemApi(item._id, {
+        quantity: nextQuantity,
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -118,11 +125,8 @@ const CartPage = () => {
           Cart
         </p>
         <h1 className="mt-3 text-3xl font-bold uppercase sm:text-4xl">
-          GIỎ HÀNG CỦA BẠN
+          GIỎ HÀNG
         </h1>
-        <p className="mt-3 max-w-2xl text-sm text-slate-200 sm:text-base">
-          Kiểm tra lại sản phẩm, cập nhật số lượng và chuyển sang checkout khi sẵn sàng.
-        </p>
       </div>
 
       {isLoading ? (
@@ -135,7 +139,9 @@ const CartPage = () => {
         </div>
       ) : cartItems.length === 0 ? (
         <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
-          <p className="text-xl font-semibold text-slate-900">Giỏ hàng đang trống</p>
+          <p className="text-xl font-semibold text-slate-900">
+            Giỏ hàng đang trống
+          </p>
           <p className="mt-3 text-slate-500">
             Hãy thêm vài sản phẩm để tiếp tục mua sắm.
           </p>
@@ -150,7 +156,7 @@ const CartPage = () => {
         <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="grid gap-6">
             {cartItems.map((item) => {
-              const product = item.product;
+              const product = item.product_id;
               const image = product?.displayProduct?.[0] || "";
               const isPending = pendingItemId === item._id;
 
@@ -197,7 +203,9 @@ const CartPage = () => {
                         <div className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 p-1">
                           <button
                             type="button"
-                            onClick={() => handleQuantityChange(item, item.quantity - 1)}
+                            onClick={() =>
+                              handleQuantityChange(item, item.quantity - 1)
+                            }
                             disabled={isPending || item.quantity <= 1}
                             className="h-10 w-10 rounded-full text-xl font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                           >
@@ -208,7 +216,9 @@ const CartPage = () => {
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleQuantityChange(item, item.quantity + 1)}
+                            onClick={() =>
+                              handleQuantityChange(item, item.quantity + 1)
+                            }
                             disabled={isPending}
                             className="h-10 w-10 rounded-full text-xl font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                           >

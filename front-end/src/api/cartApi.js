@@ -75,7 +75,10 @@ const getStoredCartState = () =>
 const enrichCartItems = (cartItems, products) =>
   cartItems.map((item) => ({
     ...item,
-    product: products.find((product) => product._id === item.product_id) || null,
+    product_id:
+      products.find((product) => product._id === item.product_id) ||
+      item.product_id ||
+      null,
   }));
 
 export const initializeCartApi = async () => {

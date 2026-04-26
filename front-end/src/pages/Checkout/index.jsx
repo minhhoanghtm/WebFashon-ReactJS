@@ -7,6 +7,7 @@ import {
   getCartApi,
   initializeCartApi,
 } from "../../api/cartApi";
+import { createOrderApi, createOrderItemApi } from "../../api/orderApi";
 import { Link } from "react-router-dom";
 
 const paymentOptions = [
@@ -36,8 +37,23 @@ const buildShippingAddress = (address) =>
     .filter(Boolean)
     .join(", ");
 
+const getId = (value) => (typeof value === "object" ? value?._id : value);
+
+const getVariantLabel = (variantId) => {
+  if (!variantId) {
+    return "Mặc định";
+  }
+
+  if (typeof variantId === "object") {
+    return [variantId.color, variantId.size].filter(Boolean).join(" - ");
+  }
+
+  return String(variantId).replaceAll("-", " ");
+};
+
 const CheckoutPage = () => {
   const [checkoutItems, setCheckoutItems] = useState([]);
+  const [userId, setUserId] = useState("");
   const [selectedPayment, setSelectedPayment] = useState("cod");
   const [note, setNote] = useState("");
   const [voucher, setVoucher] = useState("FREESHIP");
@@ -49,7 +65,9 @@ const CheckoutPage = () => {
     detail: "",
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const loadCheckoutData = async () => {
@@ -70,16 +88,23 @@ const CheckoutPage = () => {
         const profileData = await profileResponse.json();
         const cartData = await cartResponse.json();
 
-        const previewItems = (cartData.cartItems || []).map((item) => ({
-            _id: item._id,
-            name: item.product?.name || "Sản phẩm",
-            image: item.product?.displayProduct?.[0] || "",
-            price: item.price,
-            oldPrice: item.product?.old_price || item.price,
-            quantity: item.quantity,
-            variant: item.variant_id ? item.variant_id.replaceAll("-", " ") : "Mặc định",
-          }));
+        const previewItems = (cartData.cartItems || []).map((item) => {
+          const product = item.product_id;
 
+          return {
+            _id: item._id,
+            product_id: getId(item.product_id),
+            variant_id: getId(item.variant_id),
+            product_name: product?.name || "Sản phẩm",
+            product_image: product?.displayProduct?.[0] || "",
+            price: item.price,
+            oldPrice: product?.old_price || item.price,
+            quantity: item.quantity,
+            variant: getVariantLabel(item.variant_id),
+          };
+        });
+
+        setUserId(profileData?._id || "");
         setCheckoutItems(previewItems);
         setShippingForm({
           fullName:
@@ -118,6 +143,60 @@ const CheckoutPage = () => {
   }, [checkoutItems, voucher]);
 
   const shippingAddress = buildShippingAddress(shippingForm);
+
+  const handlePlaceOrder = async () => {
+    setError("");
+    setSuccessMessage("");
+
+    if (!userId) {
+      setError("Khong tim thay user_id de tao don hang.");
+      return;
+    }
+
+    if (!shippingAddress) {
+      setError("Vui long nhap dia chi giao hang.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const orderResponse = await createOrderApi({
+        user_id: userId,
+        total_price: summary.total,
+        payment_method: selectedPayment,
+        shipping_address: shippingAddress,
+      });
+      const orderData = await orderResponse.json();
+
+      if (!orderResponse.ok) {
+        setError(orderData.message || "Khong the tao don hang.");
+        return;
+      }
+
+      const orderId = orderData.order?._id;
+
+      await Promise.all(
+        checkoutItems.map((item) =>
+          createOrderItemApi({
+            order_id: orderId,
+            product_id: item.product_id,
+            variant_id: item.variant_id,
+            quantity: item.quantity,
+            price: item.price,
+            product_name: item.product_name,
+            product_image: item.product_image,
+          }),
+        ),
+      );
+
+      setSuccessMessage("Dat hang thanh cong.");
+    } catch {
+      setError("Khong the tao don hang.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -302,13 +381,13 @@ const CheckoutPage = () => {
                   className="grid grid-cols-[88px_1fr] gap-4 rounded-3xl bg-slate-50 p-4"
                 >
                   <img
-                    src={item.image}
-                    alt={item.name}
+                    src={item.product_image}
+                    alt={item.product_name}
                     className="h-[88px] w-[88px] rounded-2xl object-cover"
                   />
                   <div>
                     <h3 className="text-base font-semibold text-slate-900">
-                      {item.name}
+                      {item.product_name}
                     </h3>
                     <p className="mt-1 text-sm text-slate-500">
                       Phân loại: {item.variant}
@@ -361,10 +440,17 @@ const CheckoutPage = () => {
 
             <button
               type="button"
+              onClick={handlePlaceOrder}
+              disabled={isSubmitting}
               className="mt-8 w-full rounded-full bg-slate-900 px-6 py-4 text-base font-bold uppercase tracking-[0.16em] text-white transition hover:bg-orange-500"
             >
-              Đặt hàng ngay
+              {isSubmitting ? "Đang đặt hàng..." : "Đặt hàng ngay"}
             </button>
+            {successMessage ? (
+              <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700">
+                {successMessage}
+              </p>
+            ) : null}
           </aside>
         </div>
       )}
