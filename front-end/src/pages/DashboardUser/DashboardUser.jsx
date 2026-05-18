@@ -1,38 +1,80 @@
-import { Card, Col, Row } from "antd";
-import { useState } from "react";
+import { Card } from "antd";
+import { useEffect, useState } from "react";
 import KPIChart from "../../components/Charts/KPIChart";
-import RevenueChart from "../../components/Charts/RevenueChart";
 import OrdersChart from "../../components/Charts/OrdersChart";
 import TopProductsChart from "../../components/Charts/TopProductsChart";
 import CategoryChart from "../../components/Charts/CategoryChart";
-import CustomerChart from "../../components/Charts/CustomerChart";
-const DashboardUser = () => {
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { getPurchasePerformanceService } from "@/services/order.service";
+
   const option = [
     {
       key: "kpi",
       title: "Chỉ số KPI",
-      description: "Tổng quan về hiệu suất kinh doanh.",
+      description: "Hiệu suất mua hàng.",
     },
-    {
-      key: "orders",
-      title: "Đơn hàng",
-      description: "Biểu đồ số lượng đơn hàng theo thời gian.",
-    },
-    {
-      key: "top-products",
-      title: "Sản phẩm bán chạy",
-      description: "Top 10 sản phẩm bán chạy nhất.",
-    },
-    {
-      key: "category-performance",
-      title: "Hiệu suất danh mục",
-      description: "Phân bố theo doanh mục sản phẩm.",
-    }
+    // {
+    //   key: "orders",
+    //   title: "Đơn hàng",
+    //   description: "Biểu đồ số lượng đơn hàng theo thời gian.",
+    // },
+    // {
+    //   key: "top-products",
+    //   title: "Sản phẩm bán chạy",
+    //   description: "Top 10 sản phẩm đã mua.",
+    // },
+    // {
+    //   key: "category-performance",
+    //   title: "Hiệu suất danh mục",
+    //   description: "Phân bố theo doanh mục sản phẩm.",
+    // }
   ];
+
+const DashboardUser = () => {
+  useDocumentTitle("Dashboard Thống Kê");
+  const [performanceData, setPerformanceData] = useState([]);
+
+  useEffect(() => {
+    const fetchPerformanceData = async () => {
+      try {
+        const response = await getPurchasePerformanceService();
+        const stats = response?.data || {};
+
+        const nextPerformanceData = [
+          {
+            key: "orders",
+            label: "Đơn hàng của tôi",
+            value: stats.totalOrders || 0,
+            description: "Tổng số đơn hàng đã đặt",
+          },
+          {
+            key: "total",
+            label: "Sản phẩm đã mua",
+            value: stats.totalSold ,
+            description: "Tổng số sản phẩm đã được giao thành công",
+          },
+          {
+            key: "revenue",
+            label: "Tổng chi tiêu",
+            value: stats.totalRevenue || 0,
+            description: `Tỉ lệ hủy đơn: ${stats.cancelRate || "0%"}`,
+          },
+        ];
+
+        setPerformanceData(nextPerformanceData);
+      }
+      catch (error) {
+        console.error("Lỗi khi lấy dữ liệu hiệu suất mua hàng:", error);
+        setPerformanceData([]);
+      }
+    };
+
+    fetchPerformanceData();
+  }, []);
 
   //Map chart
   const chartMap = {
-    kpi: <KPIChart />,
+    kpi: <KPIChart title="Tổng quan kinh doanh" data={performanceData} />,
     orders: <OrdersChart />,
     "top-products": <TopProductsChart />,
     "category-performance": <CategoryChart />,
@@ -61,14 +103,10 @@ const DashboardUser = () => {
                   h-full rounded-xl p-4 cursor-pointer transition-all duration-300 border
                   ${
                     selectedOption === item.key
-                      ? "!bg-blue-500 !border-blue-500 !text-white !shadow-lg"
+                      ? "bg-blue-500! border-blue-500! text-white! shadow-lg!"
                       : "bg-white border-gray-200 hover:border-blue-400 hover:shadow-md"
                   }
                 `}
-                headStyle={{
-                  color: selectedOption === item.key ? "#fff" : "#000",
-                  fontWeight: "bold",
-                }}
               >
                 <p
                   className={`text-sm ${

@@ -1,26 +1,34 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import {
-  getUserOrdersApi,
-  getUserProfileApi,
-  initializeUserAccountApi,
-  updateUserPasswordApi,
-  updateUserProfileApi,
-} from "../../api/userAccountApi";
 import { GrFormView } from "react-icons/gr";
 import { GrFormViewHide } from "react-icons/gr";
+import {
+  getDistrictsService,
+  getProvincesService,
+  getWardsService,
+} from "@/services/location.service";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import {
+  updatePasswordService,
+  updateProfileService,
+} from "@/services/user.service";
+import { useAuth } from "@/context/AuthContext";
+import { formatDate, formatDateToInput } from "@/utils/format";
 
 const profileDefaultForm = {
-  userName: "",
-  fullName: "",
+  lastName: "",
+  firstName: "",
   avatar_url: "",
+  birthday: "",
+  sex: "",
 };
 
 const shippingDefaultForm = {
   addressFullName: "",
   addressPhone: "",
-  addressCity: "",
-  addressDistrict: "",
+  provinceCode: "",
+  districtCode: "",
+  wardCode: "",
   addressDetail: "",
 };
 
@@ -32,35 +40,6 @@ const passwordDefaultForm = {
 
 const phonePattern = /^0\d{9}$/;
 
-const orderStatusMap = {
-  pending: "Chờ xác nhận",
-  confirmed: "Đã xác nhận",
-  shipping: "Đang giao",
-  delivered: "Đã giao",
-  cancelled: "Đã hủy",
-};
-
-const orderStatusOptions = Object.entries(orderStatusMap).map(([value, label]) => ({
-  value,
-  label,
-}));
-
-const paymentMethodMap = {
-  cod: "Thanh toán khi nhận hàng",
-  momo: "Ví MoMo",
-  vnpay: "VNPay",
-};
-
-const formatDate = (value) =>
-  new Date(value).toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-
-const formatCurrency = (value) =>
-  `${Number(value || 0).toLocaleString("vi-VN")}đ`;
-
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -69,29 +48,21 @@ const readFileAsDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
-const normalizeProfilePayload = (profileForm, shippingForm, currentProfile) => ({
-  ...currentProfile,
-  userName: profileForm.userName.trim(),
-  fullName: profileForm.fullName.trim(),
-  avatar_url: profileForm.avatar_url.trim(),
-  address: [
-    {
-      fullName: shippingForm.addressFullName.trim(),
-      phone: shippingForm.addressPhone.trim(),
-      city: shippingForm.addressCity.trim(),
-      district: shippingForm.addressDistrict.trim(),
-      detail: shippingForm.addressDetail.trim(),
-    },
-  ],
-});
+const menuItems = [
+  { id: "profile", label: "Thông Tin Cá Nhân" },
+  { id: "address", label: "Thông Tin Giao Hàng" },
+  { id: "password", label: "Đổi Mật Khẩu" },
+];
+
+const getSavedAddress = (userData) => {
+  return userData?.addresses?.[0] || userData?.address?.[0] || userData?.address || null;
+};
 
 const UserAccountManagement = () => {
+  useDocumentTitle("Quản lý tài khoản");
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("profile");
   const [profile, setProfile] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [orderItems, setOrderItems] = useState([]);
-  const [selectedOrderStatus, setSelectedOrderStatus] = useState("all");
   const [profileForm, setProfileForm] = useState(profileDefaultForm);
   const [shippingForm, setShippingForm] = useState(shippingDefaultForm);
   const [passwordForm, setPasswordForm] = useState(passwordDefaultForm);
@@ -108,47 +79,101 @@ const UserAccountManagement = () => {
   const [hidePassword, setHidePassword] = useState(true);
   const [hideNewPassword, setHideNewPassword] = useState(true);
   const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
 
-  const fetchAccountData = async () => {
-    setIsLoading(true);
-    setProfileError("");
+  //update user info moi khi vao trang
+  const [isEditing, setIsEditing] = useState(false);
+  const { user, setUser } = useAuth();
+  // console.log("Header user:", user);
+  const avatarUrl =
+    user?.data.avatar_url ||
+    "https://cdn.sforum.vn/sforum/wp-content/uploads/2023/10/avatar-trang-4.jpg";
+  const lastName = user?.data.fullName?.split(" ").slice(0, -1).join(" ") || "";
+  const firstName = user?.data.fullName?.split(" ").slice(-1).join(" ") || "";
+  const birthDate = formatDate(user?.data.birthday) || "";
+  const sex = user?.data?.sex || "";
+  console.log("avatarUrl:", avatarUrl);
+  console.log("lastName:", lastName);
+  console.log("firstName:", firstName);
+  console.log("birthDate:", birthDate);
+  console.log("sex:", sex);
 
-    try {
-      await initializeUserAccountApi();
-      const [profileResponse, ordersResponse] = await Promise.all([
-        getUserProfileApi(),
-        getUserOrdersApi(),
-      ]);
-
-      const userData = await profileResponse.json();
-      const orderData = await ordersResponse.json();
-
-      setProfile(userData);
-      setOrders(orderData.orders || []);
-      setOrderItems(orderData.orderItems || []);
-      setProfileForm({
-        userName: userData.userName || "",
-        fullName: userData.fullName || "",
-        avatar_url: userData.avatar_url || "",
-      });
-      setShippingForm({
-        addressFullName: userData.address?.[0]?.fullName || "",
-        addressPhone: userData.address?.[0]?.phone || "",
-        addressCity: userData.address?.[0]?.city || "",
-        addressDistrict: userData.address?.[0]?.district || "",
-        addressDetail: userData.address?.[0]?.detail || "",
-      });
-    } catch {
-      setProfileError("Không thể tải thông tin tài khoản.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  //Load tinh thành, quận huyện, phường xã
   useEffect(() => {
-    fetchAccountData();
+    const loadProvinces = async () => {
+      try {
+        const res = await getProvincesService();
+        setProvinces(res);
+      } catch (err) {
+        console.error("Lỗi load tỉnh:", err);
+      }
+    };
+    loadProvinces();
   }, []);
 
+  useEffect(() => {
+    const hydrateShippingOptions = async () => {
+      const savedAddress = getSavedAddress(user?.data);
+
+      if (!savedAddress || !provinces.length) {
+        return;
+      }
+
+      const provinceCode =
+        savedAddress.provinceCode || savedAddress.province || savedAddress.city || "";
+      const districtCode = savedAddress.districtCode || savedAddress.district || "";
+      const wardCode = savedAddress.wardCode || savedAddress.ward || "";
+
+      if (!provinceCode) {
+        return;
+      }
+
+      try {
+        const provinceMatch = provinces.find(
+          (province) => String(province.code) === String(provinceCode),
+        );
+
+        if (!provinceMatch) {
+          return;
+        }
+
+        const districtRes = await getDistrictsService(provinceMatch.code);
+        const nextDistricts = districtRes?.districts || [];
+        setDistricts(nextDistricts);
+
+        if (!districtCode) {
+          setWards([]);
+          return;
+        }
+
+        const districtMatch = nextDistricts.find(
+          (district) => String(district.code) === String(districtCode),
+        );
+
+        if (!districtMatch) {
+          setWards([]);
+          return;
+        }
+
+        const wardRes = await getWardsService(districtMatch.code);
+        setWards(wardRes?.wards || []);
+
+        // Chuẩn hóa lại giá trị đang hiển thị để select có thể match option
+        setShippingForm((prev) => ({
+          ...prev,
+          provinceCode: String(provinceMatch.code),
+          districtCode: String(districtMatch.code),
+          wardCode: wardCode ? String(wardCode) : "",
+        }));
+      } catch (err) {
+        console.error("Lỗi hydrate địa chỉ giao hàng:", err);
+      }
+    };
+
+    hydrateShippingOptions();
+  }, [user, provinces]);
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tabFromQuery = searchParams.get("tab");
@@ -158,37 +183,57 @@ const UserAccountManagement = () => {
       return;
     }
 
-    if (tabFromQuery && ["profile", "orders", "address", "password"].includes(tabFromQuery)) {
+    if (
+      tabFromQuery &&
+      ["profile", "orders", "address", "password"].includes(tabFromQuery)
+    ) {
       setActiveTab(tabFromQuery);
     }
   }, [location.pathname, location.search]);
-
-  const ordersWithItems = useMemo(() => {
-    return orders
-      .filter((order) => order.user_id === profile?._id)
-      .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
-      .map((order) => ({
-        ...order,
-        items: orderItems.filter((item) => item.order_id === order._id),
-      }));
-  }, [orderItems, orders, profile?._id]);
-
-  const filteredOrdersWithItems = useMemo(() => {
-    if (selectedOrderStatus === "all") {
-      return ordersWithItems;
-    }
-
-    return ordersWithItems.filter((order) => order.status === selectedOrderStatus);
-  }, [ordersWithItems, selectedOrderStatus]);
 
   const handleProfileChange = ({ target }) => {
     const { name, value } = target;
     setProfileForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleShippingChange = ({ target }) => {
+  const handleShippingChange = async ({ target }) => {
     const { name, value } = target;
+
     setShippingForm((prev) => ({ ...prev, [name]: value }));
+
+    // chọn tỉnh
+    if (name === "provinceCode") {
+      setDistricts([]);
+      setWards([]);
+
+      setShippingForm((prev) => ({
+        ...prev,
+        provinceCode: value,
+        districtCode: "",
+        wardCode: "",
+      }));
+
+      if (!value) return;
+
+      const res = await getDistrictsService(value);
+      setDistricts(res?.districts || []);
+    }
+
+    // chọn huyện
+    if (name === "districtCode") {
+      setWards([]);
+
+      setShippingForm((prev) => ({
+        ...prev,
+        districtCode: value,
+        wardCode: "",
+      }));
+
+      if (!value) return;
+
+      const res = await getWardsService(value);
+      setWards(res?.wards || []);
+    }
   };
 
   const handlePasswordChange = ({ target }) => {
@@ -217,35 +262,40 @@ const UserAccountManagement = () => {
     }
   };
 
-  const saveMergedProfile = async (nextProfileForm, nextShippingForm) => {
-    const payload = normalizeProfilePayload(nextProfileForm, nextShippingForm, profile);
-    const response = await updateUserProfileApi(payload);
-    const result = await response.json();
-    setProfile(result);
-    return result;
-  };
+  // const saveMergedProfile = async (nextProfileForm, nextShippingForm) => {
+  //   const payload = normalizeProfilePayload(
+  //     nextProfileForm,
+  //     nextShippingForm,
+  //     profile,
+  //   );
+  //   const response = await updateUserProfileApi(payload);
+  //   const result = await response.json();
+  //   setProfile(result);
+  //   return result;
+  // };
 
-  const handleSaveProfile = async (event) => {
-    event.preventDefault();
+  //Cập nhật profile
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
     setIsSavingProfile(true);
     setProfileError("");
-    setProfileMessage("");
-
-    if (
-      !profileForm.userName.trim() ||
-      !profileForm.fullName.trim() ||
-      !profileForm.avatar_url.trim()
-    ) {
-      setProfileError("Vui lòng nhập đầy đủ thông tin cá nhân.");
-      setIsSavingProfile(false);
-      return;
-    }
 
     try {
-      await saveMergedProfile(profileForm, shippingForm);
-      setProfileMessage("Đã lưu thay đổi thông tin cá nhân.");
-    } catch {
-      setProfileError("Không thể cập nhật thông tin cá nhân.");
+      const payload = {
+        fullName: profileForm.lastName + " " + profileForm.firstName,
+        avatar_url: profileForm.avatar_url,
+        birthday: profileForm.birthday,
+        sex: profileForm.sex,
+      };
+
+      const updatedData = await updateProfileService(payload);
+      // service đã return res.data, nên wrap đúng format cho AuthContext
+      setUser({ data: updatedData.data });
+
+      setProfileMessage("Cập nhật thành công");
+      setIsEditing(false);
+    } catch (err) {
+      setProfileError("Không thể cập nhật thông tin");
     } finally {
       setIsSavingProfile(false);
     }
@@ -258,11 +308,12 @@ const UserAccountManagement = () => {
     setShippingMessage("");
 
     if (
-      !shippingForm.addressFullName.trim() ||
-      !shippingForm.addressPhone.trim() ||
-      !shippingForm.addressCity.trim() ||
-      !shippingForm.addressDistrict.trim() ||
-      !shippingForm.addressDetail.trim()
+      !shippingForm.addressFullName?.trim() ||
+      !shippingForm.addressPhone?.trim() ||
+      !shippingForm.provinceCode ||
+      !shippingForm.districtCode ||
+      !shippingForm.wardCode ||
+      !shippingForm.addressDetail?.trim()
     ) {
       setShippingError("Vui lòng nhập đầy đủ thông tin giao hàng.");
       setIsSavingShipping(false);
@@ -276,7 +327,23 @@ const UserAccountManagement = () => {
     }
 
     try {
-      await saveMergedProfile(profileForm, shippingForm);
+      const payload = {
+        fullName: profileForm.lastName + " " + profileForm.firstName,
+        avatar_url: profileForm.avatar_url,
+        birthday: profileForm.birthday,
+        sex: profileForm.sex,
+        address: {
+          fullName: shippingForm.addressFullName.trim(),
+          phone: shippingForm.addressPhone.trim(),
+          provinceCode: shippingForm.provinceCode,
+          districtCode: shippingForm.districtCode,
+          wardCode: shippingForm.wardCode,
+          addressDetail: shippingForm.addressDetail.trim(),
+        },
+      };
+
+      const updatedData = await updateProfileService(payload);
+      setUser({ data: updatedData.data });
       setShippingMessage("Đã cập nhật thông tin giao hàng.");
     } catch {
       setShippingError("Không thể cập nhật thông tin giao hàng.");
@@ -285,6 +352,7 @@ const UserAccountManagement = () => {
     }
   };
 
+  //Cập nhật mật khẩu
   const handleSavePassword = async (event) => {
     event.preventDefault();
     setIsSavingPassword(true);
@@ -297,12 +365,6 @@ const UserAccountManagement = () => {
       !passwordForm.confirmPassword.trim()
     ) {
       setPasswordError("Vui lòng nhập đầy đủ thông tin mật khẩu.");
-      setIsSavingPassword(false);
-      return;
-    }
-
-    if (passwordForm.currentPassword !== profile?.passWord) {
-      setPasswordError("Mật khẩu hiện tại không đúng.");
       setIsSavingPassword(false);
       return;
     }
@@ -320,14 +382,18 @@ const UserAccountManagement = () => {
     }
 
     try {
-      const response = await updateUserPasswordApi(passwordForm.newPassword);
-      const result = await response.json();
+      await updatePasswordService({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
 
-      setProfile(result);
       setPasswordForm(passwordDefaultForm);
       setPasswordMessage("Đã cập nhật mật khẩu thành công.");
-    } catch {
-      setPasswordError("Không thể cập nhật mật khẩu.");
+    } catch (err) {
+      // Axios ném lỗi nếu server trả 4xx/5xx
+      const msg =
+        err?.response?.data?.message || "Không thể cập nhật mật khẩu.";
+      setPasswordError(msg);
     } finally {
       setIsSavingPassword(false);
     }
@@ -341,12 +407,34 @@ const UserAccountManagement = () => {
     } else if (field === "confirm") {
       setHideConfirmPassword((prev) => !prev);
     }
-  }
-  const menuItems = [
-    { id: "profile", label: "Thông Tin Cá Nhân" },
-    { id: "address", label: "Thông Tin Giao Hàng" },
-    { id: "password", label: "Đổi Mật Khẩu" },
-  ];
+  };
+  useEffect(() => {
+    if (user?.data) {
+      setIsLoading(false);
+    }
+  }, [user]);
+  useEffect(() => {
+    if (user?.data) {
+      const fullName = user.data.fullName || "";
+      const storedAddress = getSavedAddress(user.data) || {};
+
+      setProfileForm({
+        lastName: fullName.split(" ").slice(0, -1).join(" "),
+        firstName: fullName.split(" ").slice(-1).join(" "),
+        avatar_url: user.data.avatar_url || "",
+        birthday: user.data.birthday || "",
+        sex: user.data.sex || "",
+      });
+      setShippingForm({
+        addressFullName: storedAddress.fullName || "",
+        addressPhone: storedAddress.phone || "",
+        provinceCode: storedAddress.provinceCode || "",
+        districtCode: storedAddress.districtCode || "",
+        wardCode: storedAddress.wardCode || "",
+        addressDetail: storedAddress.addressDetail || "",
+      });
+    }
+  }, [user]);
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -354,8 +442,8 @@ const UserAccountManagement = () => {
         <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-4">
             <img
-              src={profile?.avatar_url}
-              alt={profile?.fullName}
+              src={profileForm.avatar_url || avatarUrl}
+              alt={profileForm.lastName + " " + profileForm.firstName}
               className="h-20 w-20 rounded-3xl object-cover"
             />
             <div>
@@ -363,17 +451,10 @@ const UserAccountManagement = () => {
                 Tài khoản
               </p>
               <h2 className="mt-2 text-3xl font-bold text-slate-900">
-                Xin chào, {profile?.fullName || "người dùng"}!
+                Xin chào, {lastName + " " + firstName || "người dùng"}!
               </h2>
             </div>
           </div>
-
-          {/* <button
-            type="button"
-            className="mt-6 text-left text-sm font-semibold uppercase tracking-[0.12em] text-slate-900 underline"
-          >
-            Đăng xuất
-          </button> */}
 
           <div className="mt-8 overflow-hidden rounded-3xl border border-slate-200">
             {menuItems.map((item) => (
@@ -396,7 +477,9 @@ const UserAccountManagement = () => {
 
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           {isLoading ? (
-            <div className="py-20 text-center text-slate-500">Đang tải dữ liệu...</div>
+            <div className="py-20 text-center text-slate-500">
+              Đang tải dữ liệu...
+            </div>
           ) : (
             <>
               {activeTab === "profile" ? (
@@ -405,12 +488,16 @@ const UserAccountManagement = () => {
                     Thông Tin Cá Nhân
                   </h1>
 
-                  <form className="mt-10 grid gap-6" onSubmit={handleSaveProfile} noValidate>
+                  <form
+                    className="mt-10 grid gap-6"
+                    onSubmit={handleSaveProfile}
+                    noValidate
+                  >
                     <div className="grid gap-6 md:grid-cols-[180px_1fr] md:items-start">
                       <div className="grid gap-3">
                         <img
-                          src={profileForm.avatar_url}
-                          alt={profileForm.fullName}
+                          src={profileForm.avatar_url || avatarUrl}
+                          alt={lastName + " " + firstName}
                           className="h-44 w-44 rounded-3xl object-cover"
                         />
                         <label className="cursor-pointer rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-slate-900">
@@ -426,7 +513,9 @@ const UserAccountManagement = () => {
 
                       <div className="grid gap-6">
                         <label className="grid gap-2">
-                          <span className="text-sm font-medium text-slate-700">Họ</span>
+                          <span className="text-sm font-medium text-slate-700">
+                            Họ
+                          </span>
                           <input
                             name="lastName"
                             value={profileForm.lastName}
@@ -436,7 +525,9 @@ const UserAccountManagement = () => {
                         </label>
 
                         <label className="grid gap-2">
-                          <span className="text-sm font-medium text-slate-700">Tên</span>
+                          <span className="text-sm font-medium text-slate-700">
+                            Tên
+                          </span>
                           <input
                             name="firstName"
                             value={profileForm.firstName}
@@ -446,21 +537,25 @@ const UserAccountManagement = () => {
                         </label>
 
                         <label className="grid gap-2">
-                          <span className="text-sm font-medium text-slate-700">Ngày sinh</span>
+                          <span className="text-sm font-medium text-slate-700">
+                            Ngày sinh
+                          </span>
                           <input
                             type="date"
-                            name="birthDate"
-                            value={profileForm.birthDate}
+                            name="birthday"
+                            value={formatDateToInput(profileForm.birthday)}
                             onChange={handleProfileChange}
                             className="rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
                           />
                         </label>
 
                         <label className="grid gap-2">
-                          <span className="text-sm font-medium text-slate-700">Giới tính</span>
+                          <span className="text-sm font-medium text-slate-700">
+                            Giới tính
+                          </span>
                           <select
-                            name="gender"
-                            value={profileForm.gender}
+                            name="sex"
+                            value={profileForm.sex}
                             onChange={handleProfileChange}
                             className="rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
                           >
@@ -484,17 +579,58 @@ const UserAccountManagement = () => {
                       </div>
                     ) : null}
 
-                    <button
-                      type="submit"
-                      disabled={isSavingProfile}
-                      className="mt-2 w-fit bg-slate-900 px-10 py-4 text-xl font-bold uppercase text-white transition hover:bg-orange-500 disabled:cursor-not-allowed disabled:bg-slate-400"
-                    >
-                      {isSavingProfile ? "Đang lưu..." : "Lưu thay đổi"}
-                    </button>
+                    <div className="flex gap-4 mt-4">
+                      {!isEditing ? (
+                        // 👉 Chế độ bình thường
+                        <button
+                          type="button"
+                          onClick={() => setIsEditing(true)}
+                          className="bg-slate-900 px-10 py-4 text-xl font-bold text-white hover:bg-orange-500"
+                        >
+                          Thay đổi thông tin
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="submit"
+                            disabled={isSavingProfile}
+                            className="bg-slate-900 px-10 py-4 text-xl font-bold text-white hover:bg-green-600"
+                          >
+                            {isSavingProfile ? "Đang lưu..." : "Lưu"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsEditing(false);
+
+                              // 🔥 reset lại dữ liệu ban đầu
+                              const fullName = user?.data?.fullName || "";
+
+                              setProfileForm({
+                                lastName: fullName
+                                  .split(" ")
+                                  .slice(0, -1)
+                                  .join(" "),
+                                firstName: fullName
+                                  .split(" ")
+                                  .slice(-1)
+                                  .join(" "),
+                                avatar_url: user?.data?.avatar_url || "",
+                                birthday: user?.data?.birthday || "",
+                                sex: user?.data?.sex || "",
+                              });
+                            }}
+                            className="bg-gray-400 px-10 py-4 text-xl font-bold text-white hover:bg-gray-500"
+                          >
+                            Hủy
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </form>
                 </div>
               ) : null}
-
 
               {activeTab === "address" ? (
                 <div>
@@ -502,10 +638,17 @@ const UserAccountManagement = () => {
                     Thông Tin Giao Hàng
                   </h1>
 
-                  <form className="mt-10 grid gap-6" onSubmit={handleSaveShipping} noValidate>
+                  <form
+                    className="mt-10 grid gap-6"
+                    onSubmit={handleSaveShipping}
+                    noValidate
+                  >
                     <div className="grid gap-6 md:grid-cols-2">
+                      {/* Người nhận */}
                       <label className="grid gap-2">
-                        <span className="text-sm font-medium text-slate-700">Người nhận</span>
+                        <span className="text-sm font-medium text-slate-700">
+                          Người nhận
+                        </span>
                         <input
                           name="addressFullName"
                           value={shippingForm.addressFullName}
@@ -514,8 +657,11 @@ const UserAccountManagement = () => {
                         />
                       </label>
 
+                      {/* SĐT */}
                       <label className="grid gap-2">
-                        <span className="text-sm font-medium text-slate-700">Số điện thoại</span>
+                        <span className="text-sm font-medium text-slate-700">
+                          Số điện thoại
+                        </span>
                         <input
                           name="addressPhone"
                           value={shippingForm.addressPhone}
@@ -525,30 +671,74 @@ const UserAccountManagement = () => {
                       </label>
                     </div>
 
+                    {/* Tỉnh + Huyện */}
                     <div className="grid gap-6 md:grid-cols-2">
+                      {/* Tỉnh */}
                       <label className="grid gap-2">
-                        <span className="text-sm font-medium text-slate-700">Thành phố</span>
-                        <input
-                          name="addressCity"
-                          value={shippingForm.addressCity}
+                        <span className="text-sm font-medium text-slate-700">
+                          Thành phố
+                        </span>
+                        <select
+                          name="provinceCode"
+                          value={shippingForm.provinceCode}
                           onChange={handleShippingChange}
-                          className="rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
-                        />
+                          className="rounded-xl border border-slate-300 px-5 py-4 text-lg"
+                        >
+                          <option value="">Chọn tỉnh/thành</option>
+                          {provinces.map((p) => (
+                            <option key={p.code} value={p.code}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
                       </label>
 
+                      {/* Huyện */}
                       <label className="grid gap-2">
-                        <span className="text-sm font-medium text-slate-700">Quận/Huyện</span>
-                        <input
-                          name="addressDistrict"
-                          value={shippingForm.addressDistrict}
+                        <span className="text-sm font-medium text-slate-700">
+                          Quận/Huyện
+                        </span>
+                        <select
+                          name="districtCode"
+                          value={shippingForm.districtCode}
                           onChange={handleShippingChange}
-                          className="rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
-                        />
+                          className="rounded-xl border border-slate-300 px-5 py-4 text-lg"
+                        >
+                          <option value="">Chọn quận/huyện</option>
+                          {districts.map((d) => (
+                            <option key={d.code} value={d.code}>
+                              {d.name}
+                            </option>
+                          ))}
+                        </select>
                       </label>
                     </div>
 
+                    {/* Phường */}
                     <label className="grid gap-2">
-                      <span className="text-sm font-medium text-slate-700">Địa chỉ chi tiết</span>
+                      <span className="text-sm font-medium text-slate-700">
+                        Phường/Xã
+                      </span>
+                      <select
+                        name="wardCode"
+                        value={shippingForm.wardCode}
+                        onChange={handleShippingChange}
+                        className="rounded-xl border border-slate-300 px-5 py-4 text-lg"
+                      >
+                        <option value="">Chọn phường/xã</option>
+                        {wards.map((w) => (
+                          <option key={w.code} value={w.code}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    {/* Địa chỉ chi tiết */}
+                    <label className="grid gap-2">
+                      <span className="text-sm font-medium text-slate-700">
+                        Địa chỉ chi tiết
+                      </span>
                       <input
                         name="addressDetail"
                         value={shippingForm.addressDetail}
@@ -557,12 +747,14 @@ const UserAccountManagement = () => {
                       />
                     </label>
 
+                    {/* Error */}
                     {shippingError ? (
                       <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                         {shippingError}
                       </div>
                     ) : null}
 
+                    {/* Success */}
                     {shippingMessage ? (
                       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                         {shippingMessage}
@@ -586,55 +778,86 @@ const UserAccountManagement = () => {
                     Đổi Mật Khẩu
                   </h1>
 
-                  <form className="mt-10 grid gap-6" onSubmit={handleSavePassword} noValidate>
+                  <form
+                    className="mt-10 grid gap-6"
+                    onSubmit={handleSavePassword}
+                    noValidate
+                  >
                     <label className="grid gap-2">
-                      <span className="text-sm font-medium text-slate-700">Mật khẩu hiện tại</span>
-                      
+                      <span className="text-sm font-medium text-slate-700">
+                        Mật khẩu hiện tại
+                      </span>
+
                       <div className="relative">
                         <input
-                        type={hidePassword ? "password" : "text"}
-                        name="currentPassword"
-                        value={passwordForm.currentPassword}
-                        onChange={handlePasswordChange}
-                        className="w-full rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-slate-500" onClick={() => handleHidePasswordToggle("current")} >
-                        {hidePassword ? <GrFormViewHide className="text-3xl"/> : <GrFormView className="text-3xl"/>}
-                      </span>
+                          type={hidePassword ? "password" : "text"}
+                          name="currentPassword"
+                          value={passwordForm.currentPassword}
+                          onChange={handlePasswordChange}
+                          className="w-full rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
+                        />
+                        <span
+                          className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-slate-500"
+                          onClick={() => handleHidePasswordToggle("current")}
+                        >
+                          {hidePassword ? (
+                            <GrFormViewHide className="text-3xl" />
+                          ) : (
+                            <GrFormView className="text-3xl" />
+                          )}
+                        </span>
                       </div>
                     </label>
 
                     <label className="grid gap-2">
-                      <span className="text-sm font-medium text-slate-700">Mật khẩu mới</span>
-                      
-                      <div className="relative">
-                      <input
-                        type={hideNewPassword ? "password" : "text"}
-                        name="newPassword"
-                        value={passwordForm.newPassword}
-                        onChange={handlePasswordChange}
-                        className="w-full rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-slate-500" onClick={() => handleHidePasswordToggle("new")}>
-                        {hideNewPassword ? <GrFormViewHide className="text-3xl"/> : <GrFormView className="text-3xl"/>}
+                      <span className="text-sm font-medium text-slate-700">
+                        Mật khẩu mới
                       </span>
+
+                      <div className="relative">
+                        <input
+                          type={hideNewPassword ? "password" : "text"}
+                          name="newPassword"
+                          value={passwordForm.newPassword}
+                          onChange={handlePasswordChange}
+                          className="w-full rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
+                        />
+                        <span
+                          className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-slate-500"
+                          onClick={() => handleHidePasswordToggle("new")}
+                        >
+                          {hideNewPassword ? (
+                            <GrFormViewHide className="text-3xl" />
+                          ) : (
+                            <GrFormView className="text-3xl" />
+                          )}
+                        </span>
                       </div>
                     </label>
 
                     <label className="grid gap-2">
-                      <span className="text-sm font-medium text-slate-700">Xác nhận mật khẩu mới</span>
-                      
-                      <div className="relative">
-                      <input
-                        type={hideConfirmPassword ? "password" : "text"}
-                        name="confirmPassword"
-                        value={passwordForm.confirmPassword}
-                        onChange={handlePasswordChange}
-                        className="w-full rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-slate-500" onClick={() => handleHidePasswordToggle("confirm")}>
-                        {hideConfirmPassword ? <GrFormViewHide className="text-3xl"/> : <GrFormView className="text-3xl"/>}
+                      <span className="text-sm font-medium text-slate-700">
+                        Xác nhận mật khẩu mới
                       </span>
+
+                      <div className="relative">
+                        <input
+                          type={hideConfirmPassword ? "password" : "text"}
+                          name="confirmPassword"
+                          value={passwordForm.confirmPassword}
+                          onChange={handlePasswordChange}
+                          className="w-full rounded-xl border border-slate-300 px-5 py-4 text-lg outline-none transition focus:border-slate-900"
+                        />
+                        <span
+                          className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-slate-500"
+                          onClick={() => handleHidePasswordToggle("confirm")}
+                        >
+                          {hideConfirmPassword ? (
+                            <GrFormViewHide className="text-3xl" />
+                          ) : (
+                            <GrFormView className="text-3xl" />
+                          )}
+                        </span>
                       </div>
                     </label>
 

@@ -12,7 +12,7 @@ import { useState } from "react";
 import { GrFormView, GrFormViewHide } from "react-icons/gr";
 import { useNavigate } from "react-router-dom";
 import { IoArrowBack } from "react-icons/io5";
-import { register } from "@/services/auth.service";
+import { sendOTPServive } from "@/services/auth.service";
 
 export function SignupForm({ className, ...props }) {
   const navigate = useNavigate();
@@ -117,15 +117,10 @@ const validatePassword = (password) => {
     }
     try{
       // Gọi API đăng ký tại đây
-      const response = await register({
+      await sendOTPServive({
         email: formData.email,
-        passWord: formData.passWord,
-        lastName: formData.lastName,
-        firstName: formData.firstName
       });
-      console.log("Đăng ký thành công:", response);
-      alert("Đăng ký thành công!");
-      navigate("/login");
+      navigate("/verify-otp", { state: { formData } });
     } catch (error) {
       console.error("Lỗi đăng ký:", error);
       const errorMessage = error.response?.data?.message || "Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.";

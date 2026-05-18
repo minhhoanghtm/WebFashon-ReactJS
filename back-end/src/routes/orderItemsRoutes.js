@@ -2,13 +2,13 @@ import express from "express";
 import {
     createOrderItem,
     deleteOrderItem,
-    getOrderItemsByOrder,
+    getOrderItemsByOrderId,
     updateOrderItem
 } from "../controllers/orderItemControllers.js";
 
 const router = express.Router();
 
-router.get("/", getOrderItemsByOrder);
+router.get("/:order_id", getOrderItemsByOrderId);
 router.post("/", createOrderItem);
 router.put("/:id", updateOrderItem);
 router.delete("/:id", deleteOrderItem);

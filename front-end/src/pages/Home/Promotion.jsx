@@ -2,8 +2,7 @@ import { Carousel } from "antd";
 import React from "react";
 import { Link } from "react-router-dom";
 
-const Promotion = () => {
-  const data = [
+ const data = [
     {
       _id: "1",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNbry9WS7Tc7qoaySeYGFGrs9KCKNXprXBhQ&s",
@@ -29,17 +28,21 @@ const Promotion = () => {
       status: "active",
     },
   ];
+const Promotion = () => {
+ 
   return (
-    <div className="min-w-full px-1">
+    <div className="w-full px-2">
+      <div className="rounded-xl overflow-hidden shadow-md">
       <Carousel autoplay>
         {data.map((item) => {
             return (
                 <Link key={item._id} to={`/${item.type}/${item.target_id}`}>
-                    <img src={item.image} alt="Promotion" className="w-full h-full object-contain"/>
+                    <img src={item.image} alt="Promotion" className="w-full h-full object-cover"/>
                 </Link>
             );
         })}
         </Carousel>
+        </div>
     </div>
   );
 };

@@ -1,8 +1,10 @@
 import { SignupForm } from '@/components/signup-form'
 import registerImg  from "../../assets/register.png";
 import React from 'react'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const index = () => {
+  useDocumentTitle("Đăng ký");
    return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">

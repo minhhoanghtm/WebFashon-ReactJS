@@ -4,13 +4,13 @@
     "userName": "admin404",
     "passWord": "Admin@123",
     "fullName": "Nguyễn Minh Quân",
-    "address": [
+    "addresses": [
       {
         "fullName": "Nguyễn Minh Quân",
         "phone": "0901234567",
         "city": "TP. Hồ Chí Minh",
         "district": "Quận 3",
-        "detail": "12 Võ Văn Tần"
+        "addressDetail": "12 Võ Văn Tần"
       }
     ],
     "role": "admin",
@@ -23,13 +23,13 @@
     "userName": "linh.admin",
     "passWord": "Linh@456",
     "fullName": "Trần Hải Linh",
-    "address": [
+    "addresses": [
       {
         "fullName": "Trần Hải Linh",
         "phone": "0912345678",
         "city": "Hà Nội",
         "district": "Cầu Giấy",
-        "detail": "88 Duy Tân"
+        "addressDetail": "88 Duy Tân"
       }
     ],
     "role": "admin",
@@ -42,13 +42,13 @@
     "userName": "ngocpham",
     "passWord": "Ngoc@123",
     "fullName": "Phạm Thị Ngọc",
-    "address": [
+    "addresses": [
       {
         "fullName": "Phạm Thị Ngọc",
         "phone": "0981112233",
         "city": "Đà Nẵng",
         "district": "Hải Châu",
-        "detail": "45 Nguyễn Văn Linh"
+        "addressDetail": "45 Nguyễn Văn Linh"
       }
     ],
     "role": "user",
@@ -61,13 +61,13 @@
     "userName": "hoangvu",
     "passWord": "Vu@987",
     "fullName": "Lê Hoàng Vũ",
-    "address": [
+    "addresses": [
       {
         "fullName": "Lê Hoàng Vũ",
         "phone": "0938123456",
         "city": "TP. Hồ Chí Minh",
         "district": "Bình Thạnh",
-        "detail": "20 Điện Biên Phủ"
+        "addressDetail": "20 Điện Biên Phủ"
       }
     ],
     "role": "user",
@@ -80,13 +80,13 @@
     "userName": "maianh.shop",
     "passWord": "MaiAnh@222",
     "fullName": "Đỗ Mai Anh",
-    "address": [
+    "addresses": [
       {
         "fullName": "Đỗ Mai Anh",
         "phone": "0977332211",
         "city": "Hà Nội",
         "district": "Đống Đa",
-        "detail": "55 Thái Hà"
+        "addressDetail": "55 Thái Hà"
       }
     ],
     "role": "user",
@@ -99,13 +99,13 @@
     "userName": "truongpham",
     "passWord": "Truong@555",
     "fullName": "Phạm Đức Trường",
-    "address": [
+    "addresses": [
       {
         "fullName": "Phạm Đức Trường",
         "phone": "0965221100",
         "city": "Cần Thơ",
         "district": "Ninh Kiều",
-        "detail": "17 Trần Hưng Đạo"
+        "addressDetail": "17 Trần Hưng Đạo"
       }
     ],
     "role": "user",

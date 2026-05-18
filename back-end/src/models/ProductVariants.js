@@ -12,7 +12,6 @@ const productVariantSchema = new mongoose.Schema({
     },
     size: {
         type: String,
-        enum: ["S", "M", "L", "XL"]
     },
     stock: {
         type: Number,
@@ -32,9 +31,10 @@ const productVariantSchema = new mongoose.Schema({
 //unique theo product + color
 productVariantSchema.index({
     product_id: 1,
-    color: 1
+    color: 1,
+    size: 1
 }, {
     unique: true
 });
-
-export default mongoose.model("ProductVariants", productVariantSchema);
+const ProductVariant = mongoose.model("product_variants", productVariantSchema);
+export default ProductVariant;

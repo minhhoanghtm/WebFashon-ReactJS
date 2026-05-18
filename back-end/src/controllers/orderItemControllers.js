@@ -4,24 +4,30 @@ export const createOrderItem = async (req, res) => {
     try {
         await OrderItem.create(req.body);
         res.status(200).json({
+            success: true,
             message: "Thêm sản phẩm vào đơn hàng thành công"
         });
     } catch (error) {
         console.error("Lỗi khi gọi createOrderItem:", error);
         res.status(500).json({
+            success: false,
             message: "Lỗi hệ thống"
         });
     }
 }
 
-export const getOrderItemsByOrder = async (req, res) => {
+export const getOrderItemsByOrderId = async (req, res) => {
     try {
         const { order_id } = req.params;
         const orderItems = await OrderItem.find({ order_id }).populate("product_id").populate("variant_id");
-        res.status(200).json(orderItems);
+        res.status(200).json({
+            success: true,
+            data: orderItems
+        });
     } catch (error) {
-        console.error("Lỗi khi gọi getOrderItemsByOrder:", error);
+        console.error("Lỗi khi gọi getOrderItemsByOrderId:", error);
         res.status(500).json({
+            success: false,
             message: "Lỗi hệ thống"
         });
     }
@@ -32,11 +38,13 @@ export const updateOrderItem = async (req, res) => {
         const { id } = req.params;
         await OrderItem.findByIdAndUpdate(id, req.body);
         res.status(200).json({
+            success: true,
             message: "Cập nhật sản phẩm trong đơn hàng thành công"
         });
     } catch (error) {
         console.error("Lỗi khi gọi updateOrderItem:", error);
         res.status(500).json({
+            success: false,
             message: "Lỗi hệ thống"
         });
     }
@@ -47,11 +55,13 @@ export const deleteOrderItem = async (req, res) => {
         const { id } = req.params;  
         await OrderItem.findByIdAndDelete(id);
         res.status(200).json({
+            success: true,
             message: "Xóa sản phẩm khỏi đơn hàng thành công"
         });
     } catch (error) {
         console.error("Lỗi khi gọi deleteOrderItem:", error);
         res.status(500).json({
+            success: false,
             message: "Lỗi hệ thống"
         });
     }

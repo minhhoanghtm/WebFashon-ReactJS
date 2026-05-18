@@ -1,151 +1,97 @@
-const USER_STORAGE_KEY = "admin_user_management_data";
-const USER_SEED_VERSION_KEY = "admin_user_seed_version";
-const USER_SEED_VERSION = "v1";
-const USER_SEED_URL = "/mock/admin-users.json";
+import api from "./api";
 
-const cloneData = (data) => JSON.parse(JSON.stringify(data));
+const normalizeAddress = (address = {}) => ({
+  fullName: address.fullName || "",
+  phone: address.phone || "",
+  provinceCode: address.provinceCode || address.city || "",
+  districtCode: address.districtCode || address.district || "",
+  wardCode: address.wardCode || address.ward || "",
+  addressDetail: address.addressDetail || address.detail || "",
+  isDefault: address.isDefault || false,
+});
 
-const readStorage = (key, fallbackData) => {
-  const localValue = localStorage.getItem(key);
+const normalizeUser = (user = {}) => ({
+  ...user,
+  userName: user.userName || user.email || "",
+  gender:
+    user.gender ||
+    (user.sex === "male"
+      ? "male"
+      : user.sex === "female"
+        ? "female"
+        : "other"),
+  dateOfBirth: user.dateOfBirth || (user.birthday ? user.birthday.split("T")[0] : ""),
+  addresses: Array.isArray(user.addresses)
+    ? user.addresses.map(normalizeAddress)
+    : user.address
+      ? [normalizeAddress(Array.isArray(user.address) ? user.address[0] : user.address)]
+      : [],
+});
 
-  if (!localValue) {
-    localStorage.setItem(key, JSON.stringify(fallbackData));
-    return cloneData(fallbackData);
-  }
+const normalizePayload = (payload = {}) => ({
+  email: payload.email || "",
+  passWord: payload.passWord || "",
+  fullName: payload.fullName || "",
+  sex: payload.gender === "other" ? undefined : payload.gender,
+  birthday: payload.dateOfBirth || null,
+  role: payload.role || "user",
+  avatar_url: payload.avatar_url || "",
+  addresses: Array.isArray(payload.addresses)
+    ? payload.addresses.map(normalizeAddress)
+    : payload.address
+      ? [normalizeAddress(payload.address)]
+      : [],
+});
 
-  try {
-    return JSON.parse(localValue);
-  } catch {
-    localStorage.setItem(key, JSON.stringify(fallbackData));
-    return cloneData(fallbackData);
-  }
-};
+const toFetchLikeResponse = (status, data, ok = status >= 200 && status < 300) => ({
+  ok,
+  status,
+  json: async () => data,
+});
 
-const writeStorage = (key, data) => {
-  localStorage.setItem(key, JSON.stringify(data));
-  return cloneData(data);
-};
-
-const simulateFetch = async (callback, delay = 220) => {
-  await new Promise((resolve) => setTimeout(resolve, delay));
-  return callback();
+const toErrorResponse = (error, fallbackMessage) => {
+  const responseData = error?.response?.data || { message: fallbackMessage };
+  const status = error?.response?.status || 500;
+  return toFetchLikeResponse(status, responseData, false);
 };
 
 export const initializeAdminUserApi = async () => {
-  const currentVersion = localStorage.getItem(USER_SEED_VERSION_KEY);
+  return true;
+};
 
-  if (!localStorage.getItem(USER_STORAGE_KEY) || currentVersion !== USER_SEED_VERSION) {
-    const response = await fetch(USER_SEED_URL);
-
-    if (!response.ok) {
-      throw new Error("Không thể tải dữ liệu tài khoản.");
-    }
-
-    const seedData = await response.json();
-    writeStorage(USER_STORAGE_KEY, seedData);
-    localStorage.setItem(USER_SEED_VERSION_KEY, USER_SEED_VERSION);
+export const getAllUsersApi = async () => {
+  try {
+    const res = await api.get("/user/admin/users");
+    const users = Array.isArray(res.data?.data) ? res.data.data.map(normalizeUser) : [];
+    return toFetchLikeResponse(res.status, users);
+  } catch (error) {
+    return toErrorResponse(error, "Không thể tải danh sách tài khoản.");
   }
 };
 
-const getStoredUsers = () => readStorage(USER_STORAGE_KEY, []);
+export const addUserApi = async (payload) => {
+  try {
+    const res = await api.post("/user/admin/users", normalizePayload(payload));
+    return toFetchLikeResponse(res.status, normalizeUser(res.data?.data));
+  } catch (error) {
+    return toErrorResponse(error, "Không thể tạo tài khoản.");
+  }
+};
 
-export const getAllUsersApi = async () =>
-  simulateFetch(() => ({
-    ok: true,
-    status: 200,
-    json: async () =>
-      getStoredUsers().sort(
-        (left, right) => new Date(right.createdAt) - new Date(left.createdAt)
-      ),
-  }));
+export const updateUserApi = async (id, payload) => {
+  try {
+    const res = await api.put(`/user/admin/users/${id}`, normalizePayload(payload));
+    return toFetchLikeResponse(res.status, normalizeUser(res.data?.data));
+  } catch (error) {
+    return toErrorResponse(error, "Không thể cập nhật tài khoản.");
+  }
+};
 
-export const addUserApi = async (payload) =>
-  simulateFetch(() => {
-    const users = getStoredUsers();
-
-    if (users.some((item) => item.userName === payload.userName)) {
-      return {
-        ok: false,
-        status: 409,
-        json: async () => ({ message: "Tên đăng nhập đã tồn tại." }),
-      };
-    }
-
-    const now = new Date().toISOString();
-    const newUser = {
-      ...payload,
-      _id: `user-${Date.now()}`,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    writeStorage(USER_STORAGE_KEY, [newUser, ...users]);
-
-    return {
-      ok: true,
-      status: 201,
-      json: async () => newUser,
-    };
-  });
-
-export const updateUserApi = async (id, payload) =>
-  simulateFetch(() => {
-    const users = getStoredUsers();
-    const currentUser = users.find((item) => item._id === id);
-
-    if (!currentUser) {
-      return {
-        ok: false,
-        status: 404,
-        json: async () => ({ message: "Không tìm thấy tài khoản." }),
-      };
-    }
-
-    if (users.some((item) => item._id !== id && item.userName === payload.userName)) {
-      return {
-        ok: false,
-        status: 409,
-        json: async () => ({ message: "Tên đăng nhập đã tồn tại." }),
-      };
-    }
-
-    const updatedUser = {
-      ...currentUser,
-      ...payload,
-      updatedAt: new Date().toISOString(),
-    };
-
-    const nextUsers = users.map((item) => (item._id === id ? updatedUser : item));
-    writeStorage(USER_STORAGE_KEY, nextUsers);
-
-    return {
-      ok: true,
-      status: 200,
-      json: async () => updatedUser,
-    };
-  });
-
-export const deleteUserApi = async (id) =>
-  simulateFetch(() => {
-    const users = getStoredUsers();
-    const currentUser = users.find((item) => item._id === id);
-
-    if (!currentUser) {
-      return {
-        ok: false,
-        status: 404,
-        json: async () => ({ message: "Không tìm thấy tài khoản." }),
-      };
-    }
-
-    writeStorage(
-      USER_STORAGE_KEY,
-      users.filter((item) => item._id !== id)
-    );
-
-    return {
-      ok: true,
-      status: 200,
-      json: async () => currentUser,
-    };
-  });
+export const deleteUserApi = async (id) => {
+  try {
+    const res = await api.delete(`/user/admin/users/${id}`);
+    return toFetchLikeResponse(res.status, normalizeUser(res.data?.data));
+  } catch (error) {
+    return toErrorResponse(error, "Không thể xóa tài khoản.");
+  }
+};

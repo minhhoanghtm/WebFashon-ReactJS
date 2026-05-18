@@ -10,8 +10,8 @@
 .ant-carousel .slick-next {
   color: white !important;
   background: black;
-  padding: 10px 0px !important;      
-  font-size: 24px;             
+  padding: 10px 0px !important;
+  font-size: 24px;
 }
 
 /* icon bên trong */
@@ -19,10 +19,72 @@
 .ant-carousel .slick-next::before {
   color: red !important;
 }
+.ant-carousel {
+  max-height: 450px;
+}
+
+@keyframes saleFlash {
+  0% {
+    background: #ef4444;
+  }
+  50% {
+    background: #f97316;
+  }
+  100% {
+    background: #ef4444;
+  }
+}
+
+.sale-badge {
+  background: linear-gradient(45deg, #ef4444, #f97316);
+  box-shadow:
+    0 0 10px rgba(239, 68, 68, 0.6),
+    0 0 20px rgba(249, 115, 22, 0.4);
+  animation: rotateGlow 2.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* xoay nhẹ + nhịp glow */
+@keyframes rotateGlow {
+  0% {
+    transform: rotate(-3deg) scale(1);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    transform: rotate(3deg) scale(1.05);
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.8);
+  }
+  100% {
+    transform: rotate(-3deg) scale(1);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  }
+}
+
+.shake {
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(10deg);
+  }
+  50% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: "Geist Variable", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -60,7 +122,7 @@
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);             
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
@@ -95,7 +157,7 @@
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);             
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
@@ -129,17 +191,17 @@
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);             
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;             
+    @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;             
+    @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;             
-  }             
+    @apply font-sans;
+  }
 }

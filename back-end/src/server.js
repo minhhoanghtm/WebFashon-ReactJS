@@ -8,6 +8,8 @@ import cartItemsRouters from './routes/cartItemsRoutes.js';
 import cartRouters from './routes/cartRoutes.js';
 import orderItemRouters from './routes/orderItemsRoutes.js';
 import orderRouters from './routes/orderRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import uploadRoute from './routes/uploadRoute.js';
 import {
     connectDB
 } from './config/db.js';
@@ -39,11 +41,13 @@ const PORT = process.env.PORT || 5001;
         }));
         app.use(cookieParser());
         //public routes
+        app.use("/uploads", express.static("uploads"));
+        app.use("/api/upload", uploadRoute);
         app.use("/api/auth", authRoutes);
         app.use("/api/categories", categoryRoutes);
         app.use("/api/products", productRoutes);
-        app.use("/api/product_items", productItemRoutes);
-
+        app.use("/api/product_variants", productItemRoutes);
+        app.use("/api/reviews", reviewRoutes); //chi co get duoc public
         //private routes
         app.use(protectedRoute);
         app.use("/api/user", userRouters);

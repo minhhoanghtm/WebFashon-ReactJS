@@ -15,7 +15,7 @@ const cartItemSchema = new mongoose.Schema({
 
     variant_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "ProductVariant"
+        ref: "product_variants"
     },
     quantity: {
         type: Number,
@@ -39,5 +39,5 @@ cartItemSchema.index({
 }, {
     unique: true
 });
-const CartItem = mongoose.model("CartItem", cartItemSchema);
+const CartItem = mongoose.model("cart_items", cartItemSchema);
 export default CartItem;

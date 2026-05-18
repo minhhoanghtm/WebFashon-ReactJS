@@ -4,8 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldGroup, FieldDescription } from "@/components/ui/field";
+import { resetPasswordService, sendOTPServive, verifyOTPService } from "@/services/auth.service";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { toast } from "react-toastify";
 
 const ResetPassword = () => {
+  useDocumentTitle("Đặt lại mật khẩu");
   const navigate = useNavigate();
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
   const [formData, setFormData] = useState({
@@ -31,7 +35,7 @@ const ResetPassword = () => {
     }));
   };
 
-  // Step 1: Send OTP to email
+  //B1: gui ma OTP den email
   const handleSendOTP = async (e) => {
     e.preventDefault();
     setErrors({});
@@ -40,31 +44,30 @@ const ResetPassword = () => {
       setErrors({ email: "Email không được để trống" });
       return;
     }
-
+    console.log(formData.email);
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5001/api/auth/sendOTP", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({ general: data.message || "Gửi OTP thất bại" });
+      const resSendOTP = await sendOTPServive({ email: formData.email });
+      // const data = await resSendOTP;
+      console.log("Send OTP Response:", resSendOTP);
+      // console.log("Send OTP Data:", data);
+      console.log("Send OTP Response OK:", resSendOTP.success);
+      if (!resSendOTP.success) {
+        setErrors({ general: resSendOTP.message || "Gửi OTP thất bại" });
         return;
       }
-
       setStep(2);
     } catch (err) {
-      setErrors({ general: "Lỗi kết nối server" });
+       console.log(err.resSendOTP);
+      setErrors({
+        general: err.resSendOTP?.message || "Gửi OTP thất bại",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Step 2: Verify OTP
+  //B2: Xac thuc ma OTP
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
     setErrors({});
@@ -76,31 +79,25 @@ const ResetPassword = () => {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5001/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          otp: formData.otp,
-        }),
-      });
+      const resVerifyOTP = await verifyOTPService({ email: formData.email, otp: formData.otp });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({ general: data.message || "Xác thực OTP thất bại" });
+      if (!resVerifyOTP.success) {
+        setErrors({ general: resVerifyOTP.message || "Xác thực OTP thất bại" });
         return;
       }
 
       setStep(3);
     } catch (err) {
-      setErrors({ general: "Lỗi kết nối server" });
+       console.log(err.resVerifyOTP);
+      setErrors({
+        general: err.resVerifyOTP?.message || "Xác thực OTP thất bại",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Step 3: Reset password
+  //B3: Dat lai mat khau
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setErrors({});
@@ -117,35 +114,48 @@ const ResetPassword = () => {
       setErrors({ general: "Mật khẩu không khớp" });
       return;
     }
-
+    console.log("Reset Password Data:", { email: formData.email, otp: formData.otp, newPassword: formData.newPassword });
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5001/api/auth/resetPassword", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          otp: formData.otp,
-          newPassword: formData.newPassword,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({ general: data.message || "Đặt lại mật khẩu thất bại" });
+      const resResetPassword = await resetPasswordService({ email: formData.email, otp: formData.otp, newPassword: formData.newPassword });
+      console.log("Reset Password Response:", resResetPassword);
+      if (!resResetPassword.success) {
+        setErrors({ general: resResetPassword.message || "Đặt lại mật khẩu thất bại" });
         return;
       }
-
-      // Success - navigate to login
       navigate("/login");
     } catch (err) {
-      setErrors({ general: "Lỗi kết nối server" });
+      console.log(err.resResetPassword);
+      setErrors({
+        general: err.resResetPassword?.message || "Đặt lại mật khẩu thất bại",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleResendOTP = async () => {
+    setErrors({});
+    setLoading(true);
+    try {
+      const resSendOTP = await sendOTPServive({ email: formData.email });
+      console.log("Resend OTP Response:", resSendOTP);
+      if (!resSendOTP.success) {
+        setErrors({ general: resSendOTP.message || "Gửi lại OTP thất bại" });
+        return;
+      }
+      // alert("Mã OTP đã được gửi lại đến email của bạn");
+      toast.success("Mã OTP đã được gửi lại đến email của bạn");
+    } catch (err) {
+      console.log(err.resSendOTP);
+      setErrors({
+        general: err.resSendOTP?.message || "Gửi lại OTP thất bại",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   return (
     <div className="flex flex-col gap-6 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Back Button */}
@@ -237,7 +247,14 @@ const ResetPassword = () => {
                     />
                     {errors.otp && <span className="text-red-500 text-sm">{errors.otp}</span>}
                   </Field>
-
+                  <p
+                    type="submit"
+                    disabled={loading}
+                    className="text-blue-600 hover:underline text-sm cursor-pointer"
+                    onClick={handleResendOTP}
+                  >
+                    Bạn chưa nhận được mã? Gửi lại
+                  </p>
                   <Button
                     type="submit"
                     disabled={loading}

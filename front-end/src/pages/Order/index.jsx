@@ -1,36 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
-  getUserOrdersApi,
-  getUserProfileApi,
-  initializeUserAccountApi,
-  updateUserPasswordApi,
-  updateUserProfileApi,
-} from "../../api/userAccountApi";
-import { GrFormView } from "react-icons/gr";
-import { GrFormViewHide } from "react-icons/gr";
-
-const profileDefaultForm = {
-  userName: "",
-  fullName: "",
-  avatar_url: "",
-};
-
-const shippingDefaultForm = {
-  addressFullName: "",
-  addressPhone: "",
-  addressCity: "",
-  addressDistrict: "",
-  addressDetail: "",
-};
-
-const passwordDefaultForm = {
-  currentPassword: "",
-  newPassword: "",
-  confirmPassword: "",
-};
-
-const phonePattern = /^0\d{9}$/;
+  getOrdersByUserIdService,
+  updateOrderService,
+} from "@/services/order.service";
+import Loading from "@/components/Loading";
+import { formatCurrency, formatDate } from "@/utils/format";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const orderStatusMap = {
   pending: "Chờ xác nhận",
@@ -40,277 +18,275 @@ const orderStatusMap = {
   cancelled: "Đã hủy",
 };
 
-const orderStatusOptions = Object.entries(orderStatusMap).map(
-  ([value, label]) => ({
-    value,
-    label,
-  }),
-);
-
 const paymentMethodMap = {
   cod: "Thanh toán khi nhận hàng",
   momo: "Ví MoMo",
   vnpay: "VNPay",
 };
 
-const formatDate = (value) =>
-  new Date(value).toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-
-const formatCurrency = (value) =>
-  `${Number(value || 0).toLocaleString("vi-VN")}đ`;
-
-const readFileAsDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-const normalizeProfilePayload = (
-  profileForm,
-  shippingForm,
-  currentProfile,
-) => ({
-  ...currentProfile,
-  userName: profileForm.userName.trim(),
-  fullName: profileForm.fullName.trim(),
-  avatar_url: profileForm.avatar_url.trim(),
-  address: [
-    {
-      fullName: shippingForm.addressFullName.trim(),
-      phone: shippingForm.addressPhone.trim(),
-      city: shippingForm.addressCity.trim(),
-      district: shippingForm.addressDistrict.trim(),
-      detail: shippingForm.addressDetail.trim(),
-    },
-  ],
-});
+// Helper function to generate slug from product name
 
 const UserAccountManagement = () => {
+  useDocumentTitle("Lịch sử mua hàng");
+
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState("profile");
-  const [profile, setProfile] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [orderItems, setOrderItems] = useState([]);
-  const [selectedOrderStatus, setSelectedOrderStatus] = useState("all");
-  const [profileForm, setProfileForm] = useState(profileDefaultForm);
-  const [shippingForm, setShippingForm] = useState(shippingDefaultForm);
-  const [passwordForm, setPasswordForm] = useState(passwordDefaultForm);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [isSavingShipping, setIsSavingShipping] = useState(false);
-  const [isSavingPassword, setIsSavingPassword] = useState(false);
-  const [profileMessage, setProfileMessage] = useState("");
-  const [profileError, setProfileError] = useState("");
-  const [shippingMessage, setShippingMessage] = useState("");
-  const [shippingError, setShippingError] = useState("");
-  const [passwordMessage, setPasswordMessage] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [hidePassword, setHidePassword] = useState(true);
-  const [hideNewPassword, setHideNewPassword] = useState(true);
-  const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
 
-  const fetchAccountData = async () => {
-    setIsLoading(true);
-    setProfileError("");
+  const [orders, setOrders] = useState([]);
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState("all");
+
+  // 👉 STATE MỚI: mở/đóng chi tiết từng order
+  const [openOrders, setOpenOrders] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  //Call API lấy thông tin oder của user
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        //Lấy order của user
+        const ordersData = await getOrdersByUserIdService();
+        console.log("ordersData:", ordersData);
+        console.log("orderId:", ordersData.orders._id);
+        setOrders(ordersData.orders);
+
+        //Lấy order items của order
+      } catch (err) {
+        setError("Lấy dữ liệu thất bại");
+      }
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
+  // ================= TOGGLE ORDER =================
+  const toggleOrder = (orderId) => {
+    setOpenOrders((prev) => ({
+      ...prev,
+      [orderId]: !prev[orderId],
+    }));
+  };
+
+  // ================= MERGE ORDERS =================
+  const ordersWithItems = useMemo(() => {
+    return [...orders].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    );
+  }, [orders]);
+
+  // ================= FILTER =================
+  const filteredOrders = useMemo(() => {
+    if (selectedOrderStatus === "all") return ordersWithItems;
+
+    return ordersWithItems.filter((o) => o.status === selectedOrderStatus);
+  }, [ordersWithItems, selectedOrderStatus]);
+
+  const handleCancelOrder = async (orderId) => {
+    const result = await Swal.fire({
+      title: "Bạn có chắc?",
+      text: "Bạn muốn hủy đơn hàng này?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Hủy đơn",
+      cancelButtonText: "Đóng",
+      confirmButtonColor: "#d33",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
-      await initializeUserAccountApi();
-      const [profileResponse, ordersResponse] = await Promise.all([
-        getUserProfileApi(),
-        getUserOrdersApi(),
-      ]);
-
-      const userData = await profileResponse.json();
-      const orderData = await ordersResponse.json();
-
-      setProfile(userData);
-      setOrders(orderData.orders || []);
-      setOrderItems(orderData.orderItems || []);
-      setProfileForm({
-        userName: userData.userName || "",
-        fullName: userData.fullName || "",
-        avatar_url: userData.avatar_url || "",
+      const res = await updateOrderService(orderId, {
+        status: "cancelled",
       });
-      setShippingForm({
-        addressFullName: userData.address?.[0]?.fullName || "",
-        addressPhone: userData.address?.[0]?.phone || "",
-        addressCity: userData.address?.[0]?.city || "",
-        addressDistrict: userData.address?.[0]?.district || "",
-        addressDetail: userData.address?.[0]?.detail || "",
-      });
-    } catch {
-      setProfileError("Không thể tải thông tin tài khoản.");
-    } finally {
-      setIsLoading(false);
+
+      if (res.success) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o._id === orderId ? { ...o, status: "cancelled" } : o,
+          ),
+        );
+
+        toast.success("Hủy đơn hàng thành công");
+      } else {
+        toast.error("Hủy đơn thất bại");
+      }
+    } catch (err) {
+      toast.error("Hủy đơn thất bại");
     }
   };
 
-  useEffect(() => {
-    fetchAccountData();
-  }, []);
+  return isLoading ? (
+    <Loading />
+  ) : (
+    <div>
+      {/* BACK */}
+      <button onClick={() => navigate(-1)} className="mb-4 text-blue-500">
+        ← Quay lại
+      </button>
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const tabFromQuery = searchParams.get("tab");
+      <h1 className="text-center py-10 text-4xl font-bold">Lịch Sử Mua Hàng</h1>
 
-    if (location.pathname === "/orders") {
-      setActiveTab("orders");
-      return;
-    }
-
-    if (
-      tabFromQuery &&
-      ["profile", "orders", "address", "password"].includes(tabFromQuery)
-    ) {
-      setActiveTab(tabFromQuery);
-    }
-  }, [location.pathname, location.search]);
-
-  const ordersWithItems = useMemo(() => {
-    return orders
-      .filter((order) => order.user_id === profile?._id)
-      .sort(
-        (left, right) => new Date(right.createdAt) - new Date(left.createdAt),
-      )
-      .map((order) => ({
-        ...order,
-        items: orderItems.filter((item) => item.order_id === order._id),
-      }));
-  }, [orderItems, orders, profile?._id]);
-
-  const filteredOrdersWithItems = useMemo(() => {
-    if (selectedOrderStatus === "all") {
-      return ordersWithItems;
-    }
-
-    return ordersWithItems.filter(
-      (order) => order.status === selectedOrderStatus,
-    );
-  }, [ordersWithItems, selectedOrderStatus]);
-
-  return (
-      <div className="">
-        <button onClick={() => navigate(-1)} className="mb-4 text-blue-500 hover:text-blue-700">
-          ← Quay lại
+      {/* FILTER */}
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={() => setSelectedOrderStatus("all")}
+          className={`px-4 py-2 rounded-full border ${
+            selectedOrderStatus === "all" ? "bg-black text-white" : ""
+          }`}
+        >
+          Tất cả
         </button>
-        <h1 className="text-center py-10 text-4xl font-bold uppercase text-slate-900">
-          Lịch Sử Mua Hàng
-        </h1>
 
-        <div className="mt-5 flex flex-wrap gap-3">
+        {Object.entries(orderStatusMap).map(([value, label]) => (
           <button
-            type="button"
-            onClick={() => setSelectedOrderStatus("all")}
-            className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition ${
-              selectedOrderStatus === "all"
-                ? "border-slate-900 bg-slate-900 text-white"
-                : "border-slate-300 bg-white text-slate-700 hover:border-slate-900 hover:text-slate-900"
+            key={value}
+            onClick={() => setSelectedOrderStatus(value)}
+            className={`px-4 py-2 rounded-full border ${
+              selectedOrderStatus === value ? "bg-orange-500 text-white" : ""
             }`}
           >
-            Tất cả
+            {label}
           </button>
-          {orderStatusOptions.map((status) => (
-            <button
-              key={status.value}
-              type="button"
-              onClick={() => setSelectedOrderStatus(status.value)}
-              className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition ${
-                selectedOrderStatus === status.value
-                  ? "border-orange-500 bg-orange-500 text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:border-orange-500 hover:text-orange-500"
-              }`}
-            >
-              {status.label}
-            </button>
-          ))}
-        </div>
+        ))}
+      </div>
 
-        <div className="mt-10 grid gap-4">
-          {filteredOrdersWithItems.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-10 text-center text-slate-500">
-              {selectedOrderStatus === "all"
-                ? "Chưa có đơn hàng nào."
-                : "Không có đơn hàng nào ở trạng thái này."}
-            </div>
-          ) : (
-            filteredOrdersWithItems.map((order) => (
-              <article
-                key={order._id}
-                className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.16em] text-orange-500">
-                      Mã đơn: {order._id}
-                    </p>
-                    <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                      {orderStatusMap[order.status] || order.status}
-                    </h3>
-                    <p className="mt-2 text-sm text-slate-500">
-                      Ngày đặt: {formatDate(order.createdAt)}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Thanh toán:{" "}
-                      {paymentMethodMap[order.payment_method] ||
-                        order.payment_method}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Giao tới: {order.shipping_address}
-                    </p>
-                  </div>
-                  <div className="text-left lg:text-right">
-                    <p className="text-sm text-slate-500">Tổng đơn</p>
-                    <p className="mt-1 text-2xl font-bold text-slate-900">
-                      {formatCurrency(order.total_price)}
-                    </p>
-                  </div>
+      {/* ORDERS */}
+      <div className="mt-10">
+        {filteredOrders.length === 0 ? (
+          <p className="text-center text-gray-500">Không có đơn hàng</p>
+        ) : (
+          filteredOrders.map((order) => (
+            <div key={order._id} className="border rounded-xl p-5 mb-5">
+              {/* ORDER HEADER */}
+              <div className="flex justify-between">
+                <div>
+                  <p>Mã: {order._id}</p>
+                  <p>{orderStatusMap[order.status]}</p>
+                  <p>{formatDate(order.updatedAt || order.createdAt) || ""}</p>
+                  <p>{paymentMethodMap[order.payment_method]}</p>
                 </div>
 
-                <div className="mt-5 grid gap-3">
-                  {order.items.map((item) => (
+                <div>
+                  <b>{formatCurrency(order.total_price)}</b>
+                </div>
+              </div>
+
+              {/* MORE BUTTON */}
+              <div className="flex justify-between items-center mt-3">
+                <button
+                  onClick={() => toggleOrder(order._id)}
+                  className="text-sm text-blue-500 hover:underline"
+                >
+                  {openOrders[order._id] ? "Ẩn bớt" : "Xem chi tiết"}
+                </button>
+                {(order.status === "pending" ||
+                  order.status === "confirmed") && (
+                  <button
+                    onClick={() => handleCancelOrder(order._id)}
+                    className="mt-3 ml-3 text-red-500 hover:underline"
+                  >
+                    Hủy đơn hàng
+                  </button>
+                )}
+                {order.status === "cancelled" && (
+                  <p className="text-red-500">Đơn hàng đã bị hủy</p>
+                )}
+                {order.status === "shipping" && (
+                  <div className="flex items-center gap-2">
+                    <button className="border rounded-2xl p-2 hover:bg-green-500 hover:text-white">
+                      Đã nhận hàng
+                    </button>
+                    <button className="border rounded-2xl p-2 text-red-500 hover:bg-red-500 hover:text-white">
+                      Chưa nhận được hàng
+                    </button>
+                  </div>
+                )}
+                {order.status === "delivered" &&
+                  order.updatedAt &&
+                  new Date() - new Date(order.updatedAt) <=
+                    7 * 24 * 60 * 60 * 1000 && (
+                    <div className="flex items-center gap-2">
+                      <button className="border rounded-2xl p-2 hover:bg-gray-500 hover:text-white">
+                        Trả hàng/Hoàn tiền
+                      </button>
+                    </div>
+                  )}
+              </div>
+
+              {/* ORDER ITEMS */}
+              {openOrders[order._id] && (
+                <div className="mt-5 border-t pt-4">
+                  {order.items?.map((item) => (
                     <div
                       key={item._id}
-                      className="grid gap-3 rounded-2xl bg-white p-4 md:grid-cols-[72px_1fr_auto]"
+                      className="border rounded-2xl p-2 m-1 bg-gray-100"
                     >
-                      <img
-                        src={item.product_image}
-                        alt={item.product_name}
-                        className="h-[72px] w-[72px] rounded-2xl object-cover"
-                      />
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {item.product_name}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          Số lượng: {item.quantity}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          Mã sản phẩm: {item.product_id}
-                        </p>
-                      </div>
-                      <div className="text-left md:text-right">
-                        <p className="font-semibold text-slate-900">
+                      <Link
+                        to={`/products/${item.product_slug}`}
+                        className="flex gap-3 py-3 border-b last:border-b-0"
+                      >
+                        <img
+                          src={item.variant?.image_url || item.product_image}
+                          alt={item.product_name}
+                          className="w-16 h-16 object-cover"
+                        />
+
+                        <div>
+                          <p>{item.product_name}</p>
+                          <p>Số lượng: {item.quantity}</p>
+                          <p className="text-sm text-gray-500">
+                            <span>{item.variant?.color || "Không có màu"}</span>
+                            <span>
+                              , {item.variant?.size || "Không có kích thước"}
+                            </span>
+                          </p>
+                        </div>
+
+                        <div className="ml-auto">
                           {formatCurrency(item.price)}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          Variant: {item.variant_id || "Không có"}
-                        </p>
-                      </div>
+                        </div>
+                      </Link>
+
+                      {/* Xử lý từng sản phẩm trong đơn hàng*/}
+                      {order.status === "delivered" ? (
+                        <div className="flex gap-2 mt-2">
+                          <Link
+                            to={`/reviews/create?product_id=${item.product_id}&order_id=${order._id}`}
+                            state={{
+                              item,
+                              order,
+                            }}
+                            className="border rounded-2xl p-2 hover:bg-green-500 hover:text-white inline-block"
+                          >
+                            Đánh giá sản phẩm
+                          </Link>
+                          <Link
+                            to={`/product/${item.product_slug}`}
+                            className="border rounded-2xl  p-2 text-yellow-500 hover:bg-yellow-300 hover:text-white"
+                          >
+                            Mua lại
+                          </Link>
+                        </div>
+                      ) : (
+                        <Link
+                          to={`/product/${item.product_slug}`}
+                          className="border rounded-2xl my-3 text-yellow-500 hover:bg-yellow-300 hover:text-white"
+                        >
+                          Mua lại
+                        </Link>
+                      )}
                     </div>
                   ))}
                 </div>
-              </article>
-            ))
-          )}
-        </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
+
+      {error && <p className="text-red-500 text-center">{error}</p>}
+    </div>
   );
 };
 

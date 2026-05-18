@@ -13,20 +13,32 @@ import DashboardAdmin from "@/pages/DashboardAdmin/DashboardAdmin";
 import Checkout from "@/pages/Checkout";
 import Cart from "@/pages/Cart";
 import Order from "@/pages/Order";
+import Error from "@/pages/Error";
+import Review from "@/pages/Review";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
+/**
+ * Phân quyền truy cập:
+ * - admin: Quản trị viên - có quyền truy cập tất cả
+ * - staff: Nhân viên - có quyền quản lý sản phẩm
+ * - user: Khách hàng - có quyền xem đơn hàng, tài khoản cá nhân
+ */
 export const routes = [
+  // ==================== TRANG CÔNG KHAI ====================
   {
     path: "/",
     element: <Home />,
   },
   {
-    path: "user/dashboard",
-    element: <DashboardUser />,
+    path: "/products",
+    element: <ProductSearch />,
   },
   {
-    path: "admin/dashboard",
-    element: <DashboardAdmin />,
+    path: "/product/:slug",
+    element: <ProductDetail />,
   },
+
+  // ==================== AUTHENTICATION ====================
   {
     path: "/login",
     element: <Login />,
@@ -38,16 +50,6 @@ export const routes = [
     layout: false,
   },
   {
-    path: "/reset-password",
-    element: <ResetPassword />,
-    layout: false,
-  },
-  {
-    path: "/verify-otp",
-    element: <VerifyOTP />,
-    layout: false,
-  },
-  {
     path: "/verify-otp",
     element: <VerifyOTP />,
     layout: false,
@@ -57,36 +59,102 @@ export const routes = [
     element: <ResetPassword />,
     layout: false,
   },
+
+  // ==================== ADMIN ====================
   {
     path: "/admin/accounts",
-    element: <AdminUserManagement />,
+    element: (
+      <ProtectedRoute
+        element={<AdminUserManagement />}
+        allowedRoles={["admin"]}
+      />
+    ),
   },
   {
+    path: "/admin/dashboard",
+    element: (
+      <ProtectedRoute
+        element={<DashboardAdmin />}
+        allowedRoles={["admin", "staff"]} // Cả admin và staff đều có thể xem dashboard admin
+      />
+    ),
+  },
+
+  // ==================== STAFF ====================
+  {
+    path: "/staff/products",
+    element: (
+      <ProtectedRoute
+        element={<StaffProductManagement />}
+        allowedRoles={["staff"]}
+      />
+    ),
+  },
+
+  // ==================== USER ====================
+  {
     path: "/account/profile",
-    element: <UserAccountManagement />,
+    element: (
+      <ProtectedRoute
+        element={<UserAccountManagement />}
+        allowedRoles={["user"]}
+      />
+    ),
   },
   {
     path: "/orders",
-    element: <Order />,
+    element: (
+      <ProtectedRoute
+        element={<Order />}
+        allowedRoles={["user"]}
+      />
+    ),
   },
   {
-    path: "/staff/products",
-    element: <StaffProductManagement />,
+    path: "/user/dashboard",
+    element: (
+      <ProtectedRoute
+        element={<DashboardUser />}
+        allowedRoles={["user"]}
+      />
+    ),
   },
-  {
-    path: "/products",
-    element: <ProductSearch />,
-  },
-  {
-    path: "/products/:id",
-    element: <ProductDetail />,
-  },
+
+  // ==================== CHECKOUT & CART ====================
   {
     path: "/checkout",
-    element: <Checkout />,
+    element: (
+      <ProtectedRoute
+        element={<Checkout />}
+        allowedRoles={["user"]}
+      />
+    ),
   },
   {
     path: "/cart",
-    element: <Cart />,
+    element: (
+      <ProtectedRoute
+        element={<Cart />}
+        allowedRoles={["user"]}
+      />
+    ),
   },
+
+  // ==================== REVIEW ====================
+  {
+    path: "/reviews/create",
+    element: (
+      <ProtectedRoute
+        element={<Review />}
+        allowedRoles={["user"]}
+      />
+    ),
+  },
+
+  // ==================== 404 ====================
+  {
+    path: "*",
+    element: <Error />,
+    layout: false,
+  }
 ];

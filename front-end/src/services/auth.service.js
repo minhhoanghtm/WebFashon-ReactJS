@@ -1,17 +1,13 @@
-import { loginApi, registerApi } from "@/api/authApi";
+import { loginApi, registerApi, resetPasswordApi, sendOTPApi, verifyOTPApi } from "@/api/authApi";
 
 //login
-export const login = async (data) => {
+export const loginService = async (data) => {
     const res = await loginApi(data);
-
-    //xu ly logic
-    const token = res.data.token;
-    localStorage.setItem("token", token);
     return res.data;
 };
 
 //register
-export const register = async (data) => {
+export const registerService = async (data) => {
     //xu ly logic
     const res = await registerApi(data);
     return res.data;
@@ -19,5 +15,20 @@ export const register = async (data) => {
 
 //logout
 export const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
 };
+
+export const sendOTPServive = async (data) => {
+    const res = await sendOTPApi(data);
+    return res.data;
+}
+
+export const verifyOTPService = async (data) => {
+    const res = await verifyOTPApi(data);
+    return res.data;
+}
+
+export const resetPasswordService = async (data) => {
+    const res = await resetPasswordApi(data);
+    return res.data;
+}
