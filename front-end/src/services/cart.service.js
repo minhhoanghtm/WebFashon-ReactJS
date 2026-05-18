@@ -1,4 +1,5 @@
-import { addCartApi, deleteCartApi, getCartApi, updateCartApi } from "@/api/cartAPi";
+import { addCartApi, deleteCartApi, getCartApi, updateCartApi } from "@/api/cartApi";
+
 
 
 export const getCartService = async () => {
