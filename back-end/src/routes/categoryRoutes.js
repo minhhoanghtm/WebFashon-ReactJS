@@ -5,7 +5,7 @@ import {
     getAllCategories,
     getCategoryById,
     updateCategory
-} from "../controllers/categoryCOntrollers.js";
+} from "../controllers/categoryControllers.js";
 
 
 const router = express.Router();
