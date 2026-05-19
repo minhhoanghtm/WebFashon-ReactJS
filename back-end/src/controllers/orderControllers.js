@@ -599,123 +599,63 @@ export const getPurchasePerformance = async (req, res) => {
   try {
     const stats = await Order.aggregate([
       {
-        $facet: {
-          // Tổng quan
-          overview: [
-            {
-              $group: {
-                _id: null,
+        $group: {
+          _id: null,
 
-                totalOrders: {
-                  $sum: 1,
-                },
+          // Tổng đơn đã đặt (tất cả đơn)
+          totalOrders: {
+            $sum: 1,
+          },
 
-                totalRevenue: {
-                  $sum: "$total_price",
-                },
-
-                completedOrders: {
-                  $sum: {
-                    $cond: [{ $eq: ["$status", "completed"] }, 1, 0],
-                  },
-                },
-
-                cancelledOrders: {
-                  $sum: {
-                    $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0],
-                  },
-                },
-              },
+          // Đơn đã đặt thành công (không bị cancel)
+          placedOrders: {
+            $sum: {
+              $cond: [
+                { $in: ["$status", ["pending", "confirmed", "processing"]] },
+                1,
+                0,
+              ],
             },
-          ],
+          },
 
-          // Tổng sản phẩm bán ra
-          soldProducts: [
-            { $unwind: "$items" },
-
-            {
-              $group: {
-                _id: null,
-
-                totalSold: {
-                  $sum: "$items.quantity",
-                },
-              },
+          // Đơn giao thành công
+          deliveredOrders: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "delivered"] }, 1, 0],
             },
-          ],
+          },
 
-          // Top sản phẩm bán chạy
-          topProducts: [
-            { $unwind: "$items" },
-
-            {
-              $group: {
-                _id: "$items.product_id",
-
-                productName: {
-                  $first: "$items.product_name",
-                },
-
-                totalSold: {
-                  $sum: "$items.quantity",
-                },
-
-                revenue: {
-                  $sum: {
-                    $multiply: ["$items.quantity", "$items.price"],
-                  },
-                },
-              },
+          // Tổng tiền đã thanh toán (chỉ đơn giao thành công)
+          totalPaid: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "delivered"] }, "$total_price", 0],
             },
-
-            {
-              $sort: {
-                totalSold: -1,
-              },
-            },
-
-            {
-              $limit: 5,
-            },
-          ],
+          },
         },
       },
     ]);
 
-    const overview = stats[0].overview[0] || {};
-    const soldProducts = stats[0].soldProducts[0] || {};
-    const topProducts = stats[0].topProducts || [];
+    const data = stats?.[0] || {
+      totalOrders: 0,
+      placedOrders: 0,
+      deliveredOrders: 0,
+      totalPaid: 0,
+    };
 
-    const cancelRate =
-      overview.totalOrders > 0
-        ? ((overview.cancelledOrders / overview.totalOrders) * 100).toFixed(2)
-        : 0;
-
-    return res.status(200).json({
+    return res.json({
       success: true,
-
       data: {
-        totalOrders: overview.totalOrders || 0,
-
-        totalRevenue: overview.totalRevenue || 0,
-
-        completedOrders: overview.completedOrders || 0,
-
-        cancelledOrders: overview.cancelledOrders || 0,
-
-        totalSold: soldProducts.totalSold || 0,
-
-        cancelRate: `${cancelRate}%`,
-
-        topProducts,
+        totalOrders: data.totalOrders,
+        placedOrders: data.placedOrders,
+        deliveredOrders: data.deliveredOrders,
+        totalPaid: data.totalPaid,
       },
     });
   } catch (error) {
     console.error(error);
-
     return res.status(500).json({
       success: false,
-      message: "Lỗi thống kê hiệu suất mua hàng",
+      message: "Lỗi thống kê đơn hàng",
     });
   }
 };
