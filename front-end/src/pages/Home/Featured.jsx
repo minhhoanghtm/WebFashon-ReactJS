@@ -30,7 +30,9 @@ const Featured = ({ products, selectedCategory, title = "Sản phẩm nổi bậ
   //   return <p>Không có sản phẩm nào</p>;
   // }
 
-  const filteredProducts = products.filter((product) => {
+  const safeProducts = Array.isArray(products) ? products : [];
+
+  const filteredProducts = safeProducts.filter((product) => {
     // Lọc sản phẩm theo category nếu selectedCategory không null
     if (selectedCategory) {
       return product.category_id === selectedCategory._id;
@@ -41,7 +43,7 @@ const Featured = ({ products, selectedCategory, title = "Sản phẩm nổi bậ
     <div className="my-4 mx-5">
       <h1 className="text-xl font-bold mb-4">{title}</h1>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-hidden">
-        {filteredProducts?.map((product) => (
+        {filteredProducts.map((product) => (
           <Link
             to={`/product/${product.slug}`}
             key={product._id}

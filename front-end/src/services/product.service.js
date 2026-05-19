@@ -8,7 +8,10 @@ export const addProductService = async (data) => {
 
 export const getAllProductService = async () => {
     const res = await getAllProductApi();
-    return res.data?.data ?? res.data;
+    const payload = res.data?.data ?? res.data ?? res;
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.data)) return payload.data;
+    return [];
 }
 
 export const getProductBySlugService = async (slug) => {
