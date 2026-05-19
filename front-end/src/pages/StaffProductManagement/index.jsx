@@ -7,7 +7,11 @@ import {
 } from "@/services/product.service";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getAllCategoriesService } from "@/services/category.service";
-import { getProductVariantByProductIdService } from "@/services/productItem.service";
+import {
+  createProductVariantService,
+  deleteProductVariantService,
+  getProductVariantByProductIdService,
+} from "@/services/productItem.service";
 import { uploadImageService } from "@/services/upload.service";
 
 const defaultVariantSize = {
@@ -18,7 +22,11 @@ const defaultVariantSize = {
 const defaultVariantGroup = {
   color: "",
   image_url: "",
-  sizes: [{ ...defaultVariantSize }],
+  sizes: [
+    { size: "S", stock: 0 },
+    { size: "M", stock: 0 },
+    { size: "L", stock: 0 },
+  ],
 };
 
 const defaultFormData = {
@@ -123,6 +131,9 @@ const normalizePayload = (formData, hasVariants) => ({
     })),
   ),
 });
+
+const getSavedProductFromResponse = (result) =>
+  result?.product || result?.data || result;
 
 const StaffProductManagement = () => {
   useDocumentTitle("Quản lý sản phẩm");
@@ -448,14 +459,38 @@ const StaffProductManagement = () => {
         ? await updateProductService(editingProductId, payload)
         : await addProductService(payload);
 
+      const savedProduct = getSavedProductFromResponse(result);
+      const savedProductId = savedProduct?._id || editingProductId;
+
+      if (savedProductId) {
+        const oldVariants = editingProductId
+          ? await getProductVariantByProductIdService(savedProductId)
+          : [];
+
+        if (Array.isArray(oldVariants) && oldVariants.length > 0) {
+          await Promise.all(
+            oldVariants.map((variant) => deleteProductVariantService(variant._id)),
+          );
+        }
+
+        if (hasVariants && payload.variants.length > 0) {
+          await Promise.all(
+            payload.variants.map((variant) =>
+              createProductVariantService({
+                ...variant,
+                product_id: savedProductId,
+              }),
+            ),
+          );
+        }
+      }
+
+      await fetchManagementData();
+
       if (editingProductId) {
-        setProducts((prev) =>
-          prev.map((item) => (item._id === editingProductId ? result : item)),
-        );
-        setSuccessMessage(`Đã cập nhật sản phẩm "${result.name}".`);
+        setSuccessMessage(`Đã cập nhật sản phẩm "${savedProduct?.name || ""}".`);
       } else {
-        setProducts((prev) => [result, ...prev]);
-        setSuccessMessage(`Đã thêm sản phẩm "${result.name}".`);
+        setSuccessMessage(`Đã thêm sản phẩm "${savedProduct?.name || ""}".`);
       }
       resetForm();
     } catch (err) {
@@ -795,7 +830,7 @@ const StaffProductManagement = () => {
                           key={`${group.color || "color"}-${groupIndex}`}
                           className="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm"
                         >
-                          <div className="flex items-start justify-between gap-3">
+                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                             <div className="grid gap-3 sm:grid-cols-2 flex-1">
                               <label className="grid gap-2">
                                 <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -841,13 +876,22 @@ const StaffProductManagement = () => {
                               </label>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveVariant(groupIndex)}
-                              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 transition"
-                            >
-                              Xóa màu
-                            </button>
+                            <div className="flex flex-wrap gap-2 lg:justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleAddSizeToGroup(groupIndex)}
+                                className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 transition"
+                              >
+                                + Thêm size
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVariant(groupIndex)}
+                                className="rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 transition"
+                              >
+                                Xóa màu
+                              </button>
+                            </div>
                           </div>
 
                           <div className="mt-4 rounded-2xl bg-white p-4 border border-slate-200">
@@ -860,13 +904,6 @@ const StaffProductManagement = () => {
                                   Mỗi size nhập số lượng riêng.
                                 </p>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleAddSizeToGroup(groupIndex)}
-                                className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 transition"
-                              >
-                                + Thêm size
-                              </button>
                             </div>
 
                             <div className="mt-4 grid gap-3">
