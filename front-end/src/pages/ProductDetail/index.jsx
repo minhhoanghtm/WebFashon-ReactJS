@@ -7,7 +7,7 @@ import {
   getProductByCategoryService,
   getProductBySlugService,
 } from "@/services/product.service";
-import { getProductVariantByIdService } from "@/services/productItem.service";
+import { getProductVariantByProductIdService } from "@/services/productItem.service";
 import { getReviewsByProductIdService } from "@/services/review.service";
 import RelatedProducts from "./RelatedProducts";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -50,24 +50,32 @@ const ProductDetail = () => {
 
         //Lấy thông tin biến thể sản phẩm theo productId
         const productId = productData._id ?? productData.id;
-        const variantRes = await getProductVariantByIdService(productId);
-        const variantData = variantRes || [];
-        setVariants(variantData);
+        if (productId) {
+          const variantRes = await getProductVariantByProductIdService(productId);
+          const variantData = variantRes || [];
+          setVariants(variantData);
+        }
         console.log("Variant data:", variantData);
 
         //Lấy thông tin đánh giá sản phẩm theo productId
-        const reviewRes = await getReviewsByProductIdService(productId);
-        const reviewData = reviewRes || [];
-        setReviews(reviewData);
+        if (productId) {
+          const reviewRes = await getReviewsByProductIdService(productId);
+          const reviewData = reviewRes || [];
+          setReviews(reviewData);
+        }
         console.log("Review data:", reviewData);
 
         //Lấy thông tin sản phẩm liên quan theo categoryId
-        const relatedRes = await getProductByCategoryService(
-          productData.category_id,
-          12,
-        );
-        const relatedData = relatedRes || [];
-        setRelatedProducts(relatedData);
+        if (productData.category_id) {
+          const relatedRes = await getProductByCategoryService(
+            productData.category_id,
+            12,
+          );
+          const relatedData = relatedRes || [];
+          setRelatedProducts(relatedData);
+        } else {
+          setRelatedProducts([]);
+        }
         console.log("Related products data:", relatedData);
       } catch (error) {
         console.error("Fetch error:", error);
