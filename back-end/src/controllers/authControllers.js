@@ -151,47 +151,40 @@ export const signOut = async (req, res) => {
 
 //Gửi OTP để xác thực email
 export const sendOTPController = async (req, res) => {
-  try {
-    const { email } = req.body;
+    try {
+        const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Vui lòng cung cấp địa chỉ email",
-      });
+        if (!email) {
+            return res.status(400).json({ message: "Email required" });
+        }
+
+        const normalizedEmail = normalizeEmail(email);
+        const otp = generateOTP();
+
+        await Otp.deleteMany({ email: normalizedEmail });
+
+        await Otp.create({
+            email: normalizedEmail,
+            otp,
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        });
+
+        await sendOTP(normalizedEmail, otp);
+
+        return res.json({
+            success: true,
+            message: "OTP sent"
+        });
+
+    } catch (error) {
+        console.error("🔥 SEND OTP FAILED:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "OTP failed",
+            error: error.message
+        });
     }
-
-    const normalizedEmail = normalizeEmail(email);
-    const otp = generateOTP();
-
-    // xóa OTP cũ
-    await Otp.deleteMany({ email: normalizedEmail });
-
-    // lưu OTP mới
-    await Otp.create({
-      email: normalizedEmail,
-      otp,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
-
-    // For local debugging, log OTP when not in production
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`DEV OTP for ${normalizedEmail}: ${otp}`);
-    }
-
-    await sendOTP(normalizedEmail, otp);
-
-    return res.status(200).json({
-      success: true,
-      message: "Mã OTP đã được gửi đến email của bạn",
-    });
-  } catch (error) {
-    console.error("sendOTP error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Lỗi hệ thống khi gửi OTP",
-    });
-  }
 };
 
 //Xác thực OTP

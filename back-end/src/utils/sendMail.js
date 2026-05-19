@@ -13,36 +13,31 @@ const transporter = nodemailer.createTransport({
 
 export const sendOTP = async (email, otp) => {
     try {
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.warn("⚠️ Missing EMAIL config - DEV MODE");
-            console.log(`DEV OTP for ${email}: ${otp}`);
-            return true;
+        const user = process.env.EMAIL_USER;
+        const pass = process.env.EMAIL_PASS?.replace(/\s/g, "");
+
+        if (!user || !pass) {
+            console.log(`DEV OTP: ${otp}`);
+            return;
         }
 
-        const mailOptions = {
-            from: `"Web Fashion" <${process.env.EMAIL_USER}>`,
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user, pass },
+        });
+
+        const info = await transporter.sendMail({
+            from: user,
             to: email,
-            subject: "Mã OTP xác thực tài khoản",
-            html: `
-                <div style="font-family:Arial;padding:20px">
-                    <h2>Xác thực tài khoản</h2>
-                    <p>Mã OTP của bạn là:</p>
-                    <h1 style="color:#e74c3c">${otp}</h1>
-                    <p>Mã có hiệu lực trong 5 phút.</p>
-                    <hr/>
-                    <small>Không chia sẻ mã này cho bất kỳ ai.</small>
-                </div>
-            `,
-        };
+            subject: "OTP",
+            html: `<h1>${otp}</h1>`,
+        });
 
-        const info = await transporter.sendMail(mailOptions);
+        console.log("EMAIL SENT:", info.messageId);
+        return info;
 
-        console.log("✅ OTP sent successfully:", info.messageId);
-
-        return true;
-    } catch (error) {
-        console.error("❌ OTP SEND ERROR:", error.message);
-
-        throw new Error("Không thể gửi OTP email");
+    } catch (err) {
+        console.error("🔥 SMTP REAL ERROR:", err);
+        throw err;
     }
 };
