@@ -599,89 +599,60 @@ export const getPurchasePerformance = async (req, res) => {
   try {
     const stats = await Order.aggregate([
       {
-        $lookup: {
-          from: "order_items",
-          localField: "_id",
-          foreignField: "order_id",
-          as: "items",
-        },
-      },
-      {
-        $addFields: {
-          itemsPurchasedCount: {
-            $sum: {
-              $ifNull: ["$items.quantity", []],
+        $facet: {
+          orderStats: [
+            {
+              $group: {
+                _id: null,
+                totalOrders: { $sum: 1 },
+                placedOrders: {
+                  $sum: {
+                    $cond: [{ $ne: ["$status", "cancelled"] }, 1, 0],
+                  },
+                },
+                deliveredOrders: {
+                  $sum: {
+                    $cond: [{ $eq: ["$status", "delivered"] }, 1, 0],
+                  },
+                },
+                cancelledOrders: {
+                  $sum: {
+                    $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0],
+                  },
+                },
+                totalPaid: {
+                  $sum: {
+                    $cond: [{ $eq: ["$status", "delivered"] }, "$total_price", 0],
+                  },
+                },
+              },
             },
-          },
-        },
-      },
-
-      {
-        $group: {
-          _id: null,
-
-          // 📦 Tổng đơn hàng
-          totalOrders: { $sum: 1 },
-
-          // 🛒 Đơn chưa huỷ
-          placedOrders: {
-            $sum: {
-              $cond: [
-                { $ne: ["$status", "cancelled"] },
-                1,
-                0,
-              ],
+          ],
+          productStats: [
+            { $match: { status: "delivered" } },
+            {
+              $lookup: {
+                from: "order_items",
+                localField: "_id",
+                foreignField: "order_id",
+                as: "items",
+              },
             },
-          },
-
-          // 🚚 Đơn giao thành công
-          deliveredOrders: {
-            $sum: {
-              $cond: [
-                { $eq: ["$status", "delivered"] },
-                1,
-                0,
-              ],
+            { $unwind: { path: "$items", preserveNullAndEmptyArrays: true } },
+            {
+              $group: {
+                _id: null,
+                totalProductsPurchased: {
+                  $sum: { $ifNull: ["$items.quantity", 0] },
+                },
+              },
             },
-          },
-
-          // ❌ Đơn huỷ
-          cancelledOrders: {
-            $sum: {
-              $cond: [
-                { $eq: ["$status", "cancelled"] },
-                1,
-                0,
-              ],
-            },
-          },
-
-          // 💰 Tổng tiền đã thu (chỉ đơn delivered)
-          totalPaid: {
-            $sum: {
-              $cond: [
-                { $eq: ["$status", "delivered"] },
-                "$total_price",
-                0,
-              ],
-            },
-          },
-
-          // 📦 Tổng sản phẩm đã mua (QUAN TRỌNG)
-          totalProductsPurchased: {
-            $sum: {
-              $cond: [
-                { $eq: ["$status", "delivered"] },
-                "$itemsPurchasedCount",
-                0,
-              ],
-            },
-          },
+          ],
         },
       },
     ]);
 
-    const data = stats?.[0] || {
+    const data = {
       totalOrders: 0,
       placedOrders: 0,
       deliveredOrders: 0,
@@ -690,20 +661,29 @@ export const getPurchasePerformance = async (req, res) => {
       totalProductsPurchased: 0,
     };
 
+    const orderStats = stats?.[0]?.orderStats?.[0] || {};
+    const productStats = stats?.[0]?.productStats?.[0] || {};
+
+    const mergedData = {
+      ...data,
+      ...orderStats,
+      totalProductsPurchased: productStats.totalProductsPurchased || 0,
+    };
+
     const cancelRate =
-      data.totalOrders > 0
-        ? ((data.cancelledOrders / data.totalOrders) * 100).toFixed(2)
+      mergedData.totalOrders > 0
+        ? ((mergedData.cancelledOrders / mergedData.totalOrders) * 100).toFixed(2)
         : 0;
 
     return res.json({
       success: true,
       data: {
-        totalOrders: data.totalOrders,
-        placedOrders: data.placedOrders,
-        deliveredOrders: data.deliveredOrders,
-        cancelledOrders: data.cancelledOrders,
-        totalPaid: data.totalPaid,
-        totalProductsPurchased: data.totalProductsPurchased || 0,
+        totalOrders: mergedData.totalOrders,
+        placedOrders: mergedData.placedOrders,
+        deliveredOrders: mergedData.deliveredOrders,
+        cancelledOrders: mergedData.cancelledOrders,
+        totalPaid: mergedData.totalPaid,
+        totalProductsPurchased: mergedData.totalProductsPurchased || 0,
         cancelRate: `${cancelRate}%`,
       },
     });
