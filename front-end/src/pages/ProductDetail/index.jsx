@@ -54,16 +54,16 @@ const ProductDetail = () => {
           const variantRes = await getProductVariantByProductIdService(productId);
           const variantData = variantRes || [];
           setVariants(variantData);
+          console.log("Variant data:", variantData);
         }
-        console.log("Variant data:", variantData);
 
         //Lấy thông tin đánh giá sản phẩm theo productId
         if (productId) {
           const reviewRes = await getReviewsByProductIdService(productId);
           const reviewData = reviewRes || [];
           setReviews(reviewData);
+          console.log("Review data:", reviewData);
         }
-        console.log("Review data:", reviewData);
 
         //Lấy thông tin sản phẩm liên quan theo categoryId
         if (productData.category_id) {
@@ -73,10 +73,10 @@ const ProductDetail = () => {
           );
           const relatedData = relatedRes || [];
           setRelatedProducts(relatedData);
+          console.log("Related products data:", relatedData);
         } else {
           setRelatedProducts([]);
         }
-        console.log("Related products data:", relatedData);
       } catch (error) {
         console.error("Fetch error:", error);
       }
