@@ -8,12 +8,12 @@ import {
 
 export const getProductVariantByProductIdService = async (productId) => {
   const response = await getProductVariantByProductIdApi(productId);
-  return response.data.data;
+  return response.data?.data ?? response.data;
 };
 
 export const getProductVariantByIdService = async (id) => {
   const response = await getProductVariantByIdApi(id);
-  return response.data;
+  return response.data?.data ?? response.data;
 };
 
 export const createProductVariantService = async (data) => {

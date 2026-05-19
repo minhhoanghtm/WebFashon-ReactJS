@@ -49,13 +49,14 @@ const ProductDetail = () => {
         if (!productData) return;
 
         //Lấy thông tin biến thể sản phẩm theo productId
-        const variantRes = await getProductVariantByIdService(productData._id);
+        const productId = productData._id ?? productData.id;
+        const variantRes = await getProductVariantByIdService(productId);
         const variantData = variantRes || [];
         setVariants(variantData);
         console.log("Variant data:", variantData);
 
         //Lấy thông tin đánh giá sản phẩm theo productId
-        const reviewRes = await getReviewsByProductIdService(productData._id);
+        const reviewRes = await getReviewsByProductIdService(productId);
         const reviewData = reviewRes || [];
         setReviews(reviewData);
         console.log("Review data:", reviewData);
