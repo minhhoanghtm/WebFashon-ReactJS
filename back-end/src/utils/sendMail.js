@@ -13,11 +13,17 @@ export const sendOTP = async (email, otp) => {
         }
 
         const transporter = nodemailer.createTransport({
-            service: "gmail",
+            host: process.env.SMTP_HOST || "smtp.gmail.com",
+            port: Number(process.env.SMTP_PORT || 587),
+            secure: String(process.env.SMTP_SECURE || "false") === "true",
             auth: {
                 user,
                 pass,
             },
+            requireTLS: true,
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 10000,
         });
         const mailOptions = {
             from: user,
