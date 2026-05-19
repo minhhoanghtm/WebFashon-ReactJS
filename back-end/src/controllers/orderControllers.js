@@ -599,36 +599,75 @@ export const getPurchasePerformance = async (req, res) => {
   try {
     const stats = await Order.aggregate([
       {
+        $lookup: {
+          from: "order_items",
+          localField: "_id",
+          foreignField: "order_id",
+          as: "items",
+        },
+      },
+
+      {
         $group: {
           _id: null,
 
-          // Tổng đơn đã đặt (tất cả đơn)
-          totalOrders: {
-            $sum: 1,
-          },
+          // 📦 Tổng đơn hàng
+          totalOrders: { $sum: 1 },
 
-          // Đơn đã đặt thành công (không bị cancel)
+          // 🛒 Đơn chưa huỷ
           placedOrders: {
             $sum: {
               $cond: [
-                { $in: ["$status", ["pending", "confirmed", "processing"]] },
+                { $ne: ["$status", "cancelled"] },
                 1,
                 0,
               ],
             },
           },
 
-          // Đơn giao thành công
+          // 🚚 Đơn giao thành công
           deliveredOrders: {
             $sum: {
-              $cond: [{ $eq: ["$status", "delivered"] }, 1, 0],
+              $cond: [
+                { $eq: ["$status", "delivered"] },
+                1,
+                0,
+              ],
             },
           },
 
-          // Tổng tiền đã thanh toán (chỉ đơn giao thành công)
+          // ❌ Đơn huỷ
+          cancelledOrders: {
+            $sum: {
+              $cond: [
+                { $eq: ["$status", "cancelled"] },
+                1,
+                0,
+              ],
+            },
+          },
+
+          // 💰 Tổng tiền đã thu (chỉ đơn delivered)
           totalPaid: {
             $sum: {
-              $cond: [{ $eq: ["$status", "delivered"] }, "$total_price", 0],
+              $cond: [
+                { $eq: ["$status", "delivered"] },
+                "$total_price",
+                0,
+              ],
+            },
+          },
+
+          // 📦 Tổng sản phẩm đã mua (QUAN TRỌNG)
+          totalProductsPurchased: {
+            $sum: {
+              $cond: [
+                { $eq: ["$status", "delivered"] },
+                {
+                  $sum: "$items.quantity",
+                },
+                0,
+              ],
             },
           },
         },
@@ -639,8 +678,15 @@ export const getPurchasePerformance = async (req, res) => {
       totalOrders: 0,
       placedOrders: 0,
       deliveredOrders: 0,
+      cancelledOrders: 0,
       totalPaid: 0,
+      totalProductsPurchased: 0,
     };
+
+    const cancelRate =
+      data.totalOrders > 0
+        ? ((data.cancelledOrders / data.totalOrders) * 100).toFixed(2)
+        : 0;
 
     return res.json({
       success: true,
@@ -648,7 +694,10 @@ export const getPurchasePerformance = async (req, res) => {
         totalOrders: data.totalOrders,
         placedOrders: data.placedOrders,
         deliveredOrders: data.deliveredOrders,
+        cancelledOrders: data.cancelledOrders,
         totalPaid: data.totalPaid,
+        totalProductsPurchased: data.totalProductsPurchased || 0,
+        cancelRate: `${cancelRate}%`,
       },
     });
   } catch (error) {
