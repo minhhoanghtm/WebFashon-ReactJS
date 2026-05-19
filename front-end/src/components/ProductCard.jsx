@@ -31,15 +31,17 @@ const ProductCard = ({ product }) => {
       <Card
         hoverable
         cover={
-          <img
-            src={product.displayProduct?.[0]}
-            alt={product.name}
-            className="w-full h-60 object-cover cursor-pointer"
-            onClick={() => {
-              setIndex(0);
-              setOpen(true);
-            }}
-          />
+          <div className="w-full h-60 overflow-hidden rounded-lg">
+            <img
+              src={product.displayProduct?.[0]}
+              alt={product.name}
+              className="w-full h-full object-cover object-center cursor-pointer"
+              onClick={() => {
+                setIndex(0);
+                setOpen(true);
+              }}
+            />
+          </div>
         }
       >
         {discountPercentage > 0 && (

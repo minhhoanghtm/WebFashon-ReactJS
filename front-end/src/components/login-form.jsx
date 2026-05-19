@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -219,9 +219,9 @@ export function LoginForm({ className, ...props }) {
 
               <FieldDescription className="text-center">
                 Chưa có tài khoản?{" "}
-                <a href="/register" className="font-semibold hover:underline">
+                <Link to="/register" className="font-semibold hover:underline">
                   Đăng ký
-                </a>
+                </Link>
               </FieldDescription>
             </FieldGroup>
           </form>
@@ -238,13 +238,13 @@ export function LoginForm({ className, ...props }) {
 
       <FieldDescription className="px-6 text-center">
         Bằng cách tiếp tục, bạn đồng ý với{" "}
-        <a href="#" className="hover:underline">
+        <Link to="/terms" className="hover:underline">
           Điều khoản dịch vụ
-        </a>{" "}
+        </Link>{" "}
         và{" "}
-        <a href="#" className="hover:underline">
+        <Link to="/privacy" className="hover:underline">
           Chính sách bảo mật
-        </a>{" "}
+        </Link>{" "}
         của chúng tôi.
       </FieldDescription>
     </div>

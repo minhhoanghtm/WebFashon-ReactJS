@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -364,12 +364,9 @@ const ResetPassword = () => {
             <div className="mt-6 text-center text-sm">
               <FieldDescription>
                 Nhớ mật khẩu rồi?{" "}
-                <a
-                  href="/login"
-                  className="text-blue-600 font-semibold hover:underline"
-                >
+                <Link to="/login" className="font-semibold hover:underline">
                   Đăng nhập
-                </a>
+                </Link>
               </FieldDescription>
             </div>
           </CardContent>

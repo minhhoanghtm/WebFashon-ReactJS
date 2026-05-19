@@ -290,7 +290,7 @@ const Header = () => {
               <img
                 src={user?.data.avatar || "/default-avatar.png"}
                 alt={user?.data.fullName}
-                className="w-8 h-8 rounded-full"
+                className="w-8 h-8 rounded-full object-cover object-center"
               />
               <span>{user?.data.fullName || "Tài khoản"}</span>
             </div>

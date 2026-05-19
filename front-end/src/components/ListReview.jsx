@@ -15,11 +15,11 @@ const ListReview = ({
       {/* header */}
       <div className="flex items-center justify-between">
         <div className="flex items-end gap-2">
-        <img
-          src={avatar}
-          alt={author}
-          className="w-10 h-10 rounded-full object-cover"
-        />
+          <img
+            src={avatar}
+            alt={author}
+            className="w-10 h-10 rounded-full object-cover object-center"
+          />
         <div className="font-semibold">{author}</div>
       </div>
         <div className="flex gap-1">

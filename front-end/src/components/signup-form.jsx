@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { GrFormView, GrFormViewHide } from "react-icons/gr";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { IoArrowBack } from "react-icons/io5";
 import { sendOTPServive } from "@/services/auth.service";
 
@@ -277,7 +277,7 @@ const validatePassword = (password) => {
             Đăng ký với X
           </Button>
           <FieldDescription className="px-6 text-center">
-            Bạn đã có tài khoản? <a href="/login">Đăng nhập</a>
+            Bạn đã có tài khoản? <Link to="/login">Đăng nhập</Link>
           </FieldDescription>
         </Field>
       </FieldGroup>
