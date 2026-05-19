@@ -7,15 +7,18 @@ import {
 } from "@/services/product.service";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getAllCategoriesService } from "@/services/category.service";
-import VariantRow from "./VariantRow";
 import { getProductVariantByProductIdService } from "@/services/productItem.service";
 import { uploadImageService } from "@/services/upload.service";
 
-const defaultVariant = {
-  color: "",
+const defaultVariantSize = {
   size: "M",
   stock: 0,
+};
+
+const defaultVariantGroup = {
+  color: "",
   image_url: "",
+  sizes: [{ ...defaultVariantSize }],
 };
 
 const defaultFormData = {
@@ -49,33 +52,76 @@ const toFormData = (product) => ({
   is_active: product.is_active ?? true,
 
   variants: Array.isArray(product.variants)
-    ? product.variants.map((v) => ({
-        color: v.color || "",
-        size: v.size || "M",
-        stock: v.stock ?? 0,
-        image_url: v.image_url || "",
-      }))
+    ? groupVariantsByColor(product.variants)
     : [],
 });
 
+function groupVariantsByColor(variants) {
+  const safeVariants = Array.isArray(variants) ? variants : [];
+
+  return safeVariants.reduce((groups, variant) => {
+    const color = variant.color || "";
+    const existingGroup = groups.find((group) => group.color === color);
+
+    if (existingGroup) {
+      existingGroup.sizes.push({
+        size: variant.size || "M",
+        stock: variant.stock ?? 0,
+      });
+      return groups;
+    }
+
+    groups.push({
+      color,
+      image_url: variant.image_url || "",
+      sizes: [
+        {
+          size: variant.size || "M",
+          stock: variant.stock ?? 0,
+        },
+      ],
+    });
+    return groups;
+  }, []);
+}
+
 const normalizePayload = (formData, hasVariants) => ({
   name: formData.name.trim(),
-  displayProduct: formData.displayProduct,
+  displayProduct: formData.displayProduct.filter(
+    (image) => typeof image === "string" && !image.startsWith("data:"),
+  ),
   category_id: formData.category_id,
   description: formData.description.trim(),
   old_price: Number(formData.old_price),
   new_price: Number(formData.new_price),
   sold: Number(formData.sold || 0),
   stock: hasVariants
-    ? formData.variants.reduce((sum, v) => sum + Number(v.stock || 0), 0) // ✅ tự tính
+    ? formData.variants.reduce(
+        (sum, group) =>
+          sum +
+          (Array.isArray(group.sizes)
+            ? group.sizes.reduce(
+                (sizeSum, sizeItem) =>
+                  sizeSum + Number(sizeItem.stock || 0),
+                0,
+              )
+            : 0),
+        0,
+      )
     : Number(formData.stock || 0),
   is_active: Boolean(formData.is_active),
-  variants: formData.variants.map((v) => ({
-    color: v.color.trim(),
-    size: v.size,
-    stock: Number(v.stock || 0),
-    image_url: v.image_url,
-  })),
+  variants: formData.variants.flatMap((group) =>
+    (group.sizes || []).map((sizeItem) => ({
+      color: group.color.trim(),
+      size: sizeItem.size,
+      stock: Number(sizeItem.stock || 0),
+      image_url:
+        typeof group.image_url === "string" &&
+        !group.image_url.startsWith("data:")
+          ? group.image_url
+          : "",
+    })),
+  ),
 });
 
 const StaffProductManagement = () => {
@@ -224,13 +270,13 @@ const StaffProductManagement = () => {
   const handleAddVariant = () =>
     setFormData((prev) => ({
       ...prev,
-      variants: [...prev.variants, { ...defaultVariant }],
+      variants: [...prev.variants, { ...defaultVariantGroup }],
     }));
 
   const handleChangeVariant = (index, updated) =>
     setFormData((prev) => ({
       ...prev,
-      variants: prev.variants.map((v, i) => (i === index ? updated : v)),
+      variants: prev.variants.map((group, i) => (i === index ? updated : group)),
     }));
 
   const handleRemoveVariant = (index) =>
@@ -238,6 +284,63 @@ const StaffProductManagement = () => {
       ...prev,
       variants: prev.variants.filter((_, i) => i !== index),
     }));
+
+  const handleAddSizeToGroup = (groupIndex) =>
+    setFormData((prev) => ({
+      ...prev,
+      variants: prev.variants.map((group, i) =>
+        i === groupIndex
+          ? {
+              ...group,
+              sizes: [...(group.sizes || []), { ...defaultVariantSize }],
+            }
+          : group,
+      ),
+    }));
+
+  const handleChangeSizeInGroup = (groupIndex, sizeIndex, updated) =>
+    setFormData((prev) => ({
+      ...prev,
+      variants: prev.variants.map((group, i) =>
+        i === groupIndex
+          ? {
+              ...group,
+              sizes: (group.sizes || []).map((sizeItem, j) =>
+                j === sizeIndex ? updated : sizeItem,
+              ),
+            }
+          : group,
+      ),
+    }));
+
+  const handleRemoveSizeFromGroup = (groupIndex, sizeIndex) =>
+    setFormData((prev) => ({
+      ...prev,
+      variants: prev.variants.map((group, i) =>
+        i === groupIndex
+          ? {
+              ...group,
+              sizes: (group.sizes || []).filter((_, j) => j !== sizeIndex),
+            }
+          : group,
+      ),
+    }));
+
+  const handleGroupImageChange = async (groupIndex, file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+
+    try {
+      const url = await uploadImageService(file);
+      setFormData((prev) => ({
+        ...prev,
+        variants: prev.variants.map((group, i) =>
+          i === groupIndex ? { ...group, image_url: url } : group,
+        ),
+      }));
+    } catch {
+      setErrorMessage("Upload ảnh biến thể thất bại");
+    }
+  };
 
   const handleEditProduct = (product) => {
     console.log("PRODUCT:", product);
@@ -277,6 +380,24 @@ const StaffProductManagement = () => {
     const payload = normalizePayload(formData, hasVariants);
     console.log("payload.stock:", payload.stock); // kiểm tra ở đây
     console.log("formData.stock:", formData.stock);
+
+    const hasBase64Images =
+      formData.displayProduct.some(
+        (image) => typeof image === "string" && image.startsWith("data:"),
+      ) ||
+      formData.variants.some(
+        (group) =>
+          typeof group.image_url === "string" &&
+          group.image_url.startsWith("data:"),
+      );
+
+    if (hasBase64Images) {
+      setErrorMessage(
+        "Ảnh đang ở dạng dữ liệu tạm (base64). Vui lòng upload lại ảnh để tránh vượt giới hạn dung lượng.",
+      );
+      setIsSubmitting(false);
+      return;
+    }
     if (
       !payload.name ||
       !payload.category_id ||
@@ -292,12 +413,12 @@ const StaffProductManagement = () => {
     }
 
     if (hasVariants) {
-      const invalidVariant = payload.variants.find(
-        (v) => !v.color || !v.image_url,
+      const invalidVariant = formData.variants.find(
+        (group) => !group.color || !group.image_url || !group.sizes?.length,
       );
 
       if (invalidVariant) {
-        setErrorMessage("Mỗi variant cần có màu sắc và ảnh.");
+        setErrorMessage("Mỗi nhóm màu cần có ảnh và ít nhất một size.");
         setIsSubmitting(false);
         return;
       }
@@ -306,6 +427,17 @@ const StaffProductManagement = () => {
 
       if (new Set(variantKeys).size !== variantKeys.length) {
         setErrorMessage("Có variant bị trùng màu sắc + size.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const duplicatedSizesInSameColor = formData.variants.some((group) => {
+        const sizes = (group.sizes || []).map((sizeItem) => sizeItem.size);
+        return new Set(sizes).size !== sizes.length;
+      });
+
+      if (duplicatedSizesInSameColor) {
+        setErrorMessage("Một màu không được chọn trùng size.");
         setIsSubmitting(false);
         return;
       }
@@ -640,7 +772,7 @@ const StaffProductManagement = () => {
                         Biến thể sản phẩm
                       </p>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Thêm các biến thể khác nhau theo màu sắc và size
+                        Mỗi màu có thể chứa nhiều size, mỗi size có số lượng riêng.
                       </p>
                     </div>
                     <button
@@ -648,24 +780,163 @@ const StaffProductManagement = () => {
                       onClick={handleAddVariant}
                       className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-600 hover:bg-orange-100 transition"
                     >
-                      + Thêm variant
+                      + Thêm màu
                     </button>
                   </div>
 
                   {formData.variants.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-400">
-                      Chưa có biến thể nào. Nhấn "+ Thêm variant" để bắt đầu.
+                      Chưa có biến thể nào. Nhấn "+ Thêm màu" để bắt đầu.
                     </div>
                   ) : (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {formData.variants.map((variant, i) => (
-                        <VariantRow
-                          key={variant._id || i}
-                          index={i}
-                          variant={variant}
-                          onChange={handleChangeVariant}
-                          onRemove={handleRemoveVariant}
-                        />
+                    <div className="grid gap-4">
+                      {formData.variants.map((group, groupIndex) => (
+                        <div
+                          key={`${group.color || "color"}-${groupIndex}`}
+                          className="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="grid gap-3 sm:grid-cols-2 flex-1">
+                              <label className="grid gap-2">
+                                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                  Màu
+                                </span>
+                                <input
+                                  value={group.color}
+                                  onChange={(e) =>
+                                    handleChangeVariant(groupIndex, {
+                                      ...group,
+                                      color: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Ví dụ: Đen"
+                                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-orange-400"
+                                />
+                              </label>
+
+                              <label className="grid gap-2">
+                                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                  Ảnh nhóm màu
+                                </span>
+                                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) =>
+                                      handleGroupImageChange(
+                                        groupIndex,
+                                        e.target.files?.[0],
+                                      )
+                                    }
+                                    className="text-sm"
+                                  />
+                                  {group.image_url && (
+                                    <img
+                                      src={group.image_url}
+                                      alt={group.color || "variant"}
+                                      className="h-12 w-12 rounded-xl object-cover border"
+                                    />
+                                  )}
+                                </div>
+                              </label>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveVariant(groupIndex)}
+                              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 transition"
+                            >
+                              Xóa màu
+                            </button>
+                          </div>
+
+                          <div className="mt-4 rounded-2xl bg-white p-4 border border-slate-200">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-slate-700">
+                                  Danh sách size
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  Mỗi size nhập số lượng riêng.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleAddSizeToGroup(groupIndex)}
+                                className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-100 transition"
+                              >
+                                + Thêm size
+                              </button>
+                            </div>
+
+                            <div className="mt-4 grid gap-3">
+                              {(group.sizes || []).map((sizeItem, sizeIndex) => (
+                                <div
+                                  key={`${groupIndex}-${sizeIndex}`}
+                                  className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] rounded-2xl border border-slate-200 bg-slate-50 p-3"
+                                >
+                                  <label className="grid gap-1">
+                                    <span className="text-xs text-slate-500">
+                                      Size
+                                    </span>
+                                    <input
+                                      value={sizeItem.size}
+                                      onChange={(e) =>
+                                        handleChangeSizeInGroup(
+                                          groupIndex,
+                                          sizeIndex,
+                                          {
+                                            ...sizeItem,
+                                            size: e.target.value,
+                                          },
+                                        )
+                                      }
+                                      placeholder="M / L / XL"
+                                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-orange-400"
+                                    />
+                                  </label>
+
+                                  <label className="grid gap-1">
+                                    <span className="text-xs text-slate-500">
+                                      Số lượng
+                                    </span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={sizeItem.stock}
+                                      onChange={(e) =>
+                                        handleChangeSizeInGroup(
+                                          groupIndex,
+                                          sizeIndex,
+                                          {
+                                            ...sizeItem,
+                                            stock: e.target.value,
+                                          },
+                                        )
+                                      }
+                                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-orange-400"
+                                    />
+                                  </label>
+
+                                  <div className="flex items-end">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleRemoveSizeFromGroup(
+                                          groupIndex,
+                                          sizeIndex,
+                                        )
+                                      }
+                                      className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-100 transition"
+                                    >
+                                      Xóa size
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}

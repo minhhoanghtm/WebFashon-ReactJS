@@ -1,12 +1,5 @@
 import React from "react";
-
-const readFileAsDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+import { uploadImageService } from "@/services/upload.service";
 
 const VariantRow = ({ variant, index, onChange, onRemove }) => {
   const handleField = (field, value) => {
@@ -17,7 +10,7 @@ const VariantRow = ({ variant, index, onChange, onRemove }) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
 
-    const url = await readFileAsDataUrl(file);
+    const url = await uploadImageService(file);
     onChange(index, { ...variant, image_url: url });
   };
 
