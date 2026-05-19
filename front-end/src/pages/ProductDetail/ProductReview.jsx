@@ -155,18 +155,17 @@ const ProductReview = ({ reviews }) => {
       </div>
       {/* Review  */}
       <div className="">
-        {filteredByRating.length === 0 ? (
+          {filteredByRating.length === 0 ? (
           <p className="text-center">Chưa có đánh giá nào cho sản phẩm này.</p>
         ) : (
           filteredByRating.map((review) => {
+            const author = review.user_id?.fullName || "Người dùng ẩn danh";
+            const avatar = review.user_id?.avatar_url || review.user_id?.avatar || "https://cdn.sforum.vn/sforum/wp-content/uploads/2023/10/avatar-trang-4.jpg";
             return (
               <ListReview
                 key={review._id}
-                author={review.user_id.fullName || "Người dùng ẩn danh"}
-                avatar={
-                  review.user_id.avatar ||
-                  "https://cdn.sforum.vn/sforum/wp-content/uploads/2023/10/avatar-trang-4.jpg"
-                }
+                author={author}
+                avatar={avatar}
                 rating={review.rating}
                 content={review.content}
                 likes_count={review.likes_count}

@@ -40,8 +40,13 @@ export const deleteProductService = async (id) => {
 }
 
 export const searchProductsService = async (params) => {
-    const res = await searchProductsApi(params);
-    return res.data?.data ?? res.data;
+    try {
+        const res = await searchProductsApi(params);
+        return res.data?.data ?? res.data ?? [];
+    } catch (error) {
+        console.error('searchProductsService error:', error);
+        return [];
+    }
 }
 
 export const suggestProductsService = async (query) => {
