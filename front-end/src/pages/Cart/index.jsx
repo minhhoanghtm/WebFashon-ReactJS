@@ -86,9 +86,9 @@ const CartPage = () => {
   }, []);
 
   const summary = useMemo(() => {
-    const selectedItems = cartItems.filter((item) =>
-      selectedItemIds.includes(item._id),
-    );
+    const selectedItems = Array.isArray(cartItems)
+      ? cartItems.filter((item) => selectedItemIds.includes(item._id))
+      : [];
 
     const subtotal = selectedItems.reduce(
       (total, item) =>

@@ -402,10 +402,11 @@ const CheckoutPage = () => {
   };
 
   const summary = useMemo(() => {
-    const subtotal = checkoutItems.reduce(
-      (total, item) => total + Number(item.price || 0) * Number(item.quantity || 0),
-      0,
-    );
+    const safeCheckoutItems = Array.isArray(checkoutItems) ? checkoutItems : [];
+    const subtotal = safeCheckoutItems.reduce(
+        (total, item) => total + Number(item.price || 0) * Number(item.quantity || 0),
+        0,
+      );
     const shippingFee = subtotal >= 800000 ? 0 : 30000;
     const discount =
       voucher.trim().toUpperCase() === "FREESHIP" ? shippingFee : 0;

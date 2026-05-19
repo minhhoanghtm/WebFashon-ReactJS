@@ -106,10 +106,11 @@ const ProductInfo = ({ product, variants, selected, updateSelected }) => {
 
   const [openImage, setOpenImage] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
+  const safeVariants = Array.isArray(variants) ? variants : [];
   // Kết hợp ảnh từ displayProduct và productVariants
   const images = [
     ...(product?.displayProduct || []),
-    ...variants.map((v) => v.image_url).filter(Boolean),
+    ...safeVariants.map((v) => v.image_url).filter(Boolean),
   ];
 
   // Tính phần trăm giảm giá
@@ -122,13 +123,13 @@ const ProductInfo = ({ product, variants, selected, updateSelected }) => {
   // console.log(discount);
 
   // Kiểm tra nếu có phân loại sản phẩm
-  const hasVariants = (variants?.length ?? 0) > 0;
+  const hasVariants = (safeVariants.length ?? 0) > 0;
   
   const simpleStock = Number(product?.stock ?? 0);
 
 const variantStock =
   hasVariants && selected.color && selected.size
-    ? (variants.find(
+    ? (safeVariants.find(
         (v) =>
           v.color === selected.color &&
           v.size === selected.size
@@ -137,12 +138,10 @@ const variantStock =
 
 const currentStock = hasVariants ? variantStock : simpleStock;
   //Lấy mẫu sản phẩm
-  const variant = hasVariants
-  ? [...new Set(variants.map((v) => v.color))]
-  : [];
+  const variant = hasVariants ? [...new Set(safeVariants.map((v) => v.color))] : [];
   //Lấy ảnh theo màu
   const imagesByColor = variant.reduce((acc, color) => {
-    const found = variants.find((v) => v.color === color);
+    const found = safeVariants.find((v) => v.color === color);
     if (found) {
       acc[color] = found.image_url;
     }
@@ -151,7 +150,7 @@ const currentStock = hasVariants ? variantStock : simpleStock;
   // console.log("Images by color:", imagesByColor);
 
   //Lấy size theo màu
-  const sizesBySelectedColor = variants.reduce((acc, v) => {
+  const sizesBySelectedColor = safeVariants.reduce((acc, v) => {
     if (v.color === selected.color) {
       if (!acc[v.color]) {
         acc[v.color] = [];
@@ -166,14 +165,14 @@ const currentStock = hasVariants ? variantStock : simpleStock;
   //Lấy stock theo màu và size
   const stockByColorAndSize = hasVariants
   ? selected.color && selected.size
-    ? (variants.find(
+    ? (safeVariants.find(
         (v) => v.color === selected.color && v.size === selected.size,
       )?.stock ?? 0)
     : 0
   : product.stock ?? 0;
 
   const selectedVariant =
-    variants.find(
+    safeVariants.find(
       (v) => v.color === selected.color && v.size === selected.size,
     ) || null;
 
