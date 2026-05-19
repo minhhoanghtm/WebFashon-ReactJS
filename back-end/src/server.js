@@ -23,21 +23,52 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    ...(process.env.CLIENT_URLS ? process.env.CLIENT_URLS.split(",") : []),
+    "http://localhost:5173",
+    "https://web-fashon-react-js.vercel.app",
+].filter(Boolean);
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow non-browser requests (Render health checks, Postman, curl)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        // Allow all Vercel preview deployments
+        try {
+            if (/\.vercel\.app$/.test(new URL(origin).hostname)) {
+                return callback(null, true);
+            }
+        } catch {
+            // Ignore malformed origin and continue to reject below.
+        }
+
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
 // Wrap in async IIFE to await database connection
 (async () => {
     try {
         await connectDB();
         
         //middleware - CORS must be first
-        app.use(cors({
-            origin: process.env.CLIENT_URL || 'http://localhost:5173',
-            credentials: true,
-            methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-            allowedHeaders: ['Content-Type', 'Authorization']
-        }));
-        app.use(express.json());
+        app.use(cors(corsOptions));
+        app.options('*', cors(corsOptions));
+
+        // Larger payload support (e.g. product forms with image URLs)
+        app.use(express.json({ limit: '10mb' }));
         app.use(express.urlencoded({
-            extended: true
+            extended: true,
+            limit: '10mb',
         }));
         app.use(cookieParser());
         //public routes
