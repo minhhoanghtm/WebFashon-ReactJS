@@ -1,5 +1,5 @@
 import "./App.css";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { HashRouter, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { routes } from "./routes";
@@ -41,7 +41,7 @@ function AppContent() {
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ScrollToTop />
       <AppContent />
       <BackToTopButton />
@@ -56,7 +56,7 @@ function App() {
         draggable
         pauseOnHover
       />
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
