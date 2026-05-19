@@ -1,17 +1,37 @@
 import { createSlug } from "../utils/slug.js";
 import Product from "../models/Product.js";
+import ProductVariants from "../models/ProductVariants.js";
 import { toNoAccent } from "../utils/removeAccents.js";
 
 export const addProduct = async (req, res) => {
   try {
-    const { name, description, old_price, new_price, stock } = req.body;
+    const { name, variants = [], ...productBody } = req.body;
     const slug = createSlug(name);
     const name_no_accents = toNoAccent(name);
+
     const product = await Product.create({
-      ...req.body,
+      ...productBody,
       slug,
+      name,
       name_no_accents,
     });
+
+    if (Array.isArray(variants) && variants.length > 0) {
+      const variantDocs = variants
+        .filter((variant) => variant?.color && variant?.image_url)
+        .map((variant) => ({
+          product_id: product._id,
+          color: variant.color,
+          size: variant.size,
+          stock: Number(variant.stock || 0),
+          image_url: variant.image_url,
+        }));
+
+      if (variantDocs.length > 0) {
+        await ProductVariants.insertMany(variantDocs, { ordered: false });
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: "Tạo sản phẩm thành công",
@@ -75,9 +95,30 @@ export const getProductBySlug = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateProduct = await Product.findByIdAndUpdate(id, req.body, {
+    const { variants, ...productBody } = req.body;
+
+    const updateProduct = await Product.findByIdAndUpdate(id, productBody, {
       new: true,
     });
+
+    if (Array.isArray(variants)) {
+      await ProductVariants.deleteMany({ product_id: id });
+
+      const variantDocs = variants
+        .filter((variant) => variant?.color && variant?.image_url)
+        .map((variant) => ({
+          product_id: id,
+          color: variant.color,
+          size: variant.size,
+          stock: Number(variant.stock || 0),
+          image_url: variant.image_url,
+        }));
+
+      if (variantDocs.length > 0) {
+        await ProductVariants.insertMany(variantDocs, { ordered: false });
+      }
+    }
+
     res.json({
       success: true,
       message: "Cập nhật sản phẩm thành công",

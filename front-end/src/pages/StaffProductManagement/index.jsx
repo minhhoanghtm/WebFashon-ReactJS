@@ -8,8 +8,6 @@ import {
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getAllCategoriesService } from "@/services/category.service";
 import {
-  createProductVariantService,
-  deleteProductVariantService,
   getProductVariantByProductIdService,
 } from "@/services/productItem.service";
 import { uploadImageService } from "@/services/upload.service";
@@ -131,9 +129,6 @@ const normalizePayload = (formData, hasVariants) => ({
     })),
   ),
 });
-
-const getSavedProductFromResponse = (result) =>
-  result?.product || result?.data || result;
 
 const StaffProductManagement = () => {
   useDocumentTitle("Quản lý sản phẩm");
@@ -459,38 +454,12 @@ const StaffProductManagement = () => {
         ? await updateProductService(editingProductId, payload)
         : await addProductService(payload);
 
-      const savedProduct = getSavedProductFromResponse(result);
-      const savedProductId = savedProduct?._id || editingProductId;
-
-      if (savedProductId) {
-        const oldVariants = editingProductId
-          ? await getProductVariantByProductIdService(savedProductId)
-          : [];
-
-        if (Array.isArray(oldVariants) && oldVariants.length > 0) {
-          await Promise.all(
-            oldVariants.map((variant) => deleteProductVariantService(variant._id)),
-          );
-        }
-
-        if (hasVariants && payload.variants.length > 0) {
-          await Promise.all(
-            payload.variants.map((variant) =>
-              createProductVariantService({
-                ...variant,
-                product_id: savedProductId,
-              }),
-            ),
-          );
-        }
-      }
-
       await fetchManagementData();
 
       if (editingProductId) {
-        setSuccessMessage(`Đã cập nhật sản phẩm "${savedProduct?.name || ""}".`);
+        setSuccessMessage(`Đã cập nhật sản phẩm "${result?.name || ""}".`);
       } else {
-        setSuccessMessage(`Đã thêm sản phẩm "${savedProduct?.name || ""}".`);
+        setSuccessMessage(`Đã thêm sản phẩm "${result?.name || ""}".`);
       }
       resetForm();
     } catch (err) {
