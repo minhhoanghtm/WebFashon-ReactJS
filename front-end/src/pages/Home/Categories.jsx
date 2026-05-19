@@ -74,7 +74,7 @@ import logo from "@/assets/logo.png";
             </div>
           </Link>
         </div>
-        {categories.map((category) => (
+        {(Array.isArray(categories) ? categories : []).map((category) => (
           <Link
             to={`/categories/${category.slug}`}
             key={category._id}
