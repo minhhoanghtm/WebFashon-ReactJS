@@ -15,13 +15,12 @@ const [selectedCategory, setSelectedCategory] = useState(null);
     const fetchData = async () => {
       //Call api products
       const productRes = await getAllProductService();
-      // console.log('productRes', productRes);
-      setProducts(productRes?.data || []);
+      // productRes is the data array (services unwrap response), so use it directly
+      setProducts(productRes || []);
 
       //call api categories
       const categoryRes = await getAllCategoriesService();
-      // console.log('categoryRes', categoryRes);
-      setCategories(categoryRes?.data || []);
+      setCategories(categoryRes || []);
     };
     fetchData();
   }, []);
