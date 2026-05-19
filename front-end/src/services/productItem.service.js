@@ -7,6 +7,9 @@ import {
 } from "@/api/productItemApi";
 
 export const getProductVariantByProductIdService = async (productId) => {
+  if (!productId) {
+    return [];
+  }
   const response = await getProductVariantByProductIdApi(productId);
   return response.data?.data ?? response.data;
 };

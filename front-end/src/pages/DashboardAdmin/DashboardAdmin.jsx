@@ -132,9 +132,9 @@ const DashboardAdmin = () => {
     kpi: <KPIChart title="Chỉ số KPI" data={kpiChart} />,
     revenue: <RevenueChart data={revenueData} type={type} setType={setType} />,
     orders: <OrdersChart chartData={orderStats} />,
-    "top-products": <TopProductsChart />,
-    "category-performance": <CategoryChart />,
-    customer: <CustomerChart />,
+    // "top-products": <TopProductsChart />,
+    // "category-performance": <CategoryChart />,
+    // customer: <CustomerChart />,
   };
   return (
     <div className="w-full p-6">

@@ -68,6 +68,14 @@ export const deleteProductVariant = async (req, res) => {
 export const getProductVariantByProductId = async (req, res) => {
   try {
     const { product_id } = req.params;
+    if (!product_id || !mongoose.Types.ObjectId.isValid(product_id)) {
+      return res.status(400).json({
+        success: false,
+        message: "product_id không hợp lệ",
+        data: [],
+      });
+    }
+
     const productVariants = await ProductVariants.find({
       product_id: new mongoose.Types.ObjectId(product_id),
     });
