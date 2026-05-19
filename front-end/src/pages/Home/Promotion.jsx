@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
  const data = [
     {
       _id: "1",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNbry9WS7Tc7qoaySeYGFGrs9KCKNXprXBhQ&s",
+      image: "https://png.pngtree.com/png-clipart/20200721/original/pngtree-flash-sale-promotion-poster-template-png-image_4924968.jpg",
       type: "product",
       target_id: "123",
       position: "home_slider",
@@ -13,7 +13,7 @@ import { Link } from "react-router-dom";
     },
     {
       _id: "2",
-      image: "https://cdn.hostingviet.vn/data/tinymce/2023/hinh-nen-may-tinh-4k-1.jpg",
+      image: "https://img.freepik.com/premium-vector/flash-sale-modern-banner-template-design_535749-147.jpg?w=826",
       type: "category",
       target_id: "456",
       position: "home_slider",
@@ -21,7 +21,7 @@ import { Link } from "react-router-dom";
     },
     {
       _id: "3",
-      image: "https://i.pinimg.com/736x/41/23/a5/4123a5bfbb500a592f1e88fb151a8dfd.jpg",
+      image: "https://treobangron.com.vn/wp-content/uploads/2022/09/banner-khuyen-mai-42.jpg",
       type: "external",
       target_id: "https://example.com",
       position: "home_slider",
