@@ -42,8 +42,7 @@ const ProductDetail = () => {
         if (!slug) return;
 
         //Lấy thông tin sản phẩm theo slug
-        const productRes = await getProductBySlugService(slug);
-        const productData = productRes?.data;
+        const productData = await getProductBySlugService(slug);
         setProduct(productData);
         console.log("Product data:", productData);
 
@@ -51,13 +50,13 @@ const ProductDetail = () => {
 
         //Lấy thông tin biến thể sản phẩm theo productId
         const variantRes = await getProductVariantByIdService(productData._id);
-        const variantData = variantRes?.data || [];
+        const variantData = variantRes || [];
         setVariants(variantData);
         console.log("Variant data:", variantData);
 
         //Lấy thông tin đánh giá sản phẩm theo productId
         const reviewRes = await getReviewsByProductIdService(productData._id);
-        const reviewData = reviewRes?.data || [];
+        const reviewData = reviewRes || [];
         setReviews(reviewData);
         console.log("Review data:", reviewData);
 
@@ -66,7 +65,7 @@ const ProductDetail = () => {
           productData.category_id,
           12,
         );
-        const relatedData = relatedRes?.data || [];
+        const relatedData = relatedRes || [];
         setRelatedProducts(relatedData);
         console.log("Related products data:", relatedData);
       } catch (error) {
