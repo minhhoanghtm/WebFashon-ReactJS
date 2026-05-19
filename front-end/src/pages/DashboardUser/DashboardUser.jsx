@@ -33,6 +33,7 @@ import { getPurchasePerformanceService } from "@/services/order.service";
 const DashboardUser = () => {
   useDocumentTitle("Dashboard Thống Kê");
   const [performanceData, setPerformanceData] = useState([]);
+  const [selectedOption, setSelectedOption] = useState("kpi");
 
   useEffect(() => {
     const fetchPerformanceData = async () => {
@@ -50,13 +51,13 @@ const DashboardUser = () => {
           {
             key: "total",
             label: "Sản phẩm đã mua",
-            value: stats.totalSold ,
+            value: stats.totalProductsPurchased || 0,
             description: "Tổng số sản phẩm đã được giao thành công",
           },
           {
             key: "revenue",
             label: "Tổng chi tiêu",
-            value: stats.totalRevenue || 0,
+            value: stats.totalPaid || 0,
             description: `Tỉ lệ hủy đơn: ${stats.cancelRate || "0%"}`,
           },
         ];
@@ -80,7 +81,6 @@ const DashboardUser = () => {
     "category-performance": <CategoryChart />,
   };
 
-  const [selectedOption, setSelectedOption] = useState(null);
   return (
     <div className="w-full p-6">
       <h1 className="text-2xl font-black">Dashboard Thống Kê</h1>
@@ -123,7 +123,7 @@ const DashboardUser = () => {
 
       {/* Hiển thị biểu đồ đã chọn */}
       <div className="mt-4">
-        {selectedOption && chartMap[selectedOption]}
+        {chartMap[selectedOption]}
       </div>
     </div>
   );
