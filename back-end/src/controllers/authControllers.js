@@ -174,6 +174,11 @@ export const sendOTPController = async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
+    // For local debugging, log OTP when not in production
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`DEV OTP for ${normalizedEmail}: ${otp}`);
+    }
+
     await sendOTP(normalizedEmail, otp);
 
     return res.status(200).json({

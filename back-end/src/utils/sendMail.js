@@ -2,23 +2,34 @@ import nodemailer from "nodemailer";
 
 export const sendOTP = async (email, otp) => {
     try {
+        const user = process.env.EMAIL_USER;
+        const pass = process.env.EMAIL_PASS;
+
+        // Nếu không có cấu hình SMTP, in OTP ra console để tiện phát triển cục bộ
+        if (!user || !pass) {
+            console.warn("SMTP credentials not configured. Skipping actual email send.");
+            console.log(`DEV OTP for ${email}: ${otp}`);
+            return;
+        }
+
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
+                user,
+                pass,
             },
         });
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: user,
             to: email,
             subject: "Mã OTP xác thực",
             html: ` <h1>Mã OTP của bạn là: ${otp}</h1><p>Mã này sẽ hết hạn sau 5 phút. Vui lòng không chia sẻ mã này với bất kỳ ai.</p>`,
         };
-        await transporter.sendMail(mailOptions);
-        console.log("Email OTP đã được gửi thành công");
+        const info = await transporter.sendMail(mailOptions);
+        console.log("Email OTP đã được gửi thành công", { messageId: info.messageId, response: info.response });
     } catch (error) {
         console.error("Lỗi khi gửi email OTP:", error);
-        throw error;
+        // Không ném error để không chặn luồng đăng ký trong môi trường dev nếu mail server gặp vấn đề
+        if (process.env.NODE_ENV === "production") throw error;
     }
 }

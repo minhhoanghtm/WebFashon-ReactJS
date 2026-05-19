@@ -1,8 +1,22 @@
 import axios from "axios";
 
+const isLocalhost =
+  typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+
+const apiBaseURL =
+  isLocalhost
+    ? "http://localhost:5000/api"
+    : import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "/api" : "http://localhost:5000/api");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: apiBaseURL,
 });
+
+if (isLocalhost && apiBaseURL.includes("localhost:5000")) {
+  console.warn("Localhost detected. Using local backend API:", apiBaseURL);
+} else if (!import.meta.env.VITE_API_URL) {
+  console.warn("VITE_API_URL is not set. Using fallback baseURL:", apiBaseURL);
+}
 
 // Request interceptor
 api.interceptors.request.use(

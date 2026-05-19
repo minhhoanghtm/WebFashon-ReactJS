@@ -26,8 +26,6 @@ const PORT = process.env.PORT || 5001;
 const allowedOrigins = [
     process.env.CLIENT_URL,
     ...(process.env.CLIENT_URLS ? process.env.CLIENT_URLS.split(",") : []),
-    "http://localhost:5173",
-    "https://web-fashon-react-js.vercel.app",
 ].filter(Boolean);
 
 const corsOptions = {
@@ -42,6 +40,11 @@ const corsOptions = {
         // Allow all Vercel preview deployments
         try {
             if (/\.vercel\.app$/.test(new URL(origin).hostname)) {
+                return callback(null, true);
+            }
+
+            // Allow any local development port on localhost / 127.0.0.1
+            if (/^(localhost|127\.0\.0\.1)$/.test(new URL(origin).hostname)) {
                 return callback(null, true);
             }
         } catch {
