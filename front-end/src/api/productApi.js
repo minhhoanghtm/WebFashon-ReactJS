@@ -13,7 +13,11 @@ export const getProductDetailByIdApi = (id) => {
 }
 
 export const getProductByCategoryApi = (categoryId, limit) => {
-    return api.get(`/products/category/${categoryId}?limit=${limit}`);
+    let url = `/products/category/${categoryId}`;
+    if (limit !== undefined && limit !== null) {
+        url += `?limit=${limit}`;
+    }
+    return api.get(url);
 }
 
 export const getProductBySlugApi = (slug) => {
