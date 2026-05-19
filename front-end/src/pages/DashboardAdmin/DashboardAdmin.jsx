@@ -29,21 +29,21 @@ const option = [
     title: "Đơn hàng",
     description: "Biểu đồ số lượng đơn hàng theo thời gian.",
   },
-  {
-    key: "top-products",
-    title: "Sản phẩm bán chạy",
-    description: "Top 10 sản phẩm bán chạy nhất.",
-  },
-  {
-    key: "category-performance",
-    title: "Hiệu suất danh mục",
-    description: "Phân bố theo doanh mục sản phẩm.",
-  },
-  {
-    key: "customer",
-    title: "Khách hàng",
-    description: "Khách hàng thân thiết và mới.",
-  },
+  // {
+  //   key: "top-products",
+  //   title: "Sản phẩm bán chạy",
+  //   description: "Top 10 sản phẩm bán chạy nhất.",
+  // },
+  // {
+  //   key: "category-performance",
+  //   title: "Hiệu suất danh mục",
+  //   description: "Phân bố theo doanh mục sản phẩm.",
+  // },
+  // {
+  //   key: "customer",
+  //   title: "Khách hàng",
+  //   description: "Khách hàng thân thiết và mới.",
+  // },
 ];
 
 const DashboardAdmin = () => {
