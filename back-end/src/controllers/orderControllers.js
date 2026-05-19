@@ -606,6 +606,15 @@ export const getPurchasePerformance = async (req, res) => {
           as: "items",
         },
       },
+      {
+        $addFields: {
+          itemsPurchasedCount: {
+            $sum: {
+              $ifNull: ["$items.quantity", []],
+            },
+          },
+        },
+      },
 
       {
         $group: {
@@ -663,9 +672,7 @@ export const getPurchasePerformance = async (req, res) => {
             $sum: {
               $cond: [
                 { $eq: ["$status", "delivered"] },
-                {
-                  $sum: "$items.quantity",
-                },
+                "$itemsPurchasedCount",
                 0,
               ],
             },
