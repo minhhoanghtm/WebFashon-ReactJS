@@ -48,8 +48,8 @@ const Header = () => {
       }
       try {
         const res = await suggestProductsService(keyword);
-        if (res.success) {
-          const results = res.data;
+        const results = Array.isArray(res) ? res : res?.data ?? [];
+        if (results && results.length > 0) {
           setSuggestions(results.slice(0, 7));
           setShowSuggest(true);
         } else {

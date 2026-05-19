@@ -35,8 +35,9 @@ const ProductSearch = () => {
           };
           
           const productsRes = await searchProductsService(params);
-          setProducts(productsRes.data || []);
-          console.log('Search results:', productsRes.data);
+          const results = productsRes || [];
+          setProducts(results);
+          console.log('Search results:', results);
         } catch (error) {
           console.error('Lỗi khi tìm kiếm:', error);
           setProducts([]);
