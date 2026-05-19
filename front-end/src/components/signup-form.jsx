@@ -26,6 +26,7 @@ export function SignupForm({ className, ...props }) {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -116,6 +117,7 @@ const validatePassword = (password) => {
       return;
     }
     try{
+      setLoading(true);
       // Gọi API đăng ký tại đây
       await sendOTPServive({
         email: formData.email,
@@ -125,6 +127,8 @@ const validatePassword = (password) => {
       console.error("Lỗi đăng ký:", error);
       const errorMessage = error.response?.data?.message || "Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.";
       setErrors({ general: errorMessage });
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -245,7 +249,9 @@ const validatePassword = (password) => {
           </FieldDescription>
         </Field>
         <Field>
-          <Button type="submit">Đăng ký</Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Đang gửi mã..." : "Đăng ký"}
+          </Button>
         </Field>
         <FieldSeparator>Hoặc tiếp tục với</FieldSeparator>
         <Field>

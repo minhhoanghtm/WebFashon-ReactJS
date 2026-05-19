@@ -150,12 +150,12 @@ export function LoginForm({ className, ...props }) {
               <Field>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="passWord">Mật khẩu</FieldLabel>
-                  <a
-                    href="/reset-password"
+                  <Link
+                    to="/reset-password"
                     className="ml-auto text-sm underline-offset-2 hover:underline"
                   >
                     Quên mật khẩu?
-                  </a>
+                  </Link>
                 </div>
                 <Input
                   id="passWord"
