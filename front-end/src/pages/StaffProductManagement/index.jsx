@@ -115,9 +115,12 @@ const StaffProductManagement = () => {
               p._id,
             );
             console.log(`Variants for product ${p._id}:`, variantsRes);
+            const variants = Array.isArray(variantsRes)
+              ? variantsRes
+              : variantsRes?.data ?? [];
             return {
               ...p,
-              variants: variantsRes?.data || [],
+              variants,
             };
           } catch {
             return { ...p, variants: [] };

@@ -99,12 +99,13 @@ const ProductReview = ({ reviews }) => {
     setStartIndex(typeof i === "number" ? i : 0);
     setOpen(true);
   };
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
   //Tính trung bình đánh giá
   const averageRating =
-    reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length ||
-    0;
+    (safeReviews.reduce((sum, review) => sum + (review.rating || 0), 0) /
+      (safeReviews.length || 1)) || 0;
   //Giơi han số đánh giá hiển thị ban đầu
-  const displayedReviews = showAll ? reviews : reviews.slice(0, 3);
+  const displayedReviews = showAll ? safeReviews : safeReviews.slice(0, 3);
   //Loc tin nhan rating cao nhat
   const sortedReviews = [...displayedReviews].sort(
     (a, b) => b.rating - a.rating,

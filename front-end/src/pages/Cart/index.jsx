@@ -57,16 +57,22 @@ const CartPage = () => {
     try {
       //Lấy cart cua user
       const carRes = await getCartService();
-      const cartData = carRes.data;
+      // Normalize cart response to array
+      const cartData = Array.isArray(carRes)
+        ? carRes
+        : carRes?.data ?? carRes ?? [];
       console.log("Cart data:", cartData);
 
-      console.log("Cart ID:", cartData[0]?._id); // Kiểm tra cart ID có tồn tại không
+      const cartId = cartData[0]?._id;
+      console.log("Cart ID:", cartId);
       //Lay cart items tu cart
-      const cartItemsRes = await getCartItemsService(cartData[0]?._id);
-      const cartItemsData = cartItemsRes.data;
-      setCartItems(cartItemsData || []);
-      setSelectedItemIds((cartItemsData || []).map((item) => item._id));
-      console.log("Cart items data:", cartItemsData);
+      const cartItemsRes = await getCartItemsService(cartId);
+      const cartItemsData =
+        cartItemsRes?.data ?? cartItemsRes ?? cartItemsRes?.data?.data ?? [];
+      const safeCartItems = Array.isArray(cartItemsData) ? cartItemsData : [];
+      setCartItems(safeCartItems);
+      setSelectedItemIds(safeCartItems.map((item) => item._id));
+      console.log("Cart items data:", safeCartItems);
       // setCartItems(cartItemsData || []);
     } catch {
       setError("Không thể tải giỏ hàng.");
@@ -163,11 +169,17 @@ const CartPage = () => {
       });
 
       // Sync with server response to ensure data consistency
-      if (result.data) setCartItems(result.data);
+      const updated = result?.data ?? result ?? result?.data?.data ?? [];
+      const safeUpdated = Array.isArray(updated) ? updated : [];
+      if (safeUpdated.length) setCartItems(safeUpdated);
 
       // Notify Header to update badge with total quantity
       const totalQuantity =
-        result.data?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+        (Array.isArray(result?.data)
+          ? result.data.reduce((sum, item) => sum + (item.quantity || 0), 0)
+          : Array.isArray(result)
+          ? result.reduce((sum, item) => sum + (item.quantity || 0), 0)
+          : 0) || 0;
       console.log(
         "Dispatching cartUpdated with totalQuantity:",
         totalQuantity,
@@ -201,12 +213,21 @@ const CartPage = () => {
       const result = await deleteCartItemService(itemId);
 
       // Sync with server response
-      if (result.data) setCartItems(result.data);
+      const updatedAfterDelete =
+        result?.data ?? result ?? result?.data?.data ?? [];
+      const safeAfterDelete = Array.isArray(updatedAfterDelete)
+        ? updatedAfterDelete
+        : [];
+      if (safeAfterDelete.length) setCartItems(safeAfterDelete);
       setSelectedItemIds((prev) => prev.filter((id) => id !== itemId));
 
       // Notify Header to update badge with total quantity
       const totalQuantity =
-        result.data?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+        (Array.isArray(result?.data)
+          ? result.data.reduce((sum, item) => sum + (item.quantity || 0), 0)
+          : Array.isArray(result)
+          ? result.reduce((sum, item) => sum + (item.quantity || 0), 0)
+          : 0) || 0;
       console.log(
         "Dispatching cartUpdated after delete with totalQuantity:",
         totalQuantity,
