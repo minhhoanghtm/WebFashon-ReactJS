@@ -223,7 +223,7 @@ const UserAccountManagement = () => {
                       className="border rounded-2xl p-2 m-1 bg-gray-100"
                     >
                       <Link
-                        to={`/products/${item.product_slug}`}
+                        to={`/product/${item.product_slug}`}
                         className="flex gap-3 py-3 border-b last:border-b-0"
                       >
                         <img
