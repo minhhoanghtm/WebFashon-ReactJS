@@ -141,9 +141,31 @@ export const getOrdersByUser = async (req, res) => {
             },
 
             {
+              $lookup: {
+                from: "products",
+                localField: "product_id",
+                foreignField: "_id",
+                as: "product",
+              },
+            },
+
+            {
               $unwind: {
                 path: "$variant",
                 preserveNullAndEmptyArrays: true,
+              },
+            },
+
+            {
+              $unwind: {
+                path: "$product",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+
+            {
+              $addFields: {
+                product_slug: { $ifNull: ["$product_slug", "$product.slug"] },
               },
             },
 

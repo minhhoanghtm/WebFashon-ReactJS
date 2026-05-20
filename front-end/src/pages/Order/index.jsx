@@ -75,6 +75,8 @@ const UserAccountManagement = () => {
     );
   }, [orders]);
 
+  const getProductSlug = (item) => item.product_slug || item.product?.slug;
+
   // ================= FILTER =================
   const filteredOrders = useMemo(() => {
     if (selectedOrderStatus === "all") return ordersWithItems;
@@ -222,8 +224,13 @@ const UserAccountManagement = () => {
                       key={item._id}
                       className="border rounded-2xl p-2 m-1 bg-gray-100"
                     >
+                      {/* Ưu tiên slug snapshot, fallback sang slug hiện tại từ product */}
                       <Link
-                        to={`/product/${item.product_slug}`}
+                        to={
+                          getProductSlug(item)
+                            ? `/product/${getProductSlug(item)}`
+                            : "#"
+                        }
                         className="flex gap-3 py-3 border-b last:border-b-0"
                       >
                         <img
@@ -262,7 +269,11 @@ const UserAccountManagement = () => {
                             Đánh giá sản phẩm
                           </Link>
                           <Link
-                            to={`/product/${item.product_slug}`}
+                            to={
+                              getProductSlug(item)
+                                ? `/product/${getProductSlug(item)}`
+                                : "#"
+                            }
                             className="border rounded-2xl  p-2 text-yellow-500 hover:bg-yellow-300 hover:text-white"
                           >
                             Mua lại
@@ -270,7 +281,11 @@ const UserAccountManagement = () => {
                         </div>
                       ) : (
                         <Link
-                          to={`/product/${item.product_slug}`}
+                          to={
+                            getProductSlug(item)
+                              ? `/product/${getProductSlug(item)}`
+                              : "#"
+                          }
                           className="border rounded-2xl my-3 text-yellow-500 hover:bg-yellow-300 hover:text-white"
                         >
                           Mua lại
