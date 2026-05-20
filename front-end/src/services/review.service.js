@@ -12,7 +12,7 @@ export const getReviewsByProductIdService = async (productId) => {
 
 export const createReviewService = async (data) => {
   const res = await createReviewApi(data);
-  return res.data?.data ?? res.data;
+  return res.data;
 };
 
 export const updateReviewService = async (reviewId, data) => {
