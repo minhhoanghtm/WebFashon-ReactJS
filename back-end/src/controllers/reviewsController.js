@@ -1,4 +1,5 @@
 import Review from "../models/Review.js";
+import mongoose from "mongoose";
 
 
 export const getReviewsByProductIdController = async (req, res) => {
@@ -24,11 +25,25 @@ export const createReviewController = async (req, res) => {
     const user_id = req.user?.userId;
     
     try {
+        if (!user_id) {
+            return res.status(401).json({
+                success: false,
+                message: "Bạn cần đăng nhập để gửi đánh giá"
+            });
+        }
+
         // Validate required fields
         if (!product_id || !rating || !content?.text) {
             return res.status(400).json({
                 success: false,
                 message: "Thiếu thông tin bắt buộc (product_id, rating, text)"
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(product_id)) {
+            return res.status(400).json({
+                success: false,
+                message: "product_id không hợp lệ"
             });
         }
 
@@ -48,6 +63,13 @@ export const createReviewController = async (req, res) => {
             data: savedReview,
         });
     } catch (error) {
+        if (error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: "Bạn đã đánh giá sản phẩm này rồi"
+            });
+        }
+
         return res.status(500).json({
             success: false,
             message: error.message
