@@ -47,26 +47,38 @@ export const createReviewController = async (req, res) => {
             });
         }
 
-        const newReview = new Review({
-            product_id,
-            user_id,
+        const reviewPayload = {
             rating,
             content: {
                 text: content.text,
                 images: content.images || [],
                 videos: content.videos || []
             }
-        });
-        const savedReview = await newReview.save();
+        };
+
+        const savedReview = await Review.findOneAndUpdate(
+            { product_id, user_id },
+            {
+                $set: reviewPayload,
+                $setOnInsert: { product_id, user_id }
+            },
+            {
+                new: true,
+                upsert: true,
+                runValidators: true,
+                setDefaultsOnInsert: true
+            }
+        );
+
         return res.status(201).json({
             success: true,
             data: savedReview,
         });
     } catch (error) {
-        if (error.code === 11000) {
-            return res.status(409).json({
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
                 success: false,
-                message: "Bạn đã đánh giá sản phẩm này rồi"
+                message: error.message
             });
         }
 
