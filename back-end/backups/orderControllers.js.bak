@@ -423,7 +423,7 @@ export const kpi = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Lỗi khi gọi dashboardAdmin:", error);
+    console.error("Lỗi khi gọi Dashboard:", error);
     res.status(500).json({
       success: false,
       message: "Lỗi hệ thống",

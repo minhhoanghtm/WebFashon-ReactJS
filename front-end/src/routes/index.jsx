@@ -1,7 +1,5 @@
 import Home from "../pages/Home";
 import AdminUserManagement from "../pages/AdminUserManagement";
-import StaffProductManagement from "../pages/StaffProductManagement";
-import UserAccountManagement from "../pages/UserAccountManagement";
 import ProductDetail from "../pages/ProductDetail";
 import ProductSearch from "../pages/ProductSearch";
 import Login from "../pages/Login";
@@ -9,7 +7,7 @@ import Register from "../pages/Register";
 import VerifyOTP from "../pages/VerifyOTP";
 import ResetPassword from "../pages/ResetPassword";
 import DashboardUser from "@/pages/DashboardUser/DashboardUser";
-import DashboardAdmin from "@/pages/DashboardAdmin/DashboardAdmin";
+import Dashboard from "@/pages/Dashboard/Dashboard";
 import Checkout from "@/pages/Checkout";
 import Cart from "@/pages/Cart";
 import Order from "@/pages/Order";
@@ -74,33 +72,16 @@ export const routes = [
     path: "/admin/dashboard",
     element: (
       <ProtectedRoute
-        element={<DashboardAdmin />}
+        element={<Dashboard />}
         allowedRoles={["admin", "staff"]} // Cả admin và staff đều có thể xem dashboard admin
       />
     ),
   },
 
-  // ==================== STAFF ====================
-  {
-    path: "/staff/products",
-    element: (
-      <ProtectedRoute
-        element={<StaffProductManagement />}
-        allowedRoles={["staff"]}
-      />
-    ),
-  },
+ 
 
   // ==================== USER ====================
-  {
-    path: "/account/profile",
-    element: (
-      <ProtectedRoute
-        element={<UserAccountManagement />}
-        allowedRoles={["user"]}
-      />
-    ),
-  },
+  
   {
     path: "/orders",
     element: (

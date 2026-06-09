@@ -1,6 +1,6 @@
 import {
   createOrderApi,
-  dashboardAdminApi,
+  DashboardApi,
   dashboardUserApi,
   deleteOrderApi,
   getOrdersByUserApi,
@@ -35,8 +35,8 @@ export const paymentOrderService = async (data) => {
   return response.data;
 };
 
-export const dashboardAdminService = async () => {
-  const response = await dashboardAdminApi();
+export const DashboardService = async () => {
+  const response = await DashboardApi();
   return response.data;
 };
 

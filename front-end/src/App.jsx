@@ -1,63 +1,51 @@
-import "./App.css";
-import { HashRouter, Route, Routes, useLocation } from "react-router-dom";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import { routes } from "./routes";
-import ScrollToTop from "./components/ScrollToTop";
-import BackToTopButton from "./components/BackToTopButton";
-import { ToastContainer } from "react-toastify";
+import React, { useEffect } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './config/queryClient';
+import AppRouter from './routes/AppRouter';
+import { useAuthStore } from './store/auth.store';
+import { userApi } from './api/user.api';
 
-function AppContent() {
-  const location = useLocation();
+// Toast Notifications
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-  // Routes that don't need header and footer
-  const noLayoutRoutes = [
-    "/login",
-    "/register",
-    "/reset-password",
-    "/verify-otp",
-    "/forgot-password",
-  ];
-  const showLayout = !noLayoutRoutes.includes(location.pathname);
+const App = () => {
+  const { setUser, logout, setIsLoading } = useAuthStore();
+
+  // On initial mount, restore session if token exists
+  useEffect(() => {
+    const bootstrapAuth = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const res = await userApi.getMe();
+        if (res.success && res.data) {
+          setUser(res.data);
+        } else {
+          logout();
+        }
+      } catch (err) {
+        console.error('Session bootstrap failed:', err);
+        logout();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    bootstrapAuth();
+  }, [setUser, logout, setIsLoading]);
 
   return (
-    <div className="min-h-screen bg-stone-50 text-slate-800 flex flex-col">
-      {showLayout && <Header />}
-      <main className="flex-1">
-        <Routes>
-          {routes.map((route, index) => (
-            <Route 
-            key={index} 
-            path={route.path} 
-            element={route.element} 
-            />
-          ))}
-        </Routes>
-      </main>
-      {showLayout && <Footer />}
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <AppRouter />
+      <ToastContainer position="bottom-right" autoClose={3000} />
+    </QueryClientProvider>
   );
-}
-
-function App() {
-  return (
-    <HashRouter>
-      <ScrollToTop />
-      <AppContent />
-      <BackToTopButton />
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-    </HashRouter>
-  );
-}
+};
 
 export default App;

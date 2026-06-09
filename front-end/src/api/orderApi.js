@@ -20,7 +20,7 @@ export const paymentOrderApi = (data) => {
   return api.post("/order/payment", data);
 };
 
-export const dashboardAdminApi = () => {
+export const DashboardApi = () => {
   return api.get("/order/admin/kpi");
 };
 
