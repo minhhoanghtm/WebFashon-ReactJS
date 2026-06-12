@@ -1,347 +1,373 @@
-import { Carousel, Dropdown, Modal } from "antd";
-import { useState } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useAuthStore } from "@/store/auth.store";
+import { addCartItemService } from "@/services/cartItem.service";
 import StarRating from "../../components/Star";
-import ImagePreviewModal from "@/components/ImagePreviewModal";
 
-// const data = {
-//   _id: "1",
-//   name: "Đồng hồ nam cao cấp",
-//   displayProduct: [
-//     "https://cdn.kkfashion.vn/24416-large_default/dam-chu-a-lien-than-cong-so-co-tron-kk161-04.jpg",
-//   ],
-//   category_id: "65f1a1b2c3d4e5f678901236",
-//   slug: "dong-ho-nam-cao-cap",
-//   description: "Đồng hồ sang trọng",
-//   old_price: 2500000,
-//   new_price: 1800000,
-//   sold: 120,
-//   rating: 4.5,
-//   is_active: true,
-// };
-// const productVariants = [
-//   {
-//     product_id: "1",
-//     color: "Đen",
-//     size: "M",
-//     stock: 50,
-//     image_url:
-//       "https://file3.qdnd.vn/data/images/0/2023/05/03/vuhuyen/khanhphan.jpg?dpi=150&quality=100&w=870",
-//   },
-//   {
-//     product_id: "1",
-//     color: "Trắng",
-//     size: "L",
-//     stock: 30,
-//     image_url:
-//       "https://file3.qdnd.vn/data/images/0/2024/03/06/upload_2322/_dsc9841.jpg?dpi=150&quality=100&w=870",
-//   },
-//   {
-//     product_id: "2",
-//     color: "Xanh",
-//     size: "S",
-//     stock: 20,
-//     image_url:
-//       "https://media-cdn-v2.laodong.vn/storage/newsportal/2023/3/11/1156607/318076980_2013923305.jpg",
-//   },
-//   {
-//     product_id: "2",
-//     color: "Đỏ",
-//     size: "M",
-//     stock: 15,
-//     image_url: "https://luxuo.vn/wp-content/uploads/2021/06/IMG_8837.jpg",
-//   },
-//   {
-//     product_id: "3",
-//     color: "Đen",
-//     size: "XL",
-//     stock: 40,
-//     image_url:
-//       "https://media-cdn-v2.laodong.vn/storage/newsportal/2024/8/22/1383302/Canhdep_Vietnam-1.jpg",
-//   },
-//   {
-//     product_id: "3",
-//     color: "Xám",
-//     size: "L",
-//     stock: 25,
-//     image_url:
-//       "https://dulichviet.com.vn/images/bandidau/danh-sach-nhung-buc-anh-viet-nam-lot-top-anh-dep-the-gioi.jpg",
-//   },
-//   {
-//     product_id: "4",
-//     color: "Trắng",
-//     size: "S",
-//     stock: 10,
-//     image_url:
-//       "https://media-cdn-v2.laodong.vn/storage/newsportal/2023/8/26/1233821/Nhieu-LIKE---Mong-Ng.jpg",
-//   },
-//   {
-//     product_id: "4",
-//     color: "Xanh",
-//     size: "M",
-//     stock: 35,
-//     image_url:
-//       "https://noithatbinhminh.com.vn/wp-content/uploads/2022/08/anh-dep-44.jpg.webp",
-//   },
-//   {
-//     product_id: "5",
-//     color: "Đỏ",
-//     size: "L",
-//     stock: 45,
-//     image_url:
-//       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAvAeAL_doBuim9d57QJPSqqTHqr6FDOoscQ&s",
-//   },
-//   {
-//     product_id: "5",
-//     color: "Đen",
-//     size: "XL",
-//     stock: 60,
-//     image_url:
-//       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQkdWA_dzMoFmwsSCDDQDg5m-bGvkUxLEex0g&s",
-//   },
-// ];
-const ProductInfo = ({ product, variants, selected, updateSelected }) => {
-  if (!product) return <p>Không tìm thấy sản phẩm</p>;
-  // console.log("Product in ProductInfo:", product);
-  // console.log("Variants in ProductInfo:", variants);
+const ProductInfo = ({ product, variants = [], selected, updateSelected }) => {
+  if (!product) return <p className="text-center py-10">Không tìm thấy sản phẩm</p>;
 
-  const [openImage, setOpenImage] = useState(false);
-  const [startIndex, setStartIndex] = useState(0);
+  const navigate = useNavigate();
+  const { isAuthenticated: isLoggedIn } = useAuthStore();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
   const safeVariants = Array.isArray(variants) ? variants : [];
-  // Kết hợp ảnh từ displayProduct và productVariants
+  
+  // Combine product gallery images
   const images = [
     ...(product?.displayProduct || []),
     ...safeVariants.map((v) => v.image_url).filter(Boolean),
   ];
+  if (images.length === 0 && product.image) {
+    images.push(product.image);
+  }
 
-  // Tính phần trăm giảm giá
+  // Calculate discount percentage
   const discount =
     product.old_price > 0
       ? Math.round(
           ((product.old_price - product.new_price) / product.old_price) * 100,
         )
       : 0;
-  // console.log(discount);
 
-  // Kiểm tra nếu có phân loại sản phẩm
-  const hasVariants = (safeVariants.length ?? 0) > 0;
-  
+  const hasVariants = safeVariants.length > 0;
   const simpleStock = Number(product?.stock ?? 0);
 
-const variantStock =
-  hasVariants && selected.color && selected.size
-    ? (safeVariants.find(
-        (v) =>
-          v.color === selected.color &&
-          v.size === selected.size
-      )?.stock ?? 0)
-    : 0;
+  // Get available sizes & colors
+  const availableColors = hasVariants ? [...new Set(safeVariants.map((v) => v.color))] : [];
+  const availableSizes = hasVariants ? [...new Set(safeVariants.map((v) => v.size))] : [];
 
-const currentStock = hasVariants ? variantStock : simpleStock;
-  //Lấy mẫu sản phẩm
-  const variant = hasVariants ? [...new Set(safeVariants.map((v) => v.color))] : [];
-  //Lấy ảnh theo màu
-  const imagesByColor = variant.reduce((acc, color) => {
-    const found = safeVariants.find((v) => v.color === color);
-    if (found) {
-      acc[color] = found.image_url;
-    }
-    return acc;
-  }, {});
-  // console.log("Images by color:", imagesByColor);
-
-  //Lấy size theo màu
+  // Group sizes by selected color to disable unavailable combinations
   const sizesBySelectedColor = safeVariants.reduce((acc, v) => {
-    if (v.color === selected.color) {
-      if (!acc[v.color]) {
-        acc[v.color] = [];
-      }
-      if (!acc[v.color].includes(v.size)) {
-        acc[v.color].push(v.size);
-      }
+    if (!acc[v.color]) {
+      acc[v.color] = [];
+    }
+    if (!acc[v.color].includes(v.size)) {
+      acc[v.color].push(v.size);
     }
     return acc;
   }, {});
 
-  //Lấy stock theo màu và size
-  const stockByColorAndSize = hasVariants
-  ? selected.color && selected.size
-    ? (safeVariants.find(
+  const selectedVariant = hasVariants
+    ? safeVariants.find(
         (v) => v.color === selected.color && v.size === selected.size,
-      )?.stock ?? 0)
-    : 0
-  : product.stock ?? 0;
+      ) || null
+    : null;
 
-  const selectedVariant =
-    safeVariants.find(
-      (v) => v.color === selected.color && v.size === selected.size,
-    ) || null;
+  const currentStock = hasVariants
+    ? (selectedVariant?.stock ?? 0)
+    : simpleStock;
 
-    //kiểm tra size có tồn tại khi đã chọn màu
-  const sizeItems = selected.color
-    ? (sizesBySelectedColor[selected.color] || []).map((size) => ({
-        key: size,
-        label: size,
-      }))
-    : [];
-const finalSizeItems =
-  sizeItems.length > 0
-    ? sizeItems
-    : [{ key: "free", label: "Free size" }];
-    
-  //không tăng khi chọn size và color
-  const canChangeQuantity =
-  hasVariants
-    ? selected.color && selected.size && currentStock > 0
-    : product?.stock === undefined || simpleStock > 0; 
+  const canAddToCart = hasVariants
+    ? Boolean(
+        selected.color &&
+        selected.size &&
+        selected.quantity > 0 &&
+        selectedVariant,
+      )
+    : selected.quantity > 0;
 
-  //báo lỗi khi chọn số lượng lớn hơn stock
-  const warning = (() => {
-  if (hasVariants) {
-    if (!selected.color) return "Vui lòng chọn màu";
-    if (!selected.size) return "Vui lòng chọn size";
-    if (currentStock <= 0) return "Sản phẩm hết hàng";
+  // Formatter for prices
+  const formatPrice = (val) => {
+    if (val > 1000) {
+      return val.toLocaleString("vi-VN") + "đ";
+    }
+    return "$" + val;
+  };
+
+  // Warning text
+  const warningText = (() => {
+    if (hasVariants) {
+      if (!selected.color) return "Vui lòng chọn màu sắc";
+      if (!selected.size) return "Vui lòng chọn kích cỡ";
+      if (currentStock <= 0) return "Sản phẩm phiên bản này đã hết hàng";
+      return "";
+    }
+    if (product?.stock !== undefined && simpleStock <= 0) return "Sản phẩm đã hết hàng";
     return "";
-  }
+  })();
 
-  // ✅ Chỉ báo hết hàng nếu stock được cung cấp VÀ thực sự = 0
-  if (product?.stock !== undefined && simpleStock <= 0) return "Sản phẩm hết hàng";
+  // Handlers
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    if (!canAddToCart) {
+      toast.error(warningText || "Vui lòng chọn đầy đủ phân loại và số lượng");
+      return;
+    }
 
-  return "";
-})();
-console.log("product.stock:", product?.stock, "simpleStock:", simpleStock);
-  // console.log("Color:", selected.color);
-  // console.log("Sizes by color:", sizesBySelectedColor);
-  // console.log("Selected size:", selected.size);
-  console.log("Stock by color and size:", stockByColorAndSize);
-  // if (loading) return <p>Loading...</p>;
+    try {
+      setIsAddingToCart(true);
+
+      const payload = {
+        product_id: product._id || product.id,
+        variant_id: selectedVariant?._id || null,
+        quantity: Number(selected.quantity) || 1,
+        price: Number(product.new_price) || 0,
+      };
+
+      const result = await addCartItemService(payload);
+
+      window.dispatchEvent(
+        new CustomEvent("cartUpdated", {
+          detail: {
+            cart: result.cart,
+            totalQuantity: result.cart?.total_items ?? 0,
+            total: result.cart?.total_price ?? 0,
+          },
+        }),
+      );
+
+      toast.success("Đã thêm sản phẩm vào giỏ hàng!");
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Thêm vào giỏ hàng thất bại!");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const handleBuyNow = async (e) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
+
+    if (!canAddToCart) {
+      toast.error(warningText || "Vui lòng chọn đầy đủ phân loại và số lượng");
+      return;
+    }
+
+    try {
+      const checkoutItems = [
+        {
+          _id: selectedVariant?._id || product._id || product.id,
+          product_id: product._id || product.id,
+          variant_id: selectedVariant?._id || null,
+          product_name: product.name,
+          product_image: selectedVariant?.image_url || product.image || images[0],
+          price: Number(product.new_price) || 0,
+          oldPrice: Number(product.old_price) || 0,
+          quantity: Number(selected.quantity) || 1,
+          variant: selectedVariant
+            ? [selectedVariant.color, selectedVariant.size].filter(Boolean).join(" - ")
+            : "Mặc định",
+        },
+      ];
+
+      navigate("/checkout", { state: { checkoutItems } });
+    } catch (error) {
+      console.error("Lỗi mua ngay:", error);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-9 h-full mx-5 my-5">
-      {/* Image */}
-      <div className="rounded-xl overflow-hidden shadow-md">
-        <Carousel arrows autoplay autoplaySpeed={3000} effect="scrollx">
-          {images.map((img, index) => (
-            <div key={index} className="aspect-square bg-white">
-              <img
-                src={img}
-                alt={`Product ${index + 1}`}
-                className="w-full h-full object-cover cursor-pointer"
-                onClick={() => {
-                  setStartIndex(index);
-                  setOpenImage(true);
-                }}
-              />
+    <div className="pd-product-main animate-in fade-in duration-300">
+      {/* Left Column - Gallery */}
+      <div>
+        <div className="pd-gallery-main">
+          {images.length > 0 ? (
+            <img
+              src={images[activeImageIndex]}
+              alt={product.name}
+              className="transition-all duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
+              Không có hình ảnh
             </div>
-          ))}
-        </Carousel>
-      </div>
-      {/* Info */}
-      <div className="relative h-full flex flex-col justify-center">
-        <h1 className="text-2xl font-bold">{product.name}</h1>
-        <p className="text-gray-600">{product.description}</p>
-        <div className="flex items-center gap-4 mt-2">
-          <StarRating rating={product.rating} />
-          <span>Đá bán: {product.sold}</span>
+          )}
         </div>
-        <div className="flex items-center gap-3 mt-3">
-          <span className="text-2xl text-red-500 font-bold">
-            {(product?.new_price || 0).toLocaleString("vi-VN")}đ
-          </span>
-
-          <span className="text-gray-400 line-through text-sm">
-            {(product?.old_price || 0).toLocaleString("vi-VN")}đ
-          </span>
-
-          <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-            -{discount}%
-          </span>
-        </div>
-        <div className="mt-5">
-          <p className="font-medium mb-2">Phân loại</p>
-
-          <div className="flex flex-wrap gap-3">
-            {Object.keys(imagesByColor).map((color) => (
-              <button
-                key={color}
-                onClick={() => updateSelected("color", color)}
-                className={`flex items-center gap-2 px-3 py-2 border rounded-full transition-all duration-200
-          ${
-            selected.color === color
-              ? "border-red-500 bg-red-50 scale-105"
-              : "border-gray-300 hover:border-gray-500"
-          }`}
+        
+        {images.length > 1 && (
+          <div className="pd-thumbs">
+            {images.slice(0, 4).map((img, index) => (
+              <div
+                key={index}
+                onClick={() => setActiveImageIndex(index)}
+                className={`pd-thumb ${activeImageIndex === index ? "active" : ""}`}
               >
-                <span className="text-sm">{color}</span>
-                <img
-                  src={imagesByColor[color]}
-                  alt={color}
-                  className="w-5 h-5 rounded-full object-cover"
-                />
-              </button>
+                <img src={img} alt={`Thumbnail ${index}`} />
+              </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Right Column - Product Info */}
+      <div className="pd-product-info space-y-6 text-left">
+        {/* Title */}
+        <h1 className="pd-product-title text-slate-900 dark:text-white font-serif">{product.name}</h1>
+        
+        {/* Rating stars */}
+        <div className="pd-stars">
+          <StarRating rating={product.rating || 5} />
+          <span className="pd-review-count font-sans">({product.rating || 4.5})</span>
+          {product.sold > 0 && (
+            <span className="text-xs text-slate-400 ml-2">Đã bán {product.sold}</span>
+          )}
         </div>
-        <div className="mt-4 flex items-center gap-3">
-          <p className="font-medium">Size:</p>
 
-          <Dropdown
-            menu={{
-              items: sizeItems,
-              onClick: ({ key }) => updateSelected("size", key),
-            }}
-            placement="bottomLeft"
-            disabled={!selected.color}
-          >
-            <button
-              className={`px-4 py-1 border rounded-full transition
-        ${
-          selected.color
-            ? "bg-blue-500 text-white border-blue-500"
-            : "bg-gray-200 text-gray-500 cursor-not-allowed"
-        }`}
-            >
-              {selected.size || "Chọn size"}
-            </button>
-          </Dropdown>
+        {/* Pricing */}
+        <div className="pd-price flex items-baseline gap-3 text-slate-900 dark:text-white">
+          <span className="text-2xl font-bold text-red-600 dark:text-red-500">
+            {formatPrice(product.new_price)}
+          </span>
+          {product.old_price > product.new_price && (
+            <>
+              <span className="text-sm line-through text-slate-400">
+                {formatPrice(product.old_price)}
+              </span>
+              <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                -{discount}%
+              </span>
+            </>
+          )}
         </div>
-        <div className="mt-5 flex items-center gap-4">
-          <p className="font-medium">Số lượng:</p>
 
-          <div className="flex items-center border rounded-md overflow-hidden">
+        {/* Size Guide full-width button */}
+        <button
+          type="button"
+          onClick={() => toast.info("Bảng hướng dẫn kích cỡ đang được phát triển")}
+          className="pd-size-guide-btn"
+        >
+          Size Guide
+        </button>
+
+        {/* Size Selector */}
+        {hasVariants && availableSizes.length > 0 && (
+          <div>
+            <div className="pd-label">Kích thước (Size)</div>
+            <div className="pd-size-options">
+              {availableSizes.map((size) => {
+                const isActive = selected.size === size;
+                // Size is disabled if color is selected and this size is not available for that color
+                const isDisabled = selected.color
+                  ? !(sizesBySelectedColor[selected.color] || []).includes(size)
+                  : false;
+
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={() => updateSelected("size", size)}
+                    className={`pd-size-btn ${isActive ? "active" : ""}`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Color Selector */}
+        {hasVariants && availableColors.length > 0 && (
+          <div>
+            <div className="pd-label">Màu sắc (Color)</div>
+            <div className="pd-color-options">
+              {availableColors.map((color) => {
+                const isActive = selected.color === color;
+                return (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => {
+                      updateSelected("color", color);
+                      // Clear size if it's not available in the new color
+                      if (selected.size && !(sizesBySelectedColor[color] || []).includes(selected.size)) {
+                        updateSelected("size", null);
+                      }
+                    }}
+                    className={`pd-color-btn ${isActive ? "active" : ""}`}
+                  >
+                    {color}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Quantity Row */}
+        <div>
+          <div className="pd-label">Số lượng (Quantity)</div>
+          <div className="pd-qty-row">
             <button
-              className="px-3 py-1 hover:bg-gray-100"
-              disabled={!!warning}
-              onClick={() =>
-                updateSelected("quantity", Math.max(1, selected.quantity - 1))
-              }
+              type="button"
+              onClick={() => updateSelected("quantity", Math.max(1, selected.quantity - 1))}
+              disabled={selected.quantity <= 1}
+              className="pd-qty-btn"
             >
-              -
+              −
             </button>
-
-            <span className="px-4">{selected.quantity}</span>
-
+            <div className="pd-qty-val text-slate-800 dark:text-slate-100">
+              {selected.quantity}
+            </div>
             <button
-              className="px-3 py-1 hover:bg-gray-100"
-              disabled={!canChangeQuantity}
-              onClick={() =>
-                updateSelected(
-                  "quantity",
-                  Math.min(currentStock, selected.quantity + 1),
-                )
-              }
+              type="button"
+              onClick={() => updateSelected("quantity", Math.min(currentStock || 99, selected.quantity + 1))}
+              disabled={selected.quantity >= (currentStock || 99)}
+              className="pd-qty-btn"
             >
               +
             </button>
           </div>
-          {warning && <p className="text-red-500 text-sm">{warning}</p>}
+          {warningText && (
+            <p className="text-red-500 dark:text-red-400 text-xs mt-2 font-semibold">
+              {warningText}
+            </p>
+          )}
+          {hasVariants && selected.color && selected.size && currentStock > 0 && (
+            <p className="text-xs text-slate-400 mt-1">Còn lại {currentStock} sản phẩm trong kho</p>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3 pt-4">
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={isAddingToCart || !canAddToCart}
+            className="pd-btn-cart hover:scale-[1.01] transition-transform active:scale-[0.99] font-sans"
+          >
+            {isAddingToCart ? "Đang xử lý..." : "Thêm vào giỏ hàng"}
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleBuyNow}
+            disabled={!canAddToCart || isAddingToCart}
+            className="pd-btn-buy hover:scale-[1.01] transition-transform active:scale-[0.99] font-sans"
+          >
+            Mua ngay
+          </button>
+        </div>
+
+        {/* Trust assurance badges */}
+        <div className="pd-trust-row pt-4 border-t border-slate-100 dark:border-slate-800/80">
+          <div className="pd-trust-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="pd-trust-icon"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            <div>
+              <strong>Miễn phí vận chuyển</strong>
+              <span className="pd-trust-sub">Cho tất cả đơn hàng từ $100</span>
+            </div>
+          </div>
+          
+          <div className="pd-trust-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="pd-trust-icon"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <div>
+              <strong>Thanh toán bảo mật</strong>
+              <span className="pd-trust-sub">Cổng thanh toán mã hóa bảo mật SSL</span>
+            </div>
+          </div>
         </div>
       </div>
-      <ImagePreviewModal
-        images={images}
-        open={openImage}
-        startIndex={startIndex}
-        onClose={() => setOpenImage(false)}
-      />
     </div>
   );
 };
+
 export default ProductInfo;

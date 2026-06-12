@@ -8,6 +8,7 @@ import { cartRouter, cartItemRouter } from "../modules/carts/cart.route.js";
 import { orderRouter, orderItemRouter } from "../modules/orders/order.route.js";
 import paymentRouter from "../modules/payments/payment.route.js";
 import uploadRouter from "../modules/uploads/upload.route.js";
+import voucherRouter from "../modules/vouchers/voucher.route.js";
 import { protectedRoute } from "../middlewares/auth.middleware.js";
 
 const rootRouter = express.Router();
@@ -27,5 +28,6 @@ rootRouter.use("/cart_items", protectedRoute, cartItemRouter);
 rootRouter.use("/order", protectedRoute, orderRouter);
 rootRouter.use("/order_items", protectedRoute, orderItemRouter);
 rootRouter.use("/payments", protectedRoute, paymentRouter);
+rootRouter.use("/vouchers", protectedRoute, voucherRouter);
 
 export default rootRouter;

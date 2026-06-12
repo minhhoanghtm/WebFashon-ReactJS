@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuthStore } from "@/store/auth.store";
 
 /**
  * ProtectedRoute component để bảo vệ các trang yêu cầu quyền truy cập
@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
  * @returns {React.Component}
  */
 const ProtectedRoute = ({ element, isPublic = false, allowedRoles = [] }) => {
-  const { isLoggedIn, user } = useAuth();
+  const { isAuthenticated: isLoggedIn, user } = useAuthStore();
   const userRole = user?.data?.role;
 
   // Trang công khai - cho phép truy cập khi chưa đăng nhập

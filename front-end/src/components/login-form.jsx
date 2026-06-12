@@ -13,7 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 import loginImage from "@/assets/login.png";
 import { loginService } from "@/services/auth.service";
-import { useAuth } from "../context/AuthContext";
+import { useAuthStore } from "@/store/auth.store";
+import { userApi } from "@/api/user.api";
 import { toast } from "react-toastify";
 
 export function LoginForm({ className, ...props }) {
@@ -23,7 +24,7 @@ export function LoginForm({ className, ...props }) {
     passWord: "",
   });
   const [errors, setErrors] = useState({});
-  const { login } = useAuth();
+  const { login, setUser } = useAuthStore();
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -54,12 +55,22 @@ export function LoginForm({ className, ...props }) {
         email: formData.email,
         passWord: formData.passWord,
       });
-      // Xử lý logic sau khi đăng nhập thành công
-      // console.log("Đăng nhập thành công:", response);
-      login(response.accessToken);
-      // alert("Đăng nhập thành công!");
-      toast.success("Đăng nhập thành công!");
-      navigate("/"); // Chuyển hướng đến trang chủ sau khi đăng nhập thành công
+      const token = response.data?.accessToken;
+      if (token) {
+        login(token);
+        try {
+          const userRes = await userApi.getMe();
+          if (userRes.success && userRes.data) {
+            setUser(userRes.data);
+          }
+        } catch (err) {
+          console.error("Lỗi khi lấy thông tin user sau khi đăng nhập:", err);
+        }
+        toast.success("Đăng nhập thành công!");
+        navigate("/");
+      } else {
+        toast.error("Đăng nhập thất bại: Không tìm thấy token");
+      }
     } catch (err) {
       console.log(err.response?.data);
       setErrors({

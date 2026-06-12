@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCartStore } from '../../store/cart.store';
 import { orderApi } from '../../api/order.api';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const location = useLocation();
+  const { items: cartItems, clearCart } = useCartStore();
+  
+  // Use checked/checkout items from route state or fall back to entire cart
+  const items = location.state?.checkoutItems || cartItems;
+
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => sum + (Number(item.new_price || item.price || 0) * (item.quantity || 1)), 0);
+  };
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
@@ -23,12 +32,12 @@ const Checkout = () => {
         shippingAddress: address,
         paymentMethod: 'COD',
         items: items.map((item) => ({
-          product_id: item._id,
-          product_variant_id: item.variants?.[0]?._id,
+          product_id: item.product_id || item._id,
+          product_variant_id: item.variants?.[0]?._id || item.product_variant_id || null,
           quantity: item.quantity,
-          price: item.new_price,
+          price: item.new_price || item.price,
         })),
-        totalPrice: getTotalPrice(),
+        totalPrice: calculateTotal(),
       };
 
       const res = await orderApi.createOrder(orderPayload);
@@ -109,7 +118,7 @@ const Checkout = () => {
           </ul>
           <div className="mt-6 border-t border-gray-200 pt-4 flex justify-between text-base font-bold text-gray-900">
             <span>Total</span>
-            <span>${getTotalPrice()}</span>
+            <span>{calculateTotal().toLocaleString("vi-VN")}đ</span>
           </div>
         </div>
       </div>

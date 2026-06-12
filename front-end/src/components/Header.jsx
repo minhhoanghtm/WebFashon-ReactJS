@@ -6,7 +6,7 @@ import { Badge } from "antd";
 import { MdOutlineAccountCircle } from "react-icons/md";
 import { Dropdown } from "antd";
 import { suggestProductsService } from "@/services/product.service";
-import { useAuth } from "../context/AuthContext";
+import { useAuthStore } from "@/store/auth.store";
 import useCartAnimation from "./useCartAnimation";
 import { getCartService } from "@/services/cart.service";
 import { toast } from "react-toastify";
@@ -20,7 +20,7 @@ const Header = () => {
   const navigate = useNavigate();
   const wrapperRef = useRef();
   //kiểm tra đăng nhập
-  const { isLoggedIn, logout, user } = useAuth();
+  const { isAuthenticated: isLoggedIn, logout, user } = useAuthStore();
   const role = user?.data?.role;
   // console.log("Header isLoggedIn:", isLoggedIn);
   console.log("Header user:", role);
