@@ -6,6 +6,7 @@ import AuthLayout from '../layouts/AuthLayout';
 import AdminLayout from '../layouts/AdminLayout';
 
 import Home from '../pages/Home';
+import About from '../pages/About';
 import ProductSearch from '../pages/ProductSearch';
 import ProductDetail from '../pages/ProductDetail';
 import Login from '../pages/Login';
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
     element: <MainLayout />,
     children: [
       { index: true, element: <Home /> },
+      { path: 'about', element: <About /> },
       { path: 'products', element: <ProductSearch /> },
       { path: 'product/:slug', element: <ProductDetail /> },
       { path: 'cart', element: <Cart /> },

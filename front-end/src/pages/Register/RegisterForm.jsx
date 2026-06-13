@@ -1,0 +1,393 @@
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { sendOTPServive } from "@/services/auth.service";
+
+const FacebookIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const XIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.207-6.807-5.974 6.807H2.882l7.432-8.491L1.227 2.25h6.836l4.713 6.231 5.45-6.231zM17.002 18.807h1.646L6.154 4.556H4.382l12.62 14.251z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const initialFormData = {
+  fullName: "",
+  email: "",
+  phoneNumber: "",
+  passWord: "",
+  confirmPassword: "",
+};
+
+const splitFullName = (fullName) => {
+  const normalizedName = fullName.trim().replace(/\s+/g, " ");
+  const nameParts = normalizedName.split(" ");
+  const firstName = nameParts.pop() || normalizedName;
+  const lastName = nameParts.length > 0 ? nameParts.join(" ") : normalizedName;
+
+  return { firstName, lastName };
+};
+
+const normalizeBackendMessage = (error) => {
+  const rawMessage = error?.response?.data?.message || error?.message || "";
+  const message = Array.isArray(rawMessage) ? rawMessage.join(" ") : String(rawMessage);
+  const comparableMessage = message
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (
+    comparableMessage.includes("email") &&
+    (comparableMessage.includes("exist") ||
+      comparableMessage.includes("already") ||
+      comparableMessage.includes("ton tai") ||
+      comparableMessage.includes("da duoc su dung"))
+  ) {
+    return "Email đã tồn tại.";
+  }
+
+  if (
+    (comparableMessage.includes("phone") || comparableMessage.includes("so dien thoai")) &&
+    (comparableMessage.includes("exist") ||
+      comparableMessage.includes("already") ||
+      comparableMessage.includes("ton tai") ||
+      comparableMessage.includes("da duoc su dung"))
+  ) {
+    return "Số điện thoại đã tồn tại.";
+  }
+
+  return message || "Không thể tạo tài khoản. Vui lòng thử lại.";
+};
+
+const RegisterForm = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState(initialFormData);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: null,
+      general: null,
+    }));
+  };
+
+  const handleTermsChange = (event) => {
+    setAcceptedTerms(event.target.checked);
+    setErrors((prev) => ({
+      ...prev,
+      terms: null,
+      general: null,
+    }));
+  };
+
+  const validateForm = () => {
+    const nextErrors = {};
+    const email = formData.email.trim();
+    const phoneNumber = formData.phoneNumber.trim();
+
+    if (!formData.fullName.trim()) {
+      nextErrors.fullName = "Vui lòng nhập họ tên.";
+    }
+
+    if (!email) {
+      nextErrors.email = "Vui lòng nhập email.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextErrors.email = "Email không đúng định dạng.";
+    }
+
+    if (!phoneNumber) {
+      nextErrors.phoneNumber = "Vui lòng nhập số điện thoại.";
+    } else if (!/^\d+$/.test(phoneNumber)) {
+      nextErrors.phoneNumber = "Số điện thoại không hợp lệ.";
+    }
+
+    if (!formData.passWord) {
+      nextErrors.passWord = "Vui lòng nhập mật khẩu.";
+    } else if (formData.passWord.length < 6) {
+      nextErrors.passWord = "Mật khẩu phải có ít nhất 6 ký tự.";
+    }
+
+    if (!formData.confirmPassword) {
+      nextErrors.confirmPassword = "Vui lòng nhập lại mật khẩu.";
+    } else if (formData.confirmPassword !== formData.passWord) {
+      nextErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
+    }
+
+    if (!acceptedTerms) {
+      nextErrors.terms = "Vui lòng đồng ý với điều khoản sử dụng.";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
+
+    const { firstName, lastName } = splitFullName(formData.fullName);
+    const nextFormData = {
+      email: formData.email.trim(),
+      phoneNumber: formData.phoneNumber.trim(),
+      passWord: formData.passWord,
+      confirmPassword: formData.confirmPassword,
+      firstName,
+      lastName,
+    };
+
+    try {
+      setIsSubmitting(true);
+      await sendOTPServive({
+        email: nextFormData.email,
+      });
+      navigate("/verify-otp", { state: { formData: nextFormData } });
+    } catch (error) {
+      console.error("Lỗi đăng ký:", error);
+      setErrors({ general: normalizeBackendMessage(error) });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="register-form-section">
+      <div className="register-form-container">
+        <button
+          onClick={() => navigate("/")}
+          className="register-back-btn"
+          type="button"
+        >
+          <ArrowLeft size={17} aria-hidden="true" />
+          <span>Quay lại trang chủ</span>
+        </button>
+
+        <header className="register-header">
+          <span className="register-header__eyebrow">WebFashion</span>
+          <h1 className="register-header__title">Đăng ký</h1>
+          <p className="register-header__desc">
+            Tạo tài khoản để bắt đầu trải nghiệm mua sắm.
+          </p>
+        </header>
+
+        {errors.general && (
+          <div className="register-general-error">{errors.general}</div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="register-field-group">
+            <div className="register-field register-field--full">
+              <label htmlFor="fullName" className="register-field__label">
+                Họ và tên
+              </label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                placeholder="Nhập họ và tên"
+                className={`register-input ${errors.fullName ? "register-input--error" : ""}`}
+                value={formData.fullName}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.fullName)}
+              />
+              {errors.fullName && (
+                <span className="register-error">{errors.fullName}</span>
+              )}
+            </div>
+
+            <div className="register-field">
+              <label htmlFor="email" className="register-field__label">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Nhập email"
+                className={`register-input ${errors.email ? "register-input--error" : ""}`}
+                value={formData.email}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.email)}
+              />
+              {errors.email && <span className="register-error">{errors.email}</span>}
+            </div>
+
+            <div className="register-field">
+              <label htmlFor="phoneNumber" className="register-field__label">
+                Số điện thoại
+              </label>
+              <input
+                id="phoneNumber"
+                name="phoneNumber"
+                type="tel"
+                inputMode="numeric"
+                placeholder="Nhập số điện thoại"
+                className={`register-input ${errors.phoneNumber ? "register-input--error" : ""}`}
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.phoneNumber)}
+              />
+              {errors.phoneNumber && (
+                <span className="register-error">{errors.phoneNumber}</span>
+              )}
+            </div>
+
+            <div className="register-field">
+              <label htmlFor="passWord" className="register-field__label">
+                Mật khẩu
+              </label>
+              <div className="register-input-wrapper">
+                <input
+                  id="passWord"
+                  name="passWord"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Nhập mật khẩu"
+                  className={`register-input ${errors.passWord ? "register-input--error" : ""}`}
+                  value={formData.passWord}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  aria-invalid={Boolean(errors.passWord)}
+                />
+                <button
+                  type="button"
+                  className="register-input-toggle-btn"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  disabled={isSubmitting}
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} aria-hidden="true" />
+                  ) : (
+                    <Eye size={18} aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+              {errors.passWord && (
+                <span className="register-error">{errors.passWord}</span>
+              )}
+            </div>
+
+            <div className="register-field">
+              <label htmlFor="confirmPassword" className="register-field__label">
+                Xác nhận mật khẩu
+              </label>
+              <div className="register-input-wrapper">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Nhập lại mật khẩu"
+                  className={`register-input ${errors.confirmPassword ? "register-input--error" : ""}`}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  aria-invalid={Boolean(errors.confirmPassword)}
+                />
+                <button
+                  type="button"
+                  className="register-input-toggle-btn"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  aria-label={
+                    showConfirmPassword ? "Ẩn mật khẩu xác nhận" : "Hiện mật khẩu xác nhận"
+                  }
+                  disabled={isSubmitting}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={18} aria-hidden="true" />
+                  ) : (
+                    <Eye size={18} aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <span className="register-error">{errors.confirmPassword}</span>
+              )}
+            </div>
+
+            <div className="register-field register-field--full">
+              <label className="register-checkbox-row">
+                <input
+                  type="checkbox"
+                  className="register-checkbox"
+                  checked={acceptedTerms}
+                  onChange={handleTermsChange}
+                  disabled={isSubmitting}
+                />
+                <span className="register-checkbox-label">
+                  Tôi đồng ý với điều khoản và chính sách bảo mật
+                </span>
+              </label>
+              {errors.terms && <span className="register-error">{errors.terms}</span>}
+            </div>
+          </div>
+
+          <button type="submit" className="register-button" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <LoaderCircle className="register-button__spinner" aria-hidden="true" />
+                <span>Đang tạo tài khoản...</span>
+              </>
+            ) : (
+              "Đăng ký"
+            )}
+          </button>
+        </form>
+
+        <div className="register-divider">Hoặc tiếp tục với</div>
+
+        <div className="register-social-grid">
+          <button className="register-social-btn" type="button" title="Đăng ký với Google">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                fill="currentColor"
+              />
+            </svg>
+            <span>Google</span>
+          </button>
+          <button className="register-social-btn" type="button" title="Đăng ký với Facebook">
+            <FacebookIcon />
+            <span>Facebook</span>
+          </button>
+          <button className="register-social-btn" type="button" title="Đăng ký với X">
+            <XIcon />
+            <span>X</span>
+          </button>
+        </div>
+
+        <p className="register-footer-desc">
+          Đã có tài khoản? <Link to="/login">Đăng nhập ngay</Link>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default RegisterForm;

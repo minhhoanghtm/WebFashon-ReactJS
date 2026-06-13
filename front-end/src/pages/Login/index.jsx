@@ -9,9 +9,11 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      <div className="login-container">
-        <LoginBanner />
-        <LoginForm />
+      <div className="login-wrapper">
+        <div className="login-card">
+          <LoginBanner />
+          <LoginForm />
+        </div>
       </div>
     </div>
   );
