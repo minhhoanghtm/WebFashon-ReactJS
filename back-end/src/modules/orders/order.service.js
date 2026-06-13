@@ -5,22 +5,205 @@ import * as momoProvider from "../../providers/momo.provider.js";
 import * as stripeProvider from "../../providers/stripe.provider.js";
 import * as zalopayProvider from "../../providers/zalopay.provider.js";
 import mongoose from "mongoose";
+import Voucher from "../vouchers/voucher.model.js";
+import UserVoucher from "../vouchers/userVoucher.model.js";
+import VoucherUsage from "../vouchers/voucherUsage.model.js";
+import voucherService from "../vouchers/voucher.service.js";
 import dotenv from "dotenv";
 dotenv.config();
 
 class OrderService {
   async createOrder(userId, orderData) {
-    const { items = [], payment_method, shipping_address, total_price } = orderData;
+    const session = await mongoose.startSession();
+    try {
+      let createdOrder;
+      await session.withTransaction(async () => {
+        const items = orderData.items || [];
+        const paymentMethod = orderData.payment_method || orderData.paymentMethod || "cod";
+        const rawShippingAddress = orderData.shipping_address || orderData.shippingAddress;
+        const voucherCode = orderData.voucher_code || orderData.voucherCode;
 
-    if (!shipping_address) {
+        let dbShippingAddress = {};
+        if (typeof rawShippingAddress === "string") {
+          dbShippingAddress = {
+            full_name: orderData.fullName || "Khách hàng",
+            phone: orderData.phone || "0900000000",
+            city: "Chưa xác định",
+            district: "Chưa xác định",
+            ward: "Chưa xác định",
+            address_detail: rawShippingAddress,
+          };
+        } else if (rawShippingAddress && typeof rawShippingAddress === "object") {
+          dbShippingAddress = rawShippingAddress;
+        } else {
+          throw new AppError("Địa chỉ giao hàng là bắt buộc", 400);
+        }
+
+        let subtotal = 0;
+        const orderItems = [];
+
+        if (Array.isArray(items) && items.length > 0) {
+          for (const item of items) {
+            const product = await productRepository.findOne({ _id: item.product_id });
+            if (!product) {
+              throw new AppError(`Sản phẩm với id ${item.product_id} không tồn tại`, 404);
+            }
+            
+            const priceToUse = product.new_price || product.price || 0;
+            const totalCalculated = priceToUse * item.quantity;
+            subtotal += totalCalculated;
+
+            orderItems.push({
+              product_id: item.product_id,
+              product_name: product.name,
+              product_slug: product.slug,
+              product_image: product.image || (product.displayProduct && product.displayProduct[0]),
+              quantity: item.quantity,
+              price: priceToUse,
+              variant_id: item.variant_id || item.product_variant_id || null,
+            });
+          }
+        } else {
+          subtotal = Number(orderData.total_price || orderData.totalPrice || 0);
+        }
+
+        let discountAmount = 0;
+        let voucherId = null;
+
+        if (voucherCode) {
+          // Validate voucher and calculate discount
+          const validation = await voucherService.validateVoucher(userId, voucherCode, subtotal);
+          discountAmount = validation.discountAmount;
+          voucherId = validation.voucherId;
+
+          // Increment usedQuantity of the Voucher
+          const voucherUpdate = await Voucher.findOneAndUpdate(
+            { _id: voucherId, isDeleted: false },
+            { $inc: { usedQuantity: 1 } },
+            { session, returnDocument: "after" }
+          );
+
+          if (!voucherUpdate) {
+            throw new AppError("Không thể áp dụng voucher này", 400);
+          }
+
+          // Mark UserVoucher status as USED
+          const userVoucherUpdate = await UserVoucher.findOneAndUpdate(
+            { userId, voucherId, status: "CLAIMED" },
+            { $set: { status: "USED", usedAt: new Date() } },
+            { session, returnDocument: "after" }
+          );
+
+          if (!userVoucherUpdate) {
+            throw new AppError("Voucher của bạn đã được sử dụng hoặc không hợp lệ", 400);
+          }
+
+          // Create VoucherUsage record
+          await VoucherUsage.create(
+            [
+              {
+                userId,
+                voucherId,
+                orderId: new mongoose.Types.ObjectId(), // Temporary placeholder
+                discountAmount,
+                usedAt: new Date(),
+              },
+            ],
+            { session }
+          );
+        }
+
+        const finalTotalPrice = Math.max(0, subtotal - discountAmount);
+
+        // Create Order inside transaction
+        const orderArray = await orderRepository.create(
+          [
+            {
+              user_id: userId,
+              total_price: finalTotalPrice,
+              original_price: subtotal,
+              discount_amount: discountAmount,
+              voucher_code: voucherCode ? voucherCode.toUpperCase() : null,
+              status: "pending",
+              payment_method: paymentMethod.toLowerCase(),
+              shipping_address: dbShippingAddress,
+            },
+          ],
+          { session }
+        );
+
+        createdOrder = orderArray[0];
+
+        // Update the actual order ID in the VoucherUsage record
+        if (voucherId) {
+          await VoucherUsage.findOneAndUpdate(
+            { userId, voucherId, orderId: { $ne: createdOrder._id } },
+            { $set: { orderId: createdOrder._id } },
+            { session }
+          );
+        }
+
+        if (orderItems.length > 0) {
+          const orderItemsToInsert = orderItems.map((item) => ({
+            ...item,
+            order_id: createdOrder._id,
+          }));
+
+          await orderRepository.insertManyItems(orderItemsToInsert, { session });
+        }
+      });
+
+      // Trigger realtime socket notifications outside transaction block
+      if (createdOrder) {
+        import("../../sockets/events.js")
+          .then(({ emitOrderNotification }) => {
+            emitOrderNotification(createdOrder);
+          })
+          .catch((err) => console.error("Failed to emit order socket notification:", err.message));
+      }
+
+      return createdOrder;
+    } catch (error) {
+      // Fallback for standalone MongoDB databases which do not support transactions
+      if (
+        error.message &&
+        (error.message.includes("does not support document-level writes") ||
+          error.message.includes("replica set") ||
+          error.message.includes("transaction"))
+      ) {
+        console.warn("⚠️ MongoDB local does not support Transactions. Falling back to non-transactional execution.");
+        return await this.createOrderWithoutTransaction(userId, orderData);
+      }
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+
+  // Non-transactional fallback for development/local systems running standalone MongoDB
+  async createOrderWithoutTransaction(userId, orderData) {
+    const items = orderData.items || [];
+    const paymentMethod = orderData.payment_method || orderData.paymentMethod || "cod";
+    const rawShippingAddress = orderData.shipping_address || orderData.shippingAddress;
+    const voucherCode = orderData.voucher_code || orderData.voucherCode;
+
+    let dbShippingAddress = {};
+    if (typeof rawShippingAddress === "string") {
+      dbShippingAddress = {
+        full_name: orderData.fullName || "Khách hàng",
+        phone: orderData.phone || "0900000000",
+        city: "Chưa xác định",
+        district: "Chưa xác định",
+        ward: "Chưa xác định",
+        address_detail: rawShippingAddress,
+      };
+    } else if (rawShippingAddress && typeof rawShippingAddress === "object") {
+      dbShippingAddress = rawShippingAddress;
+    } else {
       throw new AppError("Địa chỉ giao hàng là bắt buộc", 400);
     }
 
-    if (!total_price || total_price <= 0) {
-      throw new AppError("Tổng giá tiền không hợp lệ", 400);
-    }
-
-    let totalprice = total_price;
+    let subtotal = 0;
     const orderItems = [];
 
     if (Array.isArray(items) && items.length > 0) {
@@ -30,9 +213,9 @@ class OrderService {
           throw new AppError(`Sản phẩm với id ${item.product_id} không tồn tại`, 404);
         }
         
-        const priceToUse = product.price || product.new_price || 0;
+        const priceToUse = product.new_price || product.price || 0;
         const totalCalculated = priceToUse * item.quantity;
-        totalprice += totalCalculated;
+        subtotal += totalCalculated;
 
         orderItems.push({
           product_id: item.product_id,
@@ -41,35 +224,68 @@ class OrderService {
           product_image: product.image || (product.displayProduct && product.displayProduct[0]),
           quantity: item.quantity,
           price: priceToUse,
-          variant_id: item.variant_id || null,
+          variant_id: item.variant_id || item.product_variant_id || null,
         });
       }
+    } else {
+      subtotal = Number(orderData.total_price || orderData.totalPrice || 0);
     }
+
+    let discountAmount = 0;
+    let voucherId = null;
+
+    if (voucherCode) {
+      const validation = await voucherService.validateVoucher(userId, voucherCode, subtotal);
+      discountAmount = validation.discountAmount;
+      voucherId = validation.voucherId;
+
+      await Voucher.updateOne({ _id: voucherId }, { $inc: { usedQuantity: 1 } });
+      await UserVoucher.updateOne(
+        { userId, voucherId, status: "CLAIMED" },
+        { $set: { status: "USED", usedAt: new Date() } }
+      );
+    }
+
+    const finalTotalPrice = Math.max(0, subtotal - discountAmount);
 
     const order = await orderRepository.create({
       user_id: userId,
-      total_price: totalprice,
+      total_price: finalTotalPrice,
+      original_price: subtotal,
+      discount_amount: discountAmount,
+      voucher_code: voucherCode ? voucherCode.toUpperCase() : null,
       status: "pending",
-      payment_method: payment_method || "cod",
-      shipping_address,
+      payment_method: paymentMethod.toLowerCase(),
+      shipping_address: dbShippingAddress,
     });
+
+    if (voucherId) {
+      await VoucherUsage.create({
+        userId,
+        voucherId,
+        orderId: order._id,
+        discountAmount,
+        usedAt: new Date(),
+      });
+    }
 
     if (orderItems.length > 0) {
       const orderItemsToInsert = orderItems.map((item) => ({
         ...item,
         order_id: order._id,
       }));
-
       await orderRepository.insertManyItems(orderItemsToInsert);
     }
 
-    // Trigger realtime notification
-    import("../../sockets/events.js").then(({ emitOrderNotification }) => {
-      emitOrderNotification(order);
-    }).catch(err => console.error("Failed to emit order socket notification:", err.message));
+    import("../../sockets/events.js")
+      .then(({ emitOrderNotification }) => {
+        emitOrderNotification(order);
+      })
+      .catch((err) => console.error("Failed to emit order socket notification:", err.message));
 
     return order;
   }
+
 
   async getOrdersByUser(userIdString) {
     const userId = new mongoose.Types.ObjectId(userIdString);
@@ -522,7 +738,7 @@ class OrderService {
 
   async updateOrderItem(id, itemData) {
     const { OrderItem } = await import("./order.model.js");
-    const updated = await OrderItem.findByIdAndUpdate(id, itemData, { new: true });
+    const updated = await OrderItem.findByIdAndUpdate(id, itemData, { returnDocument: "after" });
     if (!updated) {
       throw new AppError("Không tìm thấy sản phẩm trong đơn hàng", 404);
     }

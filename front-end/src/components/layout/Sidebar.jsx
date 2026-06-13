@@ -27,8 +27,8 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`relative flex h-screen flex-col border-r border-gray-200 bg-white text-gray-900
-        transition-all duration-300 ease-in-out
+      className={`sticky top-0 flex h-screen flex-col border-r border-gray-200 bg-white text-gray-900
+        transition-all duration-300 ease-in-out z-40 shrink-0
         ${collapsed ? "w-16" : "w-64"}`}
     >
       {/* Logo */}
