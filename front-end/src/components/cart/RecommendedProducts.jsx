@@ -72,8 +72,7 @@ const RecommendedProducts = ({ onAddToCart }) => {
               key={prod._id || prod.id}
               className="bg-white dark:bg-slate-900/10 border border-slate-100 dark:border-slate-800/60 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-200 group flex flex-col justify-between"
             >
-              {/* Product Link wrapper */}
-              <Link to={`/product/${prod.slug}`} className="block flex-1">
+              <Link to={`/product/${prod.slug || prod._id || prod.id}`} className="block flex-1">
                 {/* Image */}
                 <div className="aspect-[3/4] rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 relative">
                   <img

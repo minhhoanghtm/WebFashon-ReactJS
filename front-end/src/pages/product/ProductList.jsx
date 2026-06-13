@@ -38,7 +38,7 @@ const ProductList = () => {
       <div className="mt-8 grid grid-cols-1 gap-y-12 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-4 xl:gap-x-8">
         {data.map((product) => (
           <div key={product._id} className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition">
-            <Link to={`/product/${product.slug}`} className="block">
+            <Link to={`/product/${product.slug || product._id || product.id}`} className="block">
               <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-xl bg-gray-100 group-hover:opacity-75 transition">
                 <img
                   src={product.variants?.[0]?.image_url || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=400&h=400&q=80'}

@@ -1,79 +1,93 @@
-import React, { useState, useEffect } from "react";
-import { FaStar } from "react-icons/fa";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../store/auth.store";
+import { Star } from "lucide-react";
 import { getOrdersByUserIdService } from "@/services/order.service";
+import { useAuthStore } from "@/store/auth.store";
 
-const ProductReview = ({ reviews = [], productId }) => {
+const ProductReview = ({ reviews = [], productId, averageRating }) => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
-
+  const [selectedRating, setSelectedRating] = useState(0);
   const [showAll, setShowAll] = useState(false);
-  const [selectedRating, setSelectedRating] = useState(0); // 0 means all
-
-  // Eligibility states
-  const [hasPurchased, setHasPurchased] = useState(false);
-  const [hasReviewed, setHasReviewed] = useState(false);
   const [matchingOrder, setMatchingOrder] = useState(null);
   const [matchingOrderItem, setMatchingOrderItem] = useState(null);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
-  const safeReviews = Array.isArray(reviews) ? reviews : [];
-  const totalReviews = safeReviews.length;
+  const totalReviews = reviews.length;
+  const displayAverage =
+    totalReviews > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+      : averageRating;
+
+  const filteredReviews = useMemo(
+    () =>
+      selectedRating
+        ? reviews.filter((review) => Math.round(review.rating) === selectedRating)
+        : reviews,
+    [reviews, selectedRating],
+  );
+  const displayedReviews = showAll ? filteredReviews : filteredReviews.slice(0, 3);
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkReviewEligibility = async () => {
-      if (!isAuthenticated || !user || !productId) {
-        setHasPurchased(false);
-        setHasReviewed(false);
-        setMatchingOrder(null);
-        setMatchingOrderItem(null);
-        return;
-      }
+      if (!isAuthenticated || !user || !productId) return;
+
+      const userId = user._id || user.id;
+      const alreadyReviewed = reviews.some((review) => {
+        const reviewUserId = review.userId;
+        return reviewUserId && String(reviewUserId) === String(userId);
+      });
+
+      if (isMounted) setHasReviewed(alreadyReviewed);
 
       try {
-        const userId = user._id || user.id;
-
-        // 1. Check if user already reviewed this product
-        const alreadyReviewed = safeReviews.some((r) => {
-          const reviewUserId = r.user_id?._id || r.user_id;
-          return reviewUserId && reviewUserId.toString() === userId.toString();
-        });
-        setHasReviewed(alreadyReviewed);
-
-        // 2. Fetch user orders to check if they purchased it (status delivered)
-        const ordersData = await getOrdersByUserIdService();
-        const userOrders = ordersData?.orders || [];
-
+        const orderData = await getOrdersByUserIdService();
+        const orders = orderData?.orders || [];
         let foundOrder = null;
         let foundItem = null;
-        
-        for (const order of userOrders) {
+
+        for (const order of orders) {
           if (order.status !== "delivered") continue;
-          
-          const match = order.items?.find(
-            (item) => item.product_id?.toString() === productId.toString()
-          );
-          
-          if (match) {
+          const item = order.items?.find((orderItem) => {
+            const orderProductId = orderItem.product_id?._id || orderItem.product_id;
+            return String(orderProductId) === String(productId);
+          });
+
+          if (item) {
             foundOrder = order;
-            foundItem = match;
+            foundItem = item;
             break;
           }
         }
 
-        setMatchingOrder(foundOrder);
-        setMatchingOrderItem(foundItem);
-        setHasPurchased(!!foundOrder);
-      } catch (err) {
-        console.error("Error checking review eligibility:", err);
+        if (isMounted) {
+          setMatchingOrder(foundOrder);
+          setMatchingOrderItem(foundItem);
+        }
+      } catch (error) {
+        console.error("Không thể kiểm tra điều kiện đánh giá:", error);
       }
     };
 
     checkReviewEligibility();
-  }, [isAuthenticated, user, productId, safeReviews]);
 
-  const handleWriteReviewClick = () => {
-    if (!matchingOrderItem || !matchingOrder) return;
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, productId, reviews, user]);
+
+  const ratingDistribution = [5, 4, 3, 2, 1].map((stars) => {
+    const count = reviews.filter((review) => Math.round(review.rating) === stars).length;
+    return {
+      stars,
+      percentage: totalReviews ? Math.round((count / totalReviews) * 100) : 0,
+    };
+  });
+
+  const handleWriteReview = () => {
+    if (!matchingOrder || !matchingOrderItem) return;
     navigate(`/reviews/create?product_id=${productId}&order_id=${matchingOrder._id}`, {
       state: {
         item: matchingOrderItem,
@@ -82,227 +96,94 @@ const ProductReview = ({ reviews = [], productId }) => {
     });
   };
 
-  // Calculate average rating
-  const averageRating =
-    totalReviews > 0
-      ? (safeReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / totalReviews)
-      : 4.5; // Default mockup average if no reviews yet
-
-  // Group and count ratings for progress bars
-  const ratingDistribution = [5, 4, 3, 2, 1].map((stars) => {
-    const count = safeReviews.filter((r) => r.rating === stars).length;
-    const percentage = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
-    return { stars, percentage };
-  });
-
-  // Filter and sort reviews
-  const filteredReviews = selectedRating === 0
-    ? safeReviews
-    : safeReviews.filter((r) => r.rating === selectedRating);
-
-  const displayedReviews = showAll ? filteredReviews : filteredReviews.slice(0, 3);
-
-  // Helper to get initials
-  const getInitials = (name) => {
-    if (!name) return "ND";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  // Helper to format review date
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "12 Tháng 6, 2025";
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("vi-VN", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
   return (
-    <div className="space-y-6 text-left">
-      {/* Reviews Section Header */}
-      <div className="pd-section-header">
-        <span className="pd-section-title text-slate-900 dark:text-white">Đánh giá khách hàng</span>
-        {hasPurchased && !hasReviewed && (
-          <button
-            type="button"
-            onClick={handleWriteReviewClick}
-            className="pd-btn-outline"
-          >
+    <section className="product-review" aria-labelledby="product-review-title">
+      <div className="product-detail-section-header">
+        <div>
+          <span>Đánh giá</span>
+          <h2 id="product-review-title">Đánh giá khách hàng</h2>
+        </div>
+        {matchingOrder && !hasReviewed && (
+          <button type="button" onClick={handleWriteReview}>
             Viết đánh giá
           </button>
         )}
       </div>
 
-      {/* Summary Rating Wrap */}
-      <div className="pd-rating-wrap">
+      <div className="product-review__summary">
         <div>
-          <div className="pd-rating-num font-serif">{averageRating.toFixed(1)}</div>
-          <div className="pd-rating-stars-big">
-            {[...Array(5)].map((_, i) => (
-              <span
-                key={i}
-                className={
-                  i < Math.round(averageRating)
-                    ? "pd-star-filled text-yellow-500"
-                    : "pd-star-empty text-slate-300 dark:text-slate-700"
-                }
-              >
-                ★
-              </span>
+          <strong>{displayAverage.toFixed(1)}</strong>
+          <div className="product-review__stars" aria-label={`${displayAverage.toFixed(1)} sao`}>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Star
+                key={index}
+                size={17}
+                fill={index < Math.round(displayAverage) ? "currentColor" : "none"}
+                aria-hidden="true"
+              />
             ))}
           </div>
-          <div className="pd-rating-count">
-            Dựa trên {totalReviews || 128} đánh giá
-          </div>
+          <span>Dựa trên {totalReviews} đánh giá</span>
         </div>
 
-        {/* Rating Progress Bars */}
-        <div className="pd-bars">
+        <div className="product-review__bars">
           {ratingDistribution.map(({ stars, percentage }) => (
-            <div key={stars} className="pd-bar-row">
-              <span className="pd-bar-num">{stars}</span>
-              <div className="pd-bar-track">
-                {/* Fallback mock visual width if 0 total reviews to make the layout look premium */}
-                <div
-                  className="pd-bar-fill"
-                  style={{
-                    width: `${totalReviews > 0 ? percentage : (stars === 5 ? 62 : stars === 4 ? 24 : stars === 3 ? 8 : stars === 2 ? 4 : 2)}%`
-                  }}
-                ></div>
-              </div>
-              <span className="pd-bar-pct">
-                {totalReviews > 0 ? `${percentage}%` : (stars === 5 ? "62%" : stars === 4 ? "24%" : stars === 3 ? "8%" : stars === 2 ? "4%" : "2%")}
-              </span>
-            </div>
+            <button
+              type="button"
+              key={stars}
+              onClick={() => setSelectedRating(selectedRating === stars ? 0 : stars)}
+              className={selectedRating === stars ? "is-active" : ""}
+            >
+              <span>{stars} sao</span>
+              <i>
+                <b style={{ width: `${percentage}%` }} />
+              </i>
+              <em>{percentage}%</em>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Filter Buttons */}
-      <div className="flex flex-wrap gap-2 pb-4 border-b border-slate-100 dark:border-slate-800">
-        <span className="text-xs font-bold text-slate-400 uppercase self-center mr-2">Lọc theo:</span>
-        <button
-          type="button"
-          onClick={() => setSelectedRating(0)}
-          className={`px-3.5 py-1 text-xs border rounded-full font-semibold transition ${
-            selectedRating === 0
-              ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white"
-              : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-400"
-          }`}
-        >
-          Tất cả
-        </button>
-        {[5, 4, 3, 2, 1].map((stars) => (
-          <button
-            key={stars}
-            type="button"
-            onClick={() => setSelectedRating(stars)}
-            className={`px-3.5 py-1 text-xs border rounded-full font-semibold transition ${
-              selectedRating === stars
-                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white"
-                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-400"
-            }`}
-          >
-            {stars} Sao
-          </button>
-        ))}
-      </div>
-
-      {/* Review List */}
-      <div className="pd-review-list">
-        {displayedReviews.length > 0 ? (
-          displayedReviews.map((review) => {
-            const authorName = review.user_id?.fullName || review.author || "Khách hàng ẩn danh";
-            const initials = getInitials(authorName);
-            const reviewText = review.content?.text || review.content || "Sản phẩm tuyệt vời, rất đáng mua!";
-            
-            return (
-              <div key={review._id || review.id || Math.random()} className="pd-review-card text-left bg-slate-50/50 dark:bg-slate-900/20">
-                <div className="pd-rev-header">
-                  <div className="pd-rev-user">
-                    <div className="pd-avatar">{initials}</div>
-                    <div>
-                      <div className="pd-rev-name text-slate-900 dark:text-slate-100">{authorName}</div>
-                      <div className="pd-rev-date">{formatDate(review.createdAt || review.date)}</div>
-                    </div>
-                  </div>
-                  <span className="pd-verified">
-                    <span className="pd-check-icon">✓</span> Đã mua hàng
-                  </span>
+      <div className="product-review__list">
+        {displayedReviews.length ? (
+          displayedReviews.map((review) => (
+            <article className="product-review-card" key={review.id}>
+              <div className="product-review-card__header">
+                <div>
+                  <strong>{review.author}</strong>
+                  <span>{review.date}</span>
                 </div>
-                
-                {/* Review Stars */}
-                <div className="pd-rev-stars my-2">
-                  {[...Array(5)].map((_, i) => (
-                    <span
-                      key={i}
-                      className={
-                        i < (review.rating || 5)
-                          ? "pd-star-filled text-yellow-500"
-                          : "pd-star-empty text-slate-300 dark:text-slate-700"
-                      }
-                    >
-                      ★
-                    </span>
+                <div className="product-review-card__stars">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star
+                      key={index}
+                      size={13}
+                      fill={index < Math.round(review.rating) ? "currentColor" : "none"}
+                      aria-hidden="true"
+                    />
                   ))}
                 </div>
-
-                {/* Review Text */}
-                <div className="pd-rev-body text-slate-700 dark:text-slate-300">
-                  {reviewText}
-                </div>
-
-                {/* Review Tags */}
-                <div className="pd-rev-tags mt-3">
-                  <span className="pd-tag">Chất vải đẹp</span>
-                  <span className="pd-tag">Mặc vừa vặn</span>
-                </div>
               </div>
-            );
-          })
+              <p>{review.content}</p>
+            </article>
+          ))
         ) : (
-          <p className="text-center py-6 text-slate-400">
-            Chưa có đánh giá nào {selectedRating !== 0 ? `cho mức lọc ${selectedRating} sao` : ""}.
-          </p>
+          <div className="product-review__empty">
+            Chưa có đánh giá nào{selectedRating ? ` cho mức ${selectedRating} sao` : ""}.
+          </div>
         )}
       </div>
 
-      {/* Load More Button */}
-      {filteredReviews.length > displayedReviews.length && (
-        <div className="pd-load-more-wrap">
-          <button
-            type="button"
-            onClick={() => setShowAll(true)}
-            className="pd-btn-outline"
-          >
-            Tải thêm đánh giá
-          </button>
-        </div>
+      {filteredReviews.length > 3 && (
+        <button
+          type="button"
+          className="product-review__more"
+          onClick={() => setShowAll((current) => !current)}
+        >
+          {showAll ? "Thu gọn đánh giá" : "Xem thêm đánh giá"}
+        </button>
       )}
-      
-      {showAll && filteredReviews.length > 3 && (
-        <div className="pd-load-more-wrap">
-          <button
-            type="button"
-            onClick={() => setShowAll(false)}
-            className="pd-btn-outline"
-          >
-            Thu gọn đánh giá
-          </button>
-        </div>
-      )}
-    </div>
+    </section>
   );
 };
 

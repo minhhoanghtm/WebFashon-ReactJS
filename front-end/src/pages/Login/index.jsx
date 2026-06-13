@@ -1,16 +1,20 @@
-import { LoginForm } from "@/components/login-form";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import React from "react";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import LoginBanner from "./LoginBanner";
+import LoginForm from "./LoginForm";
+import "./login.css";
 
-const index = () => {
+const Login = () => {
   useDocumentTitle("Đăng nhập");
+
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-4xl">
+    <div className="login-page">
+      <div className="login-container">
+        <LoginBanner />
         <LoginForm />
       </div>
     </div>
   );
 };
 
-export default index;
+export default Login;

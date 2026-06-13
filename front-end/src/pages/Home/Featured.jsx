@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
-import { useEffect, useState } from "react";
-import { getAllProductService } from "@/services/product.service";
 const Featured = ({ products, selectedCategory, title = "Sản phẩm nổi bật" }) => {
   // console.log("Featured products:", products);
   // const [data, setData] = useState([]);
@@ -45,7 +43,7 @@ const Featured = ({ products, selectedCategory, title = "Sản phẩm nổi bậ
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-hidden">
         {filteredProducts.map((product) => (
           <Link
-            to={`/product/${product.slug}`}
+            to={`/product/${product.slug || product._id || product.id}`}
             key={product._id}
             className="border rounded-lg p-2 "
           >

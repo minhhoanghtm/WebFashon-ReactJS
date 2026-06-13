@@ -1,215 +1,253 @@
-import { useEffect, useState } from "react";
-import ProductInfo from "./ProductInfo";
-import ProductReview from "./ProductReview";
-import { useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { AlertCircle, LoaderCircle } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
+  getAllProductService,
+  getProductDetailByIdService,
   getProductByCategoryService,
   getProductBySlugService,
 } from "@/services/product.service";
 import { getProductVariantByProductIdService } from "@/services/productItem.service";
 import { getReviewsByProductIdService } from "@/services/review.service";
+import ProductGallery from "./ProductGallery";
+import ProductInfo from "./ProductInfo";
+import ProductReview from "./ProductReview";
+import ProductTabs from "./ProductTabs";
 import RelatedProducts from "./RelatedProducts";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import {
+  normalizeProductDetail,
+  normalizeRelatedProduct,
+  normalizeReviews,
+} from "./productDetailAdapter";
+import {
+  fallbackProductDetails,
+  fallbackRelatedProducts,
+} from "./productDetailMockData";
 import "./ProductDetail.css";
+
+const getProductId = (p) => {
+  if (!p) return "";
+  return p.id || p._id || p.productId || p.maSP || "";
+};
 
 const ProductDetail = () => {
   const { slug } = useParams();
-
-  const [product, setProduct] = useState(null);
-  useDocumentTitle(product?.name || "Chi tiết sản phẩm");
+  const [rawProduct, setRawProduct] = useState(null);
   const [variants, setVariants] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [selected, setSelected] = useState({
-    color: null,
-    size: null,
-    quantity: 1,
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [activeTab, setActiveTab] = useState("description"); // "description", "care", "shipping"
+  const product = useMemo(
+    () => normalizeProductDetail(rawProduct, variants, reviews),
+    [rawProduct, variants, reviews],
+  );
+  const normalizedReviews = useMemo(() => normalizeReviews(reviews), [reviews]);
+  const normalizedRelatedProducts = useMemo(() => {
+    const sourceProducts = relatedProducts.length
+      ? relatedProducts
+      : fallbackRelatedProducts;
 
-  // Cập nhật selected state
-  const updateSelected = (key, value) => {
-    setSelected(prev => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+    return sourceProducts
+      .map((item, index) => normalizeRelatedProduct(item, index))
+      .filter((item) => item.id !== product?.id)
+      .slice(0, 4);
+  }, [product?.id, relatedProducts]);
+
+  useDocumentTitle(product?.name || "Chi tiết sản phẩm");
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (product) {
+      console.log("Chi tiết sản phẩm:", product);
+    }
+  }, [product]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProductDetail = async () => {
+      if (!slug) return;
+
+      setIsLoading(true);
+      setError(null);
+
       try {
-        if (!slug) return;
+        let productData = null;
 
-        // Lấy thông tin sản phẩm theo slug
-        const productData = await getProductBySlugService(slug);
-        setProduct(productData);
-        console.log("Product data:", productData);
+        console.log("ID route (slug param):", slug);
 
-        if (!productData) return;
-
-        // Lấy thông tin biến thể sản phẩm theo productId
-        const productId = productData._id ?? productData.id;
-        if (productId) {
-          const variantRes = await getProductVariantByProductIdService(productId);
-          const variantData = variantRes || [];
-          setVariants(variantData);
-          console.log("Variant data:", variantData);
+        // 1. Thử tải sản phẩm theo slug
+        try {
+          productData = await getProductBySlugService(slug);
+          console.log("Loaded product by slug:", productData);
+        } catch {
+          // 2. Nếu lỗi, thử tải theo ID
+          try {
+            productData = await getProductDetailByIdService(slug);
+            console.log("Loaded product by ID:", productData);
+          } catch (idError) {
+            console.warn("API chi tiết theo ID thất bại:", idError);
+          }
         }
 
-        // Lấy thông tin đánh giá sản phẩm theo productId
-        if (productId) {
-          const reviewRes = await getReviewsByProductIdService(productId);
-          const reviewData = reviewRes || [];
-          setReviews(reviewData);
-          console.log("Review data:", reviewData);
+        // 3. Nếu vẫn không thấy, thử tìm trong toàn bộ sản phẩm của shop
+        if (!productData) {
+          try {
+            console.log("Đang thử fallback tìm trong toàn bộ sản phẩm...");
+            const allProducts = await getAllProductService();
+            console.log("Product list (all products loaded):", allProducts);
+
+            if (Array.isArray(allProducts)) {
+              productData = allProducts.find(
+                (item) =>
+                  String(getProductId(item)) === String(slug) ||
+                  item.slug === slug
+              );
+              if (productData) {
+                console.log("Tìm thấy sản phẩm trong danh sách fallback:", productData);
+              }
+            }
+          } catch (listError) {
+            console.error("Lỗi khi tải danh sách sản phẩm fallback:", listError);
+          }
         }
 
-        // Lấy thông tin sản phẩm liên quan theo categoryId
-        if (productData.category_id) {
-          const relatedRes = await getProductByCategoryService(
-            productData.category_id,
-            12,
+        // 4. Nếu vẫn không thấy, thử tìm trong fallback mock data
+        if (!productData) {
+          productData = fallbackProductDetails.find(
+            (item) => item.slug === slug || item.id === slug,
           );
-          const relatedData = relatedRes || [];
-          setRelatedProducts(relatedData);
-          console.log("Related products data:", relatedData);
-        } else {
+          if (productData) {
+            console.log("Tìm thấy sản phẩm trong mock data:", productData);
+          }
+        }
+
+        if (!isMounted) return;
+
+        if (!productData) {
+          setRawProduct(null);
+          setError("Sản phẩm không tồn tại");
+          console.error("Không tìm thấy sản phẩm với param:", slug);
+          return;
+        }
+
+        setRawProduct(productData);
+
+        const productId = getProductId(productData);
+        const isMockProduct = Boolean(productData.isMock);
+
+        const categoryId =
+          typeof productData.category_id === "object"
+            ? productData.category_id?._id
+            : productData.category_id;
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        // Tải các dữ liệu phụ trợ (không để lỗi các API này làm sập trang)
+        const [variantData, reviewData, relatedData] = await Promise.all([
+          (!isMockProduct && productId
+            ? getProductVariantByProductIdService(productId)
+            : Promise.resolve([])
+          ).catch((err) => {
+            console.error("Lỗi khi tải variants:", err);
+            return [];
+          }),
+          (!isMockProduct && productId
+            ? getReviewsByProductIdService(productId)
+            : Promise.resolve([])
+          ).catch((err) => {
+            console.error("Lỗi khi tải reviews:", err);
+            return [];
+          }),
+          (!isMockProduct && categoryId
+            ? getProductByCategoryService(categoryId, 12)
+            : !isMockProduct
+              ? getAllProductService()
+              : Promise.resolve(fallbackRelatedProducts)
+          ).catch((err) => {
+            console.error("Lỗi khi tải sản phẩm liên quan:", err);
+            return [];
+          }),
+        ]);
+
+        if (!isMounted) return;
+
+        console.log("Variants data loaded:", variantData);
+        setVariants(Array.isArray(variantData) ? variantData : []);
+        setReviews(Array.isArray(reviewData) ? reviewData : []);
+        setRelatedProducts(Array.isArray(relatedData) ? relatedData : []);
+      } catch (fetchError) {
+        console.error("Lỗi nghiêm trọng khi tải chi tiết sản phẩm:", fetchError);
+        if (isMounted) {
+          setRawProduct(null);
+          setError("Sản phẩm không tồn tại");
+          setVariants([]);
+          setReviews([]);
           setRelatedProducts([]);
         }
-      } catch (error) {
-        console.error("Fetch error:", error);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    fetchData();
+    fetchProductDetail();
+
+    return () => {
+      isMounted = false;
+    };
   }, [slug]);
 
-  if (!product) {
+  if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+      <div className="product-detail-state" role="status">
+        <LoaderCircle className="product-detail-state__loader" aria-hidden="true" />
+        <span>Đang tải sản phẩm...</span>
       </div>
     );
   }
 
-  // Generate a nice mock SKU based on product id
-  const displaySku = product.sku || `LUS-TR-${(product._id || product.id || "000").slice(-4).toUpperCase()}`;
+  if (!product) {
+    return (
+      <div className="product-detail-state">
+        <AlertCircle size={34} aria-hidden="true" />
+        <h1>{error || "Sản phẩm không tồn tại"}</h1>
+        <p>Sản phẩm bạn đang tìm có thể đã bị ẩn hoặc đường dẫn không đúng.</p>
+        <Link to="/products">Quay lại trang sản phẩm</Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-[1300px] mx-auto px-6 py-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="pd-breadcrumb">
-        Trang chủ <span>›</span> Cửa hàng <span>›</span> Thời trang <span>›</span> {product.name}
-      </div>
+    <div className="product-detail">
+      <div className="product-detail__container">
+        <nav className="product-detail__breadcrumb" aria-label="Điều hướng">
+          <Link to="/">Trang chủ</Link>
+          <span>/</span>
+          <Link to="/products">Sản phẩm</Link>
+          <span>/</span>
+          <strong>{product.name}</strong>
+        </nav>
 
-      {/* Main product detail section */}
-      <ProductInfo
-        product={product}
-        variants={variants}
-        selected={selected}
-        updateSelected={updateSelected}
-      />
+        <section className="product-detail__main" aria-label="Chi tiết sản phẩm">
+          <ProductGallery
+            key={product.slug || product.id}
+            images={product.images}
+            productName={product.name}
+          />
+          <ProductInfo product={product} variants={variants} />
+        </section>
 
-      {/* Bottom info section */}
-      <div className="pd-bottom-wrap">
-        <div className="pd-divider"></div>
-
-        {/* Tabs headings */}
-        <div className="pd-tabs">
-          <button
-            onClick={() => setActiveTab("description")}
-            className={`pd-tab-btn ${activeTab === "description" ? "active" : ""}`}
-          >
-            Mô tả sản phẩm
-          </button>
-          <button
-            onClick={() => setActiveTab("care")}
-            className={`pd-tab-btn ${activeTab === "care" ? "active" : ""}`}
-          >
-            Chi tiết & Bảo quản
-          </button>
-          <button
-            onClick={() => setActiveTab("shipping")}
-            className={`pd-tab-btn ${activeTab === "shipping" ? "active" : ""}`}
-          >
-            Giao hàng & Trả hàng
-          </button>
-        </div>
-
-        {/* Tab contents */}
-        {activeTab === "description" && (
-          <div className="pd-desc-grid animate-in fade-in duration-200">
-            <div className="pd-desc-col">
-              <h4>Về sản phẩm này</h4>
-              <p>{product.description || "Thiết kế may mặc cao cấp, cắt may tinh tế tôn dáng người mặc và đem lại cảm giác thoải mái khi vận động suốt cả ngày dài."}</p>
-              <p>Chất liệu vải cao cấp được tuyển chọn giúp giữ dáng áo/quần bền đẹp, thoáng khí, hoàn hảo khi mặc hàng ngày hoặc trong các dịp quan trọng.</p>
-            </div>
-            <div className="pd-desc-col">
-              <h4>Thành phần & Thông số</h4>
-              <div className="pd-spec-row">
-                <span className="pd-spec-label">Chất liệu</span>
-                <span className="pd-spec-val">72% Wool, 28% Polyester</span>
-              </div>
-              <div className="pd-spec-row">
-                <span className="pd-spec-label">Lớp lót</span>
-                <span className="pd-spec-val">100% Viscose</span>
-              </div>
-              <div className="pd-spec-row">
-                <span className="pd-spec-label">Kiểu dáng</span>
-                <span className="pd-spec-val">Wide Leg, High Rise</span>
-              </div>
-              <div className="pd-spec-row">
-                <span className="pd-spec-label">Nguồn gốc</span>
-                <span className="pd-spec-val">Made in Vietnam</span>
-              </div>
-              <div className="pd-spec-row">
-                <span className="pd-spec-label">Mã SKU</span>
-                <span className="pd-spec-val">{displaySku}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "care" && (
-          <div className="pd-desc-grid animate-in fade-in duration-200">
-            <div className="pd-desc-col">
-              <h4>Hướng dẫn giặt ủi</h4>
-              <p>Giặt máy ở chế độ giặt nhẹ (delicates hoặc handwash) ở nhiệt độ thường.</p>
-              <p>Không dùng thuốc tẩy mạnh hoặc nước giặt có tính tẩy cao. Ủi nhẹ ở nhiệt độ thấp hoặc giặt hấp khô để bảo quản phom dáng sản phẩm tốt nhất.</p>
-            </div>
-            <div className="pd-desc-col">
-              <h4>Hướng dẫn bảo quản</h4>
-              <p>Treo sản phẩm bằng móc treo có đệm vai để giữ đúng phom áo và quần.</p>
-              <p>Tránh phơi trực tiếp dưới ánh nắng gắt của mặt trời để duy trì độ bền màu tối ưu.</p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "shipping" && (
-          <div className="pd-desc-grid animate-in fade-in duration-200">
-            <div className="pd-desc-col">
-              <h4>Thông tin giao hàng</h4>
-              <p>Miễn phí vận chuyển cho tất cả đơn hàng từ $100 trở lên. Thời gian xử lý đơn hàng nhanh chóng trong vòng 24 giờ.</p>
-              <p>Giao hàng tiêu chuẩn mất từ 2-4 ngày làm việc. Có hỗ trợ giao hàng hỏa tốc nội thành.</p>
-            </div>
-            <div className="pd-desc-col">
-              <h4>Chính sách đổi trả</h4>
-              <p>Đổi trả dễ dàng trong vòng 7 ngày kể từ ngày nhận hàng thành công nếu phát sinh lỗi từ nhà sản xuất hoặc chọn nhầm size.</p>
-              <p>Sản phẩm đổi trả yêu cầu nguyên tem mác, chưa qua sử dụng hoặc giặt là.</p>
-            </div>
-          </div>
-        )}
-
-        <div className="pd-divider"></div>
-
-        {/* Product reviews list */}
-        <ProductReview reviews={reviews} productId={product._id || product.id} />
-
-        <div className="pd-divider"></div>
-
-        {/* Related products */}
-        <RelatedProducts relatedProducts={relatedProducts} />
+        <ProductTabs product={product} variants={variants} />
+        <ProductReview
+          reviews={normalizedReviews}
+          productId={product.id}
+          averageRating={product.rating}
+        />
+        <RelatedProducts products={normalizedRelatedProducts} />
       </div>
     </div>
   );

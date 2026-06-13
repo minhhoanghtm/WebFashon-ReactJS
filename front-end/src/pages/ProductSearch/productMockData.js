@@ -8,6 +8,7 @@ export const fallbackProductImage = linenShirtImage;
 export const mockProducts = [
   {
     id: "mock-ao-linen",
+    slug: "mock-ao-linen",
     name: "Áo sơ mi linen thanh lịch",
     price: 689000,
     oldPrice: 790000,
@@ -23,6 +24,7 @@ export const mockProducts = [
   },
   {
     id: "mock-giay-trang",
+    slug: "mock-giay-trang",
     name: "Giày thể thao trắng tối giản",
     price: 1290000,
     image: whiteSneakersImage,
@@ -37,6 +39,7 @@ export const mockProducts = [
   },
   {
     id: "mock-blazer-navy",
+    slug: "mock-blazer-navy",
     name: "Áo blazer xanh navy",
     price: 1590000,
     oldPrice: 1790000,
@@ -52,6 +55,7 @@ export const mockProducts = [
   },
   {
     id: "mock-tui-da",
+    slug: "mock-tui-da",
     name: "Túi da nâu dáng cong",
     price: 890000,
     image: brownBagImage,
@@ -65,6 +69,7 @@ export const mockProducts = [
   },
   {
     id: "mock-ao-linen-trang",
+    slug: "mock-ao-linen-trang",
     name: "Áo linen trắng phom rộng",
     price: 749000,
     image: linenShirtImage,
@@ -78,6 +83,7 @@ export const mockProducts = [
   },
   {
     id: "mock-giay-kem",
+    slug: "mock-giay-kem",
     name: "Giày thể thao đế kem",
     price: 1190000,
     image: whiteSneakersImage,
@@ -91,6 +97,7 @@ export const mockProducts = [
   },
   {
     id: "mock-blazer-cong-so",
+    slug: "mock-blazer-cong-so",
     name: "Blazer công sở phom suông",
     price: 1690000,
     image: navyBlazerImage,
@@ -104,6 +111,7 @@ export const mockProducts = [
   },
   {
     id: "mock-tui-vai",
+    slug: "mock-tui-vai",
     name: "Túi đeo vai phong cách tối giản",
     price: 820000,
     image: brownBagImage,

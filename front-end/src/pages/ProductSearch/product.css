@@ -275,6 +275,12 @@
 
 .product-card {
   min-width: 0;
+  position: relative;
+}
+
+.product-card__link {
+  cursor: pointer;
+  display: block;
 }
 
 .product-card__media {
@@ -283,11 +289,6 @@
   border-radius: 13px;
   overflow: hidden;
   position: relative;
-}
-
-.product-card__media > a {
-  display: block;
-  height: 100%;
 }
 
 .product-card__media img {

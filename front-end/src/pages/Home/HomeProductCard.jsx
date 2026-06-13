@@ -4,8 +4,8 @@ import { formatCurrency } from "@/utils/format";
 import { fallbackProductImage } from "./homeMockData";
 
 const HomeProductCard = ({ product, isFavorite, onToggleFavorite }) => {
-  const productPath =
-    product.slug && !product.isMock ? `/product/${product.slug}` : "/products";
+  const productIdentifier = product.slug || product.id || product._id;
+  const productPath = productIdentifier ? `/product/${productIdentifier}` : "/products";
 
   const handleImageError = (event) => {
     event.currentTarget.onerror = null;

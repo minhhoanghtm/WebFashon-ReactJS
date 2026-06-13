@@ -1,91 +1,66 @@
-import React from "react";
+import { Heart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
+import { formatCurrency } from "@/utils/format";
+import { fallbackImages } from "./productDetailMockData";
 
-const RelatedProducts = ({ relatedProducts = [] }) => {
-  const safeProducts = Array.isArray(relatedProducts) ? relatedProducts.slice(0, 4) : [];
-
-  if (safeProducts.length === 0) {
-    return null;
-  }
-
-  // Format currency
-  const formatPrice = (val) => {
-    if (val > 1000) {
-      return val.toLocaleString("vi-VN") + "đ";
-    }
-    return "$" + val;
-  };
-
-  const handleWishlistClick = (e, productName) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toast.success(`Đã thêm "${productName}" vào danh sách yêu thích!`);
-  };
+const RelatedProducts = ({ products = [] }) => {
+  if (!products.length) return null;
 
   return (
-    <div className="space-y-6 text-left pb-10">
-      {/* Section Header */}
-      <div className="pd-section-header">
-        <span className="pd-section-title text-slate-900 dark:text-white">Có thể bạn cũng thích</span>
-        <Link to="/products" className="pd-see-all">
-          Xem tất cả
-        </Link>
+    <section className="related-products" aria-labelledby="related-products-title">
+      <div className="product-detail-section-header">
+        <div>
+          <span>Sản phẩm liên quan</span>
+          <h2 id="related-products-title">Có thể bạn cũng thích</h2>
+        </div>
+        <Link to="/products">Xem tất cả</Link>
       </div>
 
-      {/* Products Grid */}
-      <div className="pd-products-grid">
-        {safeProducts.map((prod) => {
-          const mainImg = prod.image || prod.displayProduct?.[0] || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&auto=format&fit=crop&q=60";
-          const hasDiscount = prod.old_price > prod.new_price;
-
-          return (
-            <Link
-              key={prod._id || prod.id}
-              to={`/product/${prod.slug}`}
-              className="pd-prod-card group"
-            >
-              <div className="pd-prod-img">
-                <img
-                  src={mainImg}
-                  alt={prod.name}
-                  className="group-hover:scale-105 transition-transform duration-300"
-                  onError={(e) => {
-                    e.target.src = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&auto=format&fit=crop&q=60";
-                  }}
-                />
-                
-                {/* Wishlist Button */}
-                <button
-                  type="button"
-                  onClick={(e) => handleWishlistClick(e, prod.name)}
-                  className="pd-wishlist-btn font-sans hover:bg-red-50 dark:hover:bg-slate-800"
-                  title="Yêu thích"
-                >
-                  ♡
-                </button>
+      <div className="related-products__grid">
+        {products.map((product) => (
+          <Link
+            to={`/product/${product.slug || product.id}`}
+            className="related-product-card"
+            key={product.id}
+          >
+            <div className="related-product-card__image">
+              <img
+                src={product.image || fallbackImages[0]}
+                alt={product.name}
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = fallbackImages[0];
+                }}
+              />
+              <button
+                type="button"
+                aria-label="Yêu thích"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+              >
+                <Heart size={16} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="related-product-card__body">
+              <span>{product.category}</span>
+              <strong>{product.name}</strong>
+              <div>
+                <small>
+                  <Star size={13} fill="currentColor" aria-hidden="true" />
+                  {product.rating.toLocaleString("vi-VN", {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  })}
+                </small>
+                <em>{product.price > 0 ? formatCurrency(product.price) : "Liên hệ"}</em>
               </div>
-              
-              {/* Product Info */}
-              <div className="pd-prod-name text-slate-800 dark:text-slate-200 mt-2">
-                {prod.name}
-              </div>
-              
-              <div className="pd-prod-price mt-1">
-                <span className="text-slate-950 dark:text-slate-100 font-bold">
-                  {formatPrice(prod.new_price)}
-                </span>
-                {hasDiscount && (
-                  <s className="text-slate-400 dark:text-slate-600">
-                    {formatPrice(prod.old_price)}
-                  </s>
-                )}
-              </div>
-            </Link>
-          );
-        })}
+            </div>
+          </Link>
+        ))}
       </div>
-    </div>
+    </section>
   );
 };
 
