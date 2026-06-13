@@ -62,6 +62,9 @@ const MainLayout = () => {
             <Link to="/products" className="text-sm font-medium hover:text-indigo-600 transition">
               Sản phẩm
             </Link>
+            <Link to="/vouchers" className="text-sm font-medium hover:text-indigo-600 transition">
+              Voucher
+            </Link>
             <Link to="/cart" className="relative text-sm font-medium hover:text-indigo-600 transition">
               Giỏ hàng
               {cartCount > 0 && (
@@ -72,6 +75,9 @@ const MainLayout = () => {
             </Link>
             {isAuthenticated ? (
               <>
+                <Link to="/orders" className="text-sm font-medium hover:text-indigo-600 transition">
+                  Đơn hàng
+                </Link>
                 <Link to="/profile" className="text-sm font-medium hover:text-indigo-600 transition">
                   Tài khoản
                 </Link>
