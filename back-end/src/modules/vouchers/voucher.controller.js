@@ -1,41 +1,60 @@
-import Voucher from "./voucher.model.js";
+import voucherService from "./voucher.service.js";
 import { successResponse, errorResponse } from "../../common/responses/index.js";
 
-// Auto-seed mock vouchers if empty
-const seedVouchers = async () => {
-  const count = await Voucher.countDocuments();
-  if (count === 0) {
-    await Voucher.insertMany([
-      {
-        code: "WELCOME10",
-        discount_type: "percentage",
-        discount_value: 10,
-        min_order_value: 100000,
-        is_active: true,
-      },
-      {
-        code: "LUSTRA50K",
-        discount_type: "fixed",
-        discount_value: 50000,
-        min_order_value: 500000,
-        is_active: true,
-      },
-      {
-        code: "FREESHIP",
-        discount_type: "fixed",
-        discount_value: 30000, // standard shipping fee
-        min_order_value: 300000,
-        is_active: true,
-      },
-    ]);
-    console.log("Seeded default vouchers successfully.");
+// USER CONTROLLERS
+
+export const getPublicVouchers = async (req, res, next) => {
+  try {
+    const vouchers = await voucherService.getPublicVouchers();
+    return res.status(200).json({
+      success: true,
+      data: vouchers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const claimVoucher = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { voucherId } = req.body;
+
+    if (!voucherId) {
+      return res.status(400).json({
+        success: false,
+        message: "Mã định danh voucher (voucherId) là bắt buộc",
+      });
+    }
+
+    const claimed = await voucherService.claimVoucher(userId, voucherId);
+    return res.status(200).json({
+      success: true,
+      message: "Nhận mã giảm giá thành công",
+      data: claimed,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserWallet = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { status } = req.query; // Optional filter: CLAIMED, USED, EXPIRED
+    const wallet = await voucherService.getUserWallet(userId, status);
+    return res.status(200).json({
+      success: true,
+      data: wallet,
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const validateVoucher = async (req, res, next) => {
   try {
-    await seedVouchers();
-
+    const userId = req.user.userId;
     const { code, subtotal } = req.body;
 
     if (!code) {
@@ -45,56 +64,106 @@ export const validateVoucher = async (req, res, next) => {
       });
     }
 
-    const uppercaseCode = code.trim().toUpperCase();
-    const voucher = await Voucher.findOne({ code: uppercaseCode, is_active: true });
-
-    if (!voucher) {
-      return res.status(404).json({
-        success: false,
-        message: "Mã giảm giá không tồn tại hoặc đã hết hạn",
-      });
-    }
-
-    const currentSubtotal = Number(subtotal) || 0;
-
-    if (currentSubtotal < voucher.min_order_value) {
+    if (subtotal === undefined || subtotal < 0) {
       return res.status(400).json({
         success: false,
-        message: `Mã giảm giá này áp dụng cho đơn hàng tối thiểu ${voucher.min_order_value.toLocaleString("vi-VN")}đ`,
+        message: "Tổng tiền đơn hàng không hợp lệ",
       });
     }
 
-    let discount = 0;
-    if (voucher.discount_type === "percentage") {
-      discount = Math.round((voucher.discount_value / 100) * currentSubtotal);
-    } else if (voucher.discount_type === "fixed") {
-      discount = voucher.discount_value;
-    }
-
-    // Ensure discount doesn't exceed subtotal
-    discount = Math.min(discount, currentSubtotal);
-
+    const validationResult = await voucherService.validateVoucher(userId, code, subtotal);
     return res.status(200).json({
       success: true,
       message: "Áp dụng mã giảm giá thành công",
-      data: {
-        code: voucher.code,
-        discount_type: voucher.discount_type,
-        discount_value: voucher.discount_value,
-        discount_amount: discount,
-      },
+      data: validationResult,
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const getVouchers = async (req, res, next) => {
+// ADMIN CONTROLLERS
+
+export const getAdminVouchers = async (req, res, next) => {
   try {
-    await seedVouchers();
-    const vouchers = await Voucher.find({ is_active: true });
-    return successResponse(res, vouchers);
+    const result = await voucherService.getAdminVouchers(req.query);
+    return res.status(200).json({
+      success: true,
+      data: result.vouchers,
+      pagination: result.pagination,
+    });
   } catch (error) {
     next(error);
   }
 };
+
+export const createVoucher = async (req, res, next) => {
+  try {
+    const adminId = req.user.userId;
+    const voucher = await voucherService.createVoucher(adminId, req.body);
+    return res.status(201).json({
+      success: true,
+      message: "Tạo voucher mới thành công",
+      data: voucher,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateVoucher = async (req, res, next) => {
+  try {
+    const adminId = req.user.userId;
+    const { id } = req.params;
+    const voucher = await voucherService.updateVoucher(adminId, id, req.body);
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật voucher thành công",
+      data: voucher,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteVoucher = async (req, res, next) => {
+  try {
+    const adminId = req.user.userId;
+    const { id } = req.params;
+    await voucherService.deleteVoucher(adminId, id);
+    return res.status(200).json({
+      success: true,
+      message: "Xóa voucher thành công",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const toggleVoucherStatus = async (req, res, next) => {
+  try {
+    const adminId = req.user.userId;
+    const { id } = req.params;
+    const voucher = await voucherService.toggleVoucherStatus(adminId, id);
+    return res.status(200).json({
+      success: true,
+      message: "Đổi trạng thái hoạt động của voucher thành công",
+      data: voucher,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getDashboardStats = async (req, res, next) => {
+  try {
+    const stats = await voucherService.getAdminDashboardStats();
+    return res.status(200).json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

@@ -16,6 +16,8 @@ import Profile from '../pages/profile';
 import Order from '../pages/Order';
 import Review from '../pages/Review';
 import NotFound from '../pages/not-found';
+import VoucherHunting from '../pages/VoucherHunting';
+import MyCoupons from '../pages/MyCoupons';
 import CatalogManagement from '@/pages/admin/CatalogManagement';
 import ProductManagement from '@/pages/admin/ProductManagement';
 import OrderManagement from '@/pages/admin/OrderManagement';
@@ -34,6 +36,8 @@ const router = createBrowserRouter([
       { path: 'cart', element: <Cart /> },
       { path: 'checkout', element: <Checkout /> },
       { path: 'profile', element: <Profile /> },
+      { path: 'vouchers', element: <VoucherHunting /> },
+      { path: 'my-coupons', element: <MyCoupons /> },
       {
         path: 'user/dashboard',
         element: (

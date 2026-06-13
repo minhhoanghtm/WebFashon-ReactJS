@@ -70,6 +70,20 @@ const orderSchema = new mongoose.Schema(
         trim: true,
       },
     },
+    voucher_code: {
+      type: String,
+      default: null,
+    },
+    discount_amount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    original_price: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,

@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../../store/cart.store';
 import { orderApi } from '../../api/order.api';
+import CheckoutVoucherSelector from '../../components/CheckoutVoucherSelector';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { items: cartItems, clearCart } = useCartStore();
-  
-  // Use checked/checkout items from route state or fall back to entire cart
-  const items = location.state?.checkoutItems || cartItems;
-
+  const { items, getTotalPrice, clearCart } = useCartStore();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const calculateTotal = () => {
+  // Voucher states
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+
+  const calculateSubtotal = () => {
     return items.reduce((sum, item) => sum + (Number(item.new_price || item.price || 0) * (item.quantity || 1)), 0);
+  };
+
+  const calculateFinalTotal = () => {
+    const sub = calculateSubtotal();
+    const disc = appliedVoucher ? appliedVoucher.discountAmount : 0;
+    return Math.max(0, sub - disc);
   };
 
   const handlePlaceOrder = async (e) => {
@@ -32,12 +37,13 @@ const Checkout = () => {
         shippingAddress: address,
         paymentMethod: 'COD',
         items: items.map((item) => ({
-          product_id: item.product_id || item._id,
-          product_variant_id: item.variants?.[0]?._id || item.product_variant_id || null,
+          product_id: item._id,
+          product_variant_id: item.variants?.[0]?._id,
           quantity: item.quantity,
-          price: item.new_price || item.price,
+          price: item.new_price,
         })),
-        totalPrice: calculateTotal(),
+        totalPrice: calculateFinalTotal(),
+        voucherCode: appliedVoucher ? appliedVoucher.code : null,
       };
 
       const res = await orderApi.createOrder(orderPayload);
@@ -48,7 +54,7 @@ const Checkout = () => {
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to place order. Please try again.');
+      alert(err.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -75,7 +81,7 @@ const Checkout = () => {
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase">Phone Number</label>
               <input
-                type="tel"
+                type="text"
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -97,28 +103,53 @@ const Checkout = () => {
               disabled={loading || items.length === 0}
               className="mt-6 w-full rounded-xl bg-indigo-600 py-3.5 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-50 shadow-md"
             >
-              {loading ? 'Processing Order...' : 'Place Order (COD)'}
+              {loading ? 'Processing Order...' : `Place Order (COD) - ${calculateFinalTotal().toLocaleString("vi-VN")}đ`}
             </button>
           </form>
         </div>
 
         {/* Mini Order Summary */}
-        <div className="mt-8 lg:mt-0 lg:col-span-5 bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm h-fit">
-          <h3 className="text-lg font-semibold border-b border-gray-200 pb-4">Your Order</h3>
-          <ul className="mt-6 divide-y divide-gray-200">
-            {items.map((item) => (
-              <li key={item._id} className="flex py-4 justify-between text-sm">
-                <div>
-                  <span className="font-semibold text-gray-900">{item.name}</span>
-                  <span className="text-gray-500"> x {item.quantity}</span>
-                </div>
-                <span className="font-semibold text-gray-900">${item.new_price * item.quantity}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-6 border-t border-gray-200 pt-4 flex justify-between text-base font-bold text-gray-900">
-            <span>Total</span>
-            <span>{calculateTotal().toLocaleString("vi-VN")}đ</span>
+        <div className="mt-8 lg:mt-0 lg:col-span-5 bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm h-fit space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold border-b border-gray-200 pb-4">Your Order</h3>
+            <ul className="mt-6 divide-y divide-gray-200">
+              {items.map((item) => (
+                <li key={item._id} className="flex py-4 justify-between text-sm">
+                  <div>
+                    <span className="font-semibold text-gray-900">{item.name}</span>
+                    <span className="text-gray-500"> x {item.quantity}</span>
+                  </div>
+                  <span className="font-semibold text-gray-900">{(item.new_price || item.price * item.quantity).toLocaleString("vi-VN")}đ</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Voucher Section */}
+          <div className="border-t border-b border-gray-200 py-4">
+            <CheckoutVoucherSelector
+              subtotal={calculateSubtotal()}
+              appliedVoucher={appliedVoucher}
+              onApply={(voucher) => setAppliedVoucher(voucher)}
+              onRemove={() => setAppliedVoucher(null)}
+            />
+          </div>
+
+          <div className="space-y-2.5">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Tạm tính</span>
+              <span>{calculateSubtotal().toLocaleString("vi-VN")}đ</span>
+            </div>
+            {appliedVoucher && (
+              <div className="flex justify-between text-sm text-indigo-650 font-semibold">
+                <span>Giảm giá (Voucher)</span>
+                <span>-{appliedVoucher.discountAmount.toLocaleString("vi-VN")}đ</span>
+              </div>
+            )}
+            <div className="border-t border-gray-200 pt-4 flex justify-between text-base font-bold text-gray-900 font-sans">
+              <span>Tổng thanh toán</span>
+              <span className="text-indigo-600 text-lg">{calculateFinalTotal().toLocaleString("vi-VN")}đ</span>
+            </div>
           </div>
         </div>
       </div>
