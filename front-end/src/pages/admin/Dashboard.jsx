@@ -11,6 +11,7 @@ import {
   Percent,
   Sparkles,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import ReactECharts from "echarts-for-react";
 import { toast } from "react-toastify";
