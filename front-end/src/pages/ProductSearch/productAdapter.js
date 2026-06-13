@@ -120,7 +120,14 @@ export const normalizeProduct = (
         `san-pham-${index}`,
       ),
     ),
-    slug: firstValue(product.slug, product.productSlug, ""),
+    slug: firstValue(
+      product.slug,
+      product.productSlug,
+      (product.id || product._id)?.startsWith("mock-")
+        ? (product.id || product._id)
+        : "",
+      "",
+    ),
     sku: firstValue(product.sku, product.code, product.maSP, product.maSanPham, ""),
     name: firstValue(
       product.name,

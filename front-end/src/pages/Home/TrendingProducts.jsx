@@ -1,5 +1,5 @@
 import { PackageSearch } from "lucide-react";
-import HomeProductCard from "./HomeProductCard";
+import ProductCard from "../../components/ProductCard";
 import SectionHeader from "./SectionHeader";
 
 const TrendingProducts = ({
@@ -40,7 +40,7 @@ const TrendingProducts = ({
       ) : products.length > 0 ? (
         <div className="home-products__grid">
           {products.map((product) => (
-            <HomeProductCard
+            <ProductCard
               key={product.id}
               product={product}
               isFavorite={favoriteIds.has(product.id)}

@@ -9,7 +9,7 @@ const AboutHero = () => {
     >
       <div className="about-hero__overlay" />
       <div className="about-hero__content">
-        <span className="about-hero__eyebrow">WebFashion</span>
+        <span className="about-hero__eyebrow">404Studio</span>
         <h1 id="about-hero-title">Câu chuyện thương hiệu</h1>
         <p>
           Chúng tôi mang đến những sản phẩm thời trang hiện đại, chất lượng và

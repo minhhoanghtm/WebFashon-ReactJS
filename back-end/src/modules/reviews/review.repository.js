@@ -6,7 +6,13 @@ class ReviewRepository {
   }
 
   async find(query = {}, sort = { createdAt: -1 }) {
-    return await Review.find(query).sort(sort);
+    return await Review.find(query).sort(sort).lean();
+  }
+
+  async findReviewsWithUserDetails(productId) {
+    return await Review.find({ product_id: productId })
+      .populate("user_id", "fullName avatar_url")
+      .lean();
   }
 
   async findById(id) {

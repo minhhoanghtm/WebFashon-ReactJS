@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { useCartStore } from '../store/cart.store';
+import Footer from '../components/Footer';
 
 const MainLayout = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -25,7 +26,7 @@ const MainLayout = () => {
             to="/"
             className="shrink-0 text-lg font-bold tracking-tight text-indigo-600 lg:text-2xl"
           >
-            WebFashion
+            404Studio
           </Link>
 
           <form
@@ -141,11 +142,7 @@ const MainLayout = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white py-8">
-        <div className="mx-auto max-w-7xl px-6 text-center text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} WebFashion Store. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -27,6 +27,15 @@ class CartRepository {
     return await CartItem.find(query);
   }
 
+  async findItemsWithDetails(query = {}) {
+    return await CartItem.find(query)
+      .populate("product_id")
+      .populate({
+        path: "variant_id",
+        options: { strictPopulate: false },
+      });
+  }
+
   async findItemById(id) {
     return await CartItem.findById(id);
   }

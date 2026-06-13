@@ -23,7 +23,7 @@ class PaymentService {
       order.payment_method = "cod";
       order.payment_status = "pending";
       order.status = "confirmed";
-      await order.save();
+      await orderRepository.save(order);
       return {
         success: true,
         message: "Đơn hàng đã được đặt thành công. Vui lòng chuẩn bị tiền mặt khi nhận hàng.",
@@ -34,7 +34,7 @@ class PaymentService {
     if (paymentMethod === "momo") {
       order.payment_method = "momo";
       order.payment_status = "pending";
-      await order.save();
+      await orderRepository.save(order);
 
       const result = await momoProvider.createMomoPayment(order._id, order.total_price);
       return { success: true, message: "Chuyển đến cổng thanh toán", paymentUrl: result.paymentUrl, order };
@@ -43,7 +43,7 @@ class PaymentService {
     if (paymentMethod === "zalopay") {
       order.payment_method = "zalopay";
       order.payment_status = "pending";
-      await order.save();
+      await orderRepository.save(order);
 
       const result = await zalopayProvider.createZaloPayPayment(order._id, order.total_price);
       return { success: true, message: "Chuyển đến cổng thanh toán", paymentUrl: result.paymentUrl, order };
@@ -52,7 +52,7 @@ class PaymentService {
     if (paymentMethod === "stripe") {
       order.payment_method = "stripe";
       order.payment_status = "pending";
-      await order.save();
+      await orderRepository.save(order);
 
       const result = await stripeProvider.createStripePayment(order._id, order.total_price);
       return { success: true, message: "Chuyển đến cổng thanh toán", paymentUrl: result.paymentUrl, order };
@@ -61,7 +61,7 @@ class PaymentService {
     if (paymentMethod === "vnpay") {
       order.payment_method = "vnpay";
       order.payment_status = "pending";
-      await order.save();
+      await orderRepository.save(order);
 
       const paymentUrl = `${process.env.CLIENT_URL}/payment-success?orderId=${order._id}&provider=vnpay`;
       return { success: true, message: "Chuyển đến cổng thanh toán", paymentUrl, order };
@@ -76,6 +76,11 @@ class PaymentService {
       throw new AppError("Đơn hàng không tồn tại", 404);
     }
 
+    // Idempotent: If already paid, do not modify or re-save
+    if (order.payment_status === "paid") {
+      return order;
+    }
+
     if (status === "success") {
       order.payment_status = "paid";
       order.transaction_id = transactionId;
@@ -84,7 +89,7 @@ class PaymentService {
     } else {
       order.payment_status = "failed";
     }
-    await order.save();
+    await orderRepository.save(order);
     return order;
   }
 }

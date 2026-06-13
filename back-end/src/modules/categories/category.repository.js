@@ -2,7 +2,7 @@ import Category from "./category.model.js";
 
 class CategoryRepository {
   async findAll() {
-    return await Category.find();
+    return await Category.find().lean();
   }
 
   async findById(id) {

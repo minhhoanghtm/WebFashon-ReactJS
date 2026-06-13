@@ -1,15 +1,10 @@
 import reviewRepository from "./review.repository.js";
 import { AppError } from "../../common/exceptions/AppError.js";
 import mongoose from "mongoose";
-import Review from "./review.model.js";
 
 class ReviewService {
   async getReviewsByProductId(productId) {
-    // Populate user details: fullName and avatar_url
-    return await Review.find({ product_id: productId }).populate(
-      "user_id",
-      "fullName avatar_url"
-    );
+    return await reviewRepository.findReviewsWithUserDetails(productId);
   }
 
   async createReview(userId, reviewData) {

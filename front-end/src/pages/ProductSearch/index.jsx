@@ -79,6 +79,19 @@ const ProductSearch = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam && Object.keys(categoryMap).length > 0) {
+      const categoryName = categoryMap[categoryParam];
+      if (categoryName) {
+        setFilters((prev) => ({
+          ...prev,
+          categories: [categoryName],
+        }));
+      }
+    }
+  }, [searchParams, categoryMap]);
+
   const hasApiProducts = Array.isArray(apiProducts) && apiProducts.length > 0;
 
   const normalizedProducts = useMemo(() => {

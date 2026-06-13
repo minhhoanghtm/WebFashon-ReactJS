@@ -1,8 +1,6 @@
-import Voucher from "./voucher.model.js";
-import UserVoucher from "./userVoucher.model.js";
-import VoucherUsage from "./voucherUsage.model.js";
-import VoucherHistory from "./voucherHistory.model.js";
+import voucherRepository from "./voucher.repository.js";
 import { AppError } from "../../common/exceptions/AppError.js";
+import mongoose from "mongoose";
 import { acquireLock, releaseLock } from "../../providers/redisLock.provider.js";
 import getRedisConnection from "../../configs/redis.js";
 
@@ -28,13 +26,13 @@ class VoucherService {
    */
   async _seedVouchersIfEmpty() {
     try {
-      const count = await Voucher.countDocuments({ isDeleted: false });
+      const count = await voucherRepository.countDocuments({ isDeleted: false });
       if (count === 0) {
         const now = new Date();
         const nextMonth = new Date();
         nextMonth.setMonth(now.getMonth() + 1);
 
-        await Voucher.insertMany([
+        await voucherRepository.insertMany([
           {
             code: "PETWELCOME",
             name: "Chào mừng thành viên mới",
@@ -112,28 +110,28 @@ class VoucherService {
    */
   async _seedUserWalletIfEmpty(userId) {
     try {
-      const count = await UserVoucher.countDocuments({ userId });
+      const count = await voucherRepository.countUserVouchers({ userId });
       if (count === 0) {
         await this._seedVouchersIfEmpty();
-        const vouchers = await Voucher.find({ isDeleted: false }).limit(3);
+        const vouchers = await voucherRepository.find({ isDeleted: false }, { createdAt: -1 }, 0, 3);
         if (vouchers.length >= 3) {
-          await UserVoucher.insertMany([
+          await voucherRepository.insertManyUserVouchers([
             {
               userId,
-              voucherId: vouchers[0]._id,
+              voucherId: vouchers[0]._id || vouchers[0].id,
               status: "CLAIMED",
               claimedAt: new Date(),
             },
             {
               userId,
-              voucherId: vouchers[1]._id,
+              voucherId: vouchers[1]._id || vouchers[1].id,
               status: "USED",
               claimedAt: new Date(),
               usedAt: new Date(),
             },
             {
               userId,
-              voucherId: vouchers[2]._id,
+              voucherId: vouchers[2]._id || vouchers[2].id,
               status: "EXPIRED",
               claimedAt: new Date(),
             }
@@ -183,11 +181,8 @@ class VoucherService {
     sort[sortBy] = sortOrder === "desc" ? -1 : 1;
 
     const [vouchers, total] = await Promise.all([
-      Voucher.find(filter)
-        .sort(sort)
-        .skip(skip)
-        .limit(parseInt(limit, 10)),
-      Voucher.countDocuments(filter),
+      voucherRepository.find(filter, sort, skip, parseInt(limit, 10)),
+      voucherRepository.countDocuments(filter),
     ]);
 
     return {
@@ -221,8 +216,8 @@ class VoucherService {
 
     const uppercaseCode = code.trim().toUpperCase();
 
-    // Check if code exists (including soft-deleted)
-    const existingVoucher = await Voucher.findOne({ code: uppercaseCode, isDeleted: false });
+    // Check if code exists
+    const existingVoucher = await voucherRepository.findOne({ code: uppercaseCode, isDeleted: false });
     if (existingVoucher) {
       throw new AppError("Mã giảm giá đã tồn tại", 400);
     }
@@ -239,7 +234,7 @@ class VoucherService {
       throw new AppError("Tổng số lượng voucher phải lớn hơn 0", 400);
     }
 
-    const voucher = await Voucher.create({
+    const voucher = await voucherRepository.create({
       code: uppercaseCode,
       name,
       description,
@@ -255,11 +250,11 @@ class VoucherService {
     });
 
     // Write Audit Log
-    await VoucherHistory.create({
-      voucherId: voucher._id,
+    await voucherRepository.createHistory({
+      voucherId: voucher._id || voucher.id,
       action: "CREATE",
       userId,
-      details: { voucher: voucher.toObject() },
+      details: { voucher: voucher.toObject ? voucher.toObject() : voucher },
     });
 
     // Invalidate Cache
@@ -274,7 +269,7 @@ class VoucherService {
   async updateVoucher(userId, id, updateData) {
     const { name, description, endDate, totalQuantity, status } = updateData;
 
-    const voucher = await Voucher.findOne({ _id: id, isDeleted: false });
+    const voucher = await voucherRepository.findOne({ _id: id, isDeleted: false });
     if (!voucher) {
       throw new AppError("Voucher không tồn tại hoặc đã bị xóa", 404);
     }
@@ -302,14 +297,14 @@ class VoucherService {
       updates.remainingQuantity = totalQuantity - voucher.claimedQuantity;
     }
 
-    const updatedVoucher = await Voucher.findByIdAndUpdate(id, { $set: updates }, { returnDocument: "after" });
+    const updatedVoucher = await voucherRepository.findOneAndUpdate({ _id: id }, { $set: updates }, { new: true });
 
     // Write Audit Log
-    await VoucherHistory.create({
+    await voucherRepository.createHistory({
       voucherId: id,
       action: "UPDATE",
       userId,
-      details: { updates, oldVoucher: voucher.toObject() },
+      details: { updates, oldVoucher: voucher.toObject ? voucher.toObject() : voucher },
     });
 
     // Invalidate Cache
@@ -322,16 +317,16 @@ class VoucherService {
    * Admin: Soft Delete a voucher
    */
   async deleteVoucher(userId, id) {
-    const voucher = await Voucher.findOne({ _id: id, isDeleted: false });
+    const voucher = await voucherRepository.findOne({ _id: id, isDeleted: false });
     if (!voucher) {
       throw new AppError("Voucher không tồn tại hoặc đã bị xóa trước đó", 404);
     }
 
     voucher.isDeleted = true;
-    await voucher.save();
+    await voucherRepository.save(voucher);
 
     // Write Audit Log
-    await VoucherHistory.create({
+    await voucherRepository.createHistory({
       voucherId: id,
       action: "DELETE",
       userId,
@@ -348,16 +343,16 @@ class VoucherService {
    * Admin: Toggle Voucher status (ACTIVE/INACTIVE)
    */
   async toggleVoucherStatus(userId, id) {
-    const voucher = await Voucher.findOne({ _id: id, isDeleted: false });
+    const voucher = await voucherRepository.findOne({ _id: id, isDeleted: false });
     if (!voucher) {
       throw new AppError("Voucher không tồn tại", 404);
     }
 
     voucher.status = voucher.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-    await voucher.save();
+    await voucherRepository.save(voucher);
 
     // Write Audit Log
-    await VoucherHistory.create({
+    await voucherRepository.createHistory({
       voucherId: id,
       action: "STATUS_CHANGE",
       userId,
@@ -388,13 +383,13 @@ class VoucherService {
     }
 
     const now = new Date();
-    const vouchers = await Voucher.find({
+    const vouchers = await voucherRepository.find({
       status: "ACTIVE",
       isDeleted: false,
       startDate: { $lte: now },
       endDate: { $gte: now },
       remainingQuantity: { $gt: 0 },
-    }).sort({ createdAt: -1 });
+    }, { createdAt: -1 });
 
     try {
       const redis = getRedisConnection();
@@ -416,7 +411,6 @@ class VoucherService {
     await this._seedVouchersIfEmpty();
     const lockKey = `lock:claim:${userId}:${voucherId}`;
     
-    // Acquire Redis SETNX Lock to prevent simultaneous requests from the same user
     const acquired = await acquireLock(lockKey, 5000);
     if (!acquired) {
       throw new AppError("Thao tác quá nhanh. Vui lòng thử lại.", 429);
@@ -424,14 +418,14 @@ class VoucherService {
 
     try {
       // 1. Check if user already claimed this voucher
-      const existingClaim = await UserVoucher.findOne({ userId, voucherId });
+      const existingClaim = await voucherRepository.findOneUserVoucher({ userId, voucherId });
       if (existingClaim) {
         throw new AppError("Bạn đã nhận voucher này rồi", 400);
       }
 
       // 2. Validate voucher existence, dates, and active status
       const now = new Date();
-      const voucher = await Voucher.findOne({
+      const voucher = await voucherRepository.findOne({
         _id: voucherId,
         status: "ACTIVE",
         isDeleted: false,
@@ -448,8 +442,7 @@ class VoucherService {
       }
 
       // 3. Atomic Decrement of remainingQuantity at database level
-      // Only decrement if remainingQuantity is greater than 0
-      const updatedVoucher = await Voucher.findOneAndUpdate(
+      const updatedVoucher = await voucherRepository.findOneAndUpdate(
         {
           _id: voucherId,
           status: "ACTIVE",
@@ -459,7 +452,7 @@ class VoucherService {
         {
           $inc: { remainingQuantity: -1, claimedQuantity: 1 },
         },
-        { returnDocument: "after" }
+        { new: true }
       );
 
       if (!updatedVoucher) {
@@ -467,26 +460,25 @@ class VoucherService {
       }
 
       // 4. Create the UserVoucher record in the wallet
-      const userVoucher = await UserVoucher.create({
+      const userVoucher = await voucherRepository.createUserVoucher({
         userId,
         voucherId,
         status: "CLAIMED",
       });
 
       // 5. Write Audit Log
-      await VoucherHistory.create({
+      await voucherRepository.createHistory({
         voucherId,
         action: "CLAIM",
         userId,
         details: { message: "User claimed voucher successfully" },
       });
 
-      // 6. Invalidate public list cache since quantities changed
+      // 6. Invalidate public list cache
       await this._invalidateCache();
 
       return userVoucher;
     } finally {
-      // Release lock
       await releaseLock(lockKey);
     }
   }
@@ -501,12 +493,7 @@ class VoucherService {
       filter.status = status;
     }
 
-    return await UserVoucher.find(filter)
-      .populate({
-        path: "voucherId",
-        match: { isDeleted: false },
-      })
-      .sort({ createdAt: -1 });
+    return await voucherRepository.findUserWallet(filter);
   }
 
   /**
@@ -517,7 +504,7 @@ class VoucherService {
     const uppercaseCode = code.trim().toUpperCase();
 
     // 1. Find the voucher
-    const voucher = await Voucher.findOne({ code: uppercaseCode, isDeleted: false });
+    const voucher = await voucherRepository.findOne({ code: uppercaseCode, isDeleted: false });
     if (!voucher) {
       throw new AppError("Mã giảm giá không tồn tại", 404);
     }
@@ -544,10 +531,10 @@ class VoucherService {
       );
     }
 
-    // 4. Verify user owns the voucher and it is unclaimed/unused
-    const userVoucher = await UserVoucher.findOne({
+    // 4. Verify user owns the voucher
+    const userVoucher = await voucherRepository.findOneUserVoucher({
       userId,
-      voucherId: voucher._id,
+      voucherId: voucher._id || voucher.id,
     });
 
     if (!userVoucher) {
@@ -573,11 +560,10 @@ class VoucherService {
       discountAmount = voucher.discountValue;
     }
 
-    // Ensure discount amount doesn't exceed subtotal
     discountAmount = Math.min(discountAmount, currentSubtotal);
 
     return {
-      voucherId: voucher._id,
+      voucherId: voucher._id || voucher.id,
       code: voucher.code,
       name: voucher.name,
       discountType: voucher.discountType,
@@ -600,19 +586,17 @@ class VoucherService {
       soldOutVouchers,
       topVouchers,
     ] = await Promise.all([
-      Voucher.countDocuments({ isDeleted: false }),
-      Voucher.countDocuments({ status: "ACTIVE", isDeleted: false, endDate: { $gte: now } }),
-      Voucher.countDocuments({ isDeleted: false, endDate: { $lt: now } }),
-      Voucher.countDocuments({ isDeleted: false, remainingQuantity: 0 }),
-      Voucher.find({ isDeleted: false }).sort({ usedQuantity: -1 }).limit(5),
+      voucherRepository.countDocuments({ isDeleted: false }),
+      voucherRepository.countDocuments({ status: "ACTIVE", isDeleted: false, endDate: { $gte: now } }),
+      voucherRepository.countDocuments({ isDeleted: false, endDate: { $lt: now } }),
+      voucherRepository.countDocuments({ isDeleted: false, remainingQuantity: 0 }),
+      voucherRepository.find({ isDeleted: false }, { usedQuantity: -1 }, 0, 5),
     ]);
 
-    // Graph Data: Claims & Usages in the last 7 days
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    // Aggregate Claims grouped by day
-    const claimsAggregate = await UserVoucher.aggregate([
+    const claimsAggregate = await voucherRepository.aggregateUserVouchers([
       {
         $match: {
           createdAt: { $gte: sevenDaysAgo },
@@ -627,8 +611,7 @@ class VoucherService {
       { $sort: { _id: 1 } },
     ]);
 
-    // Aggregate Usages grouped by day
-    const usagesAggregate = await VoucherUsage.aggregate([
+    const usagesAggregate = await voucherRepository.aggregateUsage([
       {
         $match: {
           usedAt: { $gte: sevenDaysAgo },
@@ -643,7 +626,6 @@ class VoucherService {
       { $sort: { _id: 1 } },
     ]);
 
-    // Formulate 7-day timeline keys to align both datasets
     const chartLabels = [];
     const claimsData = [];
     const usagesData = [];
@@ -680,6 +662,272 @@ class VoucherService {
         usages: usagesData,
       },
     };
+  }
+
+  // ==========================================
+  // High-Level Domain Business Logic Methods
+  // ==========================================
+
+  /**
+   * Apply a voucher to an order (increment used count, mark UserVoucher as USED, create VoucherUsage)
+   */
+  async applyVoucher(userId, voucherCode, orderId, discountAmount, options = {}) {
+    const uppercaseCode = voucherCode.toUpperCase();
+    const voucher = await voucherRepository.findOne({ code: uppercaseCode, isDeleted: false });
+    if (!voucher) {
+      throw new AppError("Voucher không tồn tại", 404);
+    }
+
+    // 1. Increment usedQuantity of the Voucher (with atomic safeguard to not exceed totalQuantity)
+    const voucherUpdate = await voucherRepository.findOneAndUpdate(
+      { 
+        _id: voucher._id, 
+        isDeleted: false,
+        $expr: { $lt: ["$usedQuantity", "$totalQuantity"] }
+      },
+      { $inc: { usedQuantity: 1 } },
+      { ...options, new: true }
+    );
+
+    if (!voucherUpdate) {
+      throw new AppError("Không thể áp dụng voucher này (đã hết lượt sử dụng)", 400);
+    }
+
+    // 2. Mark UserVoucher status as USED
+    const userVoucherUpdate = await voucherRepository.findOneAndUpdateUserVoucher(
+      { userId, voucherId: voucher._id, status: "CLAIMED" },
+      { $set: { status: "USED", usedAt: new Date() } },
+      { ...options, new: true }
+    );
+
+    if (!userVoucherUpdate) {
+      throw new AppError("Voucher của bạn đã được sử dụng hoặc không hợp lệ", 400);
+    }
+
+    // 3. Create VoucherUsage record
+    await voucherRepository.createUsage({
+      userId,
+      voucherId: voucher._id,
+      orderId,
+      discountAmount,
+      usedAt: new Date(),
+    }, options);
+
+    // 4. Log to history
+    await voucherRepository.createHistory({
+      voucherId: voucher._id,
+      action: "USE",
+      userId,
+      details: { orderId, discountAmount },
+    }, options);
+
+    return voucherUpdate;
+  }
+
+  /**
+   * Apply a voucher with a temporary placeholder orderId (for transactional checkout flow)
+   */
+  async applyVoucherWithPlaceholder(userId, voucherCode, discountAmount, options = {}) {
+    const uppercaseCode = voucherCode.toUpperCase();
+    const voucher = await voucherRepository.findOne({ code: uppercaseCode, isDeleted: false });
+    if (!voucher) {
+      throw new AppError("Voucher không tồn tại", 404);
+    }
+
+    // 1. Increment usedQuantity of the Voucher (Atomic operation with safeguard)
+    const voucherUpdate = await voucherRepository.findOneAndUpdate(
+      { 
+        _id: voucher._id, 
+        isDeleted: false,
+        $expr: { $lt: ["$usedQuantity", "$totalQuantity"] }
+      },
+      { $inc: { usedQuantity: 1 } },
+      { ...options, new: true }
+    );
+
+    if (!voucherUpdate) {
+      throw new AppError("Không thể áp dụng voucher này (đã hết lượt sử dụng)", 400);
+    }
+
+    // 2. Mark UserVoucher status as USED (Atomic operation)
+    const userVoucherUpdate = await voucherRepository.findOneAndUpdateUserVoucher(
+      { userId, voucherId: voucher._id, status: "CLAIMED" },
+      { $set: { status: "USED", usedAt: new Date() } },
+      { ...options, new: true }
+    );
+
+    if (!userVoucherUpdate) {
+      throw new AppError("Voucher của bạn đã được sử dụng hoặc không hợp lệ", 400);
+    }
+
+    // Create a temporary placeholder orderId
+    const placeholderOrderId = new mongoose.Types.ObjectId();
+
+    // 3. Create VoucherUsage record with placeholder orderId
+    await voucherRepository.createUsage({
+      userId,
+      voucherId: voucher._id,
+      orderId: placeholderOrderId,
+      discountAmount,
+      usedAt: new Date(),
+    }, options);
+
+    // 4. Log to history
+    await voucherRepository.createHistory({
+      voucherId: voucher._id,
+      action: "USE",
+      userId,
+      details: { note: "Apply voucher with placeholder orderId", placeholderOrderId, discountAmount },
+    }, options);
+
+    return voucherUpdate;
+  }
+
+  /**
+   * Link the temporary placeholder orderId in VoucherUsage to the actual order ID
+   */
+  async linkVoucherUsageToOrder(userId, voucherId, orderId, options = {}) {
+    const updatedUsage = await voucherRepository.findOneAndUpdateUsage(
+      { userId, voucherId, orderId: { $ne: orderId } },
+      { $set: { orderId } },
+      options
+    );
+    return updatedUsage;
+  }
+
+  /**
+   * Apply voucher without creating the usage record (for non-transactional checkout flow)
+   */
+  async applyVoucherNoUsage(userId, voucherCode, options = {}) {
+    const uppercaseCode = voucherCode.toUpperCase();
+    const voucher = await voucherRepository.findOne({ code: uppercaseCode, isDeleted: false });
+    if (!voucher) {
+      throw new AppError("Voucher không tồn tại", 404);
+    }
+
+    // 1. Increment usedQuantity of the Voucher (with atomic safeguard)
+    const updateResult = await voucherRepository.updateOne(
+      { 
+        _id: voucher._id,
+        $expr: { $lt: ["$usedQuantity", "$totalQuantity"] }
+      },
+      { $inc: { usedQuantity: 1 } },
+      options
+    );
+
+    if (updateResult.modifiedCount === 0) {
+      throw new AppError("Không thể áp dụng voucher này (đã hết lượt sử dụng)", 400);
+    }
+
+    // 2. Mark UserVoucher status as USED
+    await voucherRepository.updateUserVoucher(
+      { userId, voucherId: voucher._id, status: "CLAIMED" },
+      { $set: { status: "USED", usedAt: new Date() } },
+      options
+    );
+
+    return voucher._id;
+  }
+
+  /**
+   * Create a voucher usage record (for non-transactional checkout flow)
+   */
+  async createVoucherUsage(userId, voucherId, orderId, discountAmount, options = {}) {
+    return await voucherRepository.createUsage({
+      userId,
+      voucherId,
+      orderId,
+      discountAmount,
+      usedAt: new Date(),
+    }, options);
+  }
+
+  /**
+   * Rollback voucher usage if order creation fails or is cancelled
+   */
+  async rollbackVoucherUsage(userId, voucherCode, orderId, options = {}) {
+    const uppercaseCode = voucherCode.toUpperCase();
+    const voucher = await voucherRepository.findOne({ code: uppercaseCode, isDeleted: false });
+    if (!voucher) return;
+
+    // 1. Decrement usedQuantity of the Voucher
+    await voucherRepository.updateOne(
+      { _id: voucher._id },
+      { $inc: { usedQuantity: -1 } },
+      options
+    );
+
+    // 2. Reset UserVoucher status back to CLAIMED
+    await voucherRepository.updateUserVoucher(
+      { userId, voucherId: voucher._id, status: "USED" },
+      { $set: { status: "CLAIMED" }, $unset: { usedAt: "" } },
+      options
+    );
+
+    // 3. Delete VoucherUsage record
+    await voucherRepository.deleteOneUsage(
+      { userId, voucherId: voucher._id, orderId },
+      options
+    );
+
+    // 4. Log to history
+    await voucherRepository.createHistory({
+      voucherId: voucher._id,
+      action: "UPDATE",
+      userId,
+      details: { note: "Rollback voucher usage due to order failure/cancellation", orderId },
+    }, options);
+  }
+
+  /**
+   * Expire vouchers whose endDate has passed
+   */
+  async expireVoucher() {
+    const now = new Date();
+    
+    // 1. Find expired Vouchers
+    const expiredVouchers = await voucherRepository.find({
+      status: "ACTIVE",
+      isDeleted: false,
+      endDate: { $lt: now }
+    });
+
+    if (expiredVouchers.length > 0) {
+      const expiredIds = expiredVouchers.map(v => v._id || v.id);
+      
+      // Update status to INACTIVE
+      await voucherRepository.updateOne(
+        { _id: { $in: expiredIds } },
+        { $set: { status: "INACTIVE" } }
+      );
+
+      // Create history logs
+      const historyLogs = expiredIds.map(id => ({
+        voucherId: id,
+        action: "EXPIRED",
+        userId: null,
+        details: { message: "Voucher tự động hết hạn do hệ thống quét định kỳ." }
+      }));
+      await voucherRepository.createHistory(historyLogs);
+      console.log(`✅ [Cron/Service] Đã chuyển trạng thái ${expiredVouchers.length} voucher hết hạn thành INACTIVE.`);
+    }
+
+    // 2. Expire claimed UserVouchers
+    const claimedUserVouchers = await voucherRepository.findUserVouchers({ status: "CLAIMED" });
+    let expiredUserVoucherCount = 0;
+
+    for (const uv of claimedUserVouchers) {
+      const v = await voucherRepository.findById(uv.voucherId);
+      if (!v || new Date(v.endDate) < now) {
+        uv.status = "EXPIRED";
+        await voucherRepository.save(uv);
+        expiredUserVoucherCount++;
+      }
+    }
+
+    if (expiredUserVoucherCount > 0) {
+      console.log(`✅ [Cron/Service] Đã chuyển trạng thái ${expiredUserVoucherCount} ví voucher của user sang EXPIRED.`);
+    }
   }
 }
 

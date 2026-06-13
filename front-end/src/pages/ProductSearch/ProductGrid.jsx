@@ -1,10 +1,10 @@
-import ProductSearchCard from "./ProductSearchCard";
+import ProductCard from "../../components/ProductCard";
 
 const ProductGrid = ({ products, favoriteIds, onToggleFavorite }) => {
   return (
     <div className="product-grid">
       {products.map((product) => (
-        <ProductSearchCard
+        <ProductCard
           key={product.id}
           product={product}
           isFavorite={favoriteIds.has(product.id)}

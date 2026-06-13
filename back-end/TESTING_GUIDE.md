@@ -1,4 +1,4 @@
-# API Testing Guide - REACT-WebFashion
+# API Testing Guide - REACT-404Studio
 
 Tài liệu này hướng dẫn cách test tất cả các API endpoints của dự án.
 
@@ -51,7 +51,7 @@ npm run test:api
 
 ---
 
-### 3. **REACT-WebFashion-API.postman_collection.json** (Postman Collection)
+### 3. **REACT-404Studio-API.postman_collection.json** (Postman Collection)
 - Định dạng: Postman Collection v2.1
 - Dùng cho: Visual testing, team collaboration
 - Cách sử dụng: Import vào Postman
@@ -59,7 +59,7 @@ npm run test:api
 **Installation & Sử dụng:**
 1. Mở Postman
 2. Click **Import** → **Upload Files**
-3. Chọn file `REACT-WebFashion-API.postman_collection.json`
+3. Chọn file `REACT-404Studio-API.postman_collection.json`
 4. Collection sẽ được import với tất cả endpoints
 5. Cài đặt variables: `baseUrl`, `accessToken`, `userId`, v.v.
 

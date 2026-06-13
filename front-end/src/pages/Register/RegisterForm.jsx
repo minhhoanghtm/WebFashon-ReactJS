@@ -187,7 +187,7 @@ const RegisterForm = () => {
         </button>
 
         <header className="register-header">
-          <span className="register-header__eyebrow">WebFashion</span>
+          <span className="register-header__eyebrow">404Studio</span>
           <h1 className="register-header__title">Đăng ký</h1>
           <p className="register-header__desc">
             Tạo tài khoản để bắt đầu trải nghiệm mua sắm.

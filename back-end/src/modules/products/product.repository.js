@@ -7,7 +7,7 @@ class ProductRepository {
   }
 
   async findWithoutPagination(query = {}, sort = { createdAt: -1 }) {
-    return await Product.find(query).sort(sort);
+    return await Product.find(query).sort(sort).lean();
   }
 
   async findById(id) {
@@ -45,7 +45,7 @@ class ProductRepository {
   }
 
   async findVariants(query = {}) {
-    return await ProductVariant.find(query);
+    return await ProductVariant.find(query).lean();
   }
 
   async findVariantById(id) {
