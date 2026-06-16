@@ -2,8 +2,12 @@ import { Order, OrderItem } from "./order.model.js";
 
 class OrderRepository {
   // Order methods
-  async create(orderData) {
-    return await Order.create(orderData);
+  async create(orderData, options = {}) {
+    return await Order.create(orderData, options);
+  }
+
+  async save(orderDocument, options = {}) {
+    return await orderDocument.save(options);
   }
 
   async findById(id) {
@@ -43,12 +47,26 @@ class OrderRepository {
     return await OrderItem.create(itemData);
   }
 
-  async insertManyItems(items) {
-    return await OrderItem.insertMany(items);
+  async insertManyItems(items, options = {}) {
+    return await OrderItem.insertMany(items, options);
   }
 
   async findItems(query = {}) {
     return await OrderItem.find(query);
+  }
+
+  async findItemsWithDetails(query = {}) {
+    return await OrderItem.find(query)
+      .populate("product_id")
+      .populate("variant_id");
+  }
+
+  async findItemByIdAndUpdate(id, updateData, options = { new: true }) {
+    return await OrderItem.findByIdAndUpdate(id, updateData, options);
+  }
+
+  async findItemByIdAndDelete(id) {
+    return await OrderItem.findByIdAndDelete(id);
   }
 
   async aggregateItems(pipeline) {

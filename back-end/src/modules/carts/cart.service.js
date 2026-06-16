@@ -1,6 +1,5 @@
 import cartRepository from "./cart.repository.js";
 import { AppError } from "../../common/exceptions/AppError.js";
-import { CartItem } from "./cart.model.js";
 
 class CartService {
   async addCart(cartData) {
@@ -69,12 +68,7 @@ class CartService {
   }
 
   async getCartItems(cartId) {
-    return await CartItem.find({ cart_id: cartId })
-      .populate("product_id")
-      .populate({
-        path: "variant_id",
-        options: { strictPopulate: false },
-      });
+    return await cartRepository.findItemsWithDetails({ cart_id: cartId });
   }
 
   async updateCartItem(itemId, updateData) {
@@ -99,12 +93,7 @@ class CartService {
 
   // Private helper to recalculate cart items and update cart totals
   async _recalculateCart(cartId) {
-    const updatedItems = await CartItem.find({ cart_id: cartId })
-      .populate("product_id")
-      .populate({
-        path: "variant_id",
-        options: { strictPopulate: false },
-      });
+    const updatedItems = await cartRepository.findItemsWithDetails({ cart_id: cartId });
 
     const totalItemsCount = updatedItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
     const totalPrice = updatedItems.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);

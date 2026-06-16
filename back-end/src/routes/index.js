@@ -9,6 +9,8 @@ import { orderRouter, orderItemRouter } from "../modules/orders/order.route.js";
 import paymentRouter from "../modules/payments/payment.route.js";
 import uploadRouter from "../modules/uploads/upload.route.js";
 import voucherRouter from "../modules/vouchers/voucher.route.js";
+import websiteSettingsRouter from "../modules/websiteSettings/websiteSettings.route.js";
+import bannerRouter from "../modules/banners/banner.route.js";
 import { protectedRoute } from "../middlewares/auth.middleware.js";
 
 const rootRouter = express.Router();
@@ -20,6 +22,8 @@ rootRouter.use("/products", productRouter);
 rootRouter.use("/product_variants", productVariantRouter);
 rootRouter.use("/reviews", reviewRouter);
 rootRouter.use("/upload", uploadRouter);
+rootRouter.use("/settings", websiteSettingsRouter);
+rootRouter.use("/banners", bannerRouter);
 
 // Private routes (strictly protected by auth middleware)
 rootRouter.use("/user", protectedRoute, userRouter);

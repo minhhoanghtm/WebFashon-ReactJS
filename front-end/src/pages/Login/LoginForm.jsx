@@ -124,7 +124,7 @@ const LoginForm = () => {
         </button>
 
         <header className="login-header">
-          <span className="login-header__eyebrow">WebFashion</span>
+          <span className="login-header__eyebrow">404Studio</span>
           <h1 className="login-header__title">Đăng nhập</h1>
           <p className="login-header__desc">
             Vui lòng nhập thông tin tài khoản của bạn.

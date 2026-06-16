@@ -5,9 +5,7 @@ import * as momoProvider from "../../providers/momo.provider.js";
 import * as stripeProvider from "../../providers/stripe.provider.js";
 import * as zalopayProvider from "../../providers/zalopay.provider.js";
 import mongoose from "mongoose";
-import Voucher from "../vouchers/voucher.model.js";
-import UserVoucher from "../vouchers/userVoucher.model.js";
-import VoucherUsage from "../vouchers/voucherUsage.model.js";
+
 import voucherService from "../vouchers/voucher.service.js";
 import dotenv from "dotenv";
 dotenv.config();
@@ -76,46 +74,13 @@ class OrderService {
           discountAmount = validation.discountAmount;
           voucherId = validation.voucherId;
 
-          // Increment usedQuantity of the Voucher
-          const voucherUpdate = await Voucher.findOneAndUpdate(
-            { _id: voucherId, isDeleted: false },
-            { $inc: { usedQuantity: 1 } },
-            { session, returnDocument: "after" }
-          );
-
-          if (!voucherUpdate) {
-            throw new AppError("Không thể áp dụng voucher này", 400);
-          }
-
-          // Mark UserVoucher status as USED
-          const userVoucherUpdate = await UserVoucher.findOneAndUpdate(
-            { userId, voucherId, status: "CLAIMED" },
-            { $set: { status: "USED", usedAt: new Date() } },
-            { session, returnDocument: "after" }
-          );
-
-          if (!userVoucherUpdate) {
-            throw new AppError("Voucher của bạn đã được sử dụng hoặc không hợp lệ", 400);
-          }
-
-          // Create VoucherUsage record
-          await VoucherUsage.create(
-            [
-              {
-                userId,
-                voucherId,
-                orderId: new mongoose.Types.ObjectId(), // Temporary placeholder
-                discountAmount,
-                usedAt: new Date(),
-              },
-            ],
-            { session }
-          );
+          // Apply voucher inside transaction using placeholder orderId (Original flow sequence step 1)
+          await voucherService.applyVoucherWithPlaceholder(userId, voucherCode, discountAmount, { session });
         }
 
         const finalTotalPrice = Math.max(0, subtotal - discountAmount);
 
-        // Create Order inside transaction
+        // Create Order inside transaction (Original flow sequence step 2)
         const orderArray = await orderRepository.create(
           [
             {
@@ -134,13 +99,9 @@ class OrderService {
 
         createdOrder = orderArray[0];
 
-        // Update the actual order ID in the VoucherUsage record
+        // Update the actual order ID in the VoucherUsage record (Original flow sequence step 3)
         if (voucherId) {
-          await VoucherUsage.findOneAndUpdate(
-            { userId, voucherId, orderId: { $ne: createdOrder._id } },
-            { $set: { orderId: createdOrder._id } },
-            { session }
-          );
+          await voucherService.linkVoucherUsageToOrder(userId, voucherId, createdOrder._id, { session });
         }
 
         if (orderItems.length > 0) {
@@ -239,15 +200,13 @@ class OrderService {
       discountAmount = validation.discountAmount;
       voucherId = validation.voucherId;
 
-      await Voucher.updateOne({ _id: voucherId }, { $inc: { usedQuantity: 1 } });
-      await UserVoucher.updateOne(
-        { userId, voucherId, status: "CLAIMED" },
-        { $set: { status: "USED", usedAt: new Date() } }
-      );
+      // Increment Voucher and update UserVoucher (Original fallback flow step 1)
+      await voucherService.applyVoucherNoUsage(userId, voucherCode);
     }
 
     const finalTotalPrice = Math.max(0, subtotal - discountAmount);
 
+    // Create order (Original fallback flow step 2)
     const order = await orderRepository.create({
       user_id: userId,
       total_price: finalTotalPrice,
@@ -259,14 +218,9 @@ class OrderService {
       shipping_address: dbShippingAddress,
     });
 
+    // Create VoucherUsage record (Original fallback flow step 3)
     if (voucherId) {
-      await VoucherUsage.create({
-        userId,
-        voucherId,
-        orderId: order._id,
-        discountAmount,
-        usedAt: new Date(),
-      });
+      await voucherService.createVoucherUsage(userId, voucherId, order._id, discountAmount);
     }
 
     if (orderItems.length > 0) {
@@ -730,15 +684,11 @@ class OrderService {
   }
 
   async getOrderItemsByOrderId(orderId) {
-    const { OrderItem } = await import("./order.model.js");
-    return await OrderItem.find({ order_id: orderId })
-      .populate("product_id")
-      .populate("variant_id");
+    return await orderRepository.findItemsWithDetails({ order_id: orderId });
   }
 
   async updateOrderItem(id, itemData) {
-    const { OrderItem } = await import("./order.model.js");
-    const updated = await OrderItem.findByIdAndUpdate(id, itemData, { returnDocument: "after" });
+    const updated = await orderRepository.findItemByIdAndUpdate(id, itemData, { new: true });
     if (!updated) {
       throw new AppError("Không tìm thấy sản phẩm trong đơn hàng", 404);
     }
@@ -746,8 +696,7 @@ class OrderService {
   }
 
   async deleteOrderItem(id) {
-    const { OrderItem } = await import("./order.model.js");
-    const deleted = await OrderItem.findByIdAndDelete(id);
+    const deleted = await orderRepository.findItemByIdAndDelete(id);
     if (!deleted) {
       throw new AppError("Không tìm thấy sản phẩm trong đơn hàng", 404);
     }

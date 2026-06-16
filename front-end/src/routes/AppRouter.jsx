@@ -11,6 +11,7 @@ import ProductSearch from '../pages/ProductSearch';
 import ProductDetail from '../pages/ProductDetail';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import ResetPassword from '../pages/ResetPassword';
 import Cart from '../pages/Cart';
 import Checkout from '../pages/Checkout';
 import Profile from '../pages/profile';
@@ -25,6 +26,8 @@ import OrderManagement from '@/pages/admin/OrderManagement';
 import UserManagement from '@/pages/admin/UserManagement';
 import CouponManagement from '@/pages/admin/CouponManagement';
 import Dashboard from '@/pages/admin/Dashboard';
+import WebsiteSettingsManagement from '@/pages/admin/WebsiteSettingsManagement';
+import BannerManagement from '@/pages/admin/BannerManagement';
 
 const router = createBrowserRouter([
   {
@@ -59,6 +62,7 @@ const router = createBrowserRouter([
     children: [
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
+      { path: 'reset-password', element: <ResetPassword /> },
     ],
   },
   {
@@ -71,6 +75,8 @@ const router = createBrowserRouter([
       { path: 'orders', element: <OrderManagement /> },
       { path: 'customers', element: <UserManagement /> },
       { path: 'coupons', element: <CouponManagement /> },
+      { path: 'banners', element: <BannerManagement /> },
+      { path: 'settings', element: <WebsiteSettingsManagement /> },
     ],
   },
 ]);

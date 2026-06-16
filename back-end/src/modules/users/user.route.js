@@ -9,18 +9,25 @@ import {
   updateUser,
 } from "./user.controller.js";
 import { adminOnly } from "../../middlewares/auth.middleware.js";
+import {
+  validateCreateUser,
+  validateUpdateUser,
+  validateUpdatePassword,
+  validateUpdateProfile,
+  validateUserIdParam,
+} from "./user.validator.js";
 
 const router = express.Router();
 
 // Chạy sau middleware protectedRoute nên mặc định đã được bảo vệ
 router.get("/me", authMe);
-router.put("/updatePassword", updatePassword);
-router.put("/updateProfile", updateProfile);
+router.put("/updatePassword", validateUpdatePassword, updatePassword);
+router.put("/updateProfile", validateUpdateProfile, updateProfile);
 
 // Chỉ Admin mới được truy cập
 router.get("/admin/users", adminOnly, getAllUsers);
-router.post("/admin/users", adminOnly, createUser);
-router.put("/admin/users/:id", adminOnly, updateUser);
-router.delete("/admin/users/:id", adminOnly, deleteUser);
+router.post("/admin/users", adminOnly, validateCreateUser, createUser);
+router.put("/admin/users/:id", adminOnly, validateUpdateUser, updateUser);
+router.delete("/admin/users/:id", adminOnly, validateUserIdParam, deleteUser);
 
 export default router;

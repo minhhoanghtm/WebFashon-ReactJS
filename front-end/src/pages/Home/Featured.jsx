@@ -42,13 +42,7 @@ const Featured = ({ products, selectedCategory, title = "Sản phẩm nổi bậ
       <h1 className="text-xl font-bold mb-4">{title}</h1>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-hidden">
         {filteredProducts.map((product) => (
-          <Link
-            to={`/product/${product.slug || product._id || product.id}`}
-            key={product._id}
-            className="border rounded-lg p-2 "
-          >
-            <ProductCard product={product} />
-          </Link>
+          <ProductCard key={product._id} product={product} />
         ))}
       </div>
     </div>

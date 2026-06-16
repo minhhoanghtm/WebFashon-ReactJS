@@ -9,7 +9,7 @@ const AboutCTA = () => {
         <h2 id="about-cta-title">Sẵn sàng khám phá bộ sưu tập của chúng tôi?</h2>
       </div>
 
-      <Link className="about-cta__button" to="/products">
+      <Link className="about-cta__button" to="/">
         Xem sản phẩm
         <ArrowRight size={18} aria-hidden="true" />
       </Link>

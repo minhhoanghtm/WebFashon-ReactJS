@@ -45,7 +45,7 @@
 ### 1️⃣ Clone Repository
 ```bash
 git clone <repository-url>
-cd REACT-WebFashion
+cd REACT-404Studio
 ```
 
 ### 2️⃣ Cài Đặt Backend
@@ -131,7 +131,7 @@ Mở hai terminal riêng biệt:
 ## 📁 Cấu Trúc Dự Án
 
 ```
-REACT-WebFashion/
+REACT-404Studio/
 ├── back-end/                 # Backend API
 │   ├── src/
 │   │   ├── server.js         # Entry point

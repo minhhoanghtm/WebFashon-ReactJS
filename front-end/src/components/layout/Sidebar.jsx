@@ -12,6 +12,8 @@ import {
   LogOut,
   X,
   Menu,
+  Image,
+  Settings,
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -27,6 +29,8 @@ const navItems = [
   { icon: ShoppingCart, label: "Quản lý đơn hàng", path: "/admin/orders" },
   { icon: Users, label: "Quản lý người dùng", path: "/admin/customers" },
   { icon: Tag, label: "Khuyến mãi", path: "/admin/coupons" },
+  { icon: Image, label: "Quản lý Banner", path: "/admin/banners" },
+  { icon: Settings, label: "Cài đặt hệ thống", path: "/admin/settings" },
 ];
 
 const Sidebar = () => {

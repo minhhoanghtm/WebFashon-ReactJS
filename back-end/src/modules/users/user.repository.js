@@ -14,11 +14,11 @@ class UserRepository {
   }
 
   async findAll() {
-    return await User.find();
+    return await User.find().lean();
   }
 
   async findAllWithoutPassword() {
-    return await User.find().select("-passWord");
+    return await User.find().select("-passWord").lean();
   }
 
   async create(userData) {
