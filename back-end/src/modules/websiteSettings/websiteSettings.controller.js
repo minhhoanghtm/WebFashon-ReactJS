@@ -46,14 +46,6 @@ const filterSettingsResponse = (settings, isAdmin = false) => {
       googleTagManager: raw.integrations?.googleTagManager || "",
       chatbotScript: raw.integrations?.chatbotScript || "",
     },
-    policies: {
-      aboutUs: raw.policies?.aboutUs || "",
-      shippingPolicy: raw.policies?.shippingPolicy || "",
-      returnPolicy: raw.policies?.returnPolicy || "",
-      privacyPolicy: raw.policies?.privacyPolicy || "",
-      termsOfService: raw.policies?.termsOfService || "",
-      warrantyPolicy: raw.policies?.warrantyPolicy || "",
-    },
     updatedAt: raw.updatedAt,
   };
 

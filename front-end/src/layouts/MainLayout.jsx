@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, Outlet, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { useCartStore } from '../store/cart.store';
@@ -8,13 +8,23 @@ import Footer from '../components/Footer';
 const MainLayout = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
   const { items } = useCartStore();
-  const [homeSearchTerm, setHomeSearchTerm] = useState('');
+  const [searchParams] = useSearchParams();
+  const [homeSearchTerm, setHomeSearchTerm] = useState(() => searchParams.get('search') || '');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setHomeSearchTerm(searchParams.get('search') || '');
+  }, [searchParams]);
+
   const cartCount = items.reduce((total, item) => total + (item.quantity || 0), 0);
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
-    navigate('/');
+    if (homeSearchTerm.trim()) {
+      navigate(`/products?search=${encodeURIComponent(homeSearchTerm.trim())}`);
+    } else {
+      navigate('/products');
+    }
   };
 
   return (
@@ -60,9 +70,6 @@ const MainLayout = () => {
           </form>
 
           <nav className="ml-auto flex shrink-0 items-center gap-2 lg:gap-5">
-            <Link to="/products" className="text-sm font-medium hover:text-indigo-600 transition">
-              Sản phẩm
-            </Link>
             <Link to="/vouchers" className="text-sm font-medium hover:text-indigo-600 transition">
               Voucher
             </Link>
@@ -82,11 +89,6 @@ const MainLayout = () => {
                 <Link to="/profile" className="text-sm font-medium hover:text-indigo-600 transition">
                   Tài khoản
                 </Link>
-                {(user?.role === 'admin' || user?.data?.role === 'admin') && (
-                  <Link to="/admin" className="text-sm font-medium text-amber-600 hover:text-amber-700 transition">
-                    Quản trị
-                  </Link>
-                )}
                 <button
                   onClick={logout}
                   className="rounded-lg bg-gray-100 px-4 py-2 text-xs font-semibold hover:bg-gray-200 transition"

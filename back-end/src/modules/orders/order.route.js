@@ -15,8 +15,11 @@ import {
   deleteOrderItem,
   getOrderItemsByOrderId,
   updateOrderItem,
+  getAdminOrders,
+  updateOrderStatus,
 } from "./order.controller.js";
 import { adminOnly } from "../../middlewares/auth.middleware.js";
+import { validateUpdateOrderStatus } from "./order.validator.js";
 
 const orderRouter = express.Router();
 
@@ -31,7 +34,8 @@ orderRouter.get("/payment/callback", paymentCallback);
 orderRouter.get("/admin/kpi", adminOnly, kpi);
 orderRouter.get("/admin/revenue", adminOnly, getRevenueOverview);
 orderRouter.get("/admin/stats", adminOnly, getOrderStats);
-
+orderRouter.get("/admin/orders", adminOnly, getAdminOrders);
+orderRouter.patch("/admin/orders/:id/status", adminOnly, validateUpdateOrderStatus, updateOrderStatus);
 // User metrics
 orderRouter.get("/user/revenue", dashboardUser);
 orderRouter.get("/user/purchasing_performance", getPurchasePerformance);

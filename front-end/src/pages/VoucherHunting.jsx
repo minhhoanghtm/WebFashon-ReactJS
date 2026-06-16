@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Ticket, Sparkles, Loader2, Info } from "lucide-react";
+import { Ticket, Sparkles, Loader2, Info, ArrowRight } from "lucide-react";
 import { toast } from "react-toastify";
 import voucherApi from "../api/voucher.api";
 import { useAuthStore } from "../store/auth.store";
 import VoucherDetailModal from "../components/VoucherDetailModal";
+import { getActiveBannersService, trackBannerClickService } from "../services/banner.service";
 
 const VoucherHunting = () => {
   const navigate = useNavigate();
@@ -14,6 +15,10 @@ const VoucherHunting = () => {
   const [vouchers, setVouchers] = useState([]);
   const [claimedIds, setClaimedIds] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Banner states
+  const [promoBanners, setPromoBanners] = useState([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,10 +53,49 @@ const VoucherHunting = () => {
     }
   };
 
+  const fetchBanners = async () => {
+    try {
+      setBannersLoading(true);
+      const banners = await getActiveBannersService();
+      const filtered = banners.filter(b => b.position === "home_promotion");
+      filtered.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      setPromoBanners(filtered);
+    } catch (error) {
+      console.error("Lỗi khi tải Promotion Banner cho trang Voucher:", error);
+    } finally {
+      setBannersLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchVouchers();
     fetchUserWallet();
+    fetchBanners();
   }, [isAuthenticated]);
+
+  const handleBannerClick = async (banner) => {
+    const bannerId = banner._id || banner.id;
+    if (bannerId) {
+      await trackBannerClickService(bannerId);
+    }
+
+    if (banner.targetType === "product" && banner.targetId) {
+      navigate(`/product/${banner.targetId}`);
+    } else if (banner.targetType === "category" && banner.targetId) {
+      navigate(`/products?category=${banner.targetId}`);
+    } else if (banner.targetType === "lookbook" && banner.targetId) {
+      navigate(`/lookbooks/${banner.targetId}`);
+    } else if (banner.targetType === "external" && banner.linkUrl && banner.linkUrl.trim() !== "") {
+      if (banner.linkUrl.startsWith("#")) {
+        const element = document.getElementById(banner.linkUrl.substring(1));
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      } else {
+        window.open(banner.linkUrl, "_blank", "noopener,noreferrer");
+      }
+    }
+  };
 
   const handleClaim = async (voucherId) => {
     if (!isAuthenticated) {
@@ -78,30 +122,77 @@ const VoucherHunting = () => {
     setIsModalOpen(true);
   };
 
+
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900/40 py-12 px-6 font-sans">
       <div className="mx-auto max-w-6xl space-y-8">
         
         {/* Banner Section */}
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 p-8 md:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-3 max-w-lg text-center md:text-left">
-            <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="h-4.5 w-4.5" />
-              <span>PetShop Promotion</span>
+        {!bannersLoading && promoBanners.length > 0 ? (
+          // Dynamic Promotion Banner
+          <div
+            onClick={() => handleBannerClick(promoBanners[0])}
+            className="group relative w-full h-[240px] md:h-[280px] rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-150/40 bg-gray-50 flex items-center"
+          >
+            {/* Background Image */}
+            <img
+              src={promoBanners[0].imageUrl}
+              alt={promoBanners[0].title}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.01] transition duration-700 pointer-events-none"
+            />
+            
+            {/* Elegant overlay matching Voucher page */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent transition-opacity duration-300" />
+            
+            {/* Text Content */}
+            <div className="relative z-10 p-8 md:p-12 text-left max-w-[85%] space-y-3 select-none">
+              <span className="inline-flex items-center gap-1.5 bg-indigo-650/80 px-3.5 py-0.5 rounded-full text-[10px] font-black tracking-widest text-indigo-100 uppercase">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Ưu đãi đặc biệt</span>
+              </span>
+              <h1 className="text-2xl md:text-4xl font-extrabold text-white leading-tight drop-shadow-sm">
+                {promoBanners[0].title}
+              </h1>
+              {promoBanners[0].subtitle && (
+                <p className="text-xs md:text-sm text-gray-250 font-medium line-clamp-2 max-w-lg">
+                  {promoBanners[0].subtitle}
+                </p>
+              )}
+              <div className="pt-1">
+                <button
+                  className="flex items-center gap-1.5 text-xs font-bold text-white border-b border-white pb-0.5 hover:gap-2.5 transition-all duration-300 cursor-pointer"
+                >
+                  {promoBanners[0].buttonText && (
+                    <>
+                      <span>{promoBanners[0].buttonText}</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
-              Săn Voucher Mỏi Tay <br/> Nhận Ngay Ưu Đãi
-            </h1>
-            <p className="text-sm text-indigo-100 font-medium">
-              Hàng ngàn mã giảm giá hấp dẫn áp dụng cho thức ăn, đồ chơi, phụ kiện, và dịch vụ chăm sóc thú cưng của bạn. Săn ngay kẻo lỡ!
-            </p>
           </div>
-          <div className="h-44 w-44 bg-white/10 dark:bg-white/5 border border-white/20 rounded-full flex items-center justify-center backdrop-blur-lg shadow-2xl relative">
-            <Ticket className="h-20 w-20 text-white/90 transform -rotate-12 hover:rotate-12 transition-transform duration-300" />
-            {/* Pulsing glow effect */}
-            <div className="absolute inset-0 rounded-full bg-white/5 animate-ping"></div>
+        ) : (
+          // Fallback static premium purple banner
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 p-8 md:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-3 max-w-lg text-center md:text-left">
+              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                <Sparkles className="h-4.5 w-4.5" />
+                <span>Ưu đãi từ 404Studio</span>
+              </div>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
+                Săn Voucher Mỏi Tay <br/> Nhận Ngay Ưu Đãi
+              </h1>
+              <p className="text-sm text-indigo-100 font-medium">
+                Hàng ngàn mã giảm giá hấp dẫn áp dụng cho các sản phẩm của 404Studio. Săn ngay kẻo lỡ!
+              </p>
+            </div>
+            <div className="h-44 w-44 bg-white/10 dark:bg-white/5 border border-white/20 rounded-full flex items-center justify-center backdrop-blur-lg shadow-2xl relative shrink-0">
+              <Ticket className="h-20 w-20 text-white/90 transform -rotate-12 hover:rotate-12 transition-transform duration-300" />
+              <div className="absolute inset-0 rounded-full bg-white/5 animate-ping"></div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* List Section */}
         <div className="space-y-6">

@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useProducts } from "@/hooks/useProducts";
+import { useQuery } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getAllCategoriesService } from "@/services/category.service";
+import { searchProductsService } from "@/services/product.service";
 import EmptyState from "./EmptyState";
 import ProductFilter from "./ProductFilter";
 import ProductGrid from "./ProductGrid";
 import ProductPagination from "./ProductPagination";
 import ProductToolbar from "./ProductToolbar";
-import { mockProducts } from "./productMockData";
 import {
   buildFilterOptions,
   calculatePriceBounds,
@@ -37,7 +37,6 @@ const validSortOptions = [
 
 const ProductSearch = () => {
   const [searchParams] = useSearchParams();
-  const { products: apiProducts, isLoading, error } = useProducts();
   const [categoryMap, setCategoryMap] = useState({});
   const [searchTerm, setSearchTerm] = useState(
     () => searchParams.get("search") || "",
@@ -47,6 +46,37 @@ const ProductSearch = () => {
     return validSortOptions.includes(initialSort) ? initialSort : "popular";
   });
   const [filters, setFilters] = useState(initialFilters);
+
+  const categoryIds = useMemo(() => {
+    return Object.entries(categoryMap)
+      .filter(([id, name]) => filters.categories.includes(name))
+      .map(([id]) => id)
+      .join(",");
+  }, [filters.categories, categoryMap]);
+
+  const { data: apiProducts = [], isLoading, error } = useQuery({
+    queryKey: [
+      "products-search",
+      searchTerm,
+      categoryIds,
+      filters.minPrice,
+      filters.maxPrice,
+      sortBy,
+    ],
+    queryFn: async () => {
+      const params = {
+        search: searchTerm || undefined,
+        category: categoryIds || undefined,
+        minPrice: filters.minPrice !== null && filters.minPrice !== undefined ? filters.minPrice : undefined,
+        maxPrice: filters.maxPrice !== null && filters.maxPrice !== undefined ? filters.maxPrice : undefined,
+        sort: sortBy,
+        limit: 1000,
+      };
+      return await searchProductsService(params);
+    },
+    placeholderData: (keepPreviousData) => keepPreviousData,
+  });
+
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
@@ -92,15 +122,19 @@ const ProductSearch = () => {
     }
   }, [searchParams, categoryMap]);
 
-  const hasApiProducts = Array.isArray(apiProducts) && apiProducts.length > 0;
+  useEffect(() => {
+    const querySearch = searchParams.get("search") || "";
+    setSearchTerm(querySearch);
+    setCurrentPage(1);
+  }, [searchParams]);
 
   const normalizedProducts = useMemo(() => {
-    const sourceProducts = hasApiProducts ? apiProducts : mockProducts;
+    const sourceProducts = Array.isArray(apiProducts) ? apiProducts : [];
 
     return sourceProducts.map((product, index) =>
-      normalizeProduct(product, index, categoryMap, !hasApiProducts),
+      normalizeProduct(product, index, categoryMap, false),
     );
-  }, [apiProducts, categoryMap, hasApiProducts]);
+  }, [apiProducts, categoryMap]);
 
   const filterOptions = useMemo(
     () => buildFilterOptions(normalizedProducts),
@@ -243,7 +277,7 @@ const ProductSearch = () => {
               onSearchChange={handleSearchChange}
               sortBy={sortBy}
               onSortChange={handleSortChange}
-              isUsingFallback={!isLoading && !hasApiProducts}
+              isUsingFallback={false}
               hasApiError={Boolean(error)}
             />
 

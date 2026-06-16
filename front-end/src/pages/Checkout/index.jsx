@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCartStore } from '../../store/cart.store';
 import { orderApi } from '../../api/order.api';
 import CheckoutVoucherSelector from '../../components/CheckoutVoucherSelector';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const location = useLocation();
+  const { items, setCartItems, clearCart } = useCartStore();
+  const checkoutItems = location.state?.checkoutItems || items;
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('COD');
   const [loading, setLoading] = useState(false);
 
   // Voucher states
   const [appliedVoucher, setAppliedVoucher] = useState(null);
 
   const calculateSubtotal = () => {
-    return items.reduce((sum, item) => sum + (Number(item.new_price || item.price || 0) * (item.quantity || 1)), 0);
+    return checkoutItems.reduce((sum, item) => sum + (Number(item.new_price || item.price || 0) * (item.quantity || 1)), 0);
   };
 
   const calculateFinalTotal = () => {
@@ -27,7 +30,7 @@ const Checkout = () => {
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    if (items.length === 0) return;
+    if (checkoutItems.length === 0) return;
     setLoading(true);
 
     try {
@@ -35,12 +38,12 @@ const Checkout = () => {
         fullName,
         phone,
         shippingAddress: address,
-        paymentMethod: 'COD',
-        items: items.map((item) => ({
-          product_id: item._id,
-          product_variant_id: item.variants?.[0]?._id,
+        paymentMethod: paymentMethod,
+        items: checkoutItems.map((item) => ({
+          product_id: item.product_id,
+          product_variant_id: item.variants?.[0]?._id || item.variant_id || null,
           quantity: item.quantity,
-          price: item.new_price,
+          price: item.new_price || item.price || 0,
         })),
         totalPrice: calculateFinalTotal(),
         voucherCode: appliedVoucher ? appliedVoucher.code : null,
@@ -48,9 +51,13 @@ const Checkout = () => {
 
       const res = await orderApi.createOrder(orderPayload);
       if (res.success) {
-        clearCart();
-        alert('Order placed successfully!');
-        navigate('/');
+        // Remove only checkoutItems from cart store
+        const remainingCartItems = items.filter(
+          (item) => !checkoutItems.some((checkoutItem) => checkoutItem._id === item._id)
+        );
+        setCartItems(remainingCartItems);
+        alert('Đặt hàng thành công!');
+        navigate('/orders');
       }
     } catch (err) {
       console.error(err);
@@ -98,12 +105,63 @@ const Checkout = () => {
                 className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>
+            
+            <div className="mt-6">
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-3">Phương thức thanh toán</label>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <label className={`relative flex cursor-pointer rounded-xl border p-4 shadow-sm focus:outline-none transition-all ${paymentMethod === 'COD' ? 'border-indigo-650 bg-indigo-50/20 ring-1 ring-indigo-650' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <input
+                    type="radio"
+                    name="payment-method"
+                    value="COD"
+                    checked={paymentMethod === 'COD'}
+                    onChange={() => setPaymentMethod('COD')}
+                    className="sr-only"
+                  />
+                  <span className="flex flex-col justify-between h-full w-full">
+                    <span className="block text-sm font-bold text-gray-900">COD</span>
+                    <span className="mt-1 block text-xs text-gray-500">Thanh toán khi nhận hàng</span>
+                  </span>
+                </label>
+
+                <label className={`relative flex cursor-pointer rounded-xl border p-4 shadow-sm focus:outline-none transition-all ${paymentMethod === 'MOMO' ? 'border-indigo-650 bg-indigo-50/20 ring-1 ring-indigo-650' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <input
+                    type="radio"
+                    name="payment-method"
+                    value="MOMO"
+                    checked={paymentMethod === 'MOMO'}
+                    onChange={() => setPaymentMethod('MOMO')}
+                    className="sr-only"
+                  />
+                  <span className="flex flex-col justify-between h-full w-full">
+                    <span className="block text-sm font-bold text-gray-900">Ví MoMo</span>
+                    <span className="mt-1 block text-xs text-gray-500">Thanh toán qua ví MoMo</span>
+                  </span>
+                </label>
+
+                <label className={`relative flex cursor-pointer rounded-xl border p-4 shadow-sm focus:outline-none transition-all ${paymentMethod === 'VNPAY' ? 'border-indigo-650 bg-indigo-50/20 ring-1 ring-indigo-650' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <input
+                    type="radio"
+                    name="payment-method"
+                    value="VNPAY"
+                    checked={paymentMethod === 'VNPAY'}
+                    onChange={() => setPaymentMethod('VNPAY')}
+                    className="sr-only"
+                  />
+                  <span className="flex flex-col justify-between h-full w-full">
+                    <span className="block text-sm font-bold text-gray-900">VNPay</span>
+                    <span className="mt-1 block text-xs text-gray-500">Thanh toán cổng VNPay</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
             <button
               type="submit"
-              disabled={loading || items.length === 0}
+              disabled={loading || checkoutItems.length === 0}
               className="mt-6 w-full rounded-xl bg-indigo-600 py-3.5 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-50 shadow-md"
             >
-              {loading ? 'Processing Order...' : `Place Order (COD) - ${calculateFinalTotal().toLocaleString("vi-VN")}đ`}
+              {loading ? 'Processing Order...' : `Place Order (${paymentMethod}) - ${calculateFinalTotal().toLocaleString("vi-VN")}đ`}
             </button>
           </form>
         </div>
@@ -113,13 +171,13 @@ const Checkout = () => {
           <div>
             <h3 className="text-lg font-semibold border-b border-gray-200 pb-4">Your Order</h3>
             <ul className="mt-6 divide-y divide-gray-200">
-              {items.map((item) => (
+              {checkoutItems.map((item) => (
                 <li key={item._id} className="flex py-4 justify-between text-sm">
                   <div>
                     <span className="font-semibold text-gray-900">{item.name}</span>
                     <span className="text-gray-500"> x {item.quantity}</span>
                   </div>
-                  <span className="font-semibold text-gray-900">{(item.new_price || item.price * item.quantity).toLocaleString("vi-VN")}đ</span>
+                  <span className="font-semibold text-gray-900">{(Number(item.new_price || item.price || 0) * (item.quantity || 1)).toLocaleString("vi-VN")}đ</span>
                 </li>
               ))}
             </ul>

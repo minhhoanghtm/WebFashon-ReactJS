@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { fallbackPolicy } from "./productDetailMockData";
+
+const fallbackPolicy =
+  "Hỗ trợ đổi trả theo chính sách của cửa hàng. Sản phẩm cần còn nguyên tem mác, chưa qua sử dụng và được gửi yêu cầu trong thời gian quy định.";
 
 const ProductTabs = ({ product, variants = [] }) => {
   const [activeTab, setActiveTab] = useState("description");

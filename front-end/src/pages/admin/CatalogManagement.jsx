@@ -1,18 +1,19 @@
-import React, { useState } from "react";
-import { LayoutList, Search, Plus, Edit, Trash2, X, Eye, EyeOff } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { LayoutList, Search, Plus, Edit, Trash2, X, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
-
-// Initial mock categories data
-const initialCategories = [
-  { id: 1, name: "Áo khoác", count: 45, status: "visible" },
-  { id: 2, name: "Đồ cơ bản", count: 3, status: "visible" },
-  { id: 3, name: "Quần", count: 87, status: "visible" },
-  { id: 4, name: "Váy đầm", count: 2, status: "visible" },
-  { id: 5, name: "Giày dép", count: 125, status: "visible" },
-];
+import {
+  getAllCategoriesService,
+  createCategoryService,
+  updateCategoryService,
+  deleteCategoryService,
+} from "@/services/category.service";
+import { getAllProductService } from "@/services/product.service";
 
 const CatalogManagement = () => {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -20,80 +21,136 @@ const CatalogManagement = () => {
   
   // Form states
   const [formName, setFormName] = useState("");
-  const [formStatus, setFormStatus] = useState("visible");
+  const [formImage, setFormImage] = useState("");
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [cats, prods] = await Promise.all([
+        getAllCategoriesService(),
+        getAllProductService(),
+      ]);
+      setCategories(cats);
+      setProducts(prods);
+    } catch (err) {
+      console.error("Fetch data error:", err);
+      setError("Không thể kết nối API danh mục. Vui lòng thử lại!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleOpenAddModal = () => {
     setFormName("");
-    setFormStatus("visible");
+    setFormImage("");
     setIsAddModalOpen(true);
   };
 
   const handleOpenEditModal = (cat) => {
     setCurrentCategory(cat);
     setFormName(cat.name);
-    setFormStatus(cat.status);
+    setFormImage(cat.image || "");
     setIsEditModalOpen(true);
   };
 
-  const handleAddCategory = (e) => {
+  const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!formName) {
       toast.error("Vui lòng điền tên danh mục!");
       return;
     }
+    const defaultImage = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500";
 
-    const newCat = {
-      id: Date.now(),
-      name: formName,
-      count: 0,
-      status: formStatus,
-    };
-
-    setCategories([newCat, ...categories]);
-    setIsAddModalOpen(false);
-    toast.success("Thêm danh mục thành công!");
+    try {
+      await createCategoryService({
+        name: formName,
+        image: formImage || defaultImage,
+      });
+      toast.success("Thêm danh mục thành công!");
+      setIsAddModalOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể thêm danh mục!");
+    }
   };
 
-  const handleEditCategory = (e) => {
+  const handleEditCategory = async (e) => {
     e.preventDefault();
     if (!formName) {
       toast.error("Vui lòng điền tên danh mục!");
       return;
     }
+    const defaultImage = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500";
 
-    setCategories(
-      categories.map((c) =>
-        c.id === currentCategory.id
-          ? { ...c, name: formName, status: formStatus }
-          : c
-      )
-    );
-    setIsEditModalOpen(false);
-    toast.success("Cập nhật danh mục thành công!");
+    try {
+      await updateCategoryService(currentCategory._id, {
+        name: formName,
+        image: formImage || defaultImage,
+      });
+      toast.success("Cập nhật danh mục thành công!");
+      setIsEditModalOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể cập nhật danh mục!");
+    }
   };
 
-  const handleDeleteCategory = (id, name) => {
+  const handleDeleteCategory = async (id, name) => {
     if (window.confirm(`Bạn có chắc muốn xóa danh mục "${name}"?`)) {
-      setCategories(categories.filter((c) => c.id !== id));
-      toast.success("Đã xóa danh mục!");
+      try {
+        await deleteCategoryService(id);
+        toast.success("Đã xóa danh mục!");
+        fetchData();
+      } catch (err) {
+        console.error(err);
+        toast.error("Không thể xóa danh mục!");
+      }
     }
   };
 
-  const toggleStatus = (id) => {
-    setCategories(
-      categories.map((c) =>
-        c.id === id
-          ? { ...c, status: c.status === "visible" ? "hidden" : "visible" }
-          : c
-      )
-    );
-    toast.info("Đã thay đổi trạng thái hiển thị!");
+  const getProductCount = (categoryId) => {
+    return products.filter((p) => {
+      const pCatId = typeof p.category_id === "object" ? p.category_id?._id : p.category_id;
+      return pCatId === categoryId;
+    }).length;
   };
 
   // Filter categories
   const filteredCategories = categories.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
+    c.name?.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="text-slate-500">Đang tải danh mục từ backend...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 space-y-4">
+        <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+        <h3 className="text-lg font-bold text-red-800 dark:text-red-400">Không thể kết nối API</h3>
+        <p className="text-red-600 dark:text-red-300 text-sm">{error}</p>
+        <button
+          onClick={fetchData}
+          className="bg-red-600 hover:bg-red-500 text-white font-semibold text-sm px-6 py-2 rounded-xl transition cursor-pointer"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 relative">
@@ -143,9 +200,9 @@ const CatalogManagement = () => {
           <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800/80 text-left text-sm">
             <thead className="bg-slate-50 dark:bg-slate-900/50 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <tr>
+                <th className="px-6 py-4">Hình ảnh</th>
                 <th className="px-6 py-4">Tên danh mục</th>
                 <th className="px-6 py-4 text-center">Số lượng sản phẩm</th>
-                <th className="px-6 py-4">Trạng thái</th>
                 <th className="px-6 py-4 text-center">Thao tác</th>
               </tr>
             </thead>
@@ -153,9 +210,21 @@ const CatalogManagement = () => {
               {filteredCategories.length > 0 ? (
                 filteredCategories.map((cat) => (
                   <tr
-                    key={cat.id}
+                    key={cat._id}
                     className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors"
                   >
+                    {/* Image */}
+                    <td className="px-6 py-4">
+                      <img
+                        src={cat.image}
+                        alt={cat.name}
+                        className="h-10 w-10 object-cover rounded-lg border border-slate-100 dark:border-slate-800"
+                        onError={(e) => {
+                          e.target.src = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500";
+                        }}
+                      />
+                    </td>
+
                     {/* Name */}
                     <td className="px-6 py-4 text-slate-900 dark:text-slate-100 font-semibold flex items-center gap-2">
                       <LayoutList className="h-4 w-4 text-blue-500" />
@@ -164,31 +233,7 @@ const CatalogManagement = () => {
 
                     {/* Product count */}
                     <td className="px-6 py-4 text-center text-slate-700 dark:text-slate-300">
-                      {cat.count} sản phẩm
-                    </td>
-
-                    {/* Status Display Toggle */}
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => toggleStatus(cat.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border cursor-pointer hover:opacity-80 transition ${
-                          cat.status === "visible"
-                            ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
-                            : "bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20"
-                        }`}
-                      >
-                        {cat.status === "visible" ? (
-                          <>
-                            <Eye className="h-3.5 w-3.5" />
-                            <span>Hiển thị</span>
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="h-3.5 w-3.5" />
-                            <span>Đang ẩn</span>
-                          </>
-                        )}
-                      </button>
+                      {getProductCount(cat._id)} sản phẩm
                     </td>
 
                     {/* Actions */}
@@ -196,14 +241,14 @@ const CatalogManagement = () => {
                       <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={() => handleOpenEditModal(cat)}
-                          className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-slate-700 transition"
+                          className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-slate-700 transition cursor-pointer"
                           title="Sửa danh mục"
                         >
                           <Edit className="h-4.5 w-4.5" />
                         </button>
                         <button
-                          onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-slate-700 transition"
+                          onClick={() => handleDeleteCategory(cat._id, cat.name)}
+                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-slate-700 transition cursor-pointer"
                           title="Xóa danh mục"
                         >
                           <Trash2 className="h-4.5 w-4.5" />
@@ -232,7 +277,7 @@ const CatalogManagement = () => {
               <h3 className="text-lg font-bold">Thêm danh mục mới</h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -248,35 +293,34 @@ const CatalogManagement = () => {
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-slate-400">
-                  Trạng thái mặc định
+                  URL Hình ảnh
                 </label>
-                <select
-                  value={formStatus}
-                  onChange={(e) => setFormStatus(e.target.value)}
+                <input
+                  type="text"
+                  placeholder="https://images.unsplash.com/..."
+                  value={formImage}
+                  onChange={(e) => setFormImage(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
-                >
-                  <option value="visible">Hiển thị</option>
-                  <option value="hidden">Đang ẩn</option>
-                </select>
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer text-slate-750 dark:text-slate-200"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
                 >
                   Xác nhận
                 </button>
@@ -294,7 +338,7 @@ const CatalogManagement = () => {
               <h3 className="text-lg font-bold">Chỉnh sửa danh mục</h3>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -310,35 +354,33 @@ const CatalogManagement = () => {
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-slate-400">
-                  Trạng thái
+                  URL Hình ảnh
                 </label>
-                <select
-                  value={formStatus}
-                  onChange={(e) => setFormStatus(e.target.value)}
+                <input
+                  type="text"
+                  value={formImage}
+                  onChange={(e) => setFormImage(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
-                >
-                  <option value="visible">Hiển thị</option>
-                  <option value="hidden">Đang ẩn</option>
-                </select>
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer text-slate-750 dark:text-slate-200"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
                 >
                   Cập nhật
                 </button>

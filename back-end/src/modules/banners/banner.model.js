@@ -34,7 +34,7 @@ const bannerSchema = new mongoose.Schema(
     },
     targetType: {
       type: String,
-      enum: ["product", "category", "external"],
+      enum: ["product", "category", "external", "lookbook"],
       default: "external",
     },
     targetId: {

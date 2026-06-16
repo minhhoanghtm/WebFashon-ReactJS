@@ -8,6 +8,8 @@ import {
   paymentOrderApi,
   updateOrderApi,
   getPurchasePerformanceApi,
+  getAdminOrdersApi,
+  updateOrderStatusApi,
 } from "@/api/orderApi";
 
 export const getOrdersByUserIdService = async () => {
@@ -37,12 +39,12 @@ export const paymentOrderService = async (data) => {
 
 export const DashboardService = async () => {
   const response = await DashboardApi();
-  return response.data;
+  return response.data?.data ?? response.data;
 };
 
 export const getRevenueOverviewService = async (type) => {
   const response = await getRevenueOverviewApi(type);
-  return response.data;
+  return response.data?.data ?? response.data;
 }
 
 export const dashboardUserService = async () => {
@@ -52,5 +54,15 @@ export const dashboardUserService = async () => {
 
 export const getPurchasePerformanceService = async () => {
   const response = await getPurchasePerformanceApi();
+  return response.data;
+};
+
+export const getAdminOrdersService = async (params) => {
+  const response = await getAdminOrdersApi(params);
+  return response.data?.data ?? response.data;
+};
+
+export const updateOrderStatusService = async (id, status) => {
+  const response = await updateOrderStatusApi(id, status);
   return response.data;
 };

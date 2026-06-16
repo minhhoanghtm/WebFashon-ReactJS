@@ -81,16 +81,22 @@ const LoginForm = () => {
       const token = response.data?.accessToken;
       if (token) {
         login(token);
+        let userRole = "";
         try {
           const userRes = await userApi.getMe();
           if (userRes.success && userRes.data) {
             setUser(userRes.data);
+            userRole = userRes.data.role || userRes.data.data?.role || "";
           }
         } catch (err) {
           console.error("Lỗi khi lấy thông tin user sau khi đăng nhập:", err);
         }
         toast.success("Đăng nhập thành công!");
-        navigate("/");
+        if (userRole === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
       } else {
         toast.error("Đăng nhập thất bại: Không tìm thấy token");
       }

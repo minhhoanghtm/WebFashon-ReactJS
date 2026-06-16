@@ -4,7 +4,7 @@ import { tokenStorage } from '../utils/token';
 export const useAuthStore = create((set) => ({
   user: null,
   isAuthenticated: tokenStorage.isAuthenticated(),
-  isLoading: false,
+  isLoading: tokenStorage.isAuthenticated(),
 
   login: (token, user = null) => {
     tokenStorage.setToken(token);

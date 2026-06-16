@@ -119,7 +119,7 @@ const orderItemSchema = new mongoose.Schema(
       index: true,
     },
     product_id: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: "Product",
       required: true,
       index: true,

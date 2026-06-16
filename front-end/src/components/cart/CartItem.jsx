@@ -36,11 +36,15 @@ const CartItem = ({
       {/* Image thumbnail */}
       <div className="h-24 w-24 md:h-28 md:w-28 shrink-0 overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <img
-          src={item.image || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=60"}
+          src={item.image || item.productImage || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=60"}
           alt={item.name}
           className={`h-full w-full object-cover object-center transition-all ${isOutOfStock ? "grayscale opacity-50" : ""}`}
           onError={(e) => {
-            e.target.src = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=60";
+            if (item.productImage && e.target.src !== item.productImage) {
+              e.target.src = item.productImage;
+            } else {
+              e.target.src = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=60";
+            }
           }}
         />
       </div>

@@ -3,10 +3,26 @@ import { Link } from "react-router-dom";
 import { MdEmail, MdPhone, MdLocationOn } from "react-icons/md";
 import { FaFacebook, FaInstagram, FaTiktok } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { useWebsiteSettings } from "../hooks/useWebsiteSettings";
 import "./footer.css";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
+  const { settings } = useWebsiteSettings();
+
+  const general = settings?.general || {};
+  const socialLinks = settings?.socialLinks || {};
+  const footerData = settings?.footer || {};
+
+  const siteName = general.siteName || "404Studio";
+  const siteDescription = general.siteDescription || "Thương hiệu thời trang cao cấp mang phong cách hiện đại, tối giản và tinh tế. Nâng tầm phong cách cá nhân của bạn mỗi ngày.";
+  const facebookUrl = socialLinks.facebook || "https://facebook.com";
+  const instagramUrl = socialLinks.instagram || "https://instagram.com";
+  const tiktokUrl = socialLinks.tiktok || "https://tiktok.com";
+  const address = general.address || "123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh";
+  const hotline = general.hotline || "0123 456 789";
+  const contactEmail = general.email || "info@404studio.com";
+  const copyrightText = footerData.copyrightText || `© ${new Date().getFullYear()} ${siteName} Store. All rights reserved.`;
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -29,21 +45,27 @@ const Footer = () => {
           {/* Cột 1: Brand Info */}
           <div className="footer-section footer-brand">
             <Link to="/" className="footer-logo">
-              404Studio
+              {siteName}
             </Link>
             <p className="footer-brand-desc">
-              Thương hiệu thời trang cao cấp mang phong cách hiện đại, tối giản và tinh tế. Nâng tầm phong cách cá nhân của bạn mỗi ngày.
+              {siteDescription}
             </p>
             <div className="footer-socials">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Facebook">
-                <FaFacebook />
-              </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Instagram">
-                <FaInstagram />
-              </a>
-              <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="TikTok">
-                <FaTiktok />
-              </a>
+              {facebookUrl && (
+                <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Facebook">
+                  <FaFacebook />
+                </a>
+              )}
+              {instagramUrl && (
+                <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Instagram">
+                  <FaInstagram />
+                </a>
+              )}
+              {tiktokUrl && (
+                <a href={tiktokUrl} target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="TikTok">
+                  <FaTiktok />
+                </a>
+              )}
             </div>
           </div>
 
@@ -72,15 +94,15 @@ const Footer = () => {
             <ul className="footer-contact-list">
               <li className="footer-contact-item">
                 <MdLocationOn />
-                <span>123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh</span>
+                <span>{address}</span>
               </li>
               <li className="footer-contact-item">
                 <MdPhone />
-                <span>0123 456 789</span>
+                <span>{hotline}</span>
               </li>
               <li className="footer-contact-item">
                 <MdEmail />
-                <span>info@404studio.com</span>
+                <span>{contactEmail}</span>
               </li>
             </ul>
           </div>
@@ -110,7 +132,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="footer-bottom">
           <div className="footer-copy">
-            &copy; {new Date().getFullYear()} 404Studio Store. All rights reserved.
+            {copyrightText}
           </div>
           <div className="footer-bottom-links">
             <Link to="/terms">Điều khoản sử dụng</Link>

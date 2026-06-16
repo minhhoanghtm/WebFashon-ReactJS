@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 
 import voucherService from "../vouchers/voucher.service.js";
 import dotenv from "dotenv";
+import { Cart, CartItem } from "../carts/cart.model.js";
 dotenv.config();
 
 class OrderService {
@@ -17,8 +18,10 @@ class OrderService {
       let createdOrder;
       await session.withTransaction(async () => {
         const items = orderData.items || [];
-        const paymentMethod = orderData.payment_method || orderData.paymentMethod || "cod";
-        const rawShippingAddress = orderData.shipping_address || orderData.shippingAddress;
+        const paymentMethod =
+          orderData.payment_method || orderData.paymentMethod || "cod";
+        const rawShippingAddress =
+          orderData.shipping_address || orderData.shippingAddress;
         const voucherCode = orderData.voucher_code || orderData.voucherCode;
 
         let dbShippingAddress = {};
@@ -31,7 +34,10 @@ class OrderService {
             ward: "Chưa xác định",
             address_detail: rawShippingAddress,
           };
-        } else if (rawShippingAddress && typeof rawShippingAddress === "object") {
+        } else if (
+          rawShippingAddress &&
+          typeof rawShippingAddress === "object"
+        ) {
           dbShippingAddress = rawShippingAddress;
         } else {
           throw new AppError("Địa chỉ giao hàng là bắt buộc", 400);
@@ -42,11 +48,16 @@ class OrderService {
 
         if (Array.isArray(items) && items.length > 0) {
           for (const item of items) {
-            const product = await productRepository.findOne({ _id: item.product_id });
+            const product = await productRepository.findOne({
+              _id: item.product_id,
+            });
             if (!product) {
-              throw new AppError(`Sản phẩm với id ${item.product_id} không tồn tại`, 404);
+              throw new AppError(
+                `Sản phẩm với id ${item.product_id} không tồn tại`,
+                404,
+              );
             }
-            
+
             const priceToUse = product.new_price || product.price || 0;
             const totalCalculated = priceToUse * item.quantity;
             subtotal += totalCalculated;
@@ -55,7 +66,9 @@ class OrderService {
               product_id: item.product_id,
               product_name: product.name,
               product_slug: product.slug,
-              product_image: product.image || (product.displayProduct && product.displayProduct[0]),
+              product_image:
+                product.image ||
+                (product.displayProduct && product.displayProduct[0]),
               quantity: item.quantity,
               price: priceToUse,
               variant_id: item.variant_id || item.product_variant_id || null,
@@ -70,12 +83,21 @@ class OrderService {
 
         if (voucherCode) {
           // Validate voucher and calculate discount
-          const validation = await voucherService.validateVoucher(userId, voucherCode, subtotal);
+          const validation = await voucherService.validateVoucher(
+            userId,
+            voucherCode,
+            subtotal,
+          );
           discountAmount = validation.discountAmount;
           voucherId = validation.voucherId;
 
           // Apply voucher inside transaction using placeholder orderId (Original flow sequence step 1)
-          await voucherService.applyVoucherWithPlaceholder(userId, voucherCode, discountAmount, { session });
+          await voucherService.applyVoucherWithPlaceholder(
+            userId,
+            voucherCode,
+            discountAmount,
+            { session },
+          );
         }
 
         const finalTotalPrice = Math.max(0, subtotal - discountAmount);
@@ -94,14 +116,19 @@ class OrderService {
               shipping_address: dbShippingAddress,
             },
           ],
-          { session }
+          { session },
         );
 
         createdOrder = orderArray[0];
 
         // Update the actual order ID in the VoucherUsage record (Original flow sequence step 3)
         if (voucherId) {
-          await voucherService.linkVoucherUsageToOrder(userId, voucherId, createdOrder._id, { session });
+          await voucherService.linkVoucherUsageToOrder(
+            userId,
+            voucherId,
+            createdOrder._id,
+            { session },
+          );
         }
 
         if (orderItems.length > 0) {
@@ -110,7 +137,42 @@ class OrderService {
             order_id: createdOrder._id,
           }));
 
-          await orderRepository.insertManyItems(orderItemsToInsert, { session });
+          await orderRepository.insertManyItems(orderItemsToInsert, {
+            session,
+          });
+
+          // Remove ordered items from user's cart
+          const userCart = await Cart.findOne({ user_id: userId }).session(
+            session,
+          );
+          if (userCart) {
+            const productIds = orderItems.map((item) => item.product_id);
+            await CartItem.deleteMany({
+              cart_id: userCart._id,
+              product_id: { $in: productIds },
+            }).session(session);
+
+            // Recalculate cart totals
+            const remainingItems = await CartItem.find({
+              cart_id: userCart._id,
+            }).session(session);
+            const totalItemsCount = remainingItems.reduce(
+              (sum, item) => sum + (item.quantity || 0),
+              0,
+            );
+            const totalPrice = remainingItems.reduce(
+              (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+              0,
+            );
+            await Cart.findByIdAndUpdate(
+              userCart._id,
+              {
+                total_items: totalItemsCount,
+                total_price: totalPrice,
+              },
+              { session },
+            );
+          }
         }
       });
 
@@ -120,7 +182,12 @@ class OrderService {
           .then(({ emitOrderNotification }) => {
             emitOrderNotification(createdOrder);
           })
-          .catch((err) => console.error("Failed to emit order socket notification:", err.message));
+          .catch((err) =>
+            console.error(
+              "Failed to emit order socket notification:",
+              err.message,
+            ),
+          );
       }
 
       return createdOrder;
@@ -132,7 +199,9 @@ class OrderService {
           error.message.includes("replica set") ||
           error.message.includes("transaction"))
       ) {
-        console.warn("⚠️ MongoDB local does not support Transactions. Falling back to non-transactional execution.");
+        console.warn(
+          "⚠️ MongoDB local does not support Transactions. Falling back to non-transactional execution.",
+        );
         return await this.createOrderWithoutTransaction(userId, orderData);
       }
       throw error;
@@ -144,8 +213,10 @@ class OrderService {
   // Non-transactional fallback for development/local systems running standalone MongoDB
   async createOrderWithoutTransaction(userId, orderData) {
     const items = orderData.items || [];
-    const paymentMethod = orderData.payment_method || orderData.paymentMethod || "cod";
-    const rawShippingAddress = orderData.shipping_address || orderData.shippingAddress;
+    const paymentMethod =
+      orderData.payment_method || orderData.paymentMethod || "cod";
+    const rawShippingAddress =
+      orderData.shipping_address || orderData.shippingAddress;
     const voucherCode = orderData.voucher_code || orderData.voucherCode;
 
     let dbShippingAddress = {};
@@ -169,11 +240,16 @@ class OrderService {
 
     if (Array.isArray(items) && items.length > 0) {
       for (const item of items) {
-        const product = await productRepository.findOne({ _id: item.product_id });
+        const product = await productRepository.findOne({
+          _id: item.product_id,
+        });
         if (!product) {
-          throw new AppError(`Sản phẩm với id ${item.product_id} không tồn tại`, 404);
+          throw new AppError(
+            `Sản phẩm với id ${item.product_id} không tồn tại`,
+            404,
+          );
         }
-        
+
         const priceToUse = product.new_price || product.price || 0;
         const totalCalculated = priceToUse * item.quantity;
         subtotal += totalCalculated;
@@ -182,7 +258,9 @@ class OrderService {
           product_id: item.product_id,
           product_name: product.name,
           product_slug: product.slug,
-          product_image: product.image || (product.displayProduct && product.displayProduct[0]),
+          product_image:
+            product.image ||
+            (product.displayProduct && product.displayProduct[0]),
           quantity: item.quantity,
           price: priceToUse,
           variant_id: item.variant_id || item.product_variant_id || null,
@@ -196,7 +274,11 @@ class OrderService {
     let voucherId = null;
 
     if (voucherCode) {
-      const validation = await voucherService.validateVoucher(userId, voucherCode, subtotal);
+      const validation = await voucherService.validateVoucher(
+        userId,
+        voucherCode,
+        subtotal,
+      );
       discountAmount = validation.discountAmount;
       voucherId = validation.voucherId;
 
@@ -220,7 +302,12 @@ class OrderService {
 
     // Create VoucherUsage record (Original fallback flow step 3)
     if (voucherId) {
-      await voucherService.createVoucherUsage(userId, voucherId, order._id, discountAmount);
+      await voucherService.createVoucherUsage(
+        userId,
+        voucherId,
+        order._id,
+        discountAmount,
+      );
     }
 
     if (orderItems.length > 0) {
@@ -229,17 +316,43 @@ class OrderService {
         order_id: order._id,
       }));
       await orderRepository.insertManyItems(orderItemsToInsert);
+
+      // Remove ordered items from user's cart
+      const userCart = await Cart.findOne({ user_id: userId });
+      if (userCart) {
+        const productIds = orderItems.map((item) => item.product_id);
+        await CartItem.deleteMany({
+          cart_id: userCart._id,
+          product_id: { $in: productIds },
+        });
+
+        // Recalculate
+        const remainingItems = await CartItem.find({ cart_id: userCart._id });
+        const totalItemsCount = remainingItems.reduce(
+          (sum, item) => sum + (item.quantity || 0),
+          0,
+        );
+        const totalPrice = remainingItems.reduce(
+          (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+          0,
+        );
+        await Cart.findByIdAndUpdate(userCart._id, {
+          total_items: totalItemsCount,
+          total_price: totalPrice,
+        });
+      }
     }
 
     import("../../sockets/events.js")
       .then(({ emitOrderNotification }) => {
         emitOrderNotification(order);
       })
-      .catch((err) => console.error("Failed to emit order socket notification:", err.message));
+      .catch((err) =>
+        console.error("Failed to emit order socket notification:", err.message),
+      );
 
     return order;
   }
-
 
   async getOrdersByUser(userIdString) {
     const userId = new mongoose.Types.ObjectId(userIdString);
@@ -335,9 +448,13 @@ class OrderService {
     }
 
     // Trigger status change notification
-    import("../../sockets/events.js").then(({ emitOrderNotification }) => {
-      emitOrderNotification(updated);
-    }).catch(err => console.error("Failed to emit order socket notification:", err.message));
+    import("../../sockets/events.js")
+      .then(({ emitOrderNotification }) => {
+        emitOrderNotification(updated);
+      })
+      .catch((err) =>
+        console.error("Failed to emit order socket notification:", err.message),
+      );
 
     return updated;
   }
@@ -363,7 +480,7 @@ class OrderService {
     if (order.payment_status === "paid") {
       throw new AppError(
         "Đơn hàng đã được thanh toán hoặc đang trong quá trình xử lý. Vui lòng không thanh toán lại.",
-        400
+        400,
       );
     }
 
@@ -372,7 +489,12 @@ class OrderService {
       order.payment_status = "pending";
       order.status = "confirmed";
       await order.save();
-      return { success: true, message: "Đơn hàng đã được đặt thành công. Vui lòng chuẩn bị tiền mặt khi nhận hàng.", order };
+      return {
+        success: true,
+        message:
+          "Đơn hàng đã được đặt thành công. Vui lòng chuẩn bị tiền mặt khi nhận hàng.",
+        order,
+      };
     }
 
     // Call providers
@@ -380,9 +502,17 @@ class OrderService {
       order.payment_method = "momo";
       order.payment_status = "pending";
       await order.save();
-      
-      const momoResult = await momoProvider.createMomoPayment(order._id, order.total_price);
-      return { success: true, message: "Chuyển đến cổng thanh toán", paymentUrl: momoResult.paymentUrl, order };
+
+      const momoResult = await momoProvider.createMomoPayment(
+        order._id,
+        order.total_price,
+      );
+      return {
+        success: true,
+        message: "Chuyển đến cổng thanh toán",
+        paymentUrl: momoResult.paymentUrl,
+        order,
+      };
     }
 
     if (payment_method === "vnpay") {
@@ -392,7 +522,12 @@ class OrderService {
       await order.save();
 
       const paymentUrl = `${process.env.CLIENT_URL}/payment-success?orderId=${order._id}&provider=vnpay`;
-      return { success: true, message: "Chuyển đến cổng thanh toán", paymentUrl, order };
+      return {
+        success: true,
+        message: "Chuyển đến cổng thanh toán",
+        paymentUrl,
+        order,
+      };
     }
 
     throw new AppError("Phương thức thanh toán không hợp lệ", 400);
@@ -415,9 +550,13 @@ class OrderService {
     await order.save();
 
     // Trigger payment callback status notification
-    import("../../sockets/events.js").then(({ emitOrderNotification }) => {
-      emitOrderNotification(order);
-    }).catch(err => console.error("Failed to emit order socket notification:", err.message));
+    import("../../sockets/events.js")
+      .then(({ emitOrderNotification }) => {
+        emitOrderNotification(order);
+      })
+      .catch((err) =>
+        console.error("Failed to emit order socket notification:", err.message),
+      );
 
     return order;
   }
@@ -586,14 +725,16 @@ class OrderService {
       },
     ]);
 
-    return stats[0] || {
-      totalOrders: 0,
-      deliveredOrders: 0,
-      pendingOrders: 0,
-      cancelledOrders: 0,
-      confirmedOrders: 0,
-      shippingOrders: 0,
-    };
+    return (
+      stats[0] || {
+        totalOrders: 0,
+        deliveredOrders: 0,
+        pendingOrders: 0,
+        cancelledOrders: 0,
+        confirmedOrders: 0,
+        shippingOrders: 0,
+      }
+    );
   }
 
   async getPurchasePerformance() {
@@ -615,7 +756,13 @@ class OrderService {
                   $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
                 },
                 totalPaid: {
-                  $sum: { $cond: [{ $eq: ["$status", "delivered"] }, "$total_price", 0] },
+                  $sum: {
+                    $cond: [
+                      { $eq: ["$status", "delivered"] },
+                      "$total_price",
+                      0,
+                    ],
+                  },
                 },
               },
             },
@@ -664,7 +811,9 @@ class OrderService {
 
     const cancelRate =
       mergedData.totalOrders > 0
-        ? ((mergedData.cancelledOrders / mergedData.totalOrders) * 100).toFixed(2)
+        ? ((mergedData.cancelledOrders / mergedData.totalOrders) * 100).toFixed(
+            2,
+          )
         : 0;
 
     return {
@@ -688,7 +837,9 @@ class OrderService {
   }
 
   async updateOrderItem(id, itemData) {
-    const updated = await orderRepository.findItemByIdAndUpdate(id, itemData, { new: true });
+    const updated = await orderRepository.findItemByIdAndUpdate(id, itemData, {
+      new: true,
+    });
     if (!updated) {
       throw new AppError("Không tìm thấy sản phẩm trong đơn hàng", 404);
     }
@@ -701,6 +852,46 @@ class OrderService {
       throw new AppError("Không tìm thấy sản phẩm trong đơn hàng", 404);
     }
     return deleted;
+  }
+
+  async getAdminOrders({ page = 1, limit = 10, status, search }) {
+    const query = {};
+    if (status) {
+      query.status = status;
+    }
+
+    if (search) {
+      query.$or = [
+        { orderCode: { $regex: search, $options: "i" } },
+        { fullName: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const [orders, total] = await Promise.all([
+      orderRepository.find(query, { createdAt: -1 }, skip, limit),
+      orderRepository.countDocuments(query),
+    ]);
+
+    return {
+      items: orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      }
+    };
+  }
+
+  async updateOrderStatus(id, status) {
+    const order = await orderRepository.findById(id);
+    if(!order) {
+      throw new AppError("Đơn hàng không tồn tại", 404);
+    }
+    order.status = status === "shipped" ? "shipping" : status;
+    await order.save();
+    return order;
   }
 }
 

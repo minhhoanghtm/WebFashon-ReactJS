@@ -1,15 +1,29 @@
-import { PackageSearch } from "lucide-react";
+import React, { useState } from "react";
+import { PackageSearch, ArrowDown } from "lucide-react";
 import ProductCard from "../../components/ProductCard";
 import SectionHeader from "./SectionHeader";
 
 const TrendingProducts = ({
-  products,
+  products = [],
+  limit = 8,
   isLoading,
   hasError,
   isUsingFallback,
   favoriteIds,
   onToggleFavorite,
 }) => {
+  const [visibleCount, setVisibleCount] = useState(limit);
+
+  const displayedProducts = Array.isArray(products)
+    ? products.slice(0, visibleCount)
+    : [];
+
+  const hasMore = Array.isArray(products) && products.length > visibleCount;
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + 8);
+  };
+
   return (
     <section
       id="san-pham-noi-bat"
@@ -37,16 +51,30 @@ const TrendingProducts = ({
           <span className="home-products__loader" aria-hidden="true" />
           Đang tải sản phẩm...
         </div>
-      ) : products.length > 0 ? (
-        <div className="home-products__grid">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              isFavorite={favoriteIds.has(product.id)}
-              onToggleFavorite={onToggleFavorite}
-            />
-          ))}
+      ) : displayedProducts.length > 0 ? (
+        <div className="space-y-8">
+          <div className="home-products__grid">
+            {displayedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                isFavorite={favoriteIds.has(product.id)}
+                onToggleFavorite={onToggleFavorite}
+              />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={handleLoadMore}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
+              >
+                <span>Xem thêm sản phẩm</span>
+                <ArrowDown size={14} />
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="home-products__state home-products__state--empty">

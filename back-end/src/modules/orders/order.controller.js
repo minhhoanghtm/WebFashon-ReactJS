@@ -52,7 +52,11 @@ export const paymentOrder = async (req, res, next) => {
   try {
     const userId = req.user.userId;
     const { orderId, payment_method } = req.body;
-    const result = await orderService.paymentOrder(userId, orderId, payment_method);
+    const result = await orderService.paymentOrder(
+      userId,
+      orderId,
+      payment_method,
+    );
 
     if (result.paymentUrl) {
       return res.status(200).json({
@@ -75,10 +79,14 @@ export const paymentOrder = async (req, res, next) => {
 export const paymentCallback = async (req, res, next) => {
   try {
     const { orderId, status, transactionId } = req.query;
-    const order = await orderService.paymentCallback(orderId, status, transactionId);
+    const order = await orderService.paymentCallback(
+      orderId,
+      status,
+      transactionId,
+    );
 
     return res.redirect(
-      `${process.env.CLIENT_URL}/orders?paymentStatus=${order.payment_status}`
+      `${process.env.CLIENT_URL}/orders?paymentStatus=${order.payment_status}`,
     );
   } catch (error) {
     next(error);
@@ -176,6 +184,39 @@ export const deleteOrderItem = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Xóa sản phẩm khỏi đơn hàng thành công",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAdminOrders = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 10, status, search } = req.query;
+    const result = await orderService.getAdminOrders({
+      page: parseInt(page),
+      limit: parseInt(limit),
+      status,
+      search,
+    });
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateOrderStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const order = await orderService.updateOrderStatus(id, status);
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật trạng thái đơn hàng thành công",
+      data: order,
     });
   } catch (error) {
     next(error);

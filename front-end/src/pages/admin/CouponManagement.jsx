@@ -885,7 +885,7 @@ const CouponManagement = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition shadow-md shadow-indigo-500/20 cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-black text-sm font-semibold transition shadow-md shadow-indigo-500/20 cursor-pointer"
                   >
                     Lưu thay đổi
                   </button>

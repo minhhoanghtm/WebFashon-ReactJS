@@ -1,4 +1,4 @@
-import { fallbackProductImage } from "./productMockData";
+import fallbackProductImage from "../Home/assets/product-linen-shirt.jpg";
 
 const firstValue = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");

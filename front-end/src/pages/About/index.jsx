@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { getWebsiteSettingsService } from "@/services/websiteSettings.service";
+import { getPageBySlugService } from "@/services/page.service";
 import { Loader2 } from "lucide-react";
 import AboutHero from "./AboutHero";
 import BrandStory from "./BrandStory";
@@ -20,9 +20,21 @@ const About = () => {
     const fetchAboutUs = async () => {
       try {
         setLoading(true);
-        const settings = await getWebsiteSettingsService();
-        if (settings?.policies?.aboutUs) {
-          setAboutUsHtml(settings.policies.aboutUs);
+        const data = await getPageBySlugService("about-us").catch(() => 
+          getPageBySlugService("about").catch(() => null)
+        );
+        
+        // Handle if API returns { page, sections } or flat object
+        const page = data?.page || data;
+        const sections = data?.sections || data?.page?.sections || [];
+
+        if (sections && sections.length > 0) {
+          const storySec = sections.find((s) => s.type === "story");
+          if (storySec?.data?.content) {
+            setAboutUsHtml(storySec.data.content);
+          }
+        } else if (page && page.content) {
+          setAboutUsHtml(page.content);
         }
       } catch (err) {
         console.error("Lỗi khi tải thông tin giới thiệu:", err);
