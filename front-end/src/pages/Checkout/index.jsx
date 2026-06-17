@@ -30,7 +30,9 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [loading, setLoading] = useState(false);
 
-  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  // Voucher states
+  const [appliedVoucher, setAppliedVoucher] = useState(location.state?.appliedCoupon || null);
+  const [appliedShippingVoucher, setAppliedShippingVoucher] = useState(location.state?.appliedShippingCoupon || null);
 
   const calculateSubtotal = () => {
     return checkoutItems.reduce(
@@ -40,10 +42,19 @@ const Checkout = () => {
     );
   };
 
+  const calculateShippingFee = () => {
+    const sub = calculateSubtotal();
+    if (sub >= 1000000 || sub === 0) return 0;
+    const baseShipping = 30000;
+    const shipDisc = appliedShippingVoucher ? (appliedShippingVoucher.discountAmount || appliedShippingVoucher.discount_amount || 0) : 0;
+    return Math.max(0, baseShipping - shipDisc);
+  };
+
   const calculateFinalTotal = () => {
     const sub = calculateSubtotal();
-    const disc = appliedVoucher ? appliedVoucher.discountAmount : 0;
-    return Math.max(0, sub - disc);
+    const disc = appliedVoucher ? (appliedVoucher.discountAmount || appliedVoucher.discount_amount || 0) : 0;
+    const shipFee = calculateShippingFee();
+    return Math.max(0, sub - disc + shipFee);
   };
 
   const handlePlaceOrder = async (e) => {
@@ -54,6 +65,11 @@ const Checkout = () => {
     setLoading(true);
 
     try {
+      const activeVoucherCodes = [
+        appliedVoucher?.code,
+        appliedShippingVoucher?.code
+      ].filter(Boolean).join(",");
+
       const orderPayload = {
         fullName,
         phone,
@@ -66,7 +82,7 @@ const Checkout = () => {
           price: item.new_price || item.price || 0,
         })),
         totalPrice: calculateFinalTotal(),
-        voucherCode: appliedVoucher ? appliedVoucher.code : null,
+        voucherCode: activeVoucherCodes || null,
       };
 
       const res = await orderApi.createOrder(orderPayload);
@@ -257,12 +273,27 @@ const Checkout = () => {
             <strong>{address || "Chưa nhập địa chỉ giao hàng."}</strong>
           </div>
 
-          <div className="border-t border-b border-gray-200 py-4">
+          {/* Voucher Section */}
+          <div className="border-t border-b border-gray-200 py-4 space-y-4">
             <CheckoutVoucherSelector
               subtotal={calculateSubtotal()}
+              items={checkoutItems}
+              shippingFee={calculateSubtotal() >= 1000000 || calculateSubtotal() === 0 ? 0 : 30000}
               appliedVoucher={appliedVoucher}
               onApply={(voucher) => setAppliedVoucher(voucher)}
               onRemove={() => setAppliedVoucher(null)}
+              voucherType="product"
+              label="Chọn Voucher sản phẩm"
+            />
+            <CheckoutVoucherSelector
+              subtotal={calculateSubtotal()}
+              items={checkoutItems}
+              shippingFee={calculateSubtotal() >= 1000000 || calculateSubtotal() === 0 ? 0 : 30000}
+              appliedVoucher={appliedShippingVoucher}
+              onApply={(voucher) => setAppliedShippingVoucher(voucher)}
+              onRemove={() => setAppliedShippingVoucher(null)}
+              voucherType="shipping"
+              label="Chọn Voucher vận chuyển"
             />
           </div>
 
@@ -272,11 +303,21 @@ const Checkout = () => {
               <span>{calculateSubtotal().toLocaleString("vi-VN")}đ</span>
             </div>
             {appliedVoucher && (
-              <div className="flex justify-between text-sm text-indigo-650 font-semibold">
-                <span>Giảm giá (Voucher)</span>
-                <span>-{appliedVoucher.discountAmount.toLocaleString("vi-VN")}đ</span>
+              <div className="flex justify-between text-sm text-green-600 font-semibold">
+                <span>Giảm giá (Voucher sản phẩm)</span>
+                <span>-{(appliedVoucher.discountAmount || appliedVoucher.discount_amount || 0).toLocaleString("vi-VN")}đ</span>
               </div>
             )}
+            {appliedShippingVoucher && (
+              <div className="flex justify-between text-sm text-blue-600 font-semibold">
+                <span>Giảm giá (Voucher vận chuyển)</span>
+                <span>-{(appliedShippingVoucher.discountAmount || appliedShippingVoucher.discount_amount || 0).toLocaleString("vi-VN")}đ</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Phí vận chuyển</span>
+              <span>{calculateShippingFee() === 0 ? "Miễn phí" : `${calculateShippingFee().toLocaleString("vi-VN")}đ`}</span>
+            </div>
             <div className="border-t border-gray-200 pt-4 flex justify-between text-base font-bold text-gray-900 font-sans">
               <span>Tổng thanh toán</span>
               <span className="text-indigo-600 text-lg">

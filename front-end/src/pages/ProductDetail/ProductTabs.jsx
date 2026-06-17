@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-
+import Markdown from "@/components/Markdown";
 const fallbackPolicy =
   "Hỗ trợ đổi trả theo chính sách của cửa hàng. Sản phẩm cần còn nguyên tem mác, chưa qua sử dụng và được gửi yêu cầu trong thời gian quy định.";
 
@@ -46,7 +46,7 @@ const ProductTabs = ({ product, variants = [] }) => {
         {activeTab === "description" && (
           <div className="product-tabs__copy">
             <h2>Mô tả sản phẩm</h2>
-            <p>{product.description}</p>
+            <Markdown>{product.description}</Markdown>
           </div>
         )}
 

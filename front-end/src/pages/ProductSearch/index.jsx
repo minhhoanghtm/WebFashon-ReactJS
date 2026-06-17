@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getAllCategoriesService } from "@/services/category.service";
 import { searchProductsService } from "@/services/product.service";
+import { useFavoriteStore } from "@/store/favorite.store";
 import EmptyState from "./EmptyState";
 import ProductFilter from "./ProductFilter";
 import ProductGrid from "./ProductGrid";
@@ -46,6 +47,8 @@ const ProductSearch = () => {
     return validSortOptions.includes(initialSort) ? initialSort : "popular";
   });
   const [filters, setFilters] = useState(initialFilters);
+  const favoriteItems = useFavoriteStore((state) => state.items);
+  const toggleFavorite = useFavoriteStore((state) => state.toggleProduct);
 
   const categoryIds = useMemo(() => {
     return Object.entries(categoryMap)
@@ -77,9 +80,13 @@ const ProductSearch = () => {
     placeholderData: (keepPreviousData) => keepPreviousData,
   });
 
-  const [favoriteIds, setFavoriteIds] = useState(() => new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
+
+  const favoriteIds = useMemo(
+    () => new Set(favoriteItems.map((item) => String(item.id))),
+    [favoriteItems],
+  );
 
   useDocumentTitle("Sản phẩm");
 
@@ -209,20 +216,6 @@ const ProductSearch = () => {
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
-
-  const toggleFavorite = (productId) => {
-    setFavoriteIds((currentIds) => {
-      const nextIds = new Set(currentIds);
-
-      if (nextIds.has(productId)) {
-        nextIds.delete(productId);
-      } else {
-        nextIds.add(productId);
-      }
-
-      return nextIds;
-    });
-  };
 
   const handleFiltersChange = (nextFilters) => {
     setFilters(nextFilters);

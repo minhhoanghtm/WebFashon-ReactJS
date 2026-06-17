@@ -18,14 +18,14 @@ import { uploadImageService } from "../../services/upload.service";
 import { suggestProductsService } from "../../services/product.service";
 
 const sectionTypesList = [
-  { value: "hero", label: "Hero Block" },
-  { value: "story", label: "Rich Text Story" },
-  { value: "gallery", label: "Editorial Gallery" },
-  { value: "quote", label: "Fashion Quote" },
-  { value: "image_text", label: "Image + Text" },
-  { value: "products", label: "Product Spotlight" },
-  { value: "banner", label: "Full Width Banner" },
-  { value: "cta", label: "Closing CTA Section" }
+  { value: "hero", label: "Khối Hero" },
+  { value: "story", label: "Câu chuyện văn bản" },
+  { value: "gallery", label: "Thư viện ảnh biên tập" },
+  { value: "quote", label: "Trích dẫn thời trang" },
+  { value: "image_text", label: "Ảnh + Văn bản" },
+  { value: "products", label: "Sản phẩm nổi bật" },
+  { value: "banner", label: "Banner toàn chiều rộng" },
+  { value: "cta", label: "Khối CTA kết thúc" }
 ];
 
 export const SectionBuilder = ({ sections, setSections, selectedProducts, setSelectedProducts }) => {

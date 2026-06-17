@@ -32,7 +32,7 @@ export const validateCreateUser = (req, res, next) => {
 
 export const validateUpdateUser = (req, res, next) => {
   const { id } = req.params;
-  const { email, passWord, role, sex } = req.body;
+  const { email, passWord, role, sex, status } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return next(new AppError("ID người dùng không hợp lệ", 400));
@@ -52,6 +52,10 @@ export const validateUpdateUser = (req, res, next) => {
 
   if (sex && !["male", "female"].includes(sex)) {
     return next(new AppError("Giới tính không hợp lệ! Chỉ chấp nhận: male, female", 400));
+  }
+
+  if (status && !["active", "blocked"].includes(status)) {
+    return next(new AppError("Trạng thái không hợp lệ! Chỉ chấp nhận: active, blocked", 400));
   }
 
   next();

@@ -1,22 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import { Heart, Search, X } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { useAuthStore } from '../store/auth.store';
 import { useCartStore } from '../store/cart.store';
+import { useFavoriteStore } from '../store/favorite.store';
 import Footer from '../components/Footer';
 
 const MainLayout = () => {
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
   const { items } = useCartStore();
+  const favoriteItems = useFavoriteStore((state) => state.items);
   const [searchParams] = useSearchParams();
   const [homeSearchTerm, setHomeSearchTerm] = useState(() => searchParams.get('search') || '');
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    logout();
+    toast.success('Đăng xuất thành công!');
+    navigate('/login');
+  };
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHomeSearchTerm(searchParams.get('search') || '');
   }, [searchParams]);
 
   const cartCount = items.reduce((total, item) => total + (item.quantity || 0), 0);
+  const favoriteCount = favoriteItems.length;
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -73,6 +84,15 @@ const MainLayout = () => {
             <Link to="/vouchers" className="text-sm font-medium hover:text-indigo-600 transition">
               Voucher
             </Link>
+            <Link to="/favorites" className="relative inline-flex items-center gap-1.5 text-sm font-medium hover:text-indigo-600 transition">
+              <Heart size={16} aria-hidden="true" />
+              Yêu thích
+              {favoriteCount > 0 && (
+                <span className="absolute -right-3 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                  {favoriteCount}
+                </span>
+              )}
+            </Link>
             <Link to="/cart" className="relative text-sm font-medium hover:text-indigo-600 transition">
               Giỏ hàng
               {cartCount > 0 && (
@@ -90,7 +110,7 @@ const MainLayout = () => {
                   Tài khoản
                 </Link>
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="rounded-lg bg-gray-100 px-4 py-2 text-xs font-semibold hover:bg-gray-200 transition"
                 >
                   Đăng xuất

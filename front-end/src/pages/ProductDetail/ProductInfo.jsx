@@ -1,8 +1,15 @@
+import React, { useState } from "react";
 import { Heart, Star } from "lucide-react";
 import { formatCurrency } from "@/utils/format";
+import { useFavoriteStore } from "@/store/favorite.store";
 import ProductActions from "./ProductActions";
 
 const ProductInfo = ({ product, variants }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const favoriteItems = useFavoriteStore((state) => state.items);
+  const toggleFavorite = useFavoriteStore((state) => state.toggleProduct);
+  const isFavorite = favoriteItems.some((item) => String(item.id) === String(product.id));
+
   return (
     <div className="product-info">
       <div className="product-info__eyebrow">Chi tiết sản phẩm</div>
@@ -14,10 +21,15 @@ const ProductInfo = ({ product, variants }) => {
         </div>
         <button
           type="button"
-          className="product-info__favorite"
+          onClick={() => toggleFavorite(product)}
+          className={`product-info__favorite ${isFavorite ? "is-active" : ""}`}
           aria-label="Yêu thích"
         >
-          <Heart size={20} aria-hidden="true" />
+          <Heart
+            size={20}
+            fill={isFavorite ? "currentColor" : "none"}
+            aria-hidden="true"
+          />
         </button>
       </div>
 
@@ -47,7 +59,20 @@ const ProductInfo = ({ product, variants }) => {
         )}
       </div>
 
-      <p className="product-info__description">{product.shortDescription}</p>
+      {/* <div className="product-info__description-wrapper">
+        <p className="product-info__description">
+          {isExpanded ? product.description : product.shortDescription}
+        </p>
+        {product.description && product.description.length > 190 && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="product-info__read-more"
+          >
+            {isExpanded ? "Thu gọn" : "Xem thêm"}
+          </button>
+        )}
+      </div> */}
 
       <ProductActions product={product} variants={variants} />
 

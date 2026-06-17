@@ -53,6 +53,10 @@ class AuthService {
       throw new AppError("Email hoặc password không đúng", 401);
     }
 
+    if (user.status === "blocked") {
+      throw new AppError("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.", 403);
+    }
+
     const passWordCorrect = await bcrypt.compare(passWord, user.passWord);
     if (!passWordCorrect) {
       throw new AppError("Email hoặc password không đúng", 401);

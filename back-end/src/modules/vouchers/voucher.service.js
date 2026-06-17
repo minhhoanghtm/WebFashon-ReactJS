@@ -1,6 +1,7 @@
 import voucherRepository from "./voucher.repository.js";
 import { AppError } from "../../common/exceptions/AppError.js";
 import mongoose from "mongoose";
+import Product from "../products/product.model.js";
 import { acquireLock, releaseLock } from "../../providers/redisLock.provider.js";
 import getRedisConnection from "../../configs/redis.js";
 
@@ -212,6 +213,9 @@ class VoucherService {
       startDate,
       endDate,
       status = "ACTIVE",
+      voucherType = "order",
+      applicableProducts = [],
+      applicableCategories = [],
     } = voucherData;
 
     const uppercaseCode = code.trim().toUpperCase();
@@ -247,6 +251,9 @@ class VoucherService {
       startDate,
       endDate,
       status,
+      voucherType,
+      applicableProducts,
+      applicableCategories,
     });
 
     // Write Audit Log
@@ -267,7 +274,7 @@ class VoucherService {
    * Admin: Update a voucher
    */
   async updateVoucher(userId, id, updateData) {
-    const { name, description, endDate, totalQuantity, status } = updateData;
+    const { name, description, endDate, totalQuantity, status, voucherType, applicableProducts, applicableCategories } = updateData;
 
     const voucher = await voucherRepository.findOne({ _id: id, isDeleted: false });
     if (!voucher) {
@@ -278,6 +285,9 @@ class VoucherService {
     if (name !== undefined) updates.name = name;
     if (description !== undefined) updates.description = description;
     if (status !== undefined) updates.status = status;
+    if (voucherType !== undefined) updates.voucherType = voucherType;
+    if (applicableProducts !== undefined) updates.applicableProducts = applicableProducts;
+    if (applicableCategories !== undefined) updates.applicableCategories = applicableCategories;
 
     if (endDate !== undefined) {
       if (new Date(endDate) <= new Date(voucher.startDate)) {
@@ -499,7 +509,7 @@ class VoucherService {
   /**
    * Core/Checkout: Validate voucher for application
    */
-  async validateVoucher(userId, code, subtotal) {
+  async validateVoucher(userId, code, subtotal, items = [], shippingFee = 0) {
     await this._seedUserWalletIfEmpty(userId);
     const uppercaseCode = code.trim().toUpperCase();
 
@@ -522,16 +532,7 @@ class VoucherService {
       throw new AppError("Mã giảm giá đã hết hạn", 400);
     }
 
-    // 3. Check min order value requirement
-    const currentSubtotal = Number(subtotal) || 0;
-    if (currentSubtotal < voucher.minOrderValue) {
-      throw new AppError(
-        `Mã giảm giá này áp dụng cho đơn hàng tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
-        400
-      );
-    }
-
-    // 4. Verify user owns the voucher
+    // 3. Verify user owns the voucher
     const userVoucher = await voucherRepository.findOneUserVoucher({
       userId,
       voucherId: voucher._id || voucher.id,
@@ -549,18 +550,122 @@ class VoucherService {
       throw new AppError("Voucher của bạn đã hết hạn sử dụng", 400);
     }
 
-    // 5. Calculate discount amount
+    // 4. Calculate discount amount and check min value based on voucher type
+    const currentSubtotal = Number(subtotal) || 0;
     let discountAmount = 0;
-    if (voucher.discountType === "percentage") {
-      discountAmount = Math.round((voucher.discountValue / 100) * currentSubtotal);
-      if (voucher.maxDiscountAmount > 0) {
-        discountAmount = Math.min(discountAmount, voucher.maxDiscountAmount);
-      }
-    } else if (voucher.discountType === "fixed") {
-      discountAmount = voucher.discountValue;
-    }
+    const vType = voucher.voucherType || "order";
 
-    discountAmount = Math.min(discountAmount, currentSubtotal);
+    if (vType === "product") {
+      // Product-specific / Category-specific voucher
+      if (!items || items.length === 0) {
+        // Fallback: treat entire subtotal as applicable
+        const baseAmount = currentSubtotal;
+        if (baseAmount < voucher.minOrderValue) {
+          throw new AppError(
+            `Mã giảm giá này áp dụng cho đơn hàng tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
+            400
+          );
+        }
+        if (voucher.discountType === "percentage") {
+          discountAmount = Math.round((voucher.discountValue / 100) * baseAmount);
+          if (voucher.maxDiscountAmount > 0) {
+            discountAmount = Math.min(discountAmount, voucher.maxDiscountAmount);
+          }
+        } else {
+          discountAmount = voucher.discountValue;
+        }
+        discountAmount = Math.min(discountAmount, baseAmount);
+      } else {
+        // Fetch products to verify categories
+        const productIds = items.map(item => item.product_id || item.productItem?.product_id).filter(Boolean);
+        const dbProducts = await Product.find({ _id: { $in: productIds } }).lean();
+        const productMap = new Map(dbProducts.map(p => [p._id.toString(), p]));
+
+        const appProducts = (voucher.applicableProducts || []).map(id => id.toString());
+        const appCategories = (voucher.applicableCategories || []).map(id => id.toString());
+
+        // Filter items that are applicable
+        const applicableItems = items.filter(item => {
+          const prodId = (item.product_id || item.productItem?.product_id)?.toString();
+          if (!prodId) return false;
+          
+          if (appProducts.includes(prodId)) return true;
+
+          const prod = productMap.get(prodId);
+          if (prod && prod.category_id && appCategories.includes(prod.category_id.toString())) {
+            return true;
+          }
+          return false;
+        });
+
+        if (applicableItems.length === 0) {
+          throw new AppError("Mã giảm giá không áp dụng cho bất kỳ sản phẩm nào trong giỏ hàng", 400);
+        }
+
+        const applicableSubtotal = applicableItems.reduce(
+          (sum, item) => sum + (Number(item.new_price || item.price || 0) * (item.quantity || 1)),
+          0
+        );
+
+        if (applicableSubtotal < voucher.minOrderValue) {
+          throw new AppError(
+            `Mã giảm giá này áp dụng cho các sản phẩm hợp lệ có tổng giá trị tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
+            400
+          );
+        }
+
+        if (voucher.discountType === "percentage") {
+          discountAmount = Math.round((voucher.discountValue / 100) * applicableSubtotal);
+          if (voucher.maxDiscountAmount > 0) {
+            discountAmount = Math.min(discountAmount, voucher.maxDiscountAmount);
+          }
+        } else {
+          discountAmount = voucher.discountValue;
+        }
+        discountAmount = Math.min(discountAmount, applicableSubtotal);
+      }
+    } else if (vType === "shipping") {
+      // Shipping discount / free shipping voucher
+      if (currentSubtotal < voucher.minOrderValue) {
+        throw new AppError(
+          `Mã miễn phí vận chuyển áp dụng cho đơn hàng tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
+          400
+        );
+      }
+
+      const activeShippingFee = Number(shippingFee) || 0;
+      if (activeShippingFee <= 0) {
+        discountAmount = 0;
+      } else {
+        if (voucher.discountType === "percentage") {
+          discountAmount = Math.round((voucher.discountValue / 100) * activeShippingFee);
+          if (voucher.maxDiscountAmount > 0) {
+            discountAmount = Math.min(discountAmount, voucher.maxDiscountAmount);
+          }
+        } else {
+          discountAmount = voucher.discountValue;
+        }
+        discountAmount = Math.min(discountAmount, activeShippingFee);
+      }
+    } else {
+      // Order / general voucher
+      if (currentSubtotal < voucher.minOrderValue) {
+        throw new AppError(
+          `Mã giảm giá này áp dụng cho đơn hàng tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
+          400
+        );
+      }
+
+      if (voucher.discountType === "percentage") {
+        discountAmount = Math.round((voucher.discountValue / 100) * currentSubtotal);
+        if (voucher.maxDiscountAmount > 0) {
+          discountAmount = Math.min(discountAmount, voucher.maxDiscountAmount);
+        }
+      } else {
+        discountAmount = voucher.discountValue;
+      }
+      discountAmount = Math.min(discountAmount, currentSubtotal);
+    }
 
     return {
       voucherId: voucher._id || voucher.id,
@@ -569,6 +674,7 @@ class VoucherService {
       discountType: voucher.discountType,
       discountValue: voucher.discountValue,
       discountAmount,
+      voucherType: vType,
     };
   }
 

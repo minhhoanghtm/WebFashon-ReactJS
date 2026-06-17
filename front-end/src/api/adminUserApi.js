@@ -36,6 +36,7 @@ const normalizePayload = (payload = {}) => ({
   birthday: payload.dateOfBirth || null,
   role: payload.role || "user",
   avatar_url: payload.avatar_url || "",
+  status: payload.status,
   addresses: Array.isArray(payload.addresses)
     ? payload.addresses.map(normalizeAddress)
     : payload.address

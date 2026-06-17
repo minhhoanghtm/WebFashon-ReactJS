@@ -19,6 +19,22 @@ const voucherSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    voucherType: {
+      type: String,
+      enum: ["order", "product", "shipping"],
+      required: true,
+      default: "order",
+    },
+    applicableProducts: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Product",
+      default: [],
+    },
+    applicableCategories: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Category",
+      default: [],
+    },
     discountType: {
       type: String,
       enum: ["percentage", "fixed"],

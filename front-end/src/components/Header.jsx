@@ -99,7 +99,7 @@ const Header = () => {
   const handleLogout = () => {
     logout();
     toast.success("Đăng xuất thành công!");
-    navigate("/");
+    navigate("/login");
   };
 
   //lay duong dan menu dua tren role

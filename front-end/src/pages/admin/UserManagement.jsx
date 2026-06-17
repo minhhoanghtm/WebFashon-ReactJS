@@ -21,7 +21,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { getAllUsersApi, updateUserApi } from "../../api/adminUserApi";
+import { getAllUsersApi, updateUserApi, addUserApi } from "../../api/adminUserApi";
 
 // Rich Mock Customers Data for fallback
 <<<<<<< HEAD
@@ -210,6 +210,16 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+  // Add User Modal States
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addName, setAddName] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [addPhone, setAddPhone] = useState("");
+  const [addPassword, setAddPassword] = useState("");
+  const [addRole, setAddRole] = useState("admin");
+  const [addGender, setAddGender] = useState("other");
+  const [addDateOfBirth, setAddDateOfBirth] = useState("");
+
   // Edit User Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editUser, setEditUser] = useState(null);
@@ -315,6 +325,7 @@ const UserManagement = () => {
     }
   };
 
+<<<<<<< Updated upstream
   // Determine metadata presence in dataset
 <<<<<<< HEAD
   const hasStatus = users.some((u) => u.status !== undefined && u.status !== null);
@@ -324,6 +335,10 @@ const UserManagement = () => {
   );
 >>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
   const hasRole = users.some((u) => u.role !== undefined && u.role !== null);
+=======
+  const hasStatus = true;
+  const hasRole = true;
+>>>>>>> Stashed changes
 
   // Calculations for Statistics Cards
   const totalUsersCount = users.length;
@@ -346,7 +361,7 @@ const UserManagement = () => {
   };
 
   const newUsersCount = getNewUsersCount();
-  const activeCount = users.filter((u) => u.status === "active").length;
+  const activeCount = users.filter((u) => u.status !== "blocked").length;
   const blockedCount = users.filter((u) => u.status === "blocked").length;
 
   const adminCount = users.filter((u) => u.role === "admin").length;
@@ -377,7 +392,7 @@ const UserManagement = () => {
     if (!matchesSearch) return false;
 
     if (activeFilter === "all") return true;
-    if (activeFilter === "active" && hasStatus) return u.status === "active";
+    if (activeFilter === "active" && hasStatus) return u.status !== "blocked";
     if (activeFilter === "blocked" && hasStatus) return u.status === "blocked";
     if (activeFilter === "admin" && hasRole) return u.role === "admin";
 <<<<<<< HEAD
@@ -557,9 +572,99 @@ const UserManagement = () => {
     }
   };
 
+  const handleToggleBlock = async (user) => {
+    const isCurrentlyBlocked = user.status === "blocked";
+    const newStatus = isCurrentlyBlocked ? "active" : "blocked";
+    const actionText = isCurrentlyBlocked ? "Mở khóa" : "Khóa";
+
+    try {
+      setSubmitLoading(true);
+      const payload = {
+        fullName: user.fullName || user.name || "",
+        email: user.email || "",
+        role: user.role || "user",
+        status: newStatus,
+        gender: user.sex || user.gender || "other",
+        dateOfBirth: user.birthday || user.dateOfBirth || "",
+        avatar_url: user.avatar_url || user.avatar || "",
+        addresses: user.addresses || [],
+      };
+
+      const response = await updateUserApi(user._id, payload);
+      if (response.ok) {
+        toast.success(`${actionText} tài khoản thành công!`);
+        fetchUsers();
+      } else {
+        const errData = await response.json();
+        toast.error(errData.message || `Không thể ${actionText.toLowerCase()} tài khoản.`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(`Lỗi khi ${actionText.toLowerCase()} tài khoản.`);
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const handleOpenAddUser = () => {
+    setAddName("");
+    setAddEmail("");
+    setAddPhone("");
+    setAddPassword("111111");
+    setAddRole("admin");
+    setAddGender("other");
+    setAddDateOfBirth("");
+    setIsAddModalOpen(true);
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (!addName.trim()) {
+      toast.error("Họ và tên không được để trống!");
+      return;
+    }
+    if (!addEmail.trim()) {
+      toast.error("Email không được để trống!");
+      return;
+    }
+    if (addPhone && !/^[0-9]{9,11}$/.test(addPhone)) {
+      toast.error("Số điện thoại không hợp lệ (yêu cầu 9 đến 11 chữ số)!");
+      return;
+    }
+
+    setSubmitLoading(true);
+    try {
+      const payload = {
+        fullName: addName,
+        email: addEmail,
+        passWord: addPassword || "111111",
+        role: addRole,
+        gender: addGender,
+        dateOfBirth: addDateOfBirth || null,
+        addresses: addPhone ? [{ fullName: addName, phone: addPhone }] : [],
+      };
+
+      const response = await addUserApi(payload);
+      if (response.ok) {
+        toast.success("Thêm người dùng mới thành công!");
+        setIsAddModalOpen(false);
+        fetchUsers();
+      } else {
+        const errData = await response.json();
+        toast.error(errData.message || "Không thể tạo tài khoản mới.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Đã xảy ra lỗi khi tạo tài khoản.");
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8 relative pb-10">
       {/* Header */}
+<<<<<<< Updated upstream
 <<<<<<< HEAD
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="text-left">
@@ -652,6 +757,22 @@ const UserManagement = () => {
         <p className="text-slate-500 dark:text-slate-400 mt-1">
           Quản lý hoạt động kinh doanh thương mại điện tử thời trang của bạn
         </p>
+=======
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Khách hàng</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            Quản lý hoạt động kinh doanh thương mại điện tử thời trang của bạn
+          </p>
+        </div>
+        <button
+          onClick={handleOpenAddUser}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/10 hover:-translate-y-0.5 transition cursor-pointer"
+        >
+          <Users className="h-4.5 w-4.5" />
+          <span>Thêm người dùng</span>
+        </button>
+>>>>>>> Stashed changes
       </div>
 
       {/* Stats Cards */}
@@ -669,7 +790,7 @@ const UserManagement = () => {
           <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
             <div className="space-y-1 text-left">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                {hasStatus ? "Tổng khách hàng" : "Tổng tài khoản"}
+                Tổng tài khoản
               </span>
               <h3 className="text-2xl font-black text-slate-800 dark:text-white">
                 {totalUsersCount}
@@ -683,50 +804,42 @@ const UserManagement = () => {
           <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
             <div className="space-y-1 text-left">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Khách hàng mới
+                Khách hàng
               </span>
               <h3 className="text-2xl font-black text-slate-800 dark:text-white">
-                {newUsersCount}
+                {customerCount}
               </h3>
-              <p className="text-[10px] text-slate-400 font-medium">
-                Đăng ký trong 30 ngày qua
-              </p>
-            </div>
-            <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Calendar className="h-6 w-6" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
-            <div className="space-y-1 text-left">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                {hasStatus ? "Đang hoạt động" : "Khách hàng"}
-              </span>
             </div>
             <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/30 dark:border-emerald-900/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              {hasStatus ? (
-                <UserCheck className="h-6 w-6" />
-              ) : (
-                <UserCheck2 className="h-6 w-6" />
-              )}
+              <UserCheck2 className="h-6 w-6" />
             </div>
           </div>
 
           <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
             <div className="space-y-1 text-left">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                {hasStatus ? "Bị khóa" : "Quản trị viên"}
+                Quản trị viên
               </span>
               <h3 className="text-2xl font-black text-slate-800 dark:text-white">
-                {hasStatus ? blockedCount : adminCount}
+                {adminCount}
+              </h3>
+            </div>
+            <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Shield className="h-6 w-6" />
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
+            <div className="space-y-1 text-left">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Tài khoản bị khóa
+              </span>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white">
+                {blockedCount}
               </h3>
             </div>
             <div className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400">
-              {hasStatus ? (
-                <UserX className="h-6 w-6" />
-              ) : (
-                <Shield className="h-6 w-6" />
-              )}
+              <UserX className="h-6 w-6" />
             </div>
           </div>
         </div>
@@ -985,12 +1098,12 @@ const UserManagement = () => {
                               <span
                                 className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold leading-5
                                 ${
-                                  u.status === "active"
+                                  u.status !== "blocked"
                                     ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
                                     : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"
                                 }`}
                               >
-                                {u.status === "active"
+                                {u.status !== "blocked"
                                   ? "Hoạt động"
                                   : "Bị khóa"}
 >>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
@@ -1024,7 +1137,22 @@ const UserManagement = () => {
                               >
 =======
                               <div className="action-dropdown-menu absolute right-6 top-10 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 py-1.5 text-left animate-in fade-in slide-in-from-top-1 duration-155">
+<<<<<<< Updated upstream
 >>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
+=======
+                                {(!u.role || u.role === "user") && (
+                                  <button
+                                    onClick={() => {
+                                      setActiveActionMenuId(null);
+                                      handleToggleBlock(u);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 transition cursor-pointer"
+                                  >
+                                    <Lock className="h-4 w-4 text-red-500" />
+                                    <span>{u.status === "blocked" ? "Mở khóa TK" : "Khóa tài khoản"}</span>
+                                  </button>
+                                )}
+>>>>>>> Stashed changes
                                 <button
                                   onClick={() => {
                                     setActiveActionMenuId(null);
@@ -1035,6 +1163,7 @@ const UserManagement = () => {
                                   <Eye className="h-4 w-4 text-slate-400" />
                                   <span>Xem chi tiết</span>
                                 </button>
+<<<<<<< Updated upstream
 <<<<<<< HEAD
                                 <button
 =======
@@ -1068,6 +1197,8 @@ const UserManagement = () => {
 =======
                                 </button> */}
 >>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
+=======
+>>>>>>> Stashed changes
                               </div>
                             )}
                           </td>
@@ -1162,7 +1293,22 @@ const UserManagement = () => {
                           >
 =======
                           <div className="action-dropdown-menu absolute right-0 top-8 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 py-1.5 text-left animate-in fade-in slide-in-from-top-1 duration-155">
+<<<<<<< Updated upstream
 >>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
+=======
+                            {(!u.role || u.role === "user") && (
+                              <button
+                                onClick={() => {
+                                  setActiveActionMenuId(null);
+                                  handleToggleBlock(u);
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 transition cursor-pointer"
+                              >
+                                <Lock className="h-4 w-4 text-red-500" />
+                                <span>{u.status === "blocked" ? "Mở khóa TK" : "Khóa tài khoản"}</span>
+                              </button>
+                            )}
+>>>>>>> Stashed changes
                             <button
                               onClick={() => {
                                 setActiveActionMenuId(null);
@@ -1172,26 +1318,6 @@ const UserManagement = () => {
                             >
                               <Eye className="h-4 w-4 text-slate-400" />
                               <span>Xem chi tiết</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setActiveActionMenuId(null);
-                                handleOpenEdit(u);
-                              }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer"
-                            >
-                              <Edit className="h-4 w-4 text-slate-400" />
-                              <span>Chỉnh sửa</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setActiveActionMenuId(null);
-                                handleOpenPassword(u);
-                              }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer"
-                            >
-                              <Key className="h-4 w-4 text-slate-400" />
-                              <span>Đổi mật khẩu</span>
                             </button>
                           </div>
                         )}
@@ -1260,12 +1386,12 @@ const UserManagement = () => {
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-5
                           ${
-                            u.status === "active"
+                            u.status !== "blocked"
                               ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
                               : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"
                           }`}
                         >
-                          {u.status === "active" ? "Hoạt động" : "Bị khóa"}
+                          {u.status !== "blocked" ? "Hoạt động" : "Bị khóa"}
                         </span>
 >>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                       )}
@@ -1441,12 +1567,12 @@ const UserManagement = () => {
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-5
                       ${
-                        selectedUser.status === "active"
+                        selectedUser.status !== "blocked"
                           ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
                           : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"
                       }`}
                     >
-                      {selectedUser.status === "active"
+                      {selectedUser.status !== "blocked"
                         ? "Hoạt động"
                         : "Bị khóa"}
 >>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
@@ -1859,6 +1985,134 @@ const UserManagement = () => {
 >>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                 >
                   {submitLoading ? "Đang lưu..." : "Lưu thay đổi"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD USER MODAL */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200 text-left">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                Thêm người dùng mới
+              </h3>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Họ và tên
+                  </label>
+                  <input
+                    type="text"
+                    value={addName}
+                    onChange={(e) => setAddName(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
+                    placeholder="Nhập họ và tên"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={addEmail}
+                    onChange={(e) => setAddEmail(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
+                    placeholder="Nhập email"
+                    required
+                  />
+                </div>
+
+
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Giới tính
+                    </label>
+                    <select
+                      value={addGender}
+                      onChange={(e) => setAddGender(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 font-semibold"
+                    >
+                      <option value="other">Khác</option>
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Ngày sinh
+                    </label>
+                    <input
+                      type="date"
+                      value={addDateOfBirth}
+                      onChange={(e) => setAddDateOfBirth(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Số điện thoại (tùy chọn)
+                  </label>
+                  <input
+                    type="text"
+                    value={addPhone}
+                    onChange={(e) => setAddPhone(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
+                    placeholder="Nhập số điện thoại"
+                  />
+                </div>
+
+                {hasRole && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Vai trò
+                    </label>
+                    <select
+                      value={addRole}
+                      onChange={(e) => setAddRole(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 font-semibold"
+                    >
+                      <option value="admin">Quản trị viên</option>
+                      <option value="user">Khách hàng</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4.5 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitLoading}
+                  className="px-4.5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
+                >
+                  {submitLoading ? "Đang tạo..." : "Thêm người dùng"}
                 </button>
               </div>
             </form>

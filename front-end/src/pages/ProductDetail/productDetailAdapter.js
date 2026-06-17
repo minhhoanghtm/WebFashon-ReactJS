@@ -110,7 +110,7 @@ export const normalizeProductDetail = (product, variants = [], reviews = []) => 
   const reviewCount = Number(
     firstValue(product.reviewCount, product.totalReview, reviews.length, 0),
   );
-  const rating = Number(firstValue(product.rating, product.rate, 4.6)) || 4.6;
+  const rating = Number(firstValue(product.rating, product.rate, 0)) || 0;
   const description = firstValue(
     product.description,
     product.moTa,
@@ -189,7 +189,7 @@ export const normalizeReviews = (reviews = []) =>
 export const normalizeRelatedProduct = (product = {}, index = 0) => {
   const price = normalizePrice(product);
   const images = getImages(product, product.variants || []);
-  const rating = Number(firstValue(product.rating, product.rate, 4.6)) || 4.6;
+  const rating = Number(firstValue(product.rating, product.rate, 0)) || 0;
 
   return {
     id: String(firstValue(product.id, product._id, `related-${index}`)),

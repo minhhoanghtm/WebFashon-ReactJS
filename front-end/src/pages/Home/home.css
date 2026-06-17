@@ -93,6 +93,28 @@
   padding-top: 84px;
 }
 
+.home-categories {
+  padding-top: 42px;
+}
+
+.home-products {
+  padding-top: 54px;
+}
+
+.home-section.home-promotions {
+  margin-top: 0;
+  padding-top: 54px;
+}
+
+.home-section.home-vouchers {
+  margin-top: 0;
+  padding-top: 32px;
+}
+
+.home-lookbook {
+  padding-top: 58px;
+}
+
 .home-section-header > span {
   color: #9a7650;
   display: block;
@@ -359,10 +381,14 @@
 
 .home-lookbook-card p {
   color: rgb(255 255 255 / 74%);
+  display: -webkit-box;
   font-size: 14px;
   line-height: 1.55;
   margin-top: 8px;
   max-width: 410px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .home-lookbook-card a {
@@ -423,6 +449,20 @@
 
   .home-section {
     padding-top: 62px;
+  }
+
+  .home-categories {
+    padding-top: 34px;
+  }
+
+  .home-products,
+  .home-section.home-promotions,
+  .home-lookbook {
+    padding-top: 44px;
+  }
+
+  .home-section.home-vouchers {
+    padding-top: 28px;
   }
 
   .home-products__heading {

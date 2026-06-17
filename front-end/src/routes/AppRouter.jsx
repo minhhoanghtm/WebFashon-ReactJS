@@ -20,6 +20,7 @@ import Review from '../pages/Review';
 import NotFound from '../pages/not-found';
 import VoucherHunting from '../pages/VoucherHunting';
 import MyCoupons from '../pages/MyCoupons';
+import Favorites from '../pages/Favorites';
 import CatalogManagement from '@/pages/admin/CatalogManagement';
 import ProductManagement from '@/pages/admin/ProductManagement';
 import OrderManagement from '@/pages/admin/OrderManagement';
@@ -48,6 +49,7 @@ const router = createBrowserRouter([
       { path: 'profile', element: <Profile /> },
       { path: 'vouchers', element: <VoucherHunting /> },
       { path: 'my-coupons', element: <MyCoupons /> },
+      { path: 'favorites', element: <Favorites /> },
       {
         path: 'lookbooks',
         element: <LookbookList />,

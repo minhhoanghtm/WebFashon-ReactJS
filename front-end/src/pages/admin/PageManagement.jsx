@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import {
@@ -65,6 +65,15 @@ const PageManagement = () => {
   const [formTitle, setFormTitle] = useState("");
   const [formSlug, setFormSlug] = useState("");
   const [formType, setFormType] = useState("about");
+
+  const typeToPageDetails = {
+    about: { title: "Giới thiệu (About Us)", slug: "about" },
+    policy: { title: "Chính sách (Policy)", slug: "policy" },
+    faq: { title: "Hỏi đáp (FAQ)", slug: "faq" },
+    guide: { title: "Hướng dẫn mua hàng", slug: "guide" },
+    landing: { title: "Trang Landing", slug: "landing" },
+    blog: { title: "Blog / Tin tức", slug: "blog" },
+  };
   const [formExcerpt, setFormExcerpt] = useState("");
   const [formContent, setFormContent] = useState(""); // Still used for basic rich text for non-lookbooks
   const [formStatus, setFormStatus] = useState("draft");
@@ -106,14 +115,14 @@ const PageManagement = () => {
   ];
 
   const sectionTypesList = [
-    { value: "hero", label: "Hero Block" },
-    { value: "story", label: "Rich Text Story" },
-    { value: "gallery", label: "Editorial Gallery" },
-    { value: "quote", label: "Fashion Quote" },
-    { value: "image_text", label: "Image + Text" },
-    { value: "products", label: "Product Spotlight" },
-    { value: "banner", label: "Full Width Banner" },
-    { value: "cta", label: "Closing CTA Section" },
+    { value: "hero", label: "Khối Hero" },
+    { value: "story", label: "Câu chuyện văn bản" },
+    { value: "gallery", label: "Thư viện ảnh biên tập" },
+    { value: "quote", label: "Trích dẫn thời trang" },
+    { value: "image_text", label: "Ảnh + Văn bản" },
+    { value: "products", label: "Sản phẩm nổi bật" },
+    { value: "banner", label: "Banner toàn chiều rộng" },
+    { value: "cta", label: "Khối CTA kết thúc" },
   ];
 
   // Fetch list of pages
@@ -148,21 +157,13 @@ const PageManagement = () => {
     return () => clearTimeout(delayDebounce);
   }, [filters.search]);
 
-  // Handle auto-slug generation from title
+  // Handle tying title and slug directly to formType
   useEffect(() => {
-    if (modalMode === "add" && formTitle) {
-      const slug = formTitle
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[đĐ]/g, "d")
-        .replace(/[^a-z0-9\s-]/g, "")
-        .trim()
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-");
-      setFormSlug(slug);
+    if (typeToPageDetails[formType]) {
+      setFormTitle(typeToPageDetails[formType].title);
+      setFormSlug(typeToPageDetails[formType].slug);
     }
-  }, [formTitle, modalMode]);
+  }, [formType]);
 
   // Handle Product Suggestions Query
   useEffect(() => {
@@ -223,8 +224,8 @@ const PageManagement = () => {
   const handleOpenAdd = () => {
     setModalMode("add");
     setCurrentId(null);
-    setFormTitle("");
-    setFormSlug("");
+    setFormTitle(typeToPageDetails.about.title);
+    setFormSlug(typeToPageDetails.about.slug);
     setFormType("about");
     setFormExcerpt("");
     setFormContent("");
@@ -468,7 +469,7 @@ const PageManagement = () => {
       slug: formSlug,
       type: formType,
       excerpt: formExcerpt,
-      content: formType === "lookbook" ? "" : formContent,
+      content: "",
       status: formStatus,
       seoTitle: formSeoTitle,
       seoDescription: formSeoDescription,
@@ -477,7 +478,7 @@ const PageManagement = () => {
       publishedAt: formPublishedAt
         ? new Date(formPublishedAt).toISOString()
         : null,
-      sections: formType === "lookbook" ? formSections : [],
+      sections: formSections,
     };
 
     try {
@@ -697,9 +698,9 @@ const PageManagement = () => {
                         {formatDate(p.publishedAt || p.createdAt)}
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
-                        {p.type === "lookbook" && p.status === "published" && (
+                        {p.status === "published" && (
                           <a
-                            href={`/lookbooks/${p.slug}`}
+                            href={p.type === "lookbook" ? `/lookbooks/${p.slug}` : `/${p.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
@@ -794,70 +795,38 @@ const PageManagement = () => {
               </button>
             </div>
 
-            {/* Modal Tabs Selector (Only for Lookbook page type) */}
-            {formType === "lookbook" && (
-              <div className="flex border-b border-gray-100 px-6 shrink-0 bg-gray-50/50">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("basic")}
-                  className={`px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider border-b-2 transition ${
-                    activeTab === "basic"
-                      ? "border-indigo-600 text-indigo-600"
-                      : "border-transparent text-gray-500 hover:text-gray-800"
-                  }`}
-                >
-                  Thông tin cơ bản
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("sections")}
-                  className={`px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider border-b-2 transition ${
-                    activeTab === "sections"
-                      ? "border-indigo-600 text-indigo-600"
-                      : "border-transparent text-gray-500 hover:text-gray-800"
-                  }`}
-                >
-                  Bố cục bộ sưu tập
-                </button>
-              </div>
-            )}
+            {/* Modal Tabs Selector */}
+            <div className="flex border-b border-gray-100 px-6 shrink-0 bg-gray-50/50">
+              <button
+                type="button"
+                onClick={() => setActiveTab("basic")}
+                className={`px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider border-b-2 transition ${
+                  activeTab === "basic"
+                    ? "border-indigo-600 text-indigo-600"
+                    : "border-transparent text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                Thông tin cơ bản
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("sections")}
+                className={`px-6 py-3.5 text-xs font-extrabold uppercase tracking-wider border-b-2 transition ${
+                  activeTab === "sections"
+                    ? "border-indigo-600 text-indigo-600"
+                    : "border-transparent text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                Bố cục trang
+              </button>
+            </div>
 
             {/* Modal Form Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-5 min-h-0">
               {/* TAB 1: Basic Info Metadata */}
-              {(formType !== "lookbook" || activeTab === "basic") && (
+              {activeTab === "basic" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Title */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Tiêu đề *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formTitle}
-                        onChange={(e) => setFormTitle(e.target.value)}
-                        placeholder="Ví dụ: BST Thu Đông 2026"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
-                      />
-                    </div>
-
-                    {/* Slug */}
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Slug URL *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formSlug}
-                        onChange={(e) => setFormSlug(e.target.value)}
-                        placeholder="bst-thu-dong-2026"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-mono"
-                      />
-                    </div>
-
                     {/* Page Type */}
                     <div className="space-y-1.5 text-left">
                       <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -865,12 +834,7 @@ const PageManagement = () => {
                       </label>
                       <select
                         value={formType}
-                        onChange={(e) => {
-                          setFormType(e.target.value);
-                          if (e.target.value !== "lookbook") {
-                            setActiveTab("basic");
-                          }
-                        }}
+                        onChange={(e) => setFormType(e.target.value)}
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-semibold text-gray-700 bg-white"
                       >
                         {pageTypes.map((type) => (
@@ -942,31 +906,6 @@ const PageManagement = () => {
                     />
                   </div>
 
-                  {/* Standard Rich Text Editor for non-lookbooks */}
-                  {formType !== "lookbook" && (
-                    <div className="space-y-2 pt-4 border-t border-gray-100 text-left">
-                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">
-                        Nội dung trang
-                      </label>
-                      <div className="rounded-xl overflow-hidden border border-gray-200 pb-10">
-                        <ReactQuill
-                          value={formContent}
-                          onChange={setFormContent}
-                          theme="snow"
-                          className="h-52 bg-white"
-                          modules={{
-                            toolbar: [
-                              [{ header: [1, 2, 3, false] }],
-                              ["bold", "italic", "underline", "strike"],
-                              [{ list: "ordered" }, { list: "bullet" }],
-                              ["link", "image", "clean"],
-                            ],
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
                   {/* SEO Block */}
                   <div className="space-y-4 pt-8 border-t border-gray-100 text-left">
                     <div>
@@ -1026,17 +965,17 @@ const PageManagement = () => {
               )}
 
               {/* TAB 2: Dynamic PageSections Builder */}
-              {formType === "lookbook" && activeTab === "sections" && (
+              {activeTab === "sections" && (
                 <div className="space-y-8 text-left">
                   <div className="flex justify-between items-center border-b border-gray-100 pb-4">
                     <div>
                       <h4 className="text-sm font-black text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
                         <Layout className="h-4.5 w-4.5" />
-                        Xây dựng bố cục trang Lookbook
+                        Xây dựng bố cục trang CMS
                       </h4>
                       <p className="text-xs text-gray-400 mt-1">
                         Thêm, bớt, chỉnh sửa và kéo thả/sắp xếp thứ tự các khối
-                        nội dung hiển thị trong bộ sưu tập.
+                        nội dung hiển thị trong trang CMS này.
                       </p>
                     </div>
                   </div>

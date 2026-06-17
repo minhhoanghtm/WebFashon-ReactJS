@@ -12,7 +12,7 @@ const LookbookSection = () => {
       try {
         const res = await getLookbooksService({ limit: 2 });
         const list = res.pages || res.data || [];
-        setLookbooks(list.filter((item) => item.status === "published"));
+        setLookbooks(list);
       } catch (err) {
         console.error("Lỗi khi nạp Lookbooks:", err);
       } finally {
@@ -67,7 +67,7 @@ const LookbookSection = () => {
               <h3>{item.title}</h3>
               <p>{item.excerpt}</p>
               <a href={`/lookbooks/${item.slug}`}>
-                Xem sản phẩm
+                Xem thêm
                 <ArrowUpRight size={17} aria-hidden="true" />
               </a>
             </div>
