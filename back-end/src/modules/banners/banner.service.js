@@ -95,8 +95,8 @@ class BannerService {
     if (finalTargetType === "category" && (!finalTargetId || finalTargetId.trim() === "")) {
       throw new AppError("Dữ liệu không hợp lệ: Mã danh mục liên kết (targetId) là bắt buộc khi targetType là category", 400);
     }
-    if (finalTargetType === "external" && (!finalLinkUrl || finalLinkUrl.trim() === "")) {
-      throw new AppError("Dữ liệu không hợp lệ: Đường dẫn liên kết ngoài (linkUrl) là bắt buộc khi targetType là external", 400);
+    if (finalTargetType === "lookbook" && (!finalTargetId || finalTargetId.trim() === "")) {
+      throw new AppError("Dữ liệu không hợp lệ: Slug / ID của Lookbook liên kết (targetId) là bắt buộc khi targetType là lookbook", 400);
     }
 
     const updated = await bannerRepository.findOneAndUpdate(

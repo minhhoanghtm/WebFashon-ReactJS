@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useWebsiteSettings } from "../../hooks/useWebsiteSettings";
 import { uploadImageService } from "../../services/upload.service";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 import { 
   Settings, 
   Globe, 
   Sliders, 
   Share2, 
-  FileText, 
   Briefcase, 
   Save, 
   RefreshCw, 
@@ -30,9 +27,6 @@ const WebsiteSettingsManagement = () => {
 
   const [activeTab, setActiveTab] = useState("general");
   const [uploadingField, setUploadingField] = useState(null);
-
-  // Policies active tab
-  const [activePolicyTab, setActivePolicyTab] = useState("aboutUs");
 
   if (loading) {
     return (
@@ -100,16 +94,6 @@ const WebsiteSettingsManagement = () => {
     { id: "system", label: "Hệ thống", icon: Sliders },
     { id: "social", label: "Mạng xã hội & Scripts", icon: Share2 },
     { id: "footer", label: "Thông tin chân trang", icon: Briefcase },
-    { id: "policies", label: "Chính sách & Giới thiệu", icon: FileText },
-  ];
-
-  const policyFields = [
-    { id: "aboutUs", label: "Về chúng tôi" },
-    { id: "shippingPolicy", label: "Chính sách giao hàng" },
-    { id: "returnPolicy", label: "Chính sách đổi trả" },
-    { id: "privacyPolicy", label: "Chính sách bảo mật" },
-    { id: "termsOfService", label: "Điều khoản dịch vụ" },
-    { id: "warrantyPolicy", label: "Chính sách bảo hành" },
   ];
 
   return (
@@ -134,7 +118,7 @@ const WebsiteSettingsManagement = () => {
             disabled={!isDirty || saving}
             className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-xl transition shadow-md cursor-pointer
               ${isDirty 
-                ? "bg-indigo-650 hover:bg-indigo-700 text-white hover:scale-102 active:scale-98" 
+                ? "bg-indigo-650 hover:bg-indigo-700 text-black hover:scale-102 active:scale-98" 
                 : "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
               }`}
           >
@@ -608,51 +592,6 @@ const WebsiteSettingsManagement = () => {
                   onChange={(e) => handleInputChange("footer", "copyrightText", e.target.value)}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 transition text-sm font-medium"
                   placeholder="© 2026 404Studio. All Rights Reserved."
-                />
-              </div>
-            </div>
-          )}
-
-          {/* TAB: POLICIES */}
-          {activeTab === "policies" && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Giới thiệu & Chính sách mua sắm</h2>
-              
-              {/* Policies Tabs */}
-              <div className="flex flex-wrap gap-2 border-b border-gray-100 pb-3">
-                {policyFields.map((field) => (
-                  <button
-                    key={field.id}
-                    onClick={() => setActivePolicyTab(field.id)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer
-                      ${activePolicyTab === field.id
-                        ? "bg-slate-900 text-white"
-                        : "bg-gray-50 text-gray-650 hover:bg-gray-100"
-                      }`}
-                  >
-                    {field.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Rich Text Editor */}
-              <div className="space-y-3 min-h-[350px]">
-                <label className="text-xs font-black text-gray-700 uppercase tracking-wider block">
-                  Nội dung: {policyFields.find((f) => f.id === activePolicyTab)?.label}
-                </label>
-                <ReactQuill
-                  value={settings.policies?.[activePolicyTab] || ""}
-                  onChange={(content) => handleInputChange("policies", activePolicyTab, content)}
-                  className="bg-white rounded-xl overflow-hidden h-72 border border-gray-100"
-                  theme="snow"
-                  modules={{
-                    toolbar: [
-                      [{ header: [1, 2, 3, false] }],
-                      ["bold", "italic", "underline", "strike"],
-                      [{ list: "ordered" }, { list: "bullet" }],
-                      ["clean"],
-                    ],
-                  }}
                 />
               </div>
             </div>

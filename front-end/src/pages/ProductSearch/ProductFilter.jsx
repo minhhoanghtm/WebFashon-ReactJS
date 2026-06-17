@@ -4,8 +4,8 @@ import { formatCurrency } from "@/utils/format";
 
 const filterGroups = [
   { key: "categories", optionKey: "categories", label: "Danh mục" },
-  { key: "brands", optionKey: "brands", label: "Thương hiệu" },
-  { key: "statuses", optionKey: "statuses", label: "Trạng thái" },
+  // { key: "brands", optionKey: "brands", label: "Thương hiệu" },
+  // { key: "statuses", optionKey: "statuses", label: "Trạng thái" },
   { key: "sizes", optionKey: "sizes", label: "Kích thước" },
   { key: "colors", optionKey: "colors", label: "Màu sắc" },
 ];

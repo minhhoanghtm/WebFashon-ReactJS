@@ -11,7 +11,9 @@ import uploadRouter from "../modules/uploads/upload.route.js";
 import voucherRouter from "../modules/vouchers/voucher.route.js";
 import websiteSettingsRouter from "../modules/websiteSettings/websiteSettings.route.js";
 import bannerRouter from "../modules/banners/banner.route.js";
-import { protectedRoute } from "../middlewares/auth.middleware.js";
+import { pageRouter, adminPageRouter, lookbookRouter } from "../modules/pages/page.route.js";
+import { pageSectionRouter, adminPageSectionRouter } from "../modules/pageSections/pageSection.routes.js";
+import { protectedRoute, adminOnly } from "../middlewares/auth.middleware.js";
 
 const rootRouter = express.Router();
 
@@ -24,6 +26,11 @@ rootRouter.use("/reviews", reviewRouter);
 rootRouter.use("/upload", uploadRouter);
 rootRouter.use("/settings", websiteSettingsRouter);
 rootRouter.use("/banners", bannerRouter);
+rootRouter.use("/pages", pageRouter);
+rootRouter.use("/lookbooks", lookbookRouter);
+rootRouter.use("/page-sections", pageSectionRouter);
+rootRouter.use("/admin/pages", protectedRoute, adminOnly, adminPageRouter);
+rootRouter.use("/admin/page-sections", protectedRoute, adminOnly, adminPageSectionRouter);
 
 // Private routes (strictly protected by auth middleware)
 rootRouter.use("/user", protectedRoute, userRouter);

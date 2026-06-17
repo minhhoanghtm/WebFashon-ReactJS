@@ -30,7 +30,7 @@ const cartItemSchema = new mongoose.Schema(
       required: true,
     },
     product_id: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: "Product",
       required: true,
     },
@@ -57,8 +57,7 @@ cartItemSchema.index(
   {
     cart_id: 1,
     product_id: 1,
-    size: 1,
-    color: 1,
+    variant_id: 1,
   },
   {
     unique: true,

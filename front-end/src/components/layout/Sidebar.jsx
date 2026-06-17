@@ -1,9 +1,11 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Key,
   LayoutDashboard,
   LayoutList,
   Package,
+  LogOut,
   ShoppingCart,
   Tag,
   Users,
@@ -14,13 +16,17 @@ import {
   Menu,
   Image,
   Settings,
+  FileText,
+  BookOpen,
+  User,
+  X,
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import logo from "../../assets/logo.png";
-import { useAuthStore } from "../../store/auth.store";
-import { updateProfileService, updatePasswordService } from "../../services/user.service";
 import { toast } from "react-toastify";
+import logo from "../../assets/logo.png";
+import { useAuthStore } from "@/store/auth.store";
+import { updateProfileService, updatePasswordService } from "@/services/user.service";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -30,6 +36,8 @@ const navItems = [
   { icon: Users, label: "Quản lý người dùng", path: "/admin/customers" },
   { icon: Tag, label: "Khuyến mãi", path: "/admin/coupons" },
   { icon: Image, label: "Quản lý Banner", path: "/admin/banners" },
+  { icon: BookOpen, label: "Quản lý Lookbook", path: "/admin/lookbooks" },
+  { icon: FileText, label: "Quản lý trang CMS", path: "/admin/pages" },
   { icon: Settings, label: "Cài đặt hệ thống", path: "/admin/settings" },
 ];
 
@@ -37,7 +45,7 @@ const Sidebar = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, setUser, logout } = useAuthStore();
-  
+
   const [collapsed, setCollapsed] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);

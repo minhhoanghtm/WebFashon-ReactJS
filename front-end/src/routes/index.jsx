@@ -18,7 +18,6 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 /**
  * Phân quyền truy cập:
  * - admin: Quản trị viên - có quyền truy cập tất cả
- * - staff: Nhân viên - có quyền quản lý sản phẩm
  * - user: Khách hàng - có quyền xem đơn hàng, tài khoản cá nhân
  */
 export const routes = [
@@ -73,7 +72,7 @@ export const routes = [
     element: (
       <ProtectedRoute
         element={<Dashboard />}
-        allowedRoles={["admin", "staff"]} // Cả admin và staff đều có thể xem dashboard admin
+        allowedRoles={["admin"]} // Chỉ admin có thể xem dashboard admin
       />
     ),
   },

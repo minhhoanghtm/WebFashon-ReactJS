@@ -21,7 +21,7 @@ const Header = () => {
   const wrapperRef = useRef();
   //kiểm tra đăng nhập
   const { isAuthenticated: isLoggedIn, logout, user } = useAuthStore();
-  const role = user?.data?.role;
+  const role = user?.role || user?.data?.role || "";
   // console.log("Header isLoggedIn:", isLoggedIn);
   console.log("Header user:", role);
 
@@ -105,8 +105,7 @@ const Header = () => {
   //lay duong dan menu dua tren role
   const getMenuPath = () => {
     if (!isLoggedIn) return "/login";
-    if (role === "admin") return "/admin/accounts";
-    if (role === "staff") return "/staff/products";
+    if (role === "admin") return "/admin/customers";
     return "/orders";
   };
 
@@ -114,7 +113,6 @@ const Header = () => {
   const getMenuLabel = () => {
     if (!isLoggedIn) return "Đơn hàng";
     if (role === "admin") return "Quản lý tài khoản";
-    if (role === "staff") return "Quản lý sản phẩm";
     return "Đơn hàng";
   };
 
@@ -139,7 +137,7 @@ const Header = () => {
     {
       key: "3",
       label: isLoggedIn ? (
-        <Link to={role === "user" ? "/user/dashboard" : "/admin/dashboard"}>
+        <Link to={role === "user" ? "/user/dashboard" : "/admin"}>
           {role === "user" ? "Thống kê đơn hàng" : "Dashboard Quản lý"}
         </Link>
       ) : (
@@ -260,6 +258,9 @@ const Header = () => {
           <menu className="flex gap-6">
             <Link to="/">
               <li className="hover:underline">Home</li>
+            </Link>
+            <Link to="/lookbooks">
+              <li className="hover:underline">Lookbook</li>
             </Link>
             <Link to="/about">
               <li className="hover:underline">About</li>

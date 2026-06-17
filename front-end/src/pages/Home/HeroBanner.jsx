@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { heroContent } from "./homeMockData";
+import heroImage from "./assets/hero-atelier.jpg";
 import { getActiveBannersService, trackBannerClickService } from "../../services/banner.service";
 
 const HeroBanner = () => {
@@ -16,7 +16,6 @@ const HeroBanner = () => {
       try {
         const banners = await getActiveBannersService();
         if (isMounted) {
-          // Filter to only display banners for the home hero position
           const heroBanners = banners.filter(b => b.position === "home_hero");
           setActiveBanners(heroBanners);
         }
@@ -34,34 +33,21 @@ const HeroBanner = () => {
     };
   }, []);
 
-  // Build list of slides: fallback to mock banner if no active banners found
-  const bannerList = activeBanners.length > 0 
-    ? activeBanners.map(b => ({
-        id: b.id,
-        title: b.title,
-        subtitle: b.subtitle,
-        eyebrow: "Thiết kế nổi bật",
-        buttonText: b.buttonText || "Khám phá ngay",
-        imageUrl: b.imageUrl,
-        mobileImageUrl: b.mobileImageUrl,
-        targetType: b.targetType,
-        targetId: b.targetId,
-        linkUrl: b.linkUrl,
-        isApi: true
-      }))
-    : [{
-        id: "fallback",
-        title: heroContent.title,
-        subtitle: heroContent.subtitle,
-        eyebrow: heroContent.eyebrow,
-        buttonText: heroContent.buttonLabel,
-        imageUrl: heroContent.image,
-        mobileImageUrl: heroContent.image,
-        targetType: "external",
-        targetId: "",
-        linkUrl: "#san-pham-noi-bat",
-        isApi: false
-      }];
+  // Build list of slides: map API active banners
+  const bannerList = activeBanners.map(b => ({
+    id: b._id || b.id,
+    // TEMPORARY FIX: Correct typo "Wellcome" to "Welcome" from database strings until fixed in MongoDB.
+    title: b.title ? b.title.replace(/Wellcome/gi, "Welcome") : "",
+    subtitle: b.subtitle ? b.subtitle.replace(/Wellcome/gi, "Welcome") : "",
+    eyebrow: "Thiết kế nổi bật",
+    buttonText: b.buttonText || "Khám phá ngay",
+    imageUrl: b.imageUrl,
+    mobileImageUrl: b.mobileImageUrl,
+    targetType: b.targetType,
+    targetId: b.targetId,
+    linkUrl: b.linkUrl,
+    isApi: true
+  }));
 
   // Auto-play timer
   useEffect(() => {
@@ -71,6 +57,18 @@ const HeroBanner = () => {
     }, 6000);
     return () => clearInterval(timer);
   }, [bannerList.length]);
+
+  if (loading) {
+    return (
+      <div className="home-hero flex items-center justify-center min-h-[510px] rounded-[22px] bg-[#272522]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    );
+  }
+
+  if (bannerList.length === 0) {
+    return null;
+  }
 
   const handlePrev = (e) => {
     e.stopPropagation();
@@ -92,7 +90,9 @@ const HeroBanner = () => {
       navigate(`/product/${banner.targetId}`);
     } else if (banner.targetType === "category" && banner.targetId) {
       navigate(`/products?category=${banner.targetId}`);
-    } else if (banner.targetType === "external" && banner.linkUrl) {
+    } else if (banner.targetType === "lookbook" && banner.targetId) {
+      navigate(`/lookbooks/${banner.targetId}`);
+    } else if (banner.targetType === "external" && banner.linkUrl && banner.linkUrl.trim() !== "") {
       if (banner.linkUrl.startsWith("#")) {
         const element = document.getElementById(banner.linkUrl.substring(1));
         if (element) {
@@ -100,12 +100,6 @@ const HeroBanner = () => {
         }
       } else {
         window.open(banner.linkUrl, "_blank", "noopener,noreferrer");
-      }
-    } else {
-      // Default action: scroll to featured products
-      const element = document.getElementById("san-pham-noi-bat");
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }
   };

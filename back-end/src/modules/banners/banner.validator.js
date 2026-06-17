@@ -51,7 +51,7 @@ export const validateCreateBanner = (req, res, next) => {
 
   // Target type and targetId validations
   const targetType = data.targetType || "external";
-  if (!["product", "category", "external"].includes(targetType)) {
+  if (!["product", "category", "external", "lookbook"].includes(targetType)) {
     errors.push("Kiểu liên kết (targetType) không hợp lệ");
   } else {
     req.body.targetType = targetType;
@@ -63,8 +63,8 @@ export const validateCreateBanner = (req, res, next) => {
   if (targetType === "category" && (!data.targetId || String(data.targetId).trim() === "")) {
     errors.push("Mã danh mục liên kết (targetId) là bắt buộc khi targetType là category");
   }
-  if (targetType === "external" && (!data.linkUrl || String(data.linkUrl).trim() === "")) {
-    errors.push("Đường dẫn liên kết ngoài (linkUrl) là bắt buộc khi targetType là external");
+  if (targetType === "lookbook" && (!data.targetId || String(data.targetId).trim() === "")) {
+    errors.push("Slug / ID của Lookbook liên kết (targetId) là bắt buộc khi targetType là lookbook");
   }
 
   if (data.isActive !== undefined) {
@@ -124,7 +124,7 @@ export const validateUpdateBanner = (req, res, next) => {
 
   // Target type validation
   if (data.targetType !== undefined) {
-    if (!["product", "category", "external"].includes(data.targetType)) {
+    if (!["product", "category", "external", "lookbook"].includes(data.targetType)) {
       errors.push("Kiểu liên kết (targetType) không hợp lệ");
     }
   }

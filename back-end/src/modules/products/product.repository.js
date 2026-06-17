@@ -3,11 +3,11 @@ import { Product, ProductVariant } from "./product.model.js";
 class ProductRepository {
   // Product methods
   async find(query = {}, sort = { createdAt: -1 }, skip = 0, limit = 10) {
-    return await Product.find(query).sort(sort).skip(skip).limit(limit).lean();
+    return await Product.find(query).sort(sort).skip(skip).limit(limit).populate("variants").lean();
   }
 
   async findWithoutPagination(query = {}, sort = { createdAt: -1 }) {
-    return await Product.find(query).sort(sort).lean();
+    return await Product.find(query).sort(sort).populate("variants").lean();
   }
 
   async findById(id) {

@@ -31,8 +31,9 @@ const MyCoupons = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      toast.info("Vui lòng đăng nhập để xem ví voucher!");
-      navigate("/login");
+      // toast.info("Vui lòng đăng nhập để xem ví voucher!");
+      // navigate("/login");
+      setLoading(false);
       return;
     }
     fetchWallet();
@@ -189,7 +190,7 @@ const MyCoupons = () => {
 
                     {activeTab === "CLAIMED" && (
                       <button
-                        onClick={() => navigate("/products")}
+                        onClick={() => navigate("/cart", { state: { applyVoucher: v.code } })}
                         className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow shadow-indigo-500/10 transition cursor-pointer"
                       >
                         <ShoppingBag className="h-3.5 w-3.5" />

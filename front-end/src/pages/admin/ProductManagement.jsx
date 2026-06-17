@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Edit,
   Trash2,
@@ -6,83 +6,27 @@ import {
   Search,
   AlertTriangle,
   X,
-  Filter,
+  AlertCircle
 } from "lucide-react";
 import { toast } from "react-toastify";
+import {
+  getAllProductService,
+  addProductService,
+  updateProductService,
+  deleteProductService
+} from "@/services/product.service";
+import { getAllCategoriesService } from "@/services/category.service";
 
-const images = {
-  jacket: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=100&auto=format&fit=crop&q=60",
-  tshirt: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=100&auto=format&fit=crop&q=60",
-  jeans: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=100&auto=format&fit=crop&q=60",
-  dress: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=100&auto=format&fit=crop&q=60",
-  sneakers: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=100&auto=format&fit=crop&q=60",
-  boots: "https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=100&auto=format&fit=crop&q=60",
-  placeholder: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=100&auto=format&fit=crop&q=60"
-};
-
-const initialProducts = [
-  {
-    id: 1,
-    name: "Áo khoác da cao cấp",
-    sku: "SKU-001",
-    category: "Áo khoác",
-    price: 299.99,
-    stock: 45,
-    image: images.jacket,
-  },
-  {
-    id: 2,
-    name: "Áo thun trắng cổ điển",
-    sku: "SKU-002",
-    category: "Đồ cơ bản",
-    price: 29.99,
-    stock: 3,
-    image: images.tshirt,
-  },
-  {
-    id: 3,
-    name: "Quần jeans xanh Denim",
-    sku: "SKU-003",
-    category: "Quần",
-    price: 79.99,
-    stock: 87,
-    image: images.jeans,
-  },
-  {
-    id: 4,
-    name: "Đầm hoa mùa hè",
-    sku: "SKU-004",
-    category: "Váy đầm",
-    price: 89.99,
-    stock: 2,
-    image: images.dress,
-  },
-  {
-    id: 5,
-    name: "Giày thể thao Canvas",
-    sku: "SKU-005",
-    category: "Giày dép",
-    price: 69.99,
-    stock: 124,
-    image: images.sneakers,
-  },
-  {
-    id: 6,
-    name: "Bốt da màu đen",
-    sku: "SKU-006",
-    category: "Giày dép",
-    price: 149.99,
-    stock: 1,
-    image: images.boots,
-  },
-];
-
-const categories = ["Tất cả", "Áo khoác", "Đồ cơ bản", "Quần", "Váy đầm", "Giày dép"];
+const defaultProductImage = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500";
 
 const ProductManagement = () => {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Tất cả");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("Tất cả");
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -91,93 +35,162 @@ const ProductManagement = () => {
 
   // Form states
   const [formName, setFormName] = useState("");
-  const [formSku, setFormSku] = useState("");
-  const [formCategory, setFormCategory] = useState("Áo khoác");
+  const [formCategoryId, setFormCategoryId] = useState("");
   const [formPrice, setFormPrice] = useState("");
+  const [formOldPrice, setFormOldPrice] = useState("");
   const [formStock, setFormStock] = useState("");
+  const [formImage, setFormImage] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [prods, cats] = await Promise.all([
+        getAllProductService(),
+        getAllCategoriesService(),
+      ]);
+      setProducts(prods);
+      setCategories(cats);
+      if (cats.length > 0) {
+        setFormCategoryId(cats[0]._id);
+      }
+    } catch (err) {
+      console.error("Fetch products error:", err);
+      setError("Không thể tải danh sách sản phẩm từ backend.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleOpenAddModal = () => {
     setFormName("");
-    setFormSku("");
-    setFormCategory("Áo khoác");
+    setFormCategoryId(categories[0]?._id || "");
     setFormPrice("");
+    setFormOldPrice("");
     setFormStock("");
+    setFormImage("");
+    setFormDescription("");
     setIsAddModalOpen(true);
   };
 
   const handleOpenEditModal = (product) => {
     setCurrentProduct(product);
-    setFormName(product.name);
-    setFormSku(product.sku);
-    setFormCategory(product.category);
-    setFormPrice(product.price.toString());
-    setFormStock(product.stock.toString());
+    setFormName(product.name || "");
+    const catId = typeof product.category_id === "object" ? product.category_id?._id : product.category_id;
+    setFormCategoryId(catId || (categories[0]?._id || ""));
+    setFormPrice((product.new_price ?? product.price ?? 0).toString());
+    setFormOldPrice((product.old_price ?? product.price ?? 0).toString());
+    setFormStock((product.stock ?? 0).toString());
+    setFormImage(product.displayProduct?.[0] || product.image || "");
+    setFormDescription(product.description || "");
     setIsEditModalOpen(true);
   };
 
-  const handleAddProduct = (e) => {
+  const handleAddProduct = async (e) => {
     e.preventDefault();
-    if (!formName || !formSku || !formPrice || !formStock) {
-      toast.error("Vui lòng điền đầy đủ thông tin!");
+    if (!formName || !formCategoryId || !formPrice || !formStock) {
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
 
-    const newProduct = {
-      id: Date.now(),
-      name: formName,
-      sku: formSku,
-      category: formCategory,
-      price: parseFloat(formPrice),
-      stock: parseInt(formStock, 10),
-      image: images.placeholder,
-    };
-
-    setProducts([newProduct, ...products]);
-    setIsAddModalOpen(false);
-    toast.success("Thêm sản phẩm thành công!");
+    try {
+      await addProductService({
+        name: formName,
+        category_id: formCategoryId,
+        new_price: parseFloat(formPrice),
+        old_price: parseFloat(formOldPrice || formPrice),
+        stock: parseInt(formStock, 10),
+        displayProduct: [formImage || defaultProductImage],
+        description: formDescription,
+      });
+      toast.success("Thêm sản phẩm thành công!");
+      setIsAddModalOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể thêm sản phẩm!");
+    }
   };
 
-  const handleEditProduct = (e) => {
+  const handleEditProduct = async (e) => {
     e.preventDefault();
-    if (!formName || !formSku || !formPrice || !formStock) {
-      toast.error("Vui lòng điền đầy đủ thông tin!");
+    if (!formName || !formCategoryId || !formPrice || !formStock) {
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
 
-    setProducts(
-      products.map((p) =>
-        p.id === currentProduct.id
-          ? {
-              ...p,
-              name: formName,
-              sku: formSku,
-              category: formCategory,
-              price: parseFloat(formPrice),
-              stock: parseInt(formStock, 10),
-            }
-          : p
-      )
-    );
-    setIsEditModalOpen(false);
-    toast.success("Cập nhật sản phẩm thành công!");
+    try {
+      await updateProductService(currentProduct._id, {
+        name: formName,
+        category_id: formCategoryId,
+        new_price: parseFloat(formPrice),
+        old_price: parseFloat(formOldPrice || formPrice),
+        stock: parseInt(formStock, 10),
+        displayProduct: [formImage || defaultProductImage],
+        description: formDescription,
+      });
+      toast.success("Cập nhật sản phẩm thành công!");
+      setIsEditModalOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể cập nhật sản phẩm!");
+    }
   };
 
-  const handleDeleteProduct = (id, name) => {
+  const handleDeleteProduct = async (id, name) => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${name}"?`)) {
-      setProducts(products.filter((p) => p.id !== id));
-      toast.success("Đã xóa sản phẩm!");
+      try {
+        await deleteProductService(id);
+        toast.success("Đã xóa sản phẩm!");
+        fetchData();
+      } catch (err) {
+        console.error(err);
+        toast.error("Không thể xóa sản phẩm!");
+      }
     }
   };
 
   // Filtering
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.sku.toLowerCase().includes(search.toLowerCase());
+      product.name?.toLowerCase().includes(search.toLowerCase()) ||
+      product.slug?.toLowerCase().includes(search.toLowerCase());
+    const pCatId = typeof product.category_id === "object" ? product.category_id?._id : product.category_id;
     const matchesCategory =
-      selectedCategory === "Tất cả" || product.category === selectedCategory;
+      selectedCategoryId === "Tất cả" || pCatId === selectedCategoryId;
     return matchesSearch && matchesCategory;
   });
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="text-slate-500">Đang tải sản phẩm từ backend...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 space-y-4">
+        <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+        <h3 className="text-lg font-bold text-red-800 dark:text-red-400">Không thể kết nối API</h3>
+        <p className="text-red-600 dark:text-red-300 text-sm">{error}</p>
+        <button
+          onClick={fetchData}
+          className="bg-red-600 hover:bg-red-500 text-white font-semibold text-sm px-6 py-2 rounded-xl transition cursor-pointer"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 relative">
@@ -189,7 +202,7 @@ const ProductManagement = () => {
         </p>
       </div>
 
-      {/* Toolbar (Search + Category Filter + Add Product Button) */}
+      {/* Toolbar */}
       <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300">
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {/* Search Input */}
@@ -197,7 +210,7 @@ const ProductManagement = () => {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Tìm theo tên sản phẩm hoặc SKU..."
+              placeholder="Tìm theo tên sản phẩm..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200 placeholder-slate-400"
@@ -207,13 +220,14 @@ const ProductManagement = () => {
           {/* Category Dropdown */}
           <div className="relative">
             <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200 placeholder-slate-400"
             >
+              <option value="Tất cả">Tất cả danh mục</option>
               {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat === "Tất cả" ? "Tất cả danh mục" : cat}
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
                 </option>
               ))}
             </select>
@@ -246,9 +260,8 @@ const ProductManagement = () => {
               <tr>
                 <th className="px-6 py-4">Hình ảnh</th>
                 <th className="px-6 py-4">Tên sản phẩm</th>
-                <th className="px-6 py-4">SKU</th>
                 <th className="px-6 py-4">Danh mục</th>
-                <th className="px-6 py-4">Giá cả</th>
+                <th className="px-6 py-4">Giá bán</th>
                 <th className="px-6 py-4 text-center">Kho hàng</th>
                 <th className="px-6 py-4 text-center">Thao tác</th>
               </tr>
@@ -257,17 +270,17 @@ const ProductManagement = () => {
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((product) => (
                   <tr
-                    key={product.id}
+                    key={product._id}
                     className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors"
                   >
                     {/* Image */}
                     <td className="px-6 py-4">
                       <img
-                        src={product.image}
+                        src={product.displayProduct?.[0] || product.image || defaultProductImage}
                         alt={product.name}
                         className="h-12 w-12 rounded-lg object-cover shadow-sm border border-slate-200/60 dark:border-slate-700/60"
                         onError={(e) => {
-                          e.target.src = images.placeholder;
+                          e.target.src = defaultProductImage;
                         }}
                       />
                     </td>
@@ -277,19 +290,18 @@ const ProductManagement = () => {
                       {product.name}
                     </td>
 
-                    {/* SKU */}
-                    <td className="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono">
-                      {product.sku}
-                    </td>
-
                     {/* Category */}
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                      {product.category}
+                      {(() => {
+                        const pCatId = typeof product.category_id === "object" ? product.category_id?._id : product.category_id;
+                        const cat = categories.find((c) => c._id === pCatId);
+                        return cat ? cat.name : "Chưa phân loại";
+                      })()}
                     </td>
 
                     {/* Price */}
                     <td className="px-6 py-4 text-slate-900 dark:text-slate-100">
-                      ${product.price.toFixed(2)}
+                      ${(product.new_price ?? product.price ?? 0).toFixed(2)}
                     </td>
 
                     {/* Stock badge with warning */}
@@ -311,16 +323,16 @@ const ProductManagement = () => {
                       <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={() => handleOpenEditModal(product)}
-                          className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-slate-700 transition"
+                          className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-slate-700 transition cursor-pointer"
                           title="Sửa sản phẩm"
                         >
                           <Edit className="h-4.5 w-4.5" />
                         </button>
                         <button
                           onClick={() =>
-                            handleDeleteProduct(product.id, product.name)
+                            handleDeleteProduct(product._id, product.name)
                           }
-                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-slate-700 transition"
+                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-slate-700 transition cursor-pointer"
                           title="Xóa sản phẩm"
                         >
                           <Trash2 className="h-4.5 w-4.5" />
@@ -331,7 +343,7 @@ const ProductManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center text-slate-400">
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-400">
                     Không tìm thấy sản phẩm nào phù hợp.
                   </td>
                 </tr>
@@ -349,13 +361,13 @@ const ProductManagement = () => {
               <h3 className="text-lg font-bold">Thêm sản phẩm mới</h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleAddProduct} className="space-y-4">
+            <form onSubmit={handleAddProduct} className="space-y-4 text-left">
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-slate-400">
                   Tên sản phẩm
@@ -365,21 +377,20 @@ const ProductManagement = () => {
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    SKU
+                    Hình ảnh (URL)
                   </label>
                   <input
                     type="text"
-                    required
-                    value={formSku}
-                    onChange={(e) => setFormSku(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={formImage}
+                    onChange={(e) => setFormImage(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
                 <div className="space-y-1">
@@ -387,25 +398,36 @@ const ProductManagement = () => {
                     Danh mục
                   </label>
                   <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
+                    value={formCategoryId}
+                    onChange={(e) => setFormCategoryId(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   >
-                    {categories
-                      .filter((c) => c !== "Tất cả")
-                      .map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
+                    {categories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá cả ($)
+                    Giá cũ ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formOldPrice}
+                    onChange={(e) => setFormOldPrice(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-slate-400">
+                    Giá mới ($)
                   </label>
                   <input
                     type="number"
@@ -414,7 +436,7 @@ const ProductManagement = () => {
                     required
                     value={formPrice}
                     onChange={(e) => setFormPrice(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
                 <div className="space-y-1">
@@ -427,22 +449,34 @@ const ProductManagement = () => {
                     required
                     value={formStock}
                     onChange={(e) => setFormStock(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-slate-400">
+                  Mô tả sản phẩm
+                </label>
+                <textarea
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  rows="3"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                ></textarea>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer text-slate-750 dark:text-slate-200"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
                 >
                   Xác nhận
                 </button>
@@ -460,13 +494,13 @@ const ProductManagement = () => {
               <h3 className="text-lg font-bold">Chỉnh sửa sản phẩm</h3>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleEditProduct} className="space-y-4">
+            <form onSubmit={handleEditProduct} className="space-y-4 text-left">
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-slate-400">
                   Tên sản phẩm
@@ -476,21 +510,20 @@ const ProductManagement = () => {
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    SKU
+                    Hình ảnh (URL)
                   </label>
                   <input
                     type="text"
-                    required
-                    value={formSku}
-                    onChange={(e) => setFormSku(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={formImage}
+                    onChange={(e) => setFormImage(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
                 <div className="space-y-1">
@@ -498,25 +531,36 @@ const ProductManagement = () => {
                     Danh mục
                   </label>
                   <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
+                    value={formCategoryId}
+                    onChange={(e) => setFormCategoryId(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   >
-                    {categories
-                      .filter((c) => c !== "Tất cả")
-                      .map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
+                    {categories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá cả ($)
+                    Giá cũ ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formOldPrice}
+                    onChange={(e) => setFormOldPrice(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-slate-400">
+                    Giá mới ($)
                   </label>
                   <input
                     type="number"
@@ -525,7 +569,7 @@ const ProductManagement = () => {
                     required
                     value={formPrice}
                     onChange={(e) => setFormPrice(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
                 <div className="space-y-1">
@@ -538,22 +582,34 @@ const ProductManagement = () => {
                     required
                     value={formStock}
                     onChange={(e) => setFormStock(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-slate-400">
+                  Mô tả sản phẩm
+                </label>
+                <textarea
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  rows="3"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                ></textarea>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer text-slate-750 dark:text-slate-200"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
                 >
                   Cập nhật
                 </button>

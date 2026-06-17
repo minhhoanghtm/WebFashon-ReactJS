@@ -37,8 +37,9 @@ axiosClient.interceptors.response.use(
     if (response && response.status === 401) {
       const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
       if (!isAuthPage) {
-        useAuthStore.getState().logout();
-        window.location.href = '/login';
+        // useAuthStore.getState().logout();
+        // window.location.href = '/login';
+        console.warn("API 401 Unauthorized detected. Redirection disabled for development.");
       }
     }
     

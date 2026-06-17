@@ -43,3 +43,11 @@ export const dashboardUserApi = () => {
 export const getPurchasePerformanceApi = () => {
   return api.get("/order/user/purchasing_performance");
 };
+
+export const getAdminOrdersApi = (params) => {
+  return api.get("/order/admin/orders", { params });
+};
+
+export const updateOrderStatusApi = (id, status) => {
+  return api.patch(`/order/admin/orders/${id}/status`, { status });
+};

@@ -19,8 +19,8 @@ export const validateCreateUser = (req, res, next) => {
     return next(new AppError("Mật khẩu phải có ít nhất 6 ký tự!", 400));
   }
 
-  if (role && !["user", "staff", "admin"].includes(role)) {
-    return next(new AppError("Role không hợp lệ! Chỉ chấp nhận: user, staff, admin", 400));
+  if (role && !["user",  "admin"].includes(role)) {
+    return next(new AppError("Role không hợp lệ! Chỉ chấp nhận: user, admin", 400));
   }
 
   if (sex && !["male", "female"].includes(sex)) {
@@ -46,8 +46,8 @@ export const validateUpdateUser = (req, res, next) => {
     return next(new AppError("Mật khẩu phải có ít nhất 6 ký tự!", 400));
   }
 
-  if (role && !["user", "staff", "admin"].includes(role)) {
-    return next(new AppError("Role không hợp lệ! Chỉ chấp nhận: user, staff, admin", 400));
+  if (role && !["user", "admin"].includes(role)) {
+    return next(new AppError("Role không hợp lệ! Chỉ chấp nhận: user, admin", 400));
   }
 
   if (sex && !["male", "female"].includes(sex)) {

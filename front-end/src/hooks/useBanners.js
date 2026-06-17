@@ -97,7 +97,7 @@ export const useBanners = (initialFilters = {}) => {
     try {
       const updated = await toggleBannerStatusService(id);
       setBanners((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, isActive: updated.isActive } : b))
+        prev.map((b) => ((b._id || b.id) === id ? { ...b, isActive: updated.isActive } : b))
       );
       toast.info("Đã thay đổi trạng thái kích hoạt banner!");
     } catch (err) {

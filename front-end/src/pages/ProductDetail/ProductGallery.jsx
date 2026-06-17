@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { ImageOff } from "lucide-react";
-import { fallbackImages } from "./productDetailMockData";
+import brownBagImage from "../Home/assets/product-brown-bag.jpg";
+import linenShirtImage from "../Home/assets/product-linen-shirt.jpg";
+import navyBlazerImage from "../Home/assets/product-navy-blazer.jpg";
+import whiteSneakersImage from "../Home/assets/product-white-sneakers.jpg";
+
+const fallbackImages = [
+  linenShirtImage,
+  navyBlazerImage,
+  whiteSneakersImage,
+  brownBagImage,
+];
 
 const ProductGallery = ({ images, productName }) => {
   const galleryImages = Array.isArray(images) && images.length ? images : fallbackImages;

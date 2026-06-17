@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const ReviewSchema = new mongoose.Schema(
   {
     product_id: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: "Product",
       required: true,
     },

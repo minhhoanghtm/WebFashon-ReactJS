@@ -49,14 +49,6 @@ const websiteSettingsSchema = new mongoose.Schema(
       googleTagManager: { type: String, default: "" },
       chatbotScript: { type: String, default: "" },
     },
-    policies: {
-      aboutUs: { type: String, default: "" },
-      shippingPolicy: { type: String, default: "" },
-      returnPolicy: { type: String, default: "" },
-      privacyPolicy: { type: String, default: "" },
-      termsOfService: { type: String, default: "" },
-      warrantyPolicy: { type: String, default: "" },
-    },
     // Audit fields
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

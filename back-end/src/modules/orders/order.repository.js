@@ -26,8 +26,11 @@ class OrderRepository {
     return await Order.findByIdAndDelete(id);
   }
 
-  async find(query = {}, sort = { createdAt: -1 }) {
-    return await Order.find(query).sort(sort);
+  async find(query = {}, sort = { createdAt: -1 }, skip = 0, limit = 0) {
+    let queryChain = Order.find(query).sort(sort);
+    if (skip > 0) queryChain = queryChain.skip(skip);
+    if (limit > 0) queryChain = queryChain.limit(limit);
+    return await queryChain;
   }
 
   async countDocuments(query = {}) {

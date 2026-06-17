@@ -97,7 +97,7 @@ const BannerManagement = () => {
 
   const handleOpenEdit = (banner) => {
     setModalMode("edit");
-    setCurrentId(banner.id);
+    setCurrentId(banner._id || banner.id);
     setFormTitle(banner.title);
     setFormSubtitle(banner.subtitle || "");
     setFormImageUrl(banner.imageUrl);
@@ -165,10 +165,14 @@ const BannerManagement = () => {
       toast.error("Mã danh mục liên kết (targetId) là bắt buộc");
       return;
     }
-    if (formTargetType === "external" && !formLinkUrl.trim()) {
-      toast.error("Đường dẫn liên kết ngoài (linkUrl) là bắt buộc");
+    if (formTargetType === "lookbook" && !formTargetId.trim()) {
+      toast.error("Mã / Slug Lookbook liên kết (targetId) là bắt buộc");
       return;
     }
+    // if (formTargetType === "external" && !formLinkUrl.trim()) {
+    //   toast.error("Đường dẫn liên kết ngoài (linkUrl) là bắt buộc");
+    //   return;
+    // }
 
     const payload = {
       title: formTitle,
@@ -217,7 +221,7 @@ const BannerManagement = () => {
         </div>
         <button
           onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-750 text-white text-sm font-bold rounded-xl shadow-md hover:scale-102 active:scale-98 transition cursor-pointer shrink-0"
+          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-200 text-white text-sm font-bold rounded-xl shadow-md hover:scale-102 active:scale-98 transition cursor-pointer shrink-0"
         >
           <Plus className="h-4 w-4" />
           Thêm Banner mới
@@ -234,7 +238,7 @@ const BannerManagement = () => {
             value={filters.keyword}
             onChange={(e) => setFilters((prev) => ({ ...prev, keyword: e.target.value, page: 1 }))}
             placeholder="Tìm kiếm theo tiêu đề..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-gray-950"
           />
         </div>
 
@@ -309,7 +313,7 @@ const BannerManagement = () => {
                   const isDateActive = new Date(banner.startDate) <= now && new Date(banner.endDate) >= now;
 
                   return (
-                    <tr key={banner.id} className="hover:bg-slate-50/50 transition duration-150">
+                    <tr key={banner._id || banner.id} className="hover:bg-slate-50/50 transition duration-150">
                       {/* Image Preview */}
                       <td className="px-6 py-4">
                         <div className="relative w-28 h-16 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 shrink-0 shadow-xs">
@@ -351,7 +355,7 @@ const BannerManagement = () => {
                       {/* Toggle Quick Status */}
                       <td className="px-6 py-4 text-center">
                         <button
-                          onClick={() => toggleBannerStatus(banner.id)}
+                          onClick={() => toggleBannerStatus(banner._id || banner.id)}
                           className="relative inline-flex items-center cursor-pointer justify-center align-middle"
                         >
                           <span className="sr-only">Toggle</span>
@@ -376,7 +380,7 @@ const BannerManagement = () => {
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => deleteBanner(banner.id, banner.title)}
+                            onClick={() => deleteBanner(banner._id || banner.id, banner.title)}
                             className="p-1.5 border border-red-100 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-750 cursor-pointer"
                             title="Xóa"
                           >
@@ -447,7 +451,7 @@ const BannerManagement = () => {
                     required
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
                     placeholder="Tiêu đề chính"
                   />
                 </div>
@@ -457,7 +461,7 @@ const BannerManagement = () => {
                     type="text"
                     value={formSubtitle}
                     onChange={(e) => setFormSubtitle(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
                     placeholder="Mô tả phụ ngắn"
                   />
                 </div>
@@ -564,7 +568,7 @@ const BannerManagement = () => {
                     type="text"
                     value={formButtonText}
                     onChange={(e) => setFormButtonText(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
                     placeholder="Ví dụ: Mua ngay, Xem thêm"
                   />
                 </div>
@@ -575,7 +579,7 @@ const BannerManagement = () => {
                     min="0"
                     value={formSortOrder}
                     onChange={(e) => setFormSortOrder(Number(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
                   />
                 </div>
               </div>
@@ -592,18 +596,19 @@ const BannerManagement = () => {
                     <option value="external">Liên kết ngoài (URL)</option>
                     <option value="product">Sản phẩm cụ thể</option>
                     <option value="category">Danh mục sản phẩm</option>
+                    <option value="lookbook">Bộ sưu tập (Lookbook)</option>
                   </select>
                 </div>
 
                 {formTargetType === "external" ? (
                   <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Đường dẫn liên kết ngoài (linkUrl) *</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase">Đường dẫn liên kết ngoài (linkUrl)</label>
                     <input
                       type="text"
-                      required
+                      // required
                       value={formLinkUrl}
                       onChange={(e) => setFormLinkUrl(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
                       placeholder="https://..."
                     />
                   </div>
@@ -618,7 +623,13 @@ const BannerManagement = () => {
                       value={formTargetId}
                       onChange={(e) => setFormTargetId(e.target.value)}
                       className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
-                      placeholder={formTargetType === "product" ? "Nhập ID sản phẩm" : "Nhập ID danh mục"}
+                      placeholder={
+                        formTargetType === "product"
+                          ? "Nhập ID sản phẩm"
+                          : formTargetType === "category"
+                          ? "Nhập ID danh mục"
+                          : "Nhập Slug hoặc ID của Lookbook"
+                      }
                     />
                   </div>
                 )}
@@ -633,7 +644,7 @@ const BannerManagement = () => {
                     required
                     value={formStartDate}
                     onChange={(e) => setFormStartDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -643,7 +654,7 @@ const BannerManagement = () => {
                     required
                     value={formEndDate}
                     onChange={(e) => setFormEndDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
                   />
                 </div>
               </div>
@@ -674,7 +685,7 @@ const BannerManagement = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-2 px-6 py-2 bg-indigo-650 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition shadow-md cursor-pointer hover:scale-102 active:scale-98"
+                  className="flex items-center gap-2 px-6 py-2 bg-indigo-650 hover:bg-indigo-700 text-black text-sm font-bold rounded-xl transition shadow-md cursor-pointer hover:scale-102 active:scale-98"
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   <span>{modalMode === "add" ? "Thêm mới" : "Lưu thay đổi"}</span>

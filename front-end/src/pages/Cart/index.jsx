@@ -21,71 +21,71 @@ import EmptyCart from "../../components/cart/EmptyCart";
 import CartSkeleton from "../../components/cart/CartSkeleton";
 import RecommendedProducts from "../../components/cart/RecommendedProducts";
 
-const DEMO_CART_ITEMS = [
-  {
-    _id: "demo-cart-1",
-    product_id: "demo-product-1",
-    name: "Áo thun basic form rộng",
-    category: "Áo nam",
-    image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=60",
-    new_price: 249000,
-    old_price: 329000,
-    price: 249000,
-    quantity: 2,
-    stock: 12,
-    variants: [
-      {
-        _id: "demo-variant-1",
-        color: "Trắng",
-        size: "M",
-        image_url: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=60",
-        stock: 12,
-      },
-    ],
-  },
-  {
-    _id: "demo-cart-2",
-    product_id: "demo-product-2",
-    name: "Quần jeans slim fit",
-    category: "Quần nam",
-    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&auto=format&fit=crop&q=60",
-    new_price: 419000,
-    old_price: 549000,
-    price: 419000,
-    quantity: 1,
-    stock: 5,
-    variants: [
-      {
-        _id: "demo-variant-2",
-        color: "Xanh đậm",
-        size: "32",
-        image_url: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&auto=format&fit=crop&q=60",
-        stock: 5,
-      },
-    ],
-  },
-  {
-    _id: "demo-cart-3",
-    product_id: "demo-product-3",
-    name: "Giày sneaker trắng",
-    category: "Giày dép",
-    image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&auto=format&fit=crop&q=60",
-    new_price: 690000,
-    old_price: 850000,
-    price: 690000,
-    quantity: 1,
-    stock: 3,
-    variants: [
-      {
-        _id: "demo-variant-3",
-        color: "Trắng",
-        size: "42",
-        image_url: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&auto=format&fit=crop&q=60",
-        stock: 3,
-      },
-    ],
-  },
-];
+// const DEMO_CART_ITEMS = [
+//   {
+//     _id: "demo-cart-1",
+//     product_id: "demo-product-1",
+//     name: "Áo thun basic form rộng",
+//     category: "Áo nam",
+//     image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=60",
+//     new_price: 249000,
+//     old_price: 329000,
+//     price: 249000,
+//     quantity: 2,
+//     stock: 12,
+//     variants: [
+//       {
+//         _id: "demo-variant-1",
+//         color: "Trắng",
+//         size: "M",
+//         image_url: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=60",
+//         stock: 12,
+//       },
+//     ],
+//   },
+//   {
+//     _id: "demo-cart-2",
+//     product_id: "demo-product-2",
+//     name: "Quần jeans slim fit",
+//     category: "Quần nam",
+//     image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&auto=format&fit=crop&q=60",
+//     new_price: 419000,
+//     old_price: 549000,
+//     price: 419000,
+//     quantity: 1,
+//     stock: 5,
+//     variants: [
+//       {
+//         _id: "demo-variant-2",
+//         color: "Xanh đậm",
+//         size: "32",
+//         image_url: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&auto=format&fit=crop&q=60",
+//         stock: 5,
+//       },
+//     ],
+//   },
+//   {
+//     _id: "demo-cart-3",
+//     product_id: "demo-product-3",
+//     name: "Giày sneaker trắng",
+//     category: "Giày dép",
+//     image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&auto=format&fit=crop&q=60",
+//     new_price: 690000,
+//     old_price: 850000,
+//     price: 690000,
+//     quantity: 1,
+//     stock: 3,
+//     variants: [
+//       {
+//         _id: "demo-variant-3",
+//         color: "Trắng",
+//         size: "42",
+//         image_url: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&auto=format&fit=crop&q=60",
+//         stock: 3,
+//       },
+//     ],
+//   },
+// ];
 
 // Normalizes backend CartItem schema structures to client-compatible store formats
 const normalizeCartItems = (backendItems) => {
@@ -95,12 +95,30 @@ const normalizeCartItems = (backendItems) => {
     const product = item.product_id || {};
     const variant = item.variant_id || {};
 
+    const displayImage = Array.isArray(product.displayProduct)
+      ? product.displayProduct.find(Boolean)
+      : product.displayProduct;
+
+    const normalizeImageUrl = (url) => {
+      if (!url) return "";
+      if (url.includes("example.com")) return "";
+      if (url.includes("webfashon-reactjs.onrender.com")) {
+        const localOrigin = "http://localhost:5000";
+        return url.replace(/https?:\/\/webfashon-reactjs\.onrender\.com/, localOrigin);
+      }
+      return url;
+    };
+
+    const variantImage = normalizeImageUrl(variant.image_url);
+    const productImage = normalizeImageUrl(displayImage || product.image || product.imageUrl || product.image_url || "");
+
     return {
       _id: item._id, // cartItem ID
       product_id: product._id || product.id,
       name: product.name || "Sản phẩm thời trang",
       category: product.category_id?.name || "Quần áo",
-      image: variant.image_url || product.image || "",
+      image: variantImage || productImage || "",
+      productImage: productImage,
       new_price: product.new_price || item.price || 0,
       old_price: product.old_price || 0,
       price: item.price || product.new_price || 0,
@@ -144,17 +162,18 @@ const Cart = () => {
   useEffect(() => {
     const fetchCartData = async () => {
       if (!isLoggedIn) {
-        setIsDemoMode(true);
-        setCartItems(DEMO_CART_ITEMS);
-        setSelectedItemIds(DEMO_CART_ITEMS.map((item) => item._id));
+        setIsDemoMode(false);
+        setCartItems([]);
+        setSelectedItemIds([]);
         return;
       }
       try {
         setLoading(true);
         const cartRes = await getCartService();
-        if (cartRes.success && cartRes.data?.length > 0) {
+        const cartData = cartRes.data;
+        if (cartRes.success && cartData && cartData._id) {
           setIsDemoMode(false);
-          const cartId = cartRes.data[0]._id;
+          const cartId = cartData._id;
           const itemsRes = await getCartItemsService(cartId);
           const normalized = normalizeCartItems(itemsRes.data || []);
           
@@ -164,15 +183,15 @@ const Cart = () => {
             normalized.filter((i) => (i.stock ?? 1) > 0).map((i) => i._id)
           );
         } else {
-          setIsDemoMode(true);
-          setCartItems(DEMO_CART_ITEMS);
-          setSelectedItemIds(DEMO_CART_ITEMS.map((item) => item._id));
+          setIsDemoMode(false);
+          setCartItems([]);
+          setSelectedItemIds([]);
         }
       } catch (err) {
         console.error("Lỗi khi tải dữ liệu giỏ hàng:", err);
-        setIsDemoMode(true);
-        setCartItems(DEMO_CART_ITEMS);
-        setSelectedItemIds(DEMO_CART_ITEMS.map((item) => item._id));
+        setIsDemoMode(false);
+        setCartItems([]);
+        setSelectedItemIds([]);
       } finally {
         setLoading(false);
       }

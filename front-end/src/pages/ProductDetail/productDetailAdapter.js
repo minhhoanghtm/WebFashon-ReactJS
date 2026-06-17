@@ -1,7 +1,17 @@
-import {
-  fallbackDescription,
-  fallbackImages,
-} from "./productDetailMockData";
+import brownBagImage from "../Home/assets/product-brown-bag.jpg";
+import linenShirtImage from "../Home/assets/product-linen-shirt.jpg";
+import navyBlazerImage from "../Home/assets/product-navy-blazer.jpg";
+import whiteSneakersImage from "../Home/assets/product-white-sneakers.jpg";
+
+const fallbackImages = [
+  linenShirtImage,
+  navyBlazerImage,
+  whiteSneakersImage,
+  brownBagImage,
+];
+
+const fallbackDescription =
+  "Thông tin sản phẩm đang được cập nhật. Thiết kế được chọn lọc để phù hợp với phong cách hiện đại, dễ phối đồ và thoải mái khi sử dụng hằng ngày.";
 
 const firstValue = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");

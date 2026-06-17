@@ -28,6 +28,11 @@ import CouponManagement from '@/pages/admin/CouponManagement';
 import Dashboard from '@/pages/admin/Dashboard';
 import WebsiteSettingsManagement from '@/pages/admin/WebsiteSettingsManagement';
 import BannerManagement from '@/pages/admin/BannerManagement';
+import LookbookList from '../pages/LookbookList';
+import LookbookDetail from '../pages/LookbookDetail';
+import PageManagement from '@/pages/admin/PageManagement';
+import LookbookManagement from '@/pages/admin/LookbookManagement';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const router = createBrowserRouter([
   {
@@ -43,6 +48,14 @@ const router = createBrowserRouter([
       { path: 'profile', element: <Profile /> },
       { path: 'vouchers', element: <VoucherHunting /> },
       { path: 'my-coupons', element: <MyCoupons /> },
+      {
+        path: 'lookbooks',
+        element: <LookbookList />,
+      },
+      {
+        path: 'lookbooks/:slug',
+        element: <LookbookDetail />,
+      },
       {
         path: 'user/dashboard',
         element: (
@@ -67,7 +80,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: <ProtectedRoute allowedRoles={['admin']} element={<AdminLayout />} />,
     children: [
       { index: true, element: <Dashboard /> },
       { path: 'categories', element: <CatalogManagement /> },
@@ -76,6 +89,8 @@ const router = createBrowserRouter([
       { path: 'customers', element: <UserManagement /> },
       { path: 'coupons', element: <CouponManagement /> },
       { path: 'banners', element: <BannerManagement /> },
+      { path: 'lookbooks', element: <LookbookManagement /> },
+      { path: 'pages', element: <PageManagement /> },
       { path: 'settings', element: <WebsiteSettingsManagement /> },
     ],
   },

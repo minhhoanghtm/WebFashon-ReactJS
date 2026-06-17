@@ -469,3 +469,21 @@
     animation-duration: 1.5s;
   }
 }
+
+/* Category Showcase Scrollbar utility */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+/* Fallback loading pulses for browsers with custom configs */
+.bg-slate-150\/70 {
+  background-color: rgb(241, 245, 249, 0.7);
+}
+.bg-slate-250\/70 {
+  background-color: rgb(226, 232, 240, 0.7);
+}
+

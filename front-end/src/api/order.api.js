@@ -12,6 +12,8 @@ export const orderApi = {
   getOrderStats: (userId) => axiosClient.get('/order/admin/stats', { params: userId ? { userId } : {} }),
   dashboardUser: () => axiosClient.get('/order/user/revenue'),
   getPurchasePerformance: () => axiosClient.get('/order/user/purchasing_performance'),
+  getAdminOrders: (params) => axiosClient.get('/order/admin/orders', { params }),
+  updateOrderStatus: (id, status) => axiosClient.patch(`/order/admin/orders/${id}/status`, { status }),
 
   // OrderItems
   getOrderItemsByOrderId: (orderId) => axiosClient.get(`/order_items?orderId=${orderId}`),

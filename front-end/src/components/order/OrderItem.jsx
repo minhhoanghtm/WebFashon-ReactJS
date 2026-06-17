@@ -9,7 +9,20 @@ const OrderItem = ({ item }) => {
 
   const color = item.variant?.color;
   const size = item.variant?.size;
-  const imageUrl = item.variant?.image_url || item.product_image;
+
+  const normalizeImageUrl = (url) => {
+    if (!url) return "";
+    if (url.includes("example.com")) return "";
+    if (url.includes("webfashon-reactjs.onrender.com")) {
+      const localOrigin = "http://localhost:5000";
+      return url.replace(/https?:\/\/webfashon-reactjs\.onrender\.com/, localOrigin);
+    }
+    return url;
+  };
+
+  const variantImage = normalizeImageUrl(item.variant?.image_url);
+  const productImage = normalizeImageUrl(item.product_image);
+  const imageUrl = variantImage || productImage || "";
 
   return (
     <div className="flex items-start gap-4 py-4 border-b border-gray-100 last:border-b-0 animate-fadeIn">
