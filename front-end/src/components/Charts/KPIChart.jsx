@@ -1,14 +1,14 @@
 import React from "react";
-import { FaDollarSign, FaShoppingBag, FaShoppingCart, FaUsers } from "react-icons/fa";
+import { FaCreditCard, FaShoppingBag, FaShoppingCart, FaUsers } from "react-icons/fa";
 import { AiFillProduct } from "react-icons/ai";
 
 // 🔥 icon map theo key
 const iconMap = {
-  revenue: <FaDollarSign />,
+  revenue: <FaCreditCard />,
   orders: <FaShoppingCart />,
   total: <FaShoppingBag />,
   customers: <FaUsers />,
-  avgOrder: <FaDollarSign />,
+  avgOrder: <FaCreditCard />,
   soldProducts: <AiFillProduct />,
 };
 const adminData = [

@@ -51,7 +51,7 @@ const CartSummary = ({
         {/* Grand Total */}
         <div className="flex justify-between text-base font-extrabold text-slate-900 dark:text-white">
           <span>Tổng cộng</span>
-          <span className="text-xl text-blue-600 dark:text-blue-400 font-serif">
+          <span className="text-xl text-blue-600 dark:text-blue-400 font-semibold">
             {formatPrice(total)}
           </span>
         </div>

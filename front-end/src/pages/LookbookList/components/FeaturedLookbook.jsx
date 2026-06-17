@@ -69,8 +69,7 @@ const FeaturedLookbook = ({ lookbook }) => {
             Featured Collection
           </span>
           <h2 
-            className="text-3xl md:text-5xl font-light text-neutral-900 leading-tight mb-6 tracking-wide uppercase"
-            style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif" }}
+            className="text-3xl md:text-5xl font-semibold text-neutral-900 leading-tight mb-6 tracking-wide uppercase"
           >
             {lookbook.title ? lookbook.title.normalize("NFC") : ""}
           </h2>

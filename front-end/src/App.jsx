@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './config/queryClient';
 import AppRouter from './routes/AppRouter';
+import CustomerChatWidget from './components/CustomerChatWidget';
 import { useAuthStore } from './store/auth.store';
 import { userApi } from './api/user.api';
 
@@ -43,6 +44,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AppRouter />
+      <CustomerChatWidget />
       <ToastContainer position="bottom-right" autoClose={3000} />
     </QueryClientProvider>
   );

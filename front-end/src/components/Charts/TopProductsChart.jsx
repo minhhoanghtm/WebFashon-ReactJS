@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(value || 0);
+
 const TopProductsChart = () => {
   const [data, setData] = useState([]);
 
@@ -33,7 +39,7 @@ const TopProductsChart = () => {
                   <td className="text-center border">{index + 1}</td>
                   <td className="text-center border">{product.name}</td>
                   <td className="text-center border">{product.value}</td>
-                  <td className="text-center border">{product.revenue.toLocaleString()} VND</td>
+                  <td className="text-center border">{formatCurrency(product.revenue)}</td>
                 </tr>
               ))}
             </tbody>

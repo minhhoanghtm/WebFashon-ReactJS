@@ -14,8 +14,7 @@ const ProductsSection = ({ data }) => {
         <div className="flex flex-col items-start gap-2 mb-16 rounded-none select-none">
           <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400">Shop The Look</span>
           <h2 
-            className="text-2xl md:text-4xl font-light text-neutral-900 tracking-wide uppercase font-serif"
-            style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif" }}
+            className="text-2xl md:text-4xl font-semibold text-neutral-900 tracking-wide uppercase"
           >
             Sản phẩm trong bộ sưu tập
           </h2>

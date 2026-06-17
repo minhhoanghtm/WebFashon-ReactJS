@@ -26,6 +26,7 @@ import OrderManagement from '@/pages/admin/OrderManagement';
 import UserManagement from '@/pages/admin/UserManagement';
 import CouponManagement from '@/pages/admin/CouponManagement';
 import Dashboard from '@/pages/admin/Dashboard';
+import ChatManagement from '@/pages/admin/ChatManagement';
 import WebsiteSettingsManagement from '@/pages/admin/WebsiteSettingsManagement';
 import BannerManagement from '@/pages/admin/BannerManagement';
 import LookbookList from '../pages/LookbookList';
@@ -86,6 +87,7 @@ const router = createBrowserRouter([
       { path: 'categories', element: <CatalogManagement /> },
       { path: 'products', element: <ProductManagement /> },
       { path: 'orders', element: <OrderManagement /> },
+      { path: 'chats', element: <ChatManagement /> },
       { path: 'customers', element: <UserManagement /> },
       { path: 'coupons', element: <CouponManagement /> },
       { path: 'banners', element: <BannerManagement /> },

@@ -16,6 +16,11 @@ import {
   deleteProductService
 } from "@/services/product.service";
 import { getAllCategoriesService } from "@/services/category.service";
+<<<<<<< Updated upstream
+=======
+import { getProductVariantByProductIdService } from "@/services/productItem.service";
+import { formatCurrency } from "@/utils/format";
+>>>>>>> Stashed changes
 
 const defaultProductImage = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500";
 
@@ -301,7 +306,7 @@ const ProductManagement = () => {
 
                     {/* Price */}
                     <td className="px-6 py-4 text-slate-900 dark:text-slate-100">
-                      ${(product.new_price ?? product.price ?? 0).toFixed(2)}
+                      {formatCurrency(product.new_price ?? product.price ?? 0)}
                     </td>
 
                     {/* Stock badge with warning */}
@@ -414,7 +419,7 @@ const ProductManagement = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá cũ ($)
+                    Giá cũ (VNĐ)
                   </label>
                   <input
                     type="number"
@@ -427,7 +432,7 @@ const ProductManagement = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá mới ($)
+                    Giá mới (VNĐ)
                   </label>
                   <input
                     type="number"
@@ -547,7 +552,7 @@ const ProductManagement = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá cũ ($)
+                    Giá cũ (VNĐ)
                   </label>
                   <input
                     type="number"
@@ -560,7 +565,7 @@ const ProductManagement = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá mới ($)
+                    Giá mới (VNĐ)
                   </label>
                   <input
                     type="number"

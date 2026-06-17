@@ -1,6 +1,12 @@
 import React, { useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
 
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(value || 0);
+
 const RevenueChart = ({ data, type, setType }) => {
   const [range, setRange] = useState("last7days");
 
@@ -36,7 +42,7 @@ const RevenueChart = ({ data, type, setType }) => {
     tooltip: {
       trigger: "axis",
       formatter: (params) =>
-        `${params[0].name}: ${params[0].value.toLocaleString()} VND`,
+        `${params[0].name}: ${formatCurrency(params[0].value)}`,
     },
     xAxis: {
       type: "category",
@@ -44,6 +50,9 @@ const RevenueChart = ({ data, type, setType }) => {
     },
     yAxis: {
       type: "value",
+      axisLabel: {
+        formatter: (value) => formatCurrency(value),
+      },
     },
     series: [
       {

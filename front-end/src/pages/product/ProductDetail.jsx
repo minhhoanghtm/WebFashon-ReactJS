@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { productApi } from '../../api/product.api';
 import { useCartStore } from '../../store/cart.store';
+import { formatCurrency } from '../../utils/format';
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -56,9 +57,9 @@ const ProductDetail = () => {
         <div className="mt-8 lg:mt-0 lg:pl-8">
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">{product.name}</h1>
           <div className="mt-4 flex items-center gap-4">
-            <span className="text-2xl font-bold text-indigo-600">${product.new_price}</span>
+            <span className="text-2xl font-bold text-indigo-600">{formatCurrency(product.new_price)}</span>
             {product.old_price > product.new_price && (
-              <span className="text-lg text-gray-400 line-through">${product.old_price}</span>
+              <span className="text-lg text-gray-400 line-through">{formatCurrency(product.old_price)}</span>
             )}
           </div>
           <div className="mt-6 border-t border-gray-200 pt-6">

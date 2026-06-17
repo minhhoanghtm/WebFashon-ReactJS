@@ -28,8 +28,7 @@ const LookbookHero = ({ image, title, subtitle }) => {
       <div className="relative z-10 text-center px-6 max-w-4xl select-none animate-fadeIn">
         {title && (
           <h1 
-            className="text-white text-5xl md:text-8xl font-light tracking-[0.22em] uppercase mb-8"
-            style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', Georgia, serif" }}
+            className="text-white text-5xl md:text-8xl font-semibold tracking-[0.12em] uppercase mb-8"
           >
             {title.normalize("NFC")}
           </h1>

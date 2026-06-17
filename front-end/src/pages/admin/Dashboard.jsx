@@ -19,9 +19,9 @@ import { DashboardService, getRevenueOverviewService, getAdminOrdersService } fr
 import { getAllProductService } from "@/services/product.service";
 
 const formatCurrency = (val) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("vi-VN", {
     style: "currency",
-    currency: "USD",
+    currency: "VND",
   }).format(val);
 };
 
@@ -143,6 +143,7 @@ const Dashboard = () => {
   const salesChartOptions = {
     tooltip: {
       trigger: "axis",
+      valueFormatter: (value) => formatCurrency(value || 0),
       axisPointer: {
         type: "cross",
         label: {
@@ -181,6 +182,7 @@ const Dashboard = () => {
         },
         axisLabel: {
           color: "#94a3b8",
+          formatter: (value) => formatCurrency(value),
         },
         splitLine: {
           lineStyle: {
@@ -191,7 +193,7 @@ const Dashboard = () => {
     ],
     series: [
       {
-        name: "Doanh thu (USD)",
+        name: "Doanh thu (VNĐ)",
         type: "line",
         smooth: true,
         data: revenueOverview.map((item) => item.revenue),

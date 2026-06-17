@@ -119,10 +119,7 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
 
 // Helper for formatting currency
 const formatPrice = (val) => {
-  if (val > 1000) {
-    return val.toLocaleString("vi-VN") + "đ";
-  }
-  return "$" + val;
+  return val.toLocaleString("vi-VN") + " VNĐ";
 };
 
 export default ProductCard;

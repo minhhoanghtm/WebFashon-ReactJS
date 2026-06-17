@@ -3,6 +3,7 @@ import { Search, Eye, X, AlertCircle, ChevronLeft, ChevronRight } from "lucide-r
 import { toast } from "react-toastify";
 import { getAdminOrdersService, updateOrderStatusService } from "@/services/order.service";
 import { getOrderItemsByOrderIdService } from "@/services/orderItem.service";
+import { formatCurrency } from "@/utils/format";
 
 const statusTabs = [
   { key: "All", label: "Tất cả" },
@@ -232,7 +233,7 @@ const OrderManagement = () => {
 
                     {/* Amount */}
                     <td className="px-6 py-4 text-slate-950 dark:text-slate-100">
-                      ${(order.total_price || 0).toFixed(2)}
+                      {formatCurrency(order.total_price || 0)}
                     </td>
 
                     {/* Status Badge */}
@@ -385,7 +386,7 @@ const OrderManagement = () => {
                     Tổng thanh toán
                   </span>
                   <span className="font-extrabold text-blue-600 dark:text-blue-400 text-lg">
-                    ${(selectedOrder.total_price || 0).toFixed(2)}
+                    {formatCurrency(selectedOrder.total_price || 0)}
                   </span>
                 </div>
               </div>
@@ -409,7 +410,7 @@ const OrderManagement = () => {
                         >
                           <span className="truncate max-w-[250px]">{item.product_name || "Sản phẩm thời trang"}</span>
                           <span>
-                            x{item.quantity} - <span className="font-bold">${(item.price || 0).toFixed(2)}</span>
+                            x{item.quantity} - <span className="font-bold">{formatCurrency(item.price || 0)}</span>
                           </span>
                         </div>
                       ))

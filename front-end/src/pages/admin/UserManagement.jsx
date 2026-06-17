@@ -131,11 +131,16 @@ const UserManagement = () => {
     }
   };
 
+<<<<<<< Updated upstream
   // Determine metadata presence in dataset
   const hasStatus = users.some(
     (u) => u.status !== undefined && u.status !== null,
   );
   const hasRole = users.some((u) => u.role !== undefined && u.role !== null);
+=======
+  const hasStatus = true;
+  const hasRole = true;
+>>>>>>> Stashed changes
 
   // Calculations for Statistics Cards
   const totalUsersCount = users.length;
@@ -344,11 +349,28 @@ const UserManagement = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
+<<<<<<< Updated upstream
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">Khách hàng</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
           Quản lý hoạt động kinh doanh thương mại điện tử thời trang của bạn
         </p>
+=======
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Khách hàng</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            Quản lý hoạt động kinh doanh thương mại điện tử thời trang của bạn
+          </p>
+        </div>
+        <button
+          onClick={handleOpenAddUser}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/10 hover:-translate-y-0.5 transition cursor-pointer"
+        >
+          <Users className="h-4.5 w-4.5" />
+          <span>Thêm người dùng</span>
+        </button>
+>>>>>>> Stashed changes
       </div>
 
       {/* Stats Cards */}
@@ -366,7 +388,11 @@ const UserManagement = () => {
           <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
             <div className="space-y-1 text-left">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+<<<<<<< Updated upstream
                 {hasStatus ? "Tổng khách hàng" : "Tổng tài khoản"}
+=======
+                Tổng tài khoản
+>>>>>>> Stashed changes
               </span>
               <h3 className="text-2xl font-black text-slate-800 dark:text-white">
                 {totalUsersCount}
@@ -380,6 +406,7 @@ const UserManagement = () => {
           <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
             <div className="space-y-1 text-left">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+<<<<<<< Updated upstream
                 Khách hàng mới
               </span>
               <h3 className="text-2xl font-black text-slate-800 dark:text-white">
@@ -406,12 +433,23 @@ const UserManagement = () => {
               ) : (
                 <UserCheck2 className="h-6 w-6" />
               )}
+=======
+                Khách hàng
+              </span>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white">
+                {customerCount}
+              </h3>
+            </div>
+            <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/30 dark:border-emerald-900/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <UserCheck2 className="h-6 w-6" />
+>>>>>>> Stashed changes
             </div>
           </div>
 
           <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
             <div className="space-y-1 text-left">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+<<<<<<< Updated upstream
                 {hasStatus ? "Bị khóa" : "Quản trị viên"}
               </span>
               <h3 className="text-2xl font-black text-slate-800 dark:text-white">
@@ -424,6 +462,30 @@ const UserManagement = () => {
               ) : (
                 <Shield className="h-6 w-6" />
               )}
+=======
+                Quản trị viên
+              </span>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white">
+                {adminCount}
+              </h3>
+            </div>
+            <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Shield className="h-6 w-6" />
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
+            <div className="space-y-1 text-left">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Tài khoản bị khóa
+              </span>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white">
+                {blockedCount}
+              </h3>
+            </div>
+            <div className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400">
+              <UserX className="h-6 w-6" />
+>>>>>>> Stashed changes
             </div>
           </div>
         </div>
@@ -669,6 +731,21 @@ const UserManagement = () => {
 
                             {activeActionMenuId === u._id && (
                               <div className="action-dropdown-menu absolute right-6 top-10 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 py-1.5 text-left animate-in fade-in slide-in-from-top-1 duration-155">
+<<<<<<< Updated upstream
+=======
+                                {(!u.role || u.role === "user") && (
+                                  <button
+                                    onClick={() => {
+                                      setActiveActionMenuId(null);
+                                      handleToggleBlock(u);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 transition cursor-pointer"
+                                  >
+                                    <Lock className="h-4 w-4 text-red-500" />
+                                    <span>{u.status === "blocked" ? "Mở khóa TK" : "Khóa tài khoản"}</span>
+                                  </button>
+                                )}
+>>>>>>> Stashed changes
                                 <button
                                   onClick={() => {
                                     setActiveActionMenuId(null);
@@ -679,6 +756,7 @@ const UserManagement = () => {
                                   <Eye className="h-4 w-4 text-slate-400" />
                                   <span>Xem chi tiết</span>
                                 </button>
+<<<<<<< Updated upstream
                                 {/* <button
                                   onClick={() => {
                                     setActiveActionMenuId(null);
@@ -699,6 +777,8 @@ const UserManagement = () => {
                                   <Key className="h-4 w-4 text-slate-400" />
                                   <span>Đổi mật khẩu</span>
                                 </button> */}
+=======
+>>>>>>> Stashed changes
                               </div>
                             )}
                           </td>
@@ -770,6 +850,21 @@ const UserManagement = () => {
 
                         {activeActionMenuId === u._id && (
                           <div className="action-dropdown-menu absolute right-0 top-8 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 py-1.5 text-left animate-in fade-in slide-in-from-top-1 duration-155">
+<<<<<<< Updated upstream
+=======
+                            {(!u.role || u.role === "user") && (
+                              <button
+                                onClick={() => {
+                                  setActiveActionMenuId(null);
+                                  handleToggleBlock(u);
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 transition cursor-pointer"
+                              >
+                                <Lock className="h-4 w-4 text-red-500" />
+                                <span>{u.status === "blocked" ? "Mở khóa TK" : "Khóa tài khoản"}</span>
+                              </button>
+                            )}
+>>>>>>> Stashed changes
                             <button
                               onClick={() => {
                                 setActiveActionMenuId(null);

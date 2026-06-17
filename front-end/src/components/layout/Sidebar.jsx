@@ -9,6 +9,11 @@ import {
   ShoppingCart,
   Tag,
   Users,
+<<<<<<< Updated upstream
+=======
+  Menu,
+  MessageCircle,
+>>>>>>> Stashed changes
   Image,
   Settings,
   FileText,
@@ -28,6 +33,7 @@ const navItems = [
   { icon: LayoutList, label: "Quản lý danh mục", path: "/admin/categories" },
   { icon: Package, label: "Quản lý sản phẩm", path: "/admin/products" },
   { icon: ShoppingCart, label: "Quản lý đơn hàng", path: "/admin/orders" },
+  { icon: MessageCircle, label: "Chat hỗ trợ", path: "/admin/chats" },
   { icon: Users, label: "Quản lý người dùng", path: "/admin/customers" },
   { icon: Tag, label: "Khuyến mãi", path: "/admin/coupons" },
   { icon: Image, label: "Quản lý Banner", path: "/admin/banners" },

@@ -28,8 +28,7 @@ const HeroSection = ({ data }) => {
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 select-none animate-fadeIn">
         {title && (
           <h1 
-            className="text-white text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-light tracking-[0.2em] uppercase mb-4 md:mb-6"
-            style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', Georgia, serif" }}
+            className="text-white text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold tracking-[0.12em] uppercase mb-4 md:mb-6"
           >
             {title.normalize("NFC")}
           </h1>

@@ -170,7 +170,7 @@ const LookbookList = () => {
         ) : (lookbooks.length === 0 && !lookbookBanner) ? (
           /* Empty State */
           <div className="text-center py-32 px-6 max-w-lg mx-auto rounded-none">
-            <h3 className="text-lg font-light text-neutral-800 font-serif italic mb-2">Chưa có Lookbook nào.</h3>
+            <h3 className="text-lg font-medium text-neutral-800 italic mb-2">Chưa có Lookbook nào.</h3>
             <p className="text-xs text-neutral-400 font-light leading-relaxed">
               Các bộ sưu tập mới đang được chuẩn bị. Vui lòng quay lại sau.
             </p>
@@ -181,8 +181,7 @@ const LookbookList = () => {
             {lookbooks.length > 0 && (
               <div className="max-w-7xl mx-auto px-6 md:px-12 pb-8 flex items-center justify-between border-b border-neutral-100 mb-12 rounded-none">
                 <h2 
-                  className="text-xl md:text-3xl font-light uppercase tracking-widest text-neutral-800"
-                  style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif" }}
+                  className="text-xl md:text-3xl font-semibold uppercase tracking-wide text-neutral-800"
                 >
                   Bộ sưu tập
                 </h2>

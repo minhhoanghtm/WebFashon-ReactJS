@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { productApi } from '../../api/product.api';
 import { useCartStore } from '../../store/cart.store';
+import { formatCurrency } from '../../utils/format';
 
 const ProductList = () => {
   const { addItem } = useCartStore();
@@ -49,9 +50,9 @@ const ProductList = () => {
               <div className="mt-4">
                 <h3 className="text-sm font-semibold text-gray-700">{product.name}</h3>
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="text-base font-bold text-indigo-600">${product.new_price}</span>
+                  <span className="text-base font-bold text-indigo-600">{formatCurrency(product.new_price)}</span>
                   {product.old_price > product.new_price && (
-                    <span className="text-sm text-gray-400 line-through">${product.old_price}</span>
+                    <span className="text-sm text-gray-400 line-through">{formatCurrency(product.old_price)}</span>
                   )}
                 </div>
               </div>

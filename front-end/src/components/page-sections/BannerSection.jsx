@@ -18,8 +18,7 @@ const BannerSection = ({ data }) => {
       <div className="relative z-10 text-center px-6 max-w-4xl select-none">
         {title && (
           <h2 
-            className="text-white text-3xl md:text-5xl font-light tracking-widest uppercase mb-4"
-            style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', Georgia, serif" }}
+            className="text-white text-3xl md:text-5xl font-semibold tracking-[0.08em] uppercase mb-4"
           >
             {title.normalize("NFC")}
           </h2>

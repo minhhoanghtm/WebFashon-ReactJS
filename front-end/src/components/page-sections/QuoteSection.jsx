@@ -8,8 +8,7 @@ const QuoteSection = ({ data }) => {
   return (
     <section className="py-20 md:py-28 my-8 text-center px-6 border-y border-neutral-100 rounded-none w-full bg-neutral-50/50">
       <blockquote 
-        className="font-serif italic text-2xl md:text-4xl font-light max-w-3xl mx-auto leading-relaxed text-neutral-800"
-        style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif" }}
+        className="italic text-2xl md:text-4xl font-medium max-w-3xl mx-auto leading-relaxed text-neutral-800"
       >
         "{quote.normalize("NFC")}"
       </blockquote>

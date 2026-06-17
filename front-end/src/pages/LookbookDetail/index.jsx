@@ -152,8 +152,7 @@ const LookbookDetail = () => {
           /* Fallback Typographic layout if no blocks exist */
           <div className="max-w-4xl mx-auto px-6 py-32 text-center rounded-none select-none">
             <h2 
-              className="text-neutral-900 text-3xl md:text-5xl font-light tracking-wide uppercase mb-6"
-              style={{ fontFamily: "'Playfair Display', 'Cormorant Garamond', Georgia, serif" }}
+              className="text-neutral-900 text-3xl md:text-5xl font-semibold tracking-wide uppercase mb-6"
             >
               {page.title ? page.title.normalize("NFC") : ""}
             </h2>
@@ -175,8 +174,7 @@ const LookbookDetail = () => {
             <div className="flex flex-col items-center justify-center text-center gap-2 mb-16 rounded-none select-none">
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-500">Discover More</span>
               <h2 
-                className="text-2xl md:text-3xl font-light text-white tracking-widest uppercase font-serif"
-                style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif" }}
+                className="text-2xl md:text-3xl font-semibold text-white tracking-wide uppercase"
               >
                 Khám phá thêm bộ sưu tập
               </h2>
@@ -207,8 +205,7 @@ const LookbookDetail = () => {
                         {formatDate(lb.publishedAt || lb.createdAt)}
                       </span>
                       <h3 
-                        className="text-white text-base font-normal leading-snug group-hover:text-neutral-300 transition mb-2 uppercase tracking-wider font-serif"
-                        style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif" }}
+                        className="text-white text-base font-semibold leading-snug group-hover:text-neutral-300 transition mb-2 uppercase tracking-wide"
                       >
                         {lb.title ? lb.title.normalize("NFC") : ""}
                       </h3>

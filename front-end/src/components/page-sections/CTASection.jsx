@@ -9,8 +9,7 @@ const CTASection = ({ data }) => {
     <section className="py-20 md:py-28 text-center px-6 max-w-xl mx-auto space-y-6 rounded-none">
       {title && (
         <h2 
-          className="text-2xl md:text-5xl font-light uppercase tracking-wide text-neutral-900" 
-          style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif" }}
+          className="text-2xl md:text-5xl font-semibold uppercase tracking-wide text-neutral-900" 
         >
           {title.normalize("NFC")}
         </h2>

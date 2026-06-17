@@ -68,8 +68,7 @@ const EditorialCard = ({ title, excerpt, image, href, publishedAt, priority = fa
           </span>
         )}
         <h3 
-          className="text-white text-base font-normal leading-snug group-hover:text-neutral-300 transition mb-2 uppercase tracking-wider font-serif"
-          style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif" }}
+          className="text-white text-base font-semibold leading-snug group-hover:text-neutral-300 transition mb-2 uppercase tracking-wide"
         >
           {title ? title.normalize("NFC") : ""}
         </h3>

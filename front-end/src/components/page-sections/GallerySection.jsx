@@ -32,8 +32,7 @@ const GallerySection = ({ data }) => {
             )}
             {item.caption && (
               <figcaption 
-                className="pt-4 text-left text-neutral-400 text-xs font-serif italic tracking-wide"
-                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+                className="pt-4 text-left text-neutral-400 text-xs italic tracking-wide"
               >
                 {item.caption.normalize("NFC")}
               </figcaption>

@@ -11,6 +11,12 @@ import uploadRouter from "../modules/uploads/upload.route.js";
 import voucherRouter from "../modules/vouchers/voucher.route.js";
 import websiteSettingsRouter from "../modules/websiteSettings/websiteSettings.route.js";
 import bannerRouter from "../modules/banners/banner.route.js";
+<<<<<<< Updated upstream
+=======
+import favoriteRouter from "../modules/favorites/favorite.route.js";
+import conversationRouter from "../modules/conversations/conversation.route.js";
+import messageRouter from "../modules/messages/message.route.js";
+>>>>>>> Stashed changes
 import { pageRouter, adminPageRouter, lookbookRouter } from "../modules/pages/page.route.js";
 import { pageSectionRouter, adminPageSectionRouter } from "../modules/pageSections/pageSection.routes.js";
 import { protectedRoute, adminOnly } from "../middlewares/auth.middleware.js";
@@ -40,5 +46,7 @@ rootRouter.use("/order", protectedRoute, orderRouter);
 rootRouter.use("/order_items", protectedRoute, orderItemRouter);
 rootRouter.use("/payments", protectedRoute, paymentRouter);
 rootRouter.use("/vouchers", protectedRoute, voucherRouter);
+rootRouter.use("/conversations", protectedRoute, conversationRouter);
+rootRouter.use("/messages", protectedRoute, messageRouter);
 
 export default rootRouter;

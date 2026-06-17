@@ -29,8 +29,7 @@ const ImageTextSection = ({ data }) => {
         <div className="w-full lg:w-1/2 text-left space-y-6 rounded-none">
           {title && (
             <h2 
-              className="text-2xl md:text-4xl font-light text-neutral-900 leading-tight uppercase font-serif"
-              style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif" }}
+              className="text-2xl md:text-4xl font-semibold text-neutral-900 leading-tight uppercase tracking-wide"
             >
               {title.normalize("NFC")}
             </h2>
