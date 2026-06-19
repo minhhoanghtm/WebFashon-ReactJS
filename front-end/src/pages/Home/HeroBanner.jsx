@@ -118,10 +118,10 @@ const HeroBanner = () => {
             {/* Slide Background Image */}
             <picture className="absolute inset-0 w-full h-full select-none">
               {banner.mobileImageUrl && (
-                <source media="(max-width: 768px)" srcSet={banner.mobileImageUrl} />
+                <source media="(max-width: 768px)" srcSet={encodeURI(banner.mobileImageUrl)} />
               )}
               <img
-                src={banner.imageUrl}
+                src={banner.imageUrl ? encodeURI(banner.imageUrl) : ""}
                 alt={banner.title}
                 className="w-full h-full object-cover pointer-events-none"
               />

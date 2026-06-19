@@ -1,7 +1,7 @@
 import api from "./api";
 
 export const getOrderItemsByOrderIdApi = (orderId) => {
-    return api.get(`/order_items?orderId=${orderId}`);
+    return api.get(`/order_items/${orderId}`);
 };
 
 export const createOrderItemApi = (orderItem) => {

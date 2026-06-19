@@ -14,6 +14,10 @@ import bannerRouter from "../modules/banners/banner.route.js";
 import favoriteRouter from "../modules/favorites/favorite.route.js";
 import { pageRouter, adminPageRouter, lookbookRouter } from "../modules/pages/page.route.js";
 import { pageSectionRouter, adminPageSectionRouter } from "../modules/pageSections/pageSection.routes.js";
+import {
+  adminCommunicationRouter,
+  customerCommunicationRouter,
+} from "../modules/communication/communication.route.js";
 import { protectedRoute, adminOnly } from "../middlewares/auth.middleware.js";
 
 const rootRouter = express.Router();
@@ -33,7 +37,7 @@ rootRouter.use("/page-sections", pageSectionRouter);
 rootRouter.use("/admin/pages", protectedRoute, adminOnly, adminPageRouter);
 rootRouter.use("/admin/page-sections", protectedRoute, adminOnly, adminPageSectionRouter);
 
-// Private routes (strictly protected by auth middleware)
+// Private routes
 rootRouter.use("/user", protectedRoute, userRouter);
 rootRouter.use("/cart", protectedRoute, cartRouter);
 rootRouter.use("/cart_items", protectedRoute, cartItemRouter);
@@ -41,6 +45,10 @@ rootRouter.use("/favorites", protectedRoute, favoriteRouter);
 rootRouter.use("/order", protectedRoute, orderRouter);
 rootRouter.use("/order_items", protectedRoute, orderItemRouter);
 rootRouter.use("/payments", protectedRoute, paymentRouter);
-rootRouter.use("/vouchers", protectedRoute, voucherRouter);
+rootRouter.use("/vouchers", voucherRouter);
+
+// Communication domain routes.
+rootRouter.use("/admin", adminCommunicationRouter);
+rootRouter.use("/chat", customerCommunicationRouter);
 
 export default rootRouter;

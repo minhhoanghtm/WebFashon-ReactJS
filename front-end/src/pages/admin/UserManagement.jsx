@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import {
   Users,
   Search,
@@ -21,10 +21,9 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { getAllUsersApi, updateUserApi, addUserApi } from "../../api/adminUserApi";
+import { getAllUsersApi, updateUserApi } from "../../api/adminUserApi";
 
 // Rich Mock Customers Data for fallback
-<<<<<<< HEAD
 const mockCustomers = [
   {
     _id: "mock-1",
@@ -183,9 +182,6 @@ const mockCustomers = [
     totalSpend: 6200000,
   }
 ];
-=======
-const mockCustomers = [];
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -194,11 +190,7 @@ const UserManagement = () => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
-<<<<<<< HEAD
   
-=======
-
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -209,16 +201,6 @@ const UserManagement = () => {
   // Modals States
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-
-  // Add User Modal States
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addName, setAddName] = useState("");
-  const [addEmail, setAddEmail] = useState("");
-  const [addPhone, setAddPhone] = useState("");
-  const [addPassword, setAddPassword] = useState("");
-  const [addRole, setAddRole] = useState("admin");
-  const [addGender, setAddGender] = useState("other");
-  const [addDateOfBirth, setAddDateOfBirth] = useState("");
 
   // Edit User Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -242,7 +224,6 @@ const UserManagement = () => {
       const response = await getAllUsersApi();
       if (response.ok) {
         const data = await response.json();
-<<<<<<< HEAD
         if (Array.isArray(data) && data.length > 0) {
           setUsers(data);
           setIsUsingMock(false);
@@ -259,20 +240,6 @@ const UserManagement = () => {
       setUsers(mockCustomers);
       setIsUsingMock(true);
       console.error("Failed to load user list from API. Fallback to mock data:", err);
-=======
-        setUsers(Array.isArray(data) ? data : []);
-        setIsUsingMock(false);
-      } else {
-        setUsers([]);
-        setIsUsingMock(false);
-        toast.error("Không thể tải danh sách tài khoản từ server.");
-      }
-    } catch (err) {
-      setUsers([]);
-      setIsUsingMock(false);
-      console.error("Failed to load user list from API:", err);
-      toast.error("Lỗi kết nối đến server.");
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
     } finally {
       setLoading(false);
     }
@@ -325,82 +292,43 @@ const UserManagement = () => {
     }
   };
 
-<<<<<<< Updated upstream
   // Determine metadata presence in dataset
-<<<<<<< HEAD
   const hasStatus = users.some((u) => u.status !== undefined && u.status !== null);
-=======
-  const hasStatus = users.some(
-    (u) => u.status !== undefined && u.status !== null,
-  );
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
   const hasRole = users.some((u) => u.role !== undefined && u.role !== null);
-=======
-  const hasStatus = true;
-  const hasRole = true;
->>>>>>> Stashed changes
 
   // Calculations for Statistics Cards
   const totalUsersCount = users.length;
-<<<<<<< HEAD
   
-=======
-
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
   // Calculate new users (registered in last 30 days)
   const getNewUsersCount = () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-<<<<<<< HEAD
     return users.filter((u) => u.createdAt && new Date(u.createdAt) >= thirtyDaysAgo).length;
-=======
-    return users.filter(
-      (u) => u.createdAt && new Date(u.createdAt) >= thirtyDaysAgo,
-    ).length;
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
   };
 
   const newUsersCount = getNewUsersCount();
-  const activeCount = users.filter((u) => u.status !== "blocked").length;
+  const activeCount = users.filter((u) => u.status === "active").length;
   const blockedCount = users.filter((u) => u.status === "blocked").length;
 
   const adminCount = users.filter((u) => u.role === "admin").length;
-<<<<<<< HEAD
   const staffCount = users.filter((u) => u.role === "staff").length;
   const customerCount = users.filter((u) => !u.role || u.role === "user").length;
-=======
-  const customerCount = users.filter(
-    (u) => !u.role || u.role === "user",
-  ).length;
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
 
   // Search and Filter Logic
   const filteredUsers = users.filter((u) => {
     const name = (u.fullName || u.name || "").toLowerCase();
     const email = (u.email || "").toLowerCase();
-<<<<<<< HEAD
     const phone = (u.phone || (u.addresses?.[0]?.phone) || "").toLowerCase();
     const query = searchQuery.toLowerCase();
     const matchesSearch = name.includes(query) || email.includes(query) || phone.includes(query);
-=======
-    const phone = (u.phone || u.addresses?.[0]?.phone || "").toLowerCase();
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      name.includes(query) || email.includes(query) || phone.includes(query);
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
 
     if (!matchesSearch) return false;
 
     if (activeFilter === "all") return true;
-    if (activeFilter === "active" && hasStatus) return u.status !== "blocked";
+    if (activeFilter === "active" && hasStatus) return u.status === "active";
     if (activeFilter === "blocked" && hasStatus) return u.status === "blocked";
     if (activeFilter === "admin" && hasRole) return u.role === "admin";
-<<<<<<< HEAD
     if (activeFilter === "customer" && hasRole) return !u.role || u.role === "user";
-=======
-    if (activeFilter === "customer" && hasRole)
-      return !u.role || u.role === "user";
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
 
     return true;
   });
@@ -474,13 +402,8 @@ const UserManagement = () => {
                     },
                   ],
                 }
-<<<<<<< HEAD
               : u
           )
-=======
-              : u,
-          ),
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
         );
         toast.success("Cập nhật thông tin khách hàng giả lập thành công!");
         setIsEditModalOpen(false);
@@ -572,100 +495,9 @@ const UserManagement = () => {
     }
   };
 
-  const handleToggleBlock = async (user) => {
-    const isCurrentlyBlocked = user.status === "blocked";
-    const newStatus = isCurrentlyBlocked ? "active" : "blocked";
-    const actionText = isCurrentlyBlocked ? "Mở khóa" : "Khóa";
-
-    try {
-      setSubmitLoading(true);
-      const payload = {
-        fullName: user.fullName || user.name || "",
-        email: user.email || "",
-        role: user.role || "user",
-        status: newStatus,
-        gender: user.sex || user.gender || "other",
-        dateOfBirth: user.birthday || user.dateOfBirth || "",
-        avatar_url: user.avatar_url || user.avatar || "",
-        addresses: user.addresses || [],
-      };
-
-      const response = await updateUserApi(user._id, payload);
-      if (response.ok) {
-        toast.success(`${actionText} tài khoản thành công!`);
-        fetchUsers();
-      } else {
-        const errData = await response.json();
-        toast.error(errData.message || `Không thể ${actionText.toLowerCase()} tài khoản.`);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(`Lỗi khi ${actionText.toLowerCase()} tài khoản.`);
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
-
-  const handleOpenAddUser = () => {
-    setAddName("");
-    setAddEmail("");
-    setAddPhone("");
-    setAddPassword("111111");
-    setAddRole("admin");
-    setAddGender("other");
-    setAddDateOfBirth("");
-    setIsAddModalOpen(true);
-  };
-
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    if (!addName.trim()) {
-      toast.error("Họ và tên không được để trống!");
-      return;
-    }
-    if (!addEmail.trim()) {
-      toast.error("Email không được để trống!");
-      return;
-    }
-    if (addPhone && !/^[0-9]{9,11}$/.test(addPhone)) {
-      toast.error("Số điện thoại không hợp lệ (yêu cầu 9 đến 11 chữ số)!");
-      return;
-    }
-
-    setSubmitLoading(true);
-    try {
-      const payload = {
-        fullName: addName,
-        email: addEmail,
-        passWord: addPassword || "111111",
-        role: addRole,
-        gender: addGender,
-        dateOfBirth: addDateOfBirth || null,
-        addresses: addPhone ? [{ fullName: addName, phone: addPhone }] : [],
-      };
-
-      const response = await addUserApi(payload);
-      if (response.ok) {
-        toast.success("Thêm người dùng mới thành công!");
-        setIsAddModalOpen(false);
-        fetchUsers();
-      } else {
-        const errData = await response.json();
-        toast.error(errData.message || "Không thể tạo tài khoản mới.");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Đã xảy ra lỗi khi tạo tài khoản.");
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-8 relative pb-10">
       {/* Header */}
-<<<<<<< Updated upstream
-<<<<<<< HEAD
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="text-left">
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">
@@ -751,99 +583,6 @@ const UserManagement = () => {
             </div>
           </div>
         </div>
-=======
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Khách hàng</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Quản lý hoạt động kinh doanh thương mại điện tử thời trang của bạn
-        </p>
-=======
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Khách hàng</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Quản lý hoạt động kinh doanh thương mại điện tử thời trang của bạn
-          </p>
-        </div>
-        <button
-          onClick={handleOpenAddUser}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/10 hover:-translate-y-0.5 transition cursor-pointer"
-        >
-          <Users className="h-4.5 w-4.5" />
-          <span>Thêm người dùng</span>
-        </button>
->>>>>>> Stashed changes
-      </div>
-
-      {/* Stats Cards */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="h-28 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl animate-pulse"
-            />
-          ))}
-        </div>
-      ) : users.length === 0 ? null : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
-            <div className="space-y-1 text-left">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Tổng tài khoản
-              </span>
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white">
-                {totalUsersCount}
-              </h3>
-            </div>
-            <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Users className="h-6 w-6" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
-            <div className="space-y-1 text-left">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Khách hàng
-              </span>
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white">
-                {customerCount}
-              </h3>
-            </div>
-            <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/30 dark:border-emerald-900/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <UserCheck2 className="h-6 w-6" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
-            <div className="space-y-1 text-left">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Quản trị viên
-              </span>
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white">
-                {adminCount}
-              </h3>
-            </div>
-            <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Shield className="h-6 w-6" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs flex items-center justify-between transition duration-300">
-            <div className="space-y-1 text-left">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Tài khoản bị khóa
-              </span>
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white">
-                {blockedCount}
-              </h3>
-            </div>
-            <div className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400">
-              <UserX className="h-6 w-6" />
-            </div>
-          </div>
-        </div>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
       )}
 
       {/* Main Content Area */}
@@ -858,18 +597,9 @@ const UserManagement = () => {
             <Users className="h-8 w-8" />
           </div>
           <div className="space-y-2 max-w-sm">
-<<<<<<< HEAD
             <h2 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">Chưa có khách hàng</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Dữ liệu khách hàng sẽ hiển thị tại đây khi hệ thống ghi nhận người dùng.
-=======
-            <h2 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">
-              Chưa có khách hàng
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Dữ liệu khách hàng sẽ hiển thị tại đây khi hệ thống ghi nhận người
-              dùng.
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
             </p>
           </div>
           <button
@@ -987,20 +717,12 @@ const UserManagement = () => {
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300 font-medium">
                   {currentItems.length === 0 ? (
                     <tr>
-<<<<<<< HEAD
                       <td colSpan={hasStatus ? 7 : 6} className="px-6 py-12 text-center text-slate-400 italic">
-=======
-                      <td
-                        colSpan={hasStatus ? 7 : 6}
-                        className="px-6 py-12 text-center text-slate-400 italic"
-                      >
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                         Không tìm thấy khách hàng trùng khớp.
                       </td>
                     </tr>
                   ) : (
                     currentItems.map((u) => {
-<<<<<<< HEAD
                       const name = u.fullName || u.name || u.userName || u.email || "Khách hàng";
                       const phone = u.phone || u.addresses?.[0]?.phone || "-";
                       const roleLabel = u.role === "admin" ? "Quản trị viên" : (u.role === "staff" ? "Nhân viên" : "Khách hàng");
@@ -1008,24 +730,6 @@ const UserManagement = () => {
 
                       return (
                         <tr key={u._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-850/40 transition">
-=======
-                      const name =
-                        u.fullName ||
-                        u.name ||
-                        u.userName ||
-                        u.email ||
-                        "Khách hàng";
-                      const phone = u.phone || u.addresses?.[0]?.phone || "-";
-                      const roleLabel =
-                        u.role === "admin" ? "Quản trị viên" : "Khách hàng";
-                      const firstChar = name.charAt(0).toUpperCase();
-
-                      return (
-                        <tr
-                          key={u._id}
-                          className="hover:bg-slate-50/50 dark:hover:bg-slate-850/40 transition"
-                        >
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                           <td className="px-6 py-4 flex items-center gap-3">
                             {u.avatar_url || u.avatar ? (
                               <img
@@ -1044,13 +748,7 @@ const UserManagement = () => {
                           </td>
 
                           <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
-<<<<<<< HEAD
                             <span className="truncate max-w-[180px] block">{u.email}</span>
-=======
-                            <span className="truncate max-w-[180px] block">
-                              {u.email}
-                            </span>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                           </td>
 
                           <td className="px-6 py-4 text-slate-500 dark:text-slate-400 max-lg:hidden">
@@ -1063,22 +761,12 @@ const UserManagement = () => {
 
                           {hasRole && (
                             <td className="px-6 py-4">
-<<<<<<< HEAD
                               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold leading-5
                                 ${u.role === "admin"
                                   ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"
                                   : u.role === "staff"
                                     ? "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400"
                                     : "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400"}`}
-=======
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold leading-5
-                                ${
-                                  u.role === "admin"
-                                    ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"
-                                    : "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400"
-                                }`}
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                               >
                                 {roleLabel}
                               </span>
@@ -1087,26 +775,12 @@ const UserManagement = () => {
 
                           {hasStatus && (
                             <td className="px-6 py-4">
-<<<<<<< HEAD
                               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold leading-5
                                 ${u.status === "active"
                                   ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
                                   : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"}`}
                               >
                                 {u.status === "active" ? "Hoạt động" : "Bị khóa"}
-=======
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold leading-5
-                                ${
-                                  u.status !== "blocked"
-                                    ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
-                                    : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"
-                                }`}
-                              >
-                                {u.status !== "blocked"
-                                  ? "Hoạt động"
-                                  : "Bị khóa"}
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                               </span>
                             </td>
                           )}
@@ -1116,13 +790,7 @@ const UserManagement = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-<<<<<<< HEAD
                                 setActiveActionMenuId(activeActionMenuId === u._id ? null : u._id);
-=======
-                                setActiveActionMenuId(
-                                  activeActionMenuId === u._id ? null : u._id,
-                                );
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                               }}
                               className="action-menu-trigger p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition cursor-pointer"
                               aria-label="More Actions"
@@ -1131,28 +799,9 @@ const UserManagement = () => {
                             </button>
 
                             {activeActionMenuId === u._id && (
-<<<<<<< HEAD
                               <div
                                 className="action-dropdown-menu absolute right-6 top-10 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 py-1.5 text-left animate-in fade-in slide-in-from-top-1 duration-155"
                               >
-=======
-                              <div className="action-dropdown-menu absolute right-6 top-10 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 py-1.5 text-left animate-in fade-in slide-in-from-top-1 duration-155">
-<<<<<<< Updated upstream
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
-=======
-                                {(!u.role || u.role === "user") && (
-                                  <button
-                                    onClick={() => {
-                                      setActiveActionMenuId(null);
-                                      handleToggleBlock(u);
-                                    }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 transition cursor-pointer"
-                                  >
-                                    <Lock className="h-4 w-4 text-red-500" />
-                                    <span>{u.status === "blocked" ? "Mở khóa TK" : "Khóa tài khoản"}</span>
-                                  </button>
-                                )}
->>>>>>> Stashed changes
                                 <button
                                   onClick={() => {
                                     setActiveActionMenuId(null);
@@ -1163,12 +812,7 @@ const UserManagement = () => {
                                   <Eye className="h-4 w-4 text-slate-400" />
                                   <span>Xem chi tiết</span>
                                 </button>
-<<<<<<< Updated upstream
-<<<<<<< HEAD
                                 <button
-=======
-                                {/* <button
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                                   onClick={() => {
                                     setActiveActionMenuId(null);
                                     handleOpenEdit(u);
@@ -1177,13 +821,8 @@ const UserManagement = () => {
                                 >
                                   <Edit className="h-4 w-4 text-slate-400" />
                                   <span>Chỉnh sửa</span>
-<<<<<<< HEAD
                                 </button>
                                 <button
-=======
-                                </button> */}
-                                {/* <button
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                                   onClick={() => {
                                     setActiveActionMenuId(null);
                                     handleOpenPassword(u);
@@ -1192,13 +831,7 @@ const UserManagement = () => {
                                 >
                                   <Key className="h-4 w-4 text-slate-400" />
                                   <span>Đổi mật khẩu</span>
-<<<<<<< HEAD
                                 </button>
-=======
-                                </button> */}
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
-=======
->>>>>>> Stashed changes
                               </div>
                             )}
                           </td>
@@ -1219,7 +852,6 @@ const UserManagement = () => {
               </div>
             ) : (
               currentItems.map((u) => {
-<<<<<<< HEAD
                 const name = u.fullName || u.name || u.userName || u.email || "Khách hàng";
                 const phone = u.phone || u.addresses?.[0]?.phone || "-";
                 const roleLabel = u.role === "admin" ? "Quản trị viên" : (u.role === "staff" ? "Nhân viên" : "Khách hàng");
@@ -1227,20 +859,6 @@ const UserManagement = () => {
 
                 return (
                   <div key={u._id} className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs flex flex-col space-y-3 text-left relative transition duration-300">
-=======
-                const name =
-                  u.fullName || u.name || u.userName || u.email || "Khách hàng";
-                const phone = u.phone || u.addresses?.[0]?.phone || "-";
-                const roleLabel =
-                  u.role === "admin" ? "Quản trị viên" : "Khách hàng";
-                const firstChar = name.charAt(0).toUpperCase();
-
-                return (
-                  <div
-                    key={u._id}
-                    className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs flex flex-col space-y-3 text-left relative transition duration-300"
-                  >
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
                         {u.avatar_url || u.avatar ? (
@@ -1258,13 +876,7 @@ const UserManagement = () => {
                           <h4 className="text-sm font-bold text-slate-850 dark:text-white truncate max-w-[130px]">
                             {name}
                           </h4>
-<<<<<<< HEAD
                           <span className="text-[10px] text-slate-400 font-semibold">{formatDate(u.createdAt)}</span>
-=======
-                          <span className="text-[10px] text-slate-400 font-semibold">
-                            {formatDate(u.createdAt)}
-                          </span>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                         </div>
                       </div>
 
@@ -1273,13 +885,7 @@ const UserManagement = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-<<<<<<< HEAD
                             setActiveActionMenuId(activeActionMenuId === u._id ? null : u._id);
-=======
-                            setActiveActionMenuId(
-                              activeActionMenuId === u._id ? null : u._id,
-                            );
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                           }}
                           className="action-menu-trigger p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition cursor-pointer"
                         >
@@ -1287,28 +893,9 @@ const UserManagement = () => {
                         </button>
 
                         {activeActionMenuId === u._id && (
-<<<<<<< HEAD
                           <div
                             className="action-dropdown-menu absolute right-0 top-8 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 py-1.5 text-left animate-in fade-in slide-in-from-top-1 duration-155"
                           >
-=======
-                          <div className="action-dropdown-menu absolute right-0 top-8 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 py-1.5 text-left animate-in fade-in slide-in-from-top-1 duration-155">
-<<<<<<< Updated upstream
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
-=======
-                            {(!u.role || u.role === "user") && (
-                              <button
-                                onClick={() => {
-                                  setActiveActionMenuId(null);
-                                  handleToggleBlock(u);
-                                }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 transition cursor-pointer"
-                              >
-                                <Lock className="h-4 w-4 text-red-500" />
-                                <span>{u.status === "blocked" ? "Mở khóa TK" : "Khóa tài khoản"}</span>
-                              </button>
-                            )}
->>>>>>> Stashed changes
                             <button
                               onClick={() => {
                                 setActiveActionMenuId(null);
@@ -1319,6 +906,26 @@ const UserManagement = () => {
                               <Eye className="h-4 w-4 text-slate-400" />
                               <span>Xem chi tiết</span>
                             </button>
+                            <button
+                              onClick={() => {
+                                setActiveActionMenuId(null);
+                                handleOpenEdit(u);
+                              }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer"
+                            >
+                              <Edit className="h-4 w-4 text-slate-400" />
+                              <span>Chỉnh sửa</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setActiveActionMenuId(null);
+                                handleOpenPassword(u);
+                              }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer"
+                            >
+                              <Key className="h-4 w-4 text-slate-400" />
+                              <span>Đổi mật khẩu</span>
+                            </button>
                           </div>
                         )}
                       </div>
@@ -1327,29 +934,16 @@ const UserManagement = () => {
                     <div className="space-y-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400">Email:</span>
-<<<<<<< HEAD
                         <span className="text-slate-700 dark:text-slate-300 truncate max-w-[190px]">{u.email}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400">Điện thoại:</span>
                         <span className="text-slate-700 dark:text-slate-300">{phone}</span>
-=======
-                        <span className="text-slate-700 dark:text-slate-300 truncate max-w-[190px]">
-                          {u.email}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400">Điện thoại:</span>
-                        <span className="text-slate-700 dark:text-slate-300">
-                          {phone}
-                        </span>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
                       {hasRole && (
-<<<<<<< HEAD
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-5
                           ${u.role === "admin"
                             ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"
@@ -1369,31 +963,6 @@ const UserManagement = () => {
                       >
                         {u.status === "active" ? "Hoạt động" : "Bị khóa"}
                       </span>
-=======
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-5
-                          ${
-                            u.role === "admin"
-                              ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"
-                              : "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400"
-                          }`}
-                        >
-                          {roleLabel}
-                        </span>
-                      )}
-
-                      {hasStatus && (
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-5
-                          ${
-                            u.status !== "blocked"
-                              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
-                              : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"
-                          }`}
-                        >
-                          {u.status !== "blocked" ? "Hoạt động" : "Bị khóa"}
-                        </span>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                       )}
                     </div>
                   </div>
@@ -1406,13 +975,7 @@ const UserManagement = () => {
           {totalPages > 1 && (
             <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 font-semibold text-xs text-slate-400 transition duration-300">
               <span>
-<<<<<<< HEAD
                 Hiển thị {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredUsers.length)} trong số {filteredUsers.length} khách hàng
-=======
-                Hiển thị {indexOfFirstItem + 1} -{" "}
-                {Math.min(indexOfLastItem, filteredUsers.length)} trong số{" "}
-                {filteredUsers.length} khách hàng
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
               </span>
 
               <div className="flex items-center gap-1">
@@ -1424,7 +987,6 @@ const UserManagement = () => {
                   <ChevronLeft className="h-4 w-4" />
                 </button>
 
-<<<<<<< HEAD
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                   <button
                     key={pageNum}
@@ -1438,23 +1000,6 @@ const UserManagement = () => {
                     {pageNum}
                   </button>
                 ))}
-=======
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (pageNum) => (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`h-8 w-8 rounded-lg flex items-center justify-center transition cursor-pointer ${
-                        currentPage === pageNum
-                          ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                          : "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ),
-                )}
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
 
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
@@ -1474,13 +1019,7 @@ const UserManagement = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-<<<<<<< HEAD
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Chi tiết khách hàng</h3>
-=======
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                Chi tiết khách hàng
-              </h3>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
               <button
                 onClick={() => setIsDetailModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
@@ -1498,39 +1037,18 @@ const UserManagement = () => {
                 />
               ) : (
                 <div className="h-16 w-16 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0 shadow-sm uppercase text-xl">
-<<<<<<< HEAD
                   {(selectedUser.fullName || selectedUser.name || selectedUser.userName || selectedUser.email || "K").charAt(0).toUpperCase()}
-=======
-                  {(
-                    selectedUser.fullName ||
-                    selectedUser.name ||
-                    selectedUser.userName ||
-                    selectedUser.email ||
-                    "K"
-                  )
-                    .charAt(0)
-                    .toUpperCase()}
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                 </div>
               )}
               <div className="min-w-0">
                 <h4 className="text-base font-bold text-slate-800 dark:text-white truncate">
-<<<<<<< HEAD
                   {selectedUser.fullName || selectedUser.name || selectedUser.userName || selectedUser.email || "Khách hàng"}
-=======
-                  {selectedUser.fullName ||
-                    selectedUser.name ||
-                    selectedUser.userName ||
-                    selectedUser.email ||
-                    "Khách hàng"}
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                 </h4>
                 <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5">
                   ID: {selectedUser._id}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   {hasRole && (
-<<<<<<< HEAD
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-5
                       ${selectedUser.role === "admin"
                         ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"
@@ -1539,43 +1057,16 @@ const UserManagement = () => {
                           : "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400"}`}
                     >
                       {selectedUser.role === "admin" ? "Quản trị viên" : (selectedUser.role === "staff" ? "Nhân viên" : "Khách hàng")}
-=======
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-5
-                      ${
-                        selectedUser.role === "admin"
-                          ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"
-                          : "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400"
-                      }`}
-                    >
-                      {selectedUser.role === "admin"
-                        ? "Quản trị viên"
-                        : "Khách hàng"}
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                     </span>
                   )}
 
                   {hasStatus && (
-<<<<<<< HEAD
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-5
                       ${selectedUser.status === "active"
                         ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
                         : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"}`}
                     >
                       {selectedUser.status === "active" ? "Hoạt động" : "Bị khóa"}
-=======
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-5
-                      ${
-                        selectedUser.status !== "blocked"
-                          ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
-                          : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"
-                      }`}
-                    >
-                      {selectedUser.status !== "blocked"
-                        ? "Hoạt động"
-                        : "Bị khóa"}
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                     </span>
                   )}
                 </div>
@@ -1589,24 +1080,12 @@ const UserManagement = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
                 <div className="space-y-1">
                   <span className="text-slate-400 block">Email liên hệ:</span>
-<<<<<<< HEAD
                   <span className="text-sm text-slate-800 dark:text-slate-200 break-all">{selectedUser.email}</span>
-=======
-                  <span className="text-sm text-slate-800 dark:text-slate-200 break-all">
-                    {selectedUser.email}
-                  </span>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                 </div>
                 <div className="space-y-1">
                   <span className="text-slate-400 block">Số điện thoại:</span>
                   <span className="text-sm text-slate-800 dark:text-slate-200">
-<<<<<<< HEAD
                     {selectedUser.phone || selectedUser.addresses?.[0]?.phone || "-"}
-=======
-                    {selectedUser.phone ||
-                      selectedUser.addresses?.[0]?.phone ||
-                      "-"}
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                   </span>
                 </div>
                 <div className="space-y-1">
@@ -1635,7 +1114,6 @@ const UserManagement = () => {
                       addr.addressDetail,
                       addr.wardCode,
                       addr.districtCode,
-<<<<<<< HEAD
                       addr.provinceCode
                     ].filter(Boolean).join(", ");
 
@@ -1645,26 +1123,6 @@ const UserManagement = () => {
                         <div>
                           <p className="text-sm text-slate-800 dark:text-slate-100 font-bold">{addr.fullName} ({addr.phone})</p>
                           <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mt-0.5">{fullAddr || "Chưa cập nhật chi tiết"}</p>
-=======
-                      addr.provinceCode,
-                    ]
-                      .filter(Boolean)
-                      .join(", ");
-
-                    return (
-                      <div
-                        key={idx}
-                        className="bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-850 p-3 rounded-xl space-y-1 flex items-start gap-2.5"
-                      >
-                        <MapPin className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-sm text-slate-800 dark:text-slate-100 font-bold">
-                            {addr.fullName} ({addr.phone})
-                          </p>
-                          <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mt-0.5">
-                            {fullAddr || "Chưa cập nhật chi tiết"}
-                          </p>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                           {addr.isDefault && (
                             <span className="inline-block bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md mt-1 border border-indigo-100 dark:border-indigo-900/40">
                               Mặc định
@@ -1675,13 +1133,7 @@ const UserManagement = () => {
                     );
                   })
                 ) : (
-<<<<<<< HEAD
                   <p className="text-slate-400 italic">Chưa ghi nhận địa chỉ liên lạc.</p>
-=======
-                  <p className="text-slate-400 italic">
-                    Chưa ghi nhận địa chỉ liên lạc.
-                  </p>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                 )}
               </div>
 
@@ -1692,20 +1144,9 @@ const UserManagement = () => {
                 <div className="flex items-center gap-3 bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100/30 dark:border-indigo-900/10 p-3.5 rounded-xl">
                   <ShoppingBag className="h-5 w-5 text-indigo-500" />
                   <div className="text-left font-bold">
-<<<<<<< HEAD
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Đơn hàng hoàn tất</span>
                     <span className="text-base text-indigo-600 dark:text-indigo-400">
                       {selectedUser.orderCount !== undefined ? selectedUser.orderCount : 0} đơn
-=======
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
-                      Đơn hàng hoàn tất
-                    </span>
-                    <span className="text-base text-indigo-600 dark:text-indigo-400">
-                      {selectedUser.orderCount !== undefined
-                        ? selectedUser.orderCount
-                        : 0}{" "}
-                      đơn
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                     </span>
                   </div>
                 </div>
@@ -1713,21 +1154,9 @@ const UserManagement = () => {
                 <div className="flex items-center gap-3 bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-100/30 dark:border-emerald-900/10 p-3.5 rounded-xl">
                   <TrendingUp className="h-5 w-5 text-emerald-500" />
                   <div className="text-left font-bold">
-<<<<<<< HEAD
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Tổng chi tiêu</span>
                     <span className="text-base text-emerald-600 dark:text-emerald-400">
                       {(selectedUser.totalSpend !== undefined ? selectedUser.totalSpend : 0).toLocaleString("vi-VN")} đ
-=======
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
-                      Tổng chi tiêu
-                    </span>
-                    <span className="text-base text-emerald-600 dark:text-emerald-400">
-                      {(selectedUser.totalSpend !== undefined
-                        ? selectedUser.totalSpend
-                        : 0
-                      ).toLocaleString("vi-VN")}{" "}
-                      đ
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                     </span>
                   </div>
                 </div>
@@ -1751,13 +1180,7 @@ const UserManagement = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200 text-left">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-<<<<<<< HEAD
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Sửa thông tin khách hàng</h3>
-=======
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                Sửa thông tin khách hàng
-              </h3>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
               <button
                 onClick={() => setIsEditModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
@@ -1769,13 +1192,7 @@ const UserManagement = () => {
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div className="space-y-3">
                 <div>
-<<<<<<< HEAD
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Họ và tên</label>
-=======
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Họ và tên
-                  </label>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                   <input
                     type="text"
                     value={editName}
@@ -1787,13 +1204,7 @@ const UserManagement = () => {
                 </div>
 
                 <div>
-<<<<<<< HEAD
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Email</label>
-=======
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Email
-                  </label>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                   <input
                     type="email"
                     value={editEmail}
@@ -1805,13 +1216,7 @@ const UserManagement = () => {
                 </div>
 
                 <div>
-<<<<<<< HEAD
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Số điện thoại</label>
-=======
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Số điện thoại
-                  </label>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                   <input
                     type="text"
                     value={editPhone}
@@ -1823,23 +1228,14 @@ const UserManagement = () => {
 
                 {hasRole && (
                   <div>
-<<<<<<< HEAD
                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Vai trò</label>
-=======
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                      Vai trò
-                    </label>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                     <select
                       value={editRole}
                       onChange={(e) => setEditRole(e.target.value)}
                       className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 font-semibold"
                     >
                       <option value="user">Khách hàng</option>
-<<<<<<< HEAD
                       <option value="staff">Nhân viên</option>
-=======
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                       <option value="admin">Quản trị viên</option>
                     </select>
                   </div>
@@ -1847,13 +1243,7 @@ const UserManagement = () => {
 
                 {hasStatus && (
                   <div>
-<<<<<<< HEAD
                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Trạng thái</label>
-=======
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                      Trạng thái
-                    </label>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                     <select
                       value={editStatus}
                       onChange={(e) => setEditStatus(e.target.value)}
@@ -1877,11 +1267,7 @@ const UserManagement = () => {
                 <button
                   type="submit"
                   disabled={submitLoading}
-<<<<<<< HEAD
                   className="px-4.5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
-=======
-                  className="px-4.5 py-2 text-sm font-semibold text-black bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                 >
                   {submitLoading ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>
@@ -1897,22 +1283,8 @@ const UserManagement = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200 text-left">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="text-left">
-<<<<<<< HEAD
                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Thay đổi mật khẩu khách hàng</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Đặt lại mật khẩu cho tài khoản: <span className="font-bold text-slate-600 dark:text-slate-300">{passwordUser.fullName || passwordUser.name || passwordUser.email}</span></p>
-=======
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                  Thay đổi mật khẩu khách hàng
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Đặt lại mật khẩu cho tài khoản:{" "}
-                  <span className="font-bold text-slate-600 dark:text-slate-300">
-                    {passwordUser.fullName ||
-                      passwordUser.name ||
-                      passwordUser.email}
-                  </span>
-                </p>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
               </div>
               <button
                 onClick={() => setIsPasswordModalOpen(false)}
@@ -1925,13 +1297,7 @@ const UserManagement = () => {
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div className="space-y-3.5">
                 <div>
-<<<<<<< HEAD
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Mật khẩu mới</label>
-=======
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Mật khẩu mới
-                  </label>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
                     <input
@@ -1946,13 +1312,7 @@ const UserManagement = () => {
                 </div>
 
                 <div>
-<<<<<<< HEAD
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Xác nhận mật khẩu mới</label>
-=======
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Xác nhận mật khẩu mới
-                  </label>
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
                     <input
@@ -1978,141 +1338,9 @@ const UserManagement = () => {
                 <button
                   type="submit"
                   disabled={submitLoading}
-<<<<<<< HEAD
                   className="px-4.5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
-=======
-                  className="px-4.5 py-2 text-sm font-semibold text-black bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
->>>>>>> f588986fa7ab26197632558656c2d6a4f0ae3fde
                 >
                   {submitLoading ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ADD USER MODAL */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200 text-left">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                Thêm người dùng mới
-              </h3>
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Họ và tên
-                  </label>
-                  <input
-                    type="text"
-                    value={addName}
-                    onChange={(e) => setAddName(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
-                    placeholder="Nhập họ và tên"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={addEmail}
-                    onChange={(e) => setAddEmail(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
-                    placeholder="Nhập email"
-                    required
-                  />
-                </div>
-
-
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                      Giới tính
-                    </label>
-                    <select
-                      value={addGender}
-                      onChange={(e) => setAddGender(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 font-semibold"
-                    >
-                      <option value="other">Khác</option>
-                      <option value="male">Nam</option>
-                      <option value="female">Nữ</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                      Ngày sinh
-                    </label>
-                    <input
-                      type="date"
-                      value={addDateOfBirth}
-                      onChange={(e) => setAddDateOfBirth(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Số điện thoại (tùy chọn)
-                  </label>
-                  <input
-                    type="text"
-                    value={addPhone}
-                    onChange={(e) => setAddPhone(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
-                    placeholder="Nhập số điện thoại"
-                  />
-                </div>
-
-                {hasRole && (
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                      Vai trò
-                    </label>
-                    <select
-                      value={addRole}
-                      onChange={(e) => setAddRole(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 font-semibold"
-                    >
-                      <option value="admin">Quản trị viên</option>
-                      <option value="user">Khách hàng</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4.5 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitLoading}
-                  className="px-4.5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
-                >
-                  {submitLoading ? "Đang tạo..." : "Thêm người dùng"}
                 </button>
               </div>
             </form>

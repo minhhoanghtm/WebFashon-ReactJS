@@ -1,4 +1,7 @@
+import mongoose from "mongoose";
 import getRedisConnection from "../configs/redis.js";
+import UserVoucher from "../modules/vouchers/userVoucher.model.js";
+import Voucher from "../modules/vouchers/voucher.model.js";
 
 /**
  * Custom rate limiter middleware for claiming vouchers
@@ -15,9 +18,8 @@ export const claimRateLimiter = async (req, res, next) => {
     }
 
     const redis = getRedisConnection();
-    if (!redis) {
-      // If Redis is not connected, skip rate limiting but log a warning
-      console.warn("Redis is not connected, bypassing claim rate limit");
+    if (redis.status !== "ready") {
+      console.warn("Redis unavailable");
       return next();
     }
 
@@ -39,7 +41,7 @@ export const claimRateLimiter = async (req, res, next) => {
     next();
   } catch (error) {
     console.error("Rate limit middleware error:", error);
-    // Proceed to next middleware to avoid blocking the application if rate limiter fails
     next();
   }
 };
+

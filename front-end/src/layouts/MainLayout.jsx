@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/auth.store';
 import { useCartStore } from '../store/cart.store';
 import { useFavoriteStore } from '../store/favorite.store';
 import Footer from '../components/Footer';
+import CustomerChatWidget from '../components/CustomerChatWidget';
 
 const MainLayout = () => {
   const { isAuthenticated, logout } = useAuthStore();
@@ -165,6 +166,7 @@ const MainLayout = () => {
 
       {/* Footer */}
       <Footer />
+      <CustomerChatWidget />
     </div>
   );
 };

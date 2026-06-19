@@ -24,7 +24,8 @@ const XIcon = () => (
 const initialFormData = {
   fullName: "",
   email: "",
-  phoneNumber: "",
+  dateOfBirth: "",
+  gender: "",
   passWord: "",
   confirmPassword: "",
 };
@@ -104,7 +105,6 @@ const RegisterForm = () => {
   const validateForm = () => {
     const nextErrors = {};
     const email = formData.email.trim();
-    const phoneNumber = formData.phoneNumber.trim();
 
     if (!formData.fullName.trim()) {
       nextErrors.fullName = "Vui lòng nhập họ tên.";
@@ -116,10 +116,19 @@ const RegisterForm = () => {
       nextErrors.email = "Email không đúng định dạng.";
     }
 
-    if (!phoneNumber) {
-      nextErrors.phoneNumber = "Vui lòng nhập số điện thoại.";
-    } else if (!/^\d+$/.test(phoneNumber)) {
-      nextErrors.phoneNumber = "Số điện thoại không hợp lệ.";
+    if (!formData.dateOfBirth) {
+      nextErrors.dateOfBirth = "Vui lòng nhập ngày sinh.";
+    } else {
+      const dob = new Date(formData.dateOfBirth);
+      const minAge = new Date();
+      minAge.setFullYear(minAge.getFullYear() - 10);
+      if (dob > minAge) {
+        nextErrors.dateOfBirth = "Bạn phải ít nhất 10 tuổi.";
+      }
+    }
+
+    if (!formData.gender) {
+      nextErrors.gender = "Vui lòng chọn giới tính.";
     }
 
     if (!formData.passWord) {
@@ -153,7 +162,8 @@ const RegisterForm = () => {
     const { firstName, lastName } = splitFullName(formData.fullName);
     const nextFormData = {
       email: formData.email.trim(),
-      phoneNumber: formData.phoneNumber.trim(),
+      dateOfBirth: formData.dateOfBirth,
+      gender: formData.gender,
       passWord: formData.passWord,
       confirmPassword: formData.confirmPassword,
       firstName,
@@ -168,7 +178,14 @@ const RegisterForm = () => {
       navigate("/verify-otp", { state: { formData: nextFormData } });
     } catch (error) {
       console.error("Lỗi đăng ký:", error);
-      setErrors({ general: normalizeBackendMessage(error) });
+      const msg = normalizeBackendMessage(error);
+
+      // Nếu lỗi liên quan đến email đã tồn tại → hiển thị thẳng dưới field email
+      if (msg === "Email đã tồn tại.") {
+        setErrors({ email: msg });
+      } else {
+        setErrors({ general: msg });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -238,24 +255,46 @@ const RegisterForm = () => {
               {errors.email && <span className="register-error">{errors.email}</span>}
             </div>
 
+
             <div className="register-field">
-              <label htmlFor="phoneNumber" className="register-field__label">
-                Số điện thoại
+              <label htmlFor="dateOfBirth" className="register-field__label">
+                Ngày sinh
               </label>
               <input
-                id="phoneNumber"
-                name="phoneNumber"
-                type="tel"
-                inputMode="numeric"
-                placeholder="Nhập số điện thoại"
-                className={`register-input ${errors.phoneNumber ? "register-input--error" : ""}`}
-                value={formData.phoneNumber}
+                id="dateOfBirth"
+                name="dateOfBirth"
+                type="date"
+                className={`register-input ${errors.dateOfBirth ? "register-input--error" : ""}`}
+                value={formData.dateOfBirth}
                 onChange={handleChange}
                 disabled={isSubmitting}
-                aria-invalid={Boolean(errors.phoneNumber)}
+                aria-invalid={Boolean(errors.dateOfBirth)}
+                max={new Date().toISOString().split("T")[0]}
               />
-              {errors.phoneNumber && (
-                <span className="register-error">{errors.phoneNumber}</span>
+              {errors.dateOfBirth && (
+                <span className="register-error">{errors.dateOfBirth}</span>
+              )}
+            </div>
+
+            <div className="register-field">
+              <label htmlFor="gender" className="register-field__label">
+                Giới tính
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                className={`register-input register-select ${errors.gender ? "register-input--error" : ""}`}
+                value={formData.gender}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.gender)}
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+              </select>
+              {errors.gender && (
+                <span className="register-error">{errors.gender}</span>
               )}
             </div>
 

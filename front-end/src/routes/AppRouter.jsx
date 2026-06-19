@@ -12,6 +12,7 @@ import ProductDetail from '../pages/ProductDetail';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ResetPassword from '../pages/ResetPassword';
+import VerifyOTP from '../pages/VerifyOTP';
 import Cart from '../pages/Cart';
 import Checkout from '../pages/Checkout';
 import Profile from '../pages/profile';
@@ -27,6 +28,7 @@ import OrderManagement from '@/pages/admin/OrderManagement';
 import UserManagement from '@/pages/admin/UserManagement';
 import CouponManagement from '@/pages/admin/CouponManagement';
 import Dashboard from '@/pages/admin/Dashboard';
+import AdminChatManagement from '@/pages/admin/AdminChatManagement';
 import WebsiteSettingsManagement from '@/pages/admin/WebsiteSettingsManagement';
 import BannerManagement from '@/pages/admin/BannerManagement';
 import LookbookList from '../pages/LookbookList';
@@ -78,6 +80,7 @@ const router = createBrowserRouter([
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
       { path: 'reset-password', element: <ResetPassword /> },
+      { path: 'verify-otp', element: <VerifyOTP /> },
     ],
   },
   {
@@ -88,6 +91,7 @@ const router = createBrowserRouter([
       { path: 'categories', element: <CatalogManagement /> },
       { path: 'products', element: <ProductManagement /> },
       { path: 'orders', element: <OrderManagement /> },
+      { path: 'chats', element: <AdminChatManagement /> },
       { path: 'customers', element: <UserManagement /> },
       { path: 'coupons', element: <CouponManagement /> },
       { path: 'banners', element: <BannerManagement /> },

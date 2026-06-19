@@ -9,11 +9,8 @@ import {
   ShoppingCart,
   Tag,
   Users,
-  User,
-  Key,
-  LogOut,
-  X,
   Menu,
+  MessageCircle,
   Image,
   Settings,
   FileText,
@@ -33,6 +30,7 @@ const navItems = [
   { icon: LayoutList, label: "Quản lý danh mục", path: "/admin/categories" },
   { icon: Package, label: "Quản lý sản phẩm", path: "/admin/products" },
   { icon: ShoppingCart, label: "Quản lý đơn hàng", path: "/admin/orders" },
+  { icon: MessageCircle, label: "Chat hỗ trợ", path: "/admin/chats" },
   { icon: Users, label: "Quản lý người dùng", path: "/admin/customers" },
   { icon: Tag, label: "Khuyến mãi", path: "/admin/coupons" },
   { icon: Image, label: "Quản lý Banner", path: "/admin/banners" },
@@ -392,7 +390,7 @@ const Sidebar = () => {
                 </div>
 
                 {/* Phone */}
-                <div>
+                {/* <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Số điện thoại</label>
                   <input
                     type="text"
@@ -401,7 +399,7 @@ const Sidebar = () => {
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
                     placeholder="Nhập số điện thoại"
                   />
-                </div>
+                </div> */}
               </div>
 
               {/* Status Note */}

@@ -1,4 +1,8 @@
 export const handleSocketEvents = (io, socket) => {
+  import("../modules/communication/websocket/communication.socket.js")
+    .then(({ registerCommunicationSocket }) => registerCommunicationSocket(io, socket))
+    .catch((error) => console.error("Failed to register communication socket:", error.message));
+
   console.log(`🔌 Client connected: ${socket.id}`);
 
   // Join user room

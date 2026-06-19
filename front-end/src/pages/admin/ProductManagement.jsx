@@ -17,6 +17,7 @@ import {
 } from "@/services/product.service";
 import { getAllCategoriesService } from "@/services/category.service";
 import { getProductVariantByProductIdService } from "@/services/productItem.service";
+import { formatCurrency } from "@/utils/format";
 
 const defaultProductImage = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500";
 
