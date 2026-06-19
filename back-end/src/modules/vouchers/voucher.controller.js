@@ -55,7 +55,7 @@ export const getUserWallet = async (req, res, next) => {
 export const validateVoucher = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { code, subtotal } = req.body;
+    const { code, subtotal, items, shippingFee } = req.body;
 
     if (!code) {
       return res.status(400).json({
@@ -71,7 +71,13 @@ export const validateVoucher = async (req, res, next) => {
       });
     }
 
-    const validationResult = await voucherService.validateVoucher(userId, code, subtotal);
+    const validationResult = await voucherService.validateVoucher(
+      userId,
+      code,
+      subtotal,
+      items || [],
+      shippingFee || 0
+    );
     return res.status(200).json({
       success: true,
       message: "Áp dụng mã giảm giá thành công",

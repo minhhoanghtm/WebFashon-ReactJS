@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import voucherApi from "../api/voucher.api";
 import { useAuthStore } from "../store/auth.store";
 
-const CheckoutVoucherSelector = ({ subtotal, onApply, appliedVoucher, onRemove }) => {
+const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onApply, appliedVoucher, onRemove, voucherType = "product", label }) => {
   const { isAuthenticated } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [wallet, setWallet] = useState([]);
@@ -13,6 +13,10 @@ const CheckoutVoucherSelector = ({ subtotal, onApply, appliedVoucher, onRemove }
   // Input code state
   const [inputCode, setInputCode] = useState("");
   const [validating, setValidating] = useState(false);
+
+  const displayLabel = label || (voucherType === "shipping" ? "Voucher vận chuyển" : "Voucher sản phẩm");
+  const displayDesc = voucherType === "shipping" ? "Chọn hoặc nhập mã để giảm phí vận chuyển" : "Chọn hoặc nhập mã giảm giá để nhận chiết khấu";
+  const modalTitle = voucherType === "shipping" ? "Chọn Voucher Vận Chuyển" : "Chọn Voucher Sản Phẩm";
 
   const fetchWallet = async () => {
     if (!isAuthenticated || !isOpen) return;
@@ -34,14 +38,37 @@ const CheckoutVoucherSelector = ({ subtotal, onApply, appliedVoucher, onRemove }
     fetchWallet();
   }, [isOpen, isAuthenticated]);
 
+  const isShippingVoucher = (v) => {
+    return v.code?.toUpperCase().includes("SHIP") || v.name?.toLowerCase().includes("vận chuyển") || v.name?.toLowerCase().includes("ship");
+  };
+
+  const filteredWallet = wallet.filter((item) => {
+    const v = item.voucherId;
+    if (!v) return false;
+    const isShip = isShippingVoucher(v);
+    return voucherType === "shipping" ? isShip : !isShip;
+  });
+
   const handleValidateAndApply = async (code) => {
-    if (!code.trim()) {
+    const uppercaseCode = code.trim().toUpperCase();
+    if (!uppercaseCode) {
       toast.warn("Vui lòng nhập mã giảm giá");
       return;
     }
+
+    const isShipInput = uppercaseCode.includes("SHIP");
+    if (voucherType === "shipping" && !isShipInput) {
+      toast.warn("Vui lòng nhập mã miễn phí vận chuyển");
+      return;
+    }
+    if (voucherType === "product" && isShipInput) {
+      toast.warn("Vui lòng nhập mã giảm giá sản phẩm");
+      return;
+    }
+
     try {
       setValidating(true);
-      const res = await voucherApi.validateVoucher(code.trim().toUpperCase(), subtotal);
+      const res = await voucherApi.validateVoucher(uppercaseCode, subtotal, items, shippingFee);
       if (res.success) {
         onApply(res.data);
         toast.success(`Đã áp dụng mã giảm giá ${res.data.code}`);
@@ -57,7 +84,7 @@ const CheckoutVoucherSelector = ({ subtotal, onApply, appliedVoucher, onRemove }
 
   const handleSelectFromWallet = async (voucherCode) => {
     try {
-      const res = await voucherApi.validateVoucher(voucherCode, subtotal);
+      const res = await voucherApi.validateVoucher(voucherCode, subtotal, items, shippingFee);
       if (res.success) {
         onApply(res.data);
         toast.success(`Đã áp dụng mã giảm giá ${res.data.code}`);
@@ -74,25 +101,25 @@ const CheckoutVoucherSelector = ({ subtotal, onApply, appliedVoucher, onRemove }
     <div className="w-full space-y-3 font-sans">
       <div className="flex justify-between items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-sm">
         <div className="flex items-center gap-3">
-          <Ticket className="h-5.5 w-5.5 text-indigo-600" />
+          <Ticket className="h-5.5 w-5.5 text-indigo-650" />
           {appliedVoucher ? (
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-indigo-650 bg-indigo-50 px-2 py-0.5 rounded uppercase">
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase ${voucherType === "shipping" ? "text-blue-650 bg-blue-50" : "text-indigo-650 bg-indigo-50"}`}>
                   {appliedVoucher.code}
                 </span>
                 <span className="text-xs text-slate-500 font-bold">
-                  Giảm: -{appliedVoucher.discountAmount.toLocaleString("vi-VN")}đ
+                  Giảm: -{(appliedVoucher.discountAmount || appliedVoucher.discount_amount || 0).toLocaleString("vi-VN")}đ
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">Voucher khuyến mãi PetShop</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">{voucherType === "shipping" ? "Voucher vận chuyển" : "Voucher khuyến mãi PetShop"}</p>
             </div>
           ) : (
             <div>
               <span className="text-sm font-semibold text-slate-800 dark:text-slate-250">
-                Ưu đãi PetShop Voucher
+                {displayLabel}
               </span>
-              <p className="text-xs text-slate-400">Chọn hoặc nhập mã giảm giá để nhận chiết khấu</p>
+              <p className="text-xs text-slate-400">{displayDesc}</p>
             </div>
           )}
         </div>
@@ -122,7 +149,7 @@ const CheckoutVoucherSelector = ({ subtotal, onApply, appliedVoucher, onRemove }
             <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2 text-indigo-650 font-bold">
                 <Ticket className="h-5 w-5" />
-                <span>PetShop Voucher Selector</span>
+                <span>{modalTitle}</span>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -166,7 +193,7 @@ const CheckoutVoucherSelector = ({ subtotal, onApply, appliedVoucher, onRemove }
                 <div className="flex justify-center items-center py-12">
                   <Loader2 className="h-7 w-7 animate-spin text-indigo-600" />
                 </div>
-              ) : wallet.length === 0 ? (
+              ) : filteredWallet.length === 0 ? (
                 <div className="text-center py-10 space-y-1.5">
                   <AlertCircle className="h-8 w-8 text-slate-350 mx-auto" />
                   <p className="text-xs font-semibold text-slate-500">Ví voucher của bạn trống</p>
@@ -174,7 +201,7 @@ const CheckoutVoucherSelector = ({ subtotal, onApply, appliedVoucher, onRemove }
                 </div>
               ) : (
                 <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
-                  {wallet.map((item) => {
+                  {filteredWallet.map((item) => {
                     const v = item.voucherId;
                     if (!v) return null;
                     

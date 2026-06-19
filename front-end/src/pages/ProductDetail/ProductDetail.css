@@ -154,6 +154,11 @@
   transform: scale(1.04);
 }
 
+.product-info__favorite.is-active {
+  border-color: rgb(239 68 68 / 28%);
+  color: #ef4444;
+}
+
 .product-info__meta {
   align-items: center;
   color: #7e7870;
@@ -204,6 +209,25 @@
   font-size: 14px;
   line-height: 1.75;
   margin-top: 20px;
+  white-space: pre-line;
+}
+
+.product-info__read-more {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 8px;
+  text-decoration: underline;
+  display: inline-block;
+  transition: color 0.2s ease;
+}
+
+.product-info__read-more:hover {
+  color: #2563eb;
 }
 
 .product-actions {

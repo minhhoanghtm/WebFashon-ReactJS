@@ -5,8 +5,10 @@ const CouponSection = ({
   couponCode,
   setCouponCode,
   appliedCoupon,
+  appliedShippingCoupon,
   onApplyCoupon,
   onCancelCoupon,
+  onCancelShippingCoupon,
   couponError,
   isValidating,
 }) => {
@@ -23,30 +25,56 @@ const CouponSection = ({
         <span>Mã giảm giá (Voucher)</span>
       </div>
 
-      {appliedCoupon ? (
-        /* Coupon applied state */
-        <div className="flex items-center justify-between bg-green-50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-900/50 rounded-xl p-3.5 animate-in fade-in duration-200">
-          <div className="space-y-1">
-            <span className="inline-block bg-green-600 text-white font-mono text-xs font-bold px-2 py-0.5 rounded shadow-sm">
-              {appliedCoupon.code}
-            </span>
-            <p className="text-xs text-green-700 dark:text-green-400 font-semibold">
-              Đã giảm:{" "}
-              {appliedCoupon.discount_type === "percentage"
-                ? `-${appliedCoupon.discount_value}% (-${appliedCoupon.discount_amount.toLocaleString()}đ)`
-                : `-${appliedCoupon.discount_amount.toLocaleString()}đ`}
-            </p>
-          </div>
-          <button
-            onClick={onCancelCoupon}
-            className="p-1 rounded-lg text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/40 transition cursor-pointer"
-            title="Hủy áp dụng"
-          >
-            <X className="h-4.5 w-4.5" />
-          </button>
+      {/* Applied Coupons List */}
+      {(appliedCoupon || appliedShippingCoupon) && (
+        <div className="space-y-3">
+          {appliedCoupon && (
+            <div className="flex items-center justify-between bg-green-50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-900/50 rounded-xl p-3.5 animate-in fade-in duration-200">
+              <div className="space-y-1">
+                <span className="inline-block bg-green-600 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
+                  SẢN PHẨM: {appliedCoupon.code}
+                </span>
+                <p className="text-xs text-green-700 dark:text-green-400 font-semibold">
+                  Đã giảm:{" "}
+                  {(appliedCoupon.discountType || appliedCoupon.discount_type) === "percentage"
+                    ? `-${appliedCoupon.discountValue || appliedCoupon.discount_value}% (-${(appliedCoupon.discountAmount || appliedCoupon.discount_amount || 0).toLocaleString()}đ)`
+                    : `-${(appliedCoupon.discountAmount || appliedCoupon.discount_amount || 0).toLocaleString()}đ`}
+                </p>
+              </div>
+              <button
+                onClick={onCancelCoupon}
+                className="p-1 rounded-lg text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/40 transition cursor-pointer"
+                title="Hủy áp dụng"
+              >
+                <X className="h-4.5 w-4.5" />
+              </button>
+            </div>
+          )}
+
+          {appliedShippingCoupon && (
+            <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/50 rounded-xl p-3.5 animate-in fade-in duration-200">
+              <div className="space-y-1">
+                <span className="inline-block bg-blue-600 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
+                  VẬN CHUYỂN: {appliedShippingCoupon.code}
+                </span>
+                <p className="text-xs text-blue-700 dark:text-blue-400 font-semibold">
+                  Đã giảm phí ship: -{(appliedShippingCoupon.discountAmount || appliedShippingCoupon.discount_amount || 0).toLocaleString()}đ
+                </p>
+              </div>
+              <button
+                onClick={onCancelShippingCoupon}
+                className="p-1 rounded-lg text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/40 transition cursor-pointer"
+                title="Hủy áp dụng"
+              >
+                <X className="h-4.5 w-4.5" />
+              </button>
+            </div>
+          )}
         </div>
-      ) : (
-        /* Form input state */
+      )}
+
+      {/* Form input state */}
+      {!appliedCoupon || !appliedShippingCoupon ? (
         <form onSubmit={handleSubmit} className="space-y-2">
           <div className="flex gap-2">
             <input
@@ -75,10 +103,14 @@ const CouponSection = ({
             </p>
           )}
         </form>
+      ) : (
+        <p className="text-[11px] text-slate-500 text-center font-medium">
+          Bạn đã áp dụng tối đa voucher (1 sản phẩm & 1 vận chuyển).
+        </p>
       )}
 
       {/* Suggested active vouchers list for user convenience */}
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+      {/* <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
           Gợi ý mã có sẵn:
         </span>
@@ -96,7 +128,7 @@ const CouponSection = ({
             LUSTRA50K (-50k)
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

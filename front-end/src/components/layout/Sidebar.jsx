@@ -9,11 +9,8 @@ import {
   ShoppingCart,
   Tag,
   Users,
-<<<<<<< Updated upstream
-=======
   Menu,
   MessageCircle,
->>>>>>> Stashed changes
   Image,
   Settings,
   FileText,
@@ -21,12 +18,12 @@ import {
   User,
   X,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import logo from "../../assets/logo.png";
 import { useAuthStore } from "@/store/auth.store";
-import { updatePasswordService, updateProfileService } from "@/services/user.service";
+import { updateProfileService, updatePasswordService } from "@/services/user.service";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -46,6 +43,7 @@ const Sidebar = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, setUser, logout } = useAuthStore();
+
   const [collapsed, setCollapsed] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -101,7 +99,7 @@ const Sidebar = () => {
   const adminName = user?.fullName || user?.name || user?.userName || user?.email || "Admin";
   const avatarUrl = user?.avatar_url || user?.avatar || "";
   const firstLetter = adminName.charAt(0).toUpperCase();
-  const displayRole = user?.role === "admin" ? "Quản trị viên" : "Khách hàng";
+  const displayRole = user?.role === "admin" ? "Quản trị viên" : (user?.role === "staff" ? "Nhân viên" : "Người dùng");
 
   const handleLogout = () => {
     logout();
@@ -179,64 +177,14 @@ const Sidebar = () => {
   };
 
   return (
-    <aside
-      className={`sticky top-0 flex h-screen flex-col border-r border-gray-200 bg-white text-gray-900
-        transition-all duration-300 ease-in-out z-40 shrink-0
-        ${collapsed ? "w-16" : "w-64"}`}
-    >
-      {/* Logo */}
-      <div className="flex h-16 items-center justify-center border-b border-gray-200 overflow-hidden">
-        {collapsed ? (
-          <img src={logo} alt="logo" className="h-8 w-8 object-contain" />
-        ) : (
-          <img
-            src={logo}
-            alt="404Studio logo"
-            className="h-15 w-auto object-contain"
-          />
-        )}
-      </div>
-
-      {/* Nav */}
-      <nav className="flex flex-1 flex-col gap-1 p-2 overflow-hidden">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.path;
-
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              title={collapsed ? item.label : undefined} // tooltip khi collapsed
-              className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition
-                ${collapsed ? "justify-center" : ""}
-                ${
-                  active
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {/* ẩn label khi collapsed */}
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Nút toggle — nằm ở cạnh phải, giữa chiều dọc */}
+    <>
+      {/* Mobile Drawer Trigger (Hamburger Menu) */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center
-          rounded-full border border-gray-200 bg-white text-gray-500
-          shadow-sm hover:text-indigo-600 transition"
-        aria-label={collapsed ? "Mở sidebar" : "Thu sidebar"}
+        className="fixed top-4 left-4 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 shadow-sm md:hidden hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+        aria-label="Toggle Navigation Menu"
       >
-        {collapsed ? (
-          <ChevronRight className="h-3.5 w-3.5" />
-        ) : (
-          <ChevronLeft className="h-3.5 w-3.5" />
-        )}
+        <Menu className="h-5 w-5" />
       </button>
 
       {/* Mobile Backdrop Overlay */}
@@ -442,7 +390,7 @@ const Sidebar = () => {
                 </div>
 
                 {/* Phone */}
-                <div>
+                {/* <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Số điện thoại</label>
                   <input
                     type="text"
@@ -451,7 +399,7 @@ const Sidebar = () => {
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
                     placeholder="Nhập số điện thoại"
                   />
-                </div>
+                </div> */}
               </div>
 
               {/* Status Note */}
@@ -471,7 +419,7 @@ const Sidebar = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4.5 py-2 text-sm font-semibold text-black bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
+                  className="px-4.5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
                 >
                   {loading ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>
@@ -551,7 +499,7 @@ const Sidebar = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4.5 py-2 text-sm font-semibold text-black bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
+                  className="px-4.5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
                 >
                   {loading ? "Đang đổi..." : "Lưu thay đổi"}
                 </button>
@@ -560,7 +508,7 @@ const Sidebar = () => {
           </div>
         </div>
       )}
-    </aside>
+    </>
   );
 };
 

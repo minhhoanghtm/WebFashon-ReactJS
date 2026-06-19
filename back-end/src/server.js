@@ -1,9 +1,9 @@
-import http from "http";
 import app from "./app.js";
 import { connectDB } from "./configs/db.js";
 import { initSocketServer } from "./sockets/index.js";
 import { initEmailWorker } from "./queues/workers/email.worker.js";
 import { initVoucherCron } from "./cron/voucher.cron.js";
+import { createServer } from "http";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -15,7 +15,7 @@ const startServer = async () => {
     await connectDB();
 
     // 2. Tạo server HTTP bọc ứng dụng Express
-    const server = http.createServer(app);
+    const server = createServer(app);
 
     // 3. Khởi tạo Socket.IO
     initSocketServer(server);

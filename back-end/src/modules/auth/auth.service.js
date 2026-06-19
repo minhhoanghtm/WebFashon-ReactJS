@@ -15,7 +15,7 @@ const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
 
 class AuthService {
   async signUp(userData) {
-    const { passWord, lastName, firstName, email } = userData;
+    const { passWord, lastName, firstName, email, birthday, sex } = userData;
 
     if (!passWord || !lastName || !firstName || !email) {
       throw new AppError("Không thể thiếu passWord, lastName, firstName, email!", 400);
@@ -32,7 +32,8 @@ class AuthService {
       passWord: hashedPass,
       fullName: `${lastName} ${firstName}`,
       email: normalizedEmail,
-      phone: null,
+      ...(birthday && { birthday: new Date(birthday) }),
+      ...(sex && { sex }),
     });
 
     return {
@@ -51,6 +52,10 @@ class AuthService {
     const user = await userRepository.findByEmail(normalizedEmail);
     if (!user) {
       throw new AppError("Email hoặc password không đúng", 401);
+    }
+
+    if (user.status === "blocked") {
+      throw new AppError("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.", 403);
     }
 
     const passWordCorrect = await bcrypt.compare(passWord, user.passWord);
@@ -95,6 +100,13 @@ class AuthService {
     }
 
     const normalizedEmail = normalizeEmail(email);
+
+    // Kiểm tra email đã được đăng ký chưa trước khi gửi OTP
+    const existingUser = await userRepository.findByEmail(normalizedEmail);
+    if (existingUser) {
+      throw new AppError("Email đã tồn tại!", 409);
+    }
+
     const otp = generateOTP();
 
     await authRepository.deleteOtpsByEmail(normalizedEmail);

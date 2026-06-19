@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
 const AuthLayout = () => {
   const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   if (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/reset-password') {
     return <Outlet />;

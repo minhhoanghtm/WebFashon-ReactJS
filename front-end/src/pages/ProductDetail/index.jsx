@@ -21,6 +21,7 @@ import {
   normalizeReviews,
 } from "./productDetailAdapter";
 import "./ProductDetail.css";
+import { useChatContextStore } from "@/store/chatContext.store";
 
 const getProductId = (p) => {
   if (!p) return "";
@@ -51,6 +52,22 @@ const ProductDetail = () => {
       .filter((item) => item.id !== product?.id)
       .slice(0, 4);
   }, [product?.id, relatedProducts]);
+
+  const setContext = useChatContextStore((state) => state.setContext);
+  useEffect(() => {
+    if(!product) return;
+    console.log("Product: ", product);
+    setContext({
+      type: 'product',
+      productid: product?.id,
+      slug: product?.slug,
+      productName: product?.name,
+      old_price: product?.oldPrice,
+      new_price: product?.price,
+      rating: product?.rating,
+      image: product?.images?.[0] || null,
+    });
+  }, [product, setContext]);
 
   useDocumentTitle(product?.name || "Chi tiết sản phẩm");
 

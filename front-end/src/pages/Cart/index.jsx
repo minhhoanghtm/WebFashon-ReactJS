@@ -151,6 +151,7 @@ const Cart = () => {
   // Voucher / Coupon states
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [appliedShippingCoupon, setAppliedShippingCoupon] = useState(null);
   const [couponError, setCouponError] = useState("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
@@ -215,25 +216,46 @@ const Cart = () => {
 
   // Validate coupon automatically against subtotal when checked items or quantities change
   useEffect(() => {
-    if (appliedCoupon && subtotal > 0) {
+    if (subtotal === 0) {
+      setAppliedCoupon(null);
+      setAppliedShippingCoupon(null);
+      return;
+    }
+
+    if (appliedCoupon) {
       const revalidateCoupon = async () => {
         try {
-          const res = await validateVoucherService(appliedCoupon.code, subtotal);
+          const res = await validateVoucherService(appliedCoupon.code, subtotal, checkedItems, shippingFee);
           if (res.success && res.data) {
             setAppliedCoupon(res.data);
             setCouponError("");
           } else {
             setAppliedCoupon(null);
-            setCouponError("Mã giảm giá không khả dụng cho giá trị đơn hàng này");
-            toast.warn("Mã giảm giá đã bị gỡ bỏ do thay đổi giá trị đơn hàng.");
+            setCouponError("Mã giảm giá sản phẩm không khả dụng cho giá trị đơn hàng này");
+            toast.warn("Mã giảm giá sản phẩm đã bị gỡ bỏ do thay đổi giá trị đơn hàng.");
           }
         } catch (err) {
           setAppliedCoupon(null);
         }
       };
       revalidateCoupon();
-    } else if (subtotal === 0) {
-      setAppliedCoupon(null);
+    }
+
+    if (appliedShippingCoupon) {
+      const revalidateShippingCoupon = async () => {
+        try {
+          const res = await validateVoucherService(appliedShippingCoupon.code, subtotal, checkedItems, shippingFee);
+          if (res.success && res.data) {
+            setAppliedShippingCoupon(res.data);
+          } else {
+            setAppliedShippingCoupon(null);
+            toast.warn("Mã miễn phí vận chuyển đã bị gỡ bỏ do thay đổi giá trị đơn hàng.");
+          }
+        } catch (err) {
+          setAppliedShippingCoupon(null);
+        }
+      };
+      revalidateShippingCoupon();
     }
   }, [subtotal]);
 
@@ -341,13 +363,26 @@ const Cart = () => {
 
   // Apply Coupon code
   const handleApplyCoupon = async (code) => {
+    const uppercaseCode = code.trim().toUpperCase();
+    if (appliedCoupon?.code === uppercaseCode || appliedShippingCoupon?.code === uppercaseCode) {
+      setCouponError("Mã giảm giá này đã được áp dụng");
+      return;
+    }
+
     setIsValidatingCoupon(true);
     setCouponError("");
     try {
-      const res = await validateVoucherService(code, subtotal);
+      const res = await validateVoucherService(uppercaseCode, subtotal, checkedItems, shippingFee);
       if (res.success && res.data) {
-        setAppliedCoupon(res.data);
-        toast.success("Áp dụng mã giảm giá thành công!");
+        const isShipping = res.data.voucherType === "shipping" || uppercaseCode.includes("SHIP") || res.data.name?.toLowerCase().includes("vận chuyển") || res.data.name?.toLowerCase().includes("ship");
+        if (isShipping) {
+          setAppliedShippingCoupon(res.data);
+          toast.success("Áp dụng mã miễn phí vận chuyển thành công!");
+        } else {
+          setAppliedCoupon(res.data);
+          toast.success("Áp dụng mã giảm giá sản phẩm thành công!");
+        }
+        setCouponCode("");
       } else {
         setCouponError(res.message || "Mã giảm giá không hợp lệ");
       }
@@ -362,15 +397,28 @@ const Cart = () => {
     setAppliedCoupon(null);
     setCouponCode("");
     setCouponError("");
-    toast.info("Đã hủy áp dụng mã giảm giá");
+    toast.info("Đã hủy áp dụng mã giảm giá sản phẩm");
+  };
+
+  const handleCancelShippingCoupon = () => {
+    setAppliedShippingCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+    toast.info("Đã hủy áp dụng mã miễn phí vận chuyển");
   };
 
   // Checkout redirect handler
   const handleCheckout = () => {
     if (selectedCount === 0) return;
     
-    // Pass only the checked items to Checkout state
-    navigate("/checkout", { state: { checkoutItems: checkedItems } });
+    // Pass checked items and applied vouchers to Checkout state
+    navigate("/checkout", {
+      state: {
+        checkoutItems: checkedItems,
+        appliedCoupon,
+        appliedShippingCoupon
+      }
+    });
   };
 
   // Add Recommended product to Cart
@@ -422,8 +470,12 @@ const Cart = () => {
     }
   };
 
-  const discountAmount = appliedCoupon?.discount_amount || 0;
-  const grandTotal = Math.max(0, subtotal - discountAmount + shippingFee);
+  const discountAmount = appliedCoupon?.discountAmount || appliedCoupon?.discount_amount || 0;
+  const shippingDiscount = appliedShippingCoupon?.discountAmount || appliedShippingCoupon?.discount_amount || 0;
+  const actualShippingDiscount = Math.min(shippingFee, shippingDiscount);
+  const finalShippingFee = Math.max(0, shippingFee - actualShippingDiscount);
+  const totalDiscount = discountAmount + actualShippingDiscount;
+  const grandTotal = Math.max(0, subtotal - discountAmount + finalShippingFee);
 
   if (loading) {
     return <CartSkeleton />;
@@ -495,8 +547,10 @@ const Cart = () => {
               couponCode={couponCode}
               setCouponCode={setCouponCode}
               appliedCoupon={appliedCoupon}
+              appliedShippingCoupon={appliedShippingCoupon}
               onApplyCoupon={handleApplyCoupon}
               onCancelCoupon={handleCancelCoupon}
+              onCancelShippingCoupon={handleCancelShippingCoupon}
               couponError={couponError}
               isValidating={isValidatingCoupon}
             />
@@ -504,8 +558,8 @@ const Cart = () => {
             {/* Sticky Order Summary Card */}
             <CartSummary
               subtotal={subtotal}
-              discount={discountAmount}
-              shippingFee={shippingFee}
+              discount={totalDiscount}
+              shippingFee={finalShippingFee}
               total={grandTotal}
               onCheckout={handleCheckout}
               isCheckingOut={false}

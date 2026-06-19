@@ -10,11 +10,17 @@ class ProductService {
     const slug = createSlug(name);
     const name_no_accents = toNoAccent(name);
 
+    let finalStock = Number(productBody.stock || 0);
+    if (Array.isArray(variants) && variants.length > 0) {
+      finalStock = variants.reduce((sum, v) => sum + Number(v.stock || 0), 0);
+    }
+
     const product = await productRepository.create({
       ...productBody,
       slug,
       name,
       name_no_accents,
+      stock: finalStock,
     });
 
     if (Array.isArray(variants) && variants.length > 0) {
@@ -55,18 +61,26 @@ class ProductService {
   async updateProduct(id, productData) {
     const { variants, ...productBody } = productData;
 
-    const updatedProduct = await productRepository.findByIdAndUpdate(id, productBody);
+    let finalStock = Number(productBody.stock || 0);
+    if (Array.isArray(variants) && variants.length > 0) {
+      finalStock = variants.reduce((sum, v) => sum + Number(v.stock || 0), 0);
+    }
+
+    const updatedProduct = await productRepository.findByIdAndUpdate(id, {
+      ...productBody,
+      stock: finalStock,
+    });
     if (!updatedProduct) {
       throw new AppError("Sản phẩm không tồn tại", 404);
     }
 
     if (Array.isArray(variants)) {
-      await productRepository.deleteVariantsByProductId(id);
+      await productRepository.deleteVariantsByProductId(new mongoose.Types.ObjectId(id));
 
       const variantDocs = variants
         .filter((variant) => variant?.color && variant?.image_url)
         .map((variant) => ({
-          product_id: id,
+          product_id: new mongoose.Types.ObjectId(id),
           color: variant.color,
           size: variant.size,
           stock: Number(variant.stock || 0),
@@ -86,7 +100,7 @@ class ProductService {
     if (!deletedProduct) {
       throw new AppError("Sản phẩm không tồn tại", 404);
     }
-    await productRepository.deleteVariantsByProductId(id);
+    await productRepository.deleteVariantsByProductId(new mongoose.Types.ObjectId(id));
     return deletedProduct;
   }
 

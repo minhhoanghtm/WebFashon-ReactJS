@@ -5,7 +5,7 @@ export const voucherApi = {
   getPublicVouchers: () => axiosClient.get("/vouchers"),
   claimVoucher: (voucherId) => axiosClient.post("/vouchers/claim", { voucherId }),
   getUserWallet: (status) => axiosClient.get("/vouchers/wallet", { params: status ? { status } : {} }),
-  validateVoucher: (code, subtotal) => axiosClient.post("/vouchers/validate", { code, subtotal }),
+  validateVoucher: (code, subtotal, items, shippingFee) => axiosClient.post("/vouchers/validate", { code, subtotal, items, shippingFee }),
 
   // Admin APIs
   getAdminVouchers: (params) => axiosClient.get("/vouchers/admin", { params }),

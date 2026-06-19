@@ -5,7 +5,7 @@ const fallbackProductImage = linenShirtImage;
 const firstValue = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
 
-const getCategoryName = (product) => {
+const getCategoryName = (product, categoryMap = {}) => {
   const category = firstValue(
     product.category,
     product.categoryName,
@@ -17,6 +17,13 @@ const getCategoryName = (product) => {
 
   if (typeof category === "object") {
     return firstValue(category.name, category.title, category.tenLoai, "Thời trang");
+  }
+
+  if (!category) return "Thời trang";
+
+  const categoryStr = String(category);
+  if (categoryMap && categoryMap[categoryStr]) {
+    return categoryMap[categoryStr];
   }
 
   if (
@@ -46,7 +53,7 @@ const getProductImage = (product) => {
   );
 };
 
-export const normalizeProduct = (product = {}, index = 0, isMock = false) => {
+export const normalizeProduct = (product = {}, index = 0, categoryMap = {}, isMock = false) => {
   const price = Number(
     firstValue(
       product.new_price,
@@ -93,7 +100,8 @@ export const normalizeProduct = (product = {}, index = 0, isMock = false) => {
     price: Number.isFinite(price) ? price : 0,
     oldPrice: Number.isFinite(oldPrice) ? oldPrice : 0,
     image: getProductImage(product),
-    category: getCategoryName(product),
+    category: getCategoryName(product, categoryMap),
+    category_id: product.category_id?._id || product.category_id,
     description: firstValue(
       product.description,
       product.moTa,

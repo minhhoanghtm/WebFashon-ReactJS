@@ -78,29 +78,37 @@ class OrderService {
           subtotal = Number(orderData.total_price || orderData.totalPrice || 0);
         }
 
+        const shippingFee = (subtotal >= 1000000 || subtotal === 0) ? 0 : 30000;
         let discountAmount = 0;
-        let voucherId = null;
+        const voucherIds = [];
+        const voucherCodes = voucherCode ? voucherCode.split(",").map((c) => c.trim()) : [];
 
-        if (voucherCode) {
-          // Validate voucher and calculate discount
-          const validation = await voucherService.validateVoucher(
-            userId,
-            voucherCode,
-            subtotal,
-          );
-          discountAmount = validation.discountAmount;
-          voucherId = validation.voucherId;
+        for (const code of voucherCodes) {
+          if (code) {
+            // Validate voucher and calculate discount
+            const validation = await voucherService.validateVoucher(
+              userId,
+              code,
+              subtotal,
+              orderItems,
+              shippingFee,
+            );
+            discountAmount += validation.discountAmount;
+            if (validation.voucherId) {
+              voucherIds.push(validation.voucherId);
+            }
 
-          // Apply voucher inside transaction using placeholder orderId (Original flow sequence step 1)
-          await voucherService.applyVoucherWithPlaceholder(
-            userId,
-            voucherCode,
-            discountAmount,
-            { session },
-          );
+            // Apply voucher inside transaction using placeholder orderId (Original flow sequence step 1)
+            await voucherService.applyVoucherWithPlaceholder(
+              userId,
+              code,
+              validation.discountAmount,
+              { session },
+            );
+          }
         }
 
-        const finalTotalPrice = Math.max(0, subtotal - discountAmount);
+        const finalTotalPrice = Math.max(0, subtotal + shippingFee - discountAmount);
 
         // Create Order inside transaction (Original flow sequence step 2)
         const orderArray = await orderRepository.create(
@@ -122,10 +130,10 @@ class OrderService {
         createdOrder = orderArray[0];
 
         // Update the actual order ID in the VoucherUsage record (Original flow sequence step 3)
-        if (voucherId) {
+        for (const vId of voucherIds) {
           await voucherService.linkVoucherUsageToOrder(
             userId,
-            voucherId,
+            vId,
             createdOrder._id,
             { session },
           );
@@ -270,23 +278,34 @@ class OrderService {
       subtotal = Number(orderData.total_price || orderData.totalPrice || 0);
     }
 
+    const shippingFee = (subtotal >= 1000000 || subtotal === 0) ? 0 : 30000;
     let discountAmount = 0;
-    let voucherId = null;
+    const voucherIds = [];
+    const voucherCodes = voucherCode ? voucherCode.split(",").map((c) => c.trim()) : [];
 
-    if (voucherCode) {
-      const validation = await voucherService.validateVoucher(
-        userId,
-        voucherCode,
-        subtotal,
-      );
-      discountAmount = validation.discountAmount;
-      voucherId = validation.voucherId;
+    for (const code of voucherCodes) {
+      if (code) {
+        const validation = await voucherService.validateVoucher(
+          userId,
+          code,
+          subtotal,
+          orderItems,
+          shippingFee,
+        );
+        discountAmount += validation.discountAmount;
+        if (validation.voucherId) {
+          voucherIds.push({
+            id: validation.voucherId,
+            disc: validation.discountAmount,
+          });
+        }
 
-      // Increment Voucher and update UserVoucher (Original fallback flow step 1)
-      await voucherService.applyVoucherNoUsage(userId, voucherCode);
+        // Increment Voucher and update UserVoucher (Original fallback flow step 1)
+        await voucherService.applyVoucherNoUsage(userId, code);
+      }
     }
 
-    const finalTotalPrice = Math.max(0, subtotal - discountAmount);
+    const finalTotalPrice = Math.max(0, subtotal + shippingFee - discountAmount);
 
     // Create order (Original fallback flow step 2)
     const order = await orderRepository.create({
@@ -301,12 +320,12 @@ class OrderService {
     });
 
     // Create VoucherUsage record (Original fallback flow step 3)
-    if (voucherId) {
+    for (const vUsage of voucherIds) {
       await voucherService.createVoucherUsage(
         userId,
-        voucherId,
+        vUsage.id,
         order._id,
-        discountAmount,
+        vUsage.disc,
       );
     }
 
@@ -861,10 +880,26 @@ class OrderService {
     }
 
     if (search) {
-      query.$or = [
-        { orderCode: { $regex: search, $options: "i" } },
-        { fullName: { $regex: search, $options: "i" } },
+      const orConditions = [
+        { "shipping_address.full_name": { $regex: search, $options: "i" } },
+        { "shipping_address.phone": { $regex: search, $options: "i" } },
       ];
+
+      if (mongoose.Types.ObjectId.isValid(search)) {
+        orConditions.push({ _id: new mongoose.Types.ObjectId(search) });
+      } else {
+        const escapedSearch = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+        orConditions.push({
+          $expr: {
+            $regexMatch: {
+              input: { $toString: "$_id" },
+              regex: escapedSearch,
+              options: "i",
+            },
+          },
+        });
+      }
+      query.$or = orConditions;
     }
 
     const skip = (page - 1) * limit;

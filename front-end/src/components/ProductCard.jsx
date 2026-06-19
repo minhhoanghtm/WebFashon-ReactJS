@@ -2,12 +2,18 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, Star } from "lucide-react";
 import { toast } from "react-toastify";
+import { useFavoriteStore } from "@/store/favorite.store";
 
 const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
   const navigate = useNavigate();
+  const favoriteItems = useFavoriteStore((state) => state.items);
+  const toggleStoredFavorite = useFavoriteStore((state) => state.toggleProduct);
 
   if (!product) return null;
 
+  const productId = String(product.id || product._id || "");
+  const isStoredFavorite = favoriteItems.some((item) => String(item.id) === productId);
+  const effectiveIsFavorite = isFavorite ?? isStoredFavorite;
   const productPath = product.slug ? `/product/${product.slug}` : "/products";
   
   const displayImage = product.displayProduct?.[0] || product.image || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&auto=format&fit=crop&q=60";
@@ -36,9 +42,14 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
     e.preventDefault();
     e.stopPropagation();
     if (onToggleFavorite) {
-      onToggleFavorite(product.id || product._id);
+      onToggleFavorite(product);
     } else {
-      toast.success(`Đã thêm "${product.name}" vào danh sách yêu thích!`);
+      toggleStoredFavorite(product);
+      toast.success(
+        isStoredFavorite
+          ? `Đã bỏ "${product.name}" khỏi danh sách yêu thích!`
+          : `Đã thêm "${product.name}" vào danh sách yêu thích!`,
+      );
     }
   };
 
@@ -73,7 +84,7 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
           className="favorite-btn absolute top-3 right-3 w-8 h-8 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 text-slate-400 hover:text-red-500 z-10"
           aria-label="Yêu thích"
         >
-          <Heart size={16} fill={isFavorite ? "rgb(239, 68, 68)" : "none"} className={isFavorite ? "text-red-500" : ""} />
+          <Heart size={16} fill={effectiveIsFavorite ? "rgb(239, 68, 68)" : "none"} className={effectiveIsFavorite ? "text-red-500" : ""} />
         </button>
       </div>
 

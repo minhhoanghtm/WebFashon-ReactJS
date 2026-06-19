@@ -80,6 +80,7 @@ class UserService {
       birthday,
       role,
       avatar_url,
+      status,
       addresses,
     } = updateData;
 
@@ -89,30 +90,39 @@ class UserService {
     }
 
     if (user.role === "user") {
-      throw new AppError("Không được phép chỉnh sửa thông tin khách hàng", 403);
-    }
-
-    if (email) {
-      const normalizedEmail = normalizeEmail(email);
-      const emailExists = await userRepository.findByEmail(normalizedEmail);
-      if (emailExists && emailExists._id.toString() !== id) {
-        throw new AppError("Email đã tồn tại", 409);
+      // For standard customers, only allow locking/unlocking (updating status)
+      if (status !== undefined) {
+        user.status = status;
+      } else {
+        throw new AppError("Không được phép chỉnh sửa thông tin khách hàng", 403);
       }
-      user.email = normalizedEmail;
-    }
+    } else {
+      // For administrators, allow normal updates
+      if (status !== undefined) {
+        user.status = status;
+      }
+      if (email) {
+        const normalizedEmail = normalizeEmail(email);
+        const emailExists = await userRepository.findByEmail(normalizedEmail);
+        if (emailExists && emailExists._id.toString() !== id) {
+          throw new AppError("Email đã tồn tại", 409);
+        }
+        user.email = normalizedEmail;
+      }
 
-    if (passWord) {
-      user.passWord = await bcrypt.hash(passWord, 10);
-    }
+      if (passWord) {
+        user.passWord = await bcrypt.hash(passWord, 10);
+      }
 
-    user.fullName = fullName || user.fullName;
-    user.sex = sex || user.sex;
-    user.birthday = birthday || user.birthday;
-    user.role = role || user.role;
-    user.avatar_url = avatar_url || user.avatar_url;
+      user.fullName = fullName || user.fullName;
+      user.sex = sex || user.sex;
+      user.birthday = birthday || user.birthday;
+      user.role = role || user.role;
+      user.avatar_url = avatar_url || user.avatar_url;
 
-    if (addresses) {
-      user.addresses = normalizeAddresses(addresses);
+      if (addresses) {
+        user.addresses = normalizeAddresses(addresses);
+      }
     }
 
     await user.save();

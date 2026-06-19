@@ -3,6 +3,8 @@ import { Ticket, Search, Plus, Edit, Trash2, X, Eye, EyeOff, Loader2, ArrowUpDow
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import voucherApi from "../../api/voucher.api";
+import { getAllProductService } from "@/services/product.service";
+import { getAllCategoriesService } from "@/services/category.service";
 
 const CouponManagement = () => {
   const [vouchers, setVouchers] = useState([]);
@@ -40,6 +42,29 @@ const CouponManagement = () => {
   const [formStartDate, setFormStartDate] = useState("");
   const [formEndDate, setFormEndDate] = useState("");
   const [formStatus, setFormStatus] = useState("ACTIVE");
+  const [formVoucherType, setFormVoucherType] = useState("order");
+  const [formApplicableProducts, setFormApplicableProducts] = useState([]);
+  const [formApplicableCategories, setFormApplicableCategories] = useState([]);
+
+  // Master lists
+  const [allProducts, setAllProducts] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
+
+  useEffect(() => {
+    const loadProductsAndCategories = async () => {
+      try {
+        const [prods, cats] = await Promise.all([
+          getAllProductService(),
+          getAllCategoriesService()
+        ]);
+        setAllProducts(prods || []);
+        setAllCategories(cats || []);
+      } catch (err) {
+        console.error("Failed to load products/categories:", err);
+      }
+    };
+    loadProductsAndCategories();
+  }, []);
 
   const fetchVouchers = async () => {
     try {
@@ -77,6 +102,9 @@ const CouponManagement = () => {
     setFormMaxDiscountAmount("");
     setFormMinOrderValue("");
     setFormTotalQuantity("");
+    setFormVoucherType("order");
+    setFormApplicableProducts([]);
+    setFormApplicableCategories([]);
     
     // Set default dates: start now, end in 7 days
     const today = new Date();
@@ -99,6 +127,9 @@ const CouponManagement = () => {
     setFormMaxDiscountAmount(v.maxDiscountAmount || "");
     setFormMinOrderValue(v.minOrderValue || "");
     setFormTotalQuantity(v.totalQuantity);
+    setFormVoucherType(v.voucherType || "order");
+    setFormApplicableProducts(v.applicableProducts || []);
+    setFormApplicableCategories(v.applicableCategories || []);
     
     setFormStartDate(new Date(v.startDate).toISOString().split("T")[0]);
     setFormEndDate(new Date(v.endDate).toISOString().split("T")[0]);
@@ -135,6 +166,10 @@ const CouponManagement = () => {
       toast.error("Ngày kết thúc phải lớn hơn ngày bắt đầu!");
       return false;
     }
+    if (formVoucherType === "product" && formApplicableProducts.length === 0 && formApplicableCategories.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một sản phẩm hoặc danh mục áp dụng!");
+      return false;
+    }
     return true;
   };
 
@@ -155,6 +190,9 @@ const CouponManagement = () => {
         startDate: new Date(formStartDate).toISOString(),
         endDate: new Date(formEndDate).toISOString(),
         status: formStatus,
+        voucherType: formVoucherType,
+        applicableProducts: formApplicableProducts,
+        applicableCategories: formApplicableCategories,
       };
 
       const res = await voucherApi.createVoucher(payload);
@@ -179,6 +217,9 @@ const CouponManagement = () => {
         endDate: new Date(formEndDate).toISOString(),
         totalQuantity: Number(formTotalQuantity),
         status: formStatus,
+        voucherType: formVoucherType,
+        applicableProducts: formApplicableProducts,
+        applicableCategories: formApplicableCategories,
       };
 
       const res = await voucherApi.updateVoucher(currentVoucherId, payload);
@@ -358,6 +399,15 @@ const CouponManagement = () => {
                             </span>
                             <div className="text-slate-800 dark:text-slate-200 text-sm font-semibold max-w-[200px] truncate">
                               {v.name}
+                            </div>
+                            <div className="text-slate-850 dark:text-slate-350 text-[10px] font-bold mt-1">
+                              {v.voucherType === "shipping" ? (
+                                <span className="text-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 px-1 py-0.5 rounded">Vận chuyển</span>
+                              ) : v.voucherType === "product" ? (
+                                <span className="text-purple-600 bg-purple-50 dark:bg-purple-950/40 dark:text-purple-400 px-1 py-0.5 rounded font-medium">Sản phẩm ({v.applicableProducts?.length || 0} SP / {v.applicableCategories?.length || 0} DM)</span>
+                              ) : (
+                                <span className="text-slate-600 bg-slate-100 dark:bg-slate-900/60 dark:text-slate-400 px-1 py-0.5 rounded">Đơn hàng</span>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -557,7 +607,26 @@ const CouponManagement = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Loại Voucher *</label>
+                    <select
+                      value={formVoucherType}
+                      onChange={(e) => {
+                        setFormVoucherType(e.target.value);
+                        if (e.target.value !== "product") {
+                          setFormApplicableProducts([]);
+                          setFormApplicableCategories([]);
+                        }
+                      }}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value="order">Giảm đơn hàng</option>
+                      <option value="product">Giảm sản phẩm/danh mục</option>
+                      <option value="shipping">Phí vận chuyển</option>
+                    </select>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Loại giảm giá</label>
                     <select
@@ -604,6 +673,62 @@ const CouponManagement = () => {
                     />
                   </div>
                 </div>
+
+                {formVoucherType === "product" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Sản phẩm áp dụng ({formApplicableProducts.length} đã chọn)
+                      </label>
+                      <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 max-h-36 overflow-y-auto space-y-2">
+                        {allProducts.map((p) => {
+                          const isChecked = formApplicableProducts.includes(p._id);
+                          return (
+                            <label key={p._id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-350 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  setFormApplicableProducts((prev) =>
+                                    isChecked ? prev.filter((id) => id !== p._id) : [...prev, p._id]
+                                  );
+                                }}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span className="truncate">{p.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Danh mục áp dụng ({formApplicableCategories.length} đã chọn)
+                      </label>
+                      <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 max-h-36 overflow-y-auto space-y-2">
+                        {allCategories.map((c) => {
+                          const isChecked = formApplicableCategories.includes(c._id);
+                          return (
+                            <label key={c._id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-350 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  setFormApplicableCategories((prev) =>
+                                    isChecked ? prev.filter((id) => id !== c._id) : [...prev, c._id]
+                                  );
+                                }}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span className="truncate">{c.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
@@ -816,7 +941,26 @@ const CouponManagement = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Loại Voucher *</label>
+                    <select
+                      value={formVoucherType}
+                      onChange={(e) => {
+                        setFormVoucherType(e.target.value);
+                        if (e.target.value !== "product") {
+                          setFormApplicableProducts([]);
+                          setFormApplicableCategories([]);
+                        }
+                      }}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value="order">Giảm đơn hàng</option>
+                      <option value="product">Giảm sản phẩm/danh mục</option>
+                      <option value="shipping">Phí vận chuyển</option>
+                    </select>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Đơn tối thiểu (Không được sửa)</label>
                     <input
@@ -851,6 +995,62 @@ const CouponManagement = () => {
                     </select>
                   </div>
                 </div>
+
+                {formVoucherType === "product" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Sản phẩm áp dụng ({formApplicableProducts.length} đã chọn)
+                      </label>
+                      <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 max-h-36 overflow-y-auto space-y-2">
+                        {allProducts.map((p) => {
+                          const isChecked = formApplicableProducts.includes(p._id);
+                          return (
+                            <label key={p._id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-350 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  setFormApplicableProducts((prev) =>
+                                    isChecked ? prev.filter((id) => id !== p._id) : [...prev, p._id]
+                                  );
+                                }}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span className="truncate">{p.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Danh mục áp dụng ({formApplicableCategories.length} đã chọn)
+                      </label>
+                      <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 max-h-36 overflow-y-auto space-y-2">
+                        {allCategories.map((c) => {
+                          const isChecked = formApplicableCategories.includes(c._id);
+                          return (
+                            <label key={c._id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-350 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  setFormApplicableCategories((prev) =>
+                                    isChecked ? prev.filter((id) => id !== c._id) : [...prev, c._id]
+                                  );
+                                }}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span className="truncate">{c.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

@@ -53,6 +53,12 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    status: {
+      type: String,
+      enum: ["active", "blocked"],
+      default: "active",
+      index: true,
+    },
     avatar_url: {
       type: String,
       default:

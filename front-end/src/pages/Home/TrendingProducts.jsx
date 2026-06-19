@@ -11,6 +11,7 @@ const TrendingProducts = ({
   isUsingFallback,
   favoriteIds,
   onToggleFavorite,
+  title = "Sản phẩm nổi bật",
 }) => {
   const [visibleCount, setVisibleCount] = useState(limit);
 
@@ -34,7 +35,7 @@ const TrendingProducts = ({
         <SectionHeader
           id="home-products-title"
           eyebrow="Được yêu thích"
-          title="Sản phẩm nổi bật"
+          title={title}
           subtitle="Những lựa chọn được yêu thích nhất dành cho phong cách hằng ngày"
         />
         {isUsingFallback && (

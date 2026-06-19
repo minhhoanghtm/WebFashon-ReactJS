@@ -8,6 +8,8 @@ import PromotionBannerSection from "./PromotionBannerSection";
 import CategoryShowcase from "./CategoryShowcase";
 import VoucherSection from "./VoucherSection";
 import { normalizeProduct, normalizeSearchText } from "./productAdapter";
+import { useFavoriteStore } from "@/store/favorite.store";
+import { getAllCategoriesService } from "@/services/category.service";
 import "./home.css";
 
 import { toast } from "react-toastify";
@@ -17,7 +19,8 @@ import { useAuthStore } from "../../store/auth.store";
 const Home = () => {
   const { products: apiProducts, isLoading, error } = useProducts();
   const { homeSearchTerm = "" } = useOutletContext() || {};
-  const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+  const favoriteItems = useFavoriteStore((state) => state.items);
+  const toggleFavorite = useFavoriteStore((state) => state.toggleProduct);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,34 +29,66 @@ const Home = () => {
   const [claimedIds, setClaimedIds] = useState([]);
   const [vouchersLoading, setVouchersLoading] = useState(true);
 
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("all");
+
+  const favoriteIds = useMemo(
+    () => new Set(favoriteItems.map((item) => String(item.id))),
+    [favoriteItems],
+  );
+
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      setCategoriesError(false);
+      const data = await getAllCategoriesService();
+      setCategories(data || []);
+    } catch (err) {
+      console.error("Lỗi khi nạp danh mục trang chủ:", err);
+      setCategoriesError(true);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  const categoryMap = useMemo(() => {
+    return Object.fromEntries(
+      categories
+        .filter((cat) => cat?._id && cat?.name)
+        .map((cat) => [String(cat._id), cat.name]),
+    );
+  }, [categories]);
+
   const normalizedProducts = useMemo(() => {
     const sourceProducts = Array.isArray(apiProducts) ? apiProducts : [];
     return sourceProducts.map((product, index) =>
-      normalizeProduct(product, index, false),
+      normalizeProduct(product, index, categoryMap, false),
     );
-  }, [apiProducts]);
+  }, [apiProducts, categoryMap]);
 
   const filteredProducts = useMemo(() => {
-    const keyword = normalizeSearchText(homeSearchTerm);
-    if (!keyword) return normalizedProducts;
-    return normalizedProducts.filter((product) =>
-      [product.name, product.category, product.description].some((value) =>
-        normalizeSearchText(value).includes(keyword),
-      ),
-    );
-  }, [normalizedProducts, homeSearchTerm]);
+    let result = normalizedProducts;
 
-  const toggleFavorite = (productId) => {
-    setFavoriteIds((currentIds) => {
-      const nextIds = new Set(currentIds);
-      if (nextIds.has(productId)) {
-        nextIds.delete(productId);
-      } else {
-        nextIds.add(productId);
-      }
-      return nextIds;
-    });
-  };
+    const keyword = normalizeSearchText(homeSearchTerm);
+    if (keyword) {
+      result = result.filter((product) =>
+        [product.name, product.category, product.description].some((value) =>
+          normalizeSearchText(value).includes(keyword),
+        ),
+      );
+    }
+
+    if (selectedCategoryId && selectedCategoryId !== "all") {
+      result = result.filter((product) => {
+        const prodCatId = String(product.category_id || "");
+        return prodCatId === String(selectedCategoryId);
+      });
+    }
+
+    return result;
+  }, [normalizedProducts, homeSearchTerm, selectedCategoryId]);
 
   const fetchVouchers = async () => {
     try {
@@ -85,7 +120,12 @@ const Home = () => {
   useEffect(() => {
     fetchVouchers();
     fetchUserWallet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleClaim = async (voucherId) => {
     if (!isAuthenticated) {
@@ -111,7 +151,17 @@ const Home = () => {
         {/* 1. Hero Banner */}
         <HeroBanner />
 
-        {/* 2. Featured Products */}
+        {/* 2. Product Categories */}
+        <CategoryShowcase
+          categories={categories}
+          loading={categoriesLoading}
+          error={categoriesError}
+          onRetry={fetchCategories}
+          selectedCategoryId={selectedCategoryId}
+          onSelectCategory={setSelectedCategoryId}
+        />
+
+        {/* 3. Featured Products */}
         <TrendingProducts
           products={filteredProducts}
           limit={8}
@@ -122,13 +172,15 @@ const Home = () => {
           }
           favoriteIds={favoriteIds}
           onToggleFavorite={toggleFavorite}
+          title={
+            selectedCategoryId === "all"
+              ? "Sản phẩm nổi bật"
+              : categoryMap[selectedCategoryId] || "Sản phẩm nổi bật"
+          }
         />
 
-        {/* 3. Sale Banner */}
+        {/* 4. Voucher / Flash Sale Banner */}
         <PromotionBannerSection />
-
-        {/* 4. Category Showcase */}
-        <CategoryShowcase />
 
         {/* 5. Voucher Hot Hôm Nay */}
         <VoucherSection

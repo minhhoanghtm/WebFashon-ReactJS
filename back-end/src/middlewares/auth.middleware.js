@@ -43,6 +43,37 @@ export const protectedRoute = (req, res, next) => {
   }
 };
 
+export const optionalProtectedRoute = (req, res, next) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      req.user = null;
+      return next();
+    }
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodeUser) => {
+      if (err) {
+        req.user = null;
+        return next();
+      }
+
+      const user = await User.findById(decodeUser.userId).select("-passWord");
+      if (!user) {
+        req.user = null;
+        return next();
+      }
+
+      req.user = decodeUser;
+      next();
+    });
+  } catch (error) {
+    req.user = null;
+    next();
+  }
+};
+
 export const adminOnly = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
