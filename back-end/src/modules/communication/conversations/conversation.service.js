@@ -122,6 +122,9 @@ class ConversationService {
 
   async closeConversation(conversationId, actor = {}) {
     await this.getConversationById(conversationId, actor);
+    if (actor.role === "admin") {
+      throw new ForbiddenError("Admin is not allowed to close conversations");
+    }
     return conversationRepository.updateById(conversationId, { status: "closed" });
   }
 

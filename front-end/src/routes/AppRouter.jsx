@@ -22,6 +22,11 @@ import NotFound from '../pages/not-found';
 import VoucherHunting from '../pages/VoucherHunting';
 import MyCoupons from '../pages/MyCoupons';
 import Favorites from '../pages/Favorites';
+import Policy from '../pages/Policy';
+import FAQ from '../pages/FAQ';
+import Guide from '../pages/Guide';
+import Landing from '../pages/Landing';
+import Blog from '../pages/Blog';
 import CatalogManagement from '@/pages/admin/CatalogManagement';
 import ProductManagement from '@/pages/admin/ProductManagement';
 import OrderManagement from '@/pages/admin/OrderManagement';
@@ -44,6 +49,11 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: 'about', element: <About /> },
+      { path: 'policy', element: <Policy /> },
+      { path: 'faq', element: <FAQ /> },
+      { path: 'guide', element: <Guide /> },
+      { path: 'landing', element: <Landing /> },
+      { path: 'blog', element: <Blog /> },
       { path: 'products', element: <ProductSearch /> },
       { path: 'product/:slug', element: <ProductDetail /> },
       { path: 'cart', element: <Cart /> },

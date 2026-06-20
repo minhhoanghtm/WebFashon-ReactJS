@@ -27,7 +27,7 @@ import { tokenStorage } from "@/utils/token";
 
 const statusMeta = {
   waiting_admin: {
-    label: "Chờ admin",
+    label: "Chờ trả lời",
     className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900",
   },
   waiting_customer: {
@@ -45,10 +45,8 @@ const statusMeta = {
 };
 
 const filters = [
-  { key: "all", label: "Tất cả" },
-  { key: "waiting_admin", label: "Chờ admin" },
-  { key: "waiting_customer", label: "Chờ khách" },
-  { key: "closed", label: "Đã đóng" },
+  { key: "all", label: "Tổng hội thoại" },
+  { key: "waiting_admin", label: "Chờ trả lời" },
 ];
 
 const formatTime = (value) => {
@@ -311,22 +309,14 @@ const AdminChatManagement = () => {
         </button>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
           <p className="text-xs font-bold uppercase text-slate-400">Tổng hội thoại</p>
           <p className="mt-2 text-2xl font-extrabold text-slate-950 dark:text-white">{stats.total}</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-          <p className="text-xs font-bold uppercase text-slate-400">Chờ admin</p>
+          <p className="text-xs font-bold uppercase text-slate-400">Chờ trả lời</p>
           <p className="mt-2 text-2xl font-extrabold text-amber-600">{stats.waiting_admin || 0}</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-          <p className="text-xs font-bold uppercase text-slate-400">Chờ khách</p>
-          <p className="mt-2 text-2xl font-extrabold text-blue-600">{stats.waiting_customer || 0}</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-          <p className="text-xs font-bold uppercase text-slate-400">Đã đóng</p>
-          <p className="mt-2 text-2xl font-extrabold text-slate-500">{stats.closed || 0}</p>
         </div>
       </section>
 
@@ -430,37 +420,7 @@ const AdminChatManagement = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  {selectedConversation.status === "closed" ? (
-                    <button
-                      type="button"
-                      onClick={handleReopen}
-                      className="inline-flex h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Mở lại
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleAssign}
-                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-300"
-                      >
-                        <UserCheck className="h-4 w-4" />
-                        Nhận xử lý
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleClose}
-                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-bold text-red-700 transition hover:bg-red-100 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        Đóng
-                      </button>
-                    </>
-                  )}
-                </div>
+
               </div>
 
               <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/70 p-5 dark:bg-slate-950/40">
@@ -489,7 +449,7 @@ const AdminChatManagement = () => {
                       }
                       return (
                         <div key={message._id} className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}>
-                          <div className={`max-w-[78%] space-y-1 ${isAdmin ? "text-right" : "text-left"}`}>
+                          <div className={`max-w-[78%] space-y-1 flex flex-col ${isAdmin ? "items-end text-right" : "items-start text-left"}`}>
                             <p
                               className={`rounded-2xl px-4 py-3 text-sm font-medium leading-relaxed shadow-sm ${
                                 isAdmin

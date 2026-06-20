@@ -19,6 +19,7 @@ import {
   customerCommunicationRouter,
 } from "../modules/communication/communication.route.js";
 import { protectedRoute, adminOnly } from "../middlewares/auth.middleware.js";
+import shippingRouter from "../modules/shipping/shipping.routes.js";
 
 const rootRouter = express.Router();
 
@@ -50,5 +51,10 @@ rootRouter.use("/vouchers", voucherRouter);
 // Communication domain routes.
 rootRouter.use("/admin", adminCommunicationRouter);
 rootRouter.use("/chat", customerCommunicationRouter);
+
+
+//Shipping domain routes
+rootRouter.use("/shipping", shippingRouter);
+
 
 export default rootRouter;

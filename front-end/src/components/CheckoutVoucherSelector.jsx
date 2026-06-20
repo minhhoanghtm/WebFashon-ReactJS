@@ -6,6 +6,8 @@ import { useAuthStore } from "../store/auth.store";
 
 const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onApply, appliedVoucher, onRemove, voucherType = "product", label }) => {
   const { isAuthenticated } = useAuthStore();
+  const token = localStorage.getItem("accessToken");
+  const isUserLoggedIn = isAuthenticated || !!token;
   const [isOpen, setIsOpen] = useState(false);
   const [wallet, setWallet] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onAppl
   const modalTitle = voucherType === "shipping" ? "Chọn Voucher Vận Chuyển" : "Chọn Voucher Sản Phẩm";
 
   const fetchWallet = async () => {
-    if (!isAuthenticated || !isOpen) return;
+    if (!token || !isOpen) return;
     try {
       setLoading(true);
       const res = await voucherApi.getUserWallet("CLAIMED");
@@ -36,7 +38,7 @@ const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onAppl
 
   useEffect(() => {
     fetchWallet();
-  }, [isOpen, isAuthenticated]);
+  }, [isOpen, isUserLoggedIn]);
 
   const isShippingVoucher = (v) => {
     return v.code?.toUpperCase().includes("SHIP") || v.name?.toLowerCase().includes("vận chuyển") || v.name?.toLowerCase().includes("ship");
@@ -94,8 +96,6 @@ const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onAppl
       toast.error(err.response?.data?.message || "Voucher không đủ điều kiện áp dụng cho đơn hàng này");
     }
   };
-
-  if (!isAuthenticated) return null;
 
   return (
     <div className="w-full space-y-3 font-sans">
@@ -189,7 +189,19 @@ const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onAppl
                 Ví voucher của bạn
               </h4>
 
-              {loading ? (
+              {!isUserLoggedIn ? (
+                <div className="text-center py-10 space-y-3">
+                  <AlertCircle className="h-8 w-8 text-slate-350 mx-auto" />
+                  <p className="text-xs font-semibold text-slate-500">Đăng nhập để xem ví voucher của bạn</p>
+                  <p className="text-[10px] text-slate-400">Bạn có thể săn và lưu các voucher giảm giá vào ví cá nhân!</p>
+                  <a
+                    href="/login"
+                    className="inline-block mt-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/25"
+                  >
+                    Đăng nhập ngay
+                  </a>
+                </div>
+              ) : loading ? (
                 <div className="flex justify-center items-center py-12">
                   <Loader2 className="h-7 w-7 animate-spin text-indigo-600" />
                 </div>

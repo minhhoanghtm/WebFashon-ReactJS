@@ -13,6 +13,7 @@ import {
   Star,
 } from "lucide-react";
 import { io } from "socket.io-client";
+import { useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
 import { tokenStorage } from "../utils/token";
 import { ENV } from "../config/env";
@@ -85,6 +86,23 @@ const CustomerChatWidget = () => {
       return { lastIntent: null, lastProductId: null };
     }
   });
+
+  const unreadKey = `customer_chat_has_unread_${userKey}`;
+  const [hasUnread, setHasUnread] = useState(() => {
+    try {
+      return localStorage.getItem(unreadKey) === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(unreadKey, hasUnread ? "true" : "false");
+    } catch (error) {
+      console.error("Lỗi khi lưu trạng thái chưa đọc:", error);
+    }
+  }, [hasUnread, unreadKey]);
 
   const [loading, setLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -159,18 +177,41 @@ const CustomerChatWidget = () => {
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isAuthenticated) {
       fetchConversations();
     }
-  }, [isOpen, isAuthenticated]);
+  }, [isAuthenticated, isOpen]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping, chatMode]);
 
+  // Keep track of isOpen and chatMode using refs to avoid closure issues in socket handlers
+  const isOpenRef = useRef(isOpen);
+  const chatModeRef = useRef(chatMode);
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  useEffect(() => {
+    chatModeRef.current = chatMode;
+  }, [chatMode]);
+
+  useEffect(() => {
+    if (isOpen && chatMode === "support") {
+      setHasUnread(false);
+    }
+  }, [isOpen, chatMode]);
+
+  const selectedConversationIdRef = useRef(null);
+  useEffect(() => {
+    selectedConversationIdRef.current = conversations.support?._id;
+  }, [conversations.support?._id]);
+
   // Handle socket connections
   useEffect(() => {
-    if (!isAuthenticated || !isOpen) return;
+    if (!isAuthenticated) return;
 
     const token = tokenStorage.getToken();
 
@@ -183,6 +224,10 @@ const CustomerChatWidget = () => {
 
     socket.on("connect", () => {
       console.log("Socket connected");
+      if (selectedConversationIdRef.current) {
+        console.log("Joining room on connect:", selectedConversationIdRef.current);
+        socket.emit("conversation:join", selectedConversationIdRef.current);
+      }
     });
 
     socket.on("message:new", (message) => {
@@ -192,7 +237,7 @@ const CustomerChatWidget = () => {
         message?.conversationId?._id || message?.conversationId || "",
       );
 
-      if (conversationId === conversations.support?._id) {
+      if (conversationId === selectedConversationIdRef.current) {
         setMessages((prev) => {
           const exists = prev.support.some((m) => m._id === message._id);
 
@@ -203,6 +248,15 @@ const CustomerChatWidget = () => {
             support: [...prev.support, message],
           };
         });
+
+        // Set unread status if message is from admin and chat is closed or in AI tab
+        if (message.senderType === "admin") {
+          const isClosed = !isOpenRef.current;
+          const isAiMode = chatModeRef.current === "ai";
+          if (isClosed || isAiMode) {
+            setHasUnread(true);
+          }
+        }
       }
     });
 
@@ -216,19 +270,23 @@ const CustomerChatWidget = () => {
 
     return () => {
       socket.disconnect();
+      socketRef.current = null;
     };
-  }, [isAuthenticated, isOpen, conversations.support?._id]);
+  }, [isAuthenticated, socketUrl]);
 
   useEffect(() => {
     const socket = socketRef.current;
+    const conversationId = conversations.support?._id;
 
-    if (!socket) return;
+    if (!socket || !conversationId) return;
 
-    if (conversations.support?._id) {
-      console.log("Joining room:", conversations.support._id);
+    console.log("Joining room:", conversationId);
+    socket.emit("conversation:join", conversationId);
 
-      socket.emit("conversation:join", conversations.support._id);
-    }
+    return () => {
+      console.log("Leaving room:", conversationId);
+      socket.emit("conversation:leave", conversationId);
+    };
   }, [conversations.support?._id]);
 
   useEffect(() => {
@@ -361,6 +419,13 @@ const CustomerChatWidget = () => {
       };
     });
   }, [context, isOpen, AI_CHAT_METADATA_KEY]);
+
+  const { pathname } = useLocation();
+  const isAuthOrAdminPage = ["/login", "/register", "/reset-password", "/verify-otp", "/admin"].some(
+    (path) => pathname.startsWith(path)
+  );
+
+  if (isAuthOrAdminPage) return null;
 
   // Handle typing status notification
   const handleInputChange = (e) => {
@@ -839,7 +904,11 @@ const CustomerChatWidget = () => {
           />
         )}
         {!isOpen && (
-          <span className="absolute right-0 top-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-400" />
+          <span
+            className={`absolute right-0 top-0 h-3.5 w-3.5 rounded-full border-2 border-white transition-colors duration-300 ${
+              hasUnread ? "bg-red-500 animate-pulse" : "bg-emerald-400"
+            }`}
+          />
         )}
       </button>
     </div>

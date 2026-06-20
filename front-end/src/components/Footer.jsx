@@ -134,10 +134,10 @@ const Footer = () => {
           <div className="footer-copy">
             {copyrightText}
           </div>
-          <div className="footer-bottom-links">
+          {/* <div className="footer-bottom-links">
             <Link to="/terms">Điều khoản sử dụng</Link>
             <Link to="/privacy">Chính sách bảo mật</Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>

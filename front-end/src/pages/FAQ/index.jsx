@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getPageBySlugService } from "@/services/page.service";
 import { Loader2, AlertCircle } from "lucide-react";
-import AboutHero from "./AboutHero";
+import AboutHero from "../About/AboutHero";
 
 // Dynamic Section Components
 import HeroSection from "@/components/page-sections/HeroSection";
@@ -14,63 +14,53 @@ import ProductsSection from "@/components/page-sections/ProductsSection";
 import BannerSection from "@/components/page-sections/BannerSection";
 import CTASection from "@/components/page-sections/CTASection";
 
-import "./about.css";
+import "../About/about.css";
 
-const About = () => {
-  useDocumentTitle("Giới thiệu thương hiệu");
-  const [aboutUsHtml, setAboutUsHtml] = useState("");
+const FAQ = () => {
+  useDocumentTitle("Hỏi đáp & Hỗ trợ");
+  const [contentHtml, setContentHtml] = useState("");
   const [pageTitle, setPageTitle] = useState("");
   const [pageExcerpt, setPageExcerpt] = useState("");
   const [pageSections, setPageSections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAboutUs = async () => {
+    const fetchFAQ = async () => {
       try {
         setLoading(true);
-        const data = await getPageBySlugService("about-us").catch(() => 
-          getPageBySlugService("about").catch(() => null)
-        );
+        const data = await getPageBySlugService("faq").catch(() => null);
         
-        // Handle if API returns { page, sections } or flat object
         const page = data?.page || data;
         const sections = data?.sections || data?.page?.sections || [];
 
         if (page) {
-          if (page.title) {
-            setPageTitle(page.title);
-          }
-          if (page.excerpt) {
-            setPageExcerpt(page.excerpt);
-          }
-          if (page.content) {
-            setAboutUsHtml(page.content);
-          }
+          if (page.title) setPageTitle(page.title);
+          if (page.excerpt) setPageExcerpt(page.excerpt);
+          if (page.content) setContentHtml(page.content);
         }
-        
         if (sections && sections.length > 0) {
           setPageSections(sections);
         }
       } catch (err) {
-        console.error("Lỗi khi tải thông tin giới thiệu:", err);
+        console.error("Lỗi khi tải trang Hỏi đáp:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchAboutUs();
+    fetchFAQ();
   }, []);
 
   if (loading) {
     return (
       <div className="about-loading-container">
         <Loader2 className="about-loading-spinner animate-spin" />
-        <span>Đang tải thông tin giới thiệu...</span>
+        <span>Đang tải thông tin hỏi đáp...</span>
       </div>
     );
   }
 
   const hasSections = pageSections && pageSections.length > 0;
-  const hasContent = aboutUsHtml && aboutUsHtml.trim() !== "";
+  const hasContent = contentHtml && contentHtml.trim() !== "";
 
   return (
     <div className="about-page">
@@ -108,17 +98,17 @@ const About = () => {
             <main className="about-page__content">
               <section 
                 className="about-page__custom-content ql-editor"
-                dangerouslySetInnerHTML={{ __html: aboutUsHtml }}
+                dangerouslySetInnerHTML={{ __html: contentHtml }}
               />
             </main>
           </>
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900/20 max-w-4xl mx-auto mt-8">
             <AlertCircle className="h-10 w-10 text-amber-500 mx-auto" />
-            <h3 className="text-base font-extrabold text-slate-800 dark:text-white mt-2">Trang giới thiệu chưa cấu hình</h3>
+            <h3 className="text-base font-extrabold text-slate-800 dark:text-white mt-2">Trang hỏi đáp chưa cấu hình</h3>
             <p className="max-w-sm text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed mx-auto">
-              Nội dung của trang giới thiệu hiện chưa được thiết lập trên hệ thống quản trị. Vui lòng truy cập trang Quản lý trang để thiết lập nội dung.
-              </p>
+              Nội dung của trang hỏi đáp hiện chưa được thiết lập trên hệ thống quản trị. Vui lòng truy cập trang Quản lý trang để thiết lập nội dung.
+            </p>
           </div>
         )}
       </div>
@@ -126,4 +116,4 @@ const About = () => {
   );
 };
 
-export default About;
+export default FAQ;

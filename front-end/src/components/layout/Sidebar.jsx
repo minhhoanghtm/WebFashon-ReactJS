@@ -18,12 +18,16 @@ import {
   User,
   X,
 } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import logo from "../../assets/logo.png";
 import { useAuthStore } from "@/store/auth.store";
 import { updateProfileService, updatePasswordService } from "@/services/user.service";
+import { io } from "socket.io-client";
+import { ENV } from "@/config/env";
+import { tokenStorage } from "@/utils/token";
+import { getAdminConversationsService } from "@/services/chat.service";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -49,6 +53,55 @@ const Sidebar = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const socketUrl = useMemo(() => {
+    return ENV.API_BASE_URL.replace("/api", "");
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await getAdminConversationsService({ status: "waiting_admin", limit: 100, type: "support" });
+      setUnreadCount(res?.total || res?.items?.length || 0);
+    } catch (error) {
+      console.error("Lỗi khi lấy số tin nhắn chưa đọc:", error);
+    }
+  };
+
+  useEffect(() => {
+    const isAuthorized = user?.role === "admin" || user?.role === "staff";
+    if (isAuthorized) {
+      fetchUnreadCount();
+    } else {
+      setUnreadCount(0);
+    }
+  }, [user, pathname]);
+
+  useEffect(() => {
+    const isAuthorized = user?.role === "admin" || user?.role === "staff";
+    if (!isAuthorized) return;
+
+    const token = tokenStorage.getToken();
+    if (!token) return;
+
+    const socket = io(socketUrl, {
+      auth: { token },
+      transports: ["websocket"],
+    });
+
+    socket.on("connect", () => {
+      console.log("Admin Sidebar Socket connected");
+    });
+
+    socket.on("message:new", (message) => {
+      console.log("Sidebar: new message received, updating count");
+      fetchUnreadCount();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user, socketUrl]);
 
   // Profile Form States
   const [profileName, setProfileName] = useState("");
@@ -226,7 +279,7 @@ const Sidebar = () => {
                 key={item.path}
                 to={item.path}
                 title={collapsed ? item.label : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition
+                className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition relative
                   ${collapsed ? "justify-center" : ""}
                   ${
                     active
@@ -236,6 +289,15 @@ const Sidebar = () => {
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!collapsed && <span className="truncate">{item.label}</span>}
+                {item.path === "/admin/chats" && unreadCount > 0 && (
+                  collapsed ? (
+                    <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                  ) : (
+                    <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )
+                )}
               </Link>
             );
           })}

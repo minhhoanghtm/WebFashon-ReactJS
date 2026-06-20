@@ -45,7 +45,7 @@ const seedPages = [
   },
   {
     title: "Chính sách mua hàng",
-    slug: "chinh-sach",
+    slug: "policy",
     type: "policy",
     status: "published",
     displayOrder: 2,

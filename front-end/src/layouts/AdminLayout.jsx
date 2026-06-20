@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import { Moon, Sun } from 'lucide-react';
 
@@ -7,6 +7,15 @@ const AdminLayout = () => {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('admin-theme') || 'dark';
   });
+
+  const mainRef = useRef(null);
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo(0, 0);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -55,7 +64,7 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-8">
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-8">
           <Outlet />
         </main>
       </div>

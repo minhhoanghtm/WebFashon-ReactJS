@@ -7,6 +7,7 @@ import { useCartStore } from '../store/cart.store';
 import { useFavoriteStore } from '../store/favorite.store';
 import Footer from '../components/Footer';
 import CustomerChatWidget from '../components/CustomerChatWidget';
+import ScrollToTop from '../components/ScrollToTop';
 
 const MainLayout = () => {
   const { isAuthenticated, logout } = useAuthStore();
@@ -41,6 +42,7 @@ const MainLayout = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900 font-sans">
+      <ScrollToTop />
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
