@@ -15,7 +15,9 @@ export const signUp = async (req, res, next) => {
 export const signIn = async (req, res, next) => {
   try {
     const { email, passWord } = req.body;
-    const { accessToken, refreshToken, user } = await authService.signIn(email, passWord);
+    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const ua = req.headers["user-agent"];
+    const { accessToken, refreshToken, user } = await authService.signIn(email, passWord, ip, ua);
 
     // Set refresh token in httpOnly cookie
     res.cookie("refreshToken", refreshToken, {
@@ -34,13 +36,54 @@ export const signIn = async (req, res, next) => {
 export const signOut = async (req, res, next) => {
   try {
     const token = req.cookies?.refreshToken;
-    await authService.signOut(token);
+    const jti = req.user?.jti;
+    await authService.signOut(token, jti);
 
     res.clearCookie("refreshToken");
     return res.status(204).json({
       success: true,
       message: "Đăng xuất thành công",
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const refreshAccessToken = async (req, res, next) => {
+  try {
+    const token = req.cookies?.refreshToken;
+    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const ua = req.headers["user-agent"];
+
+    const { accessToken, refreshToken, user } = await authService.refreshAccessToken(token, ip, ua);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: REFRESH_TOKEN_TTL,
+    });
+
+    return successResponse(res, { accessToken }, `Refresh token thành công cho user ${user.fullName}`);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const signOutAllDevices = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Không xác định được user",
+      });
+    }
+
+    await authService.signOutAll(userId);
+
+    res.clearCookie("refreshToken");
+    return successResponse(res, null, "Đăng xuất khỏi tất cả các thiết bị thành công");
   } catch (error) {
     next(error);
   }

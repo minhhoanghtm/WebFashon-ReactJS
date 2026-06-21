@@ -1,9 +1,10 @@
 import orderRepository from "./order.repository.js";
 import productRepository from "../products/product.repository.js";
+import productService from "../products/product.service.js";
+import { Order, OrderItem } from "./order.model.js";
 import { AppError } from "../../common/exceptions/AppError.js";
 import * as momoProvider from "../../providers/momo.provider.js";
 import * as stripeProvider from "../../providers/stripe.provider.js";
-import * as zalopayProvider from "../../providers/zalopay.provider.js";
 import mongoose from "mongoose";
 
 import voucherService from "../vouchers/voucher.service.js";
@@ -78,7 +79,9 @@ class OrderService {
           subtotal = Number(orderData.total_price || orderData.totalPrice || 0);
         }
 
-        const shippingFee = (subtotal >= 1000000 || subtotal === 0) ? 0 : 30000;
+        const shippingFee = (subtotal >= 1000000 || subtotal === 0)
+          ? 0
+          : (orderData.shippingFee !== undefined ? Number(orderData.shippingFee) : 30000);
         let discountAmount = 0;
         const voucherIds = [];
         const voucherCodes = voucherCode ? voucherCode.split(",").map((c) => c.trim()) : [];
@@ -110,6 +113,11 @@ class OrderService {
 
         const finalTotalPrice = Math.max(0, subtotal + shippingFee - discountAmount);
 
+        // Deduct stock atomically before creating the order
+        if (orderItems.length > 0) {
+          await productService.deductStock(orderItems, session);
+        }
+
         // Create Order inside transaction (Original flow sequence step 2)
         const orderArray = await orderRepository.create(
           [
@@ -122,6 +130,7 @@ class OrderService {
               status: "pending",
               payment_method: paymentMethod.toLowerCase(),
               shipping_address: dbShippingAddress,
+              stock_deducted: true,
             },
           ],
           { session },
@@ -220,6 +229,7 @@ class OrderService {
 
   // Non-transactional fallback for development/local systems running standalone MongoDB
   async createOrderWithoutTransaction(userId, orderData) {
+    console.log("Inside createOrderWithoutTransaction: userId =", userId, "type =", typeof userId);
     const items = orderData.items || [];
     const paymentMethod =
       orderData.payment_method || orderData.paymentMethod || "cod";
@@ -278,7 +288,9 @@ class OrderService {
       subtotal = Number(orderData.total_price || orderData.totalPrice || 0);
     }
 
-    const shippingFee = (subtotal >= 1000000 || subtotal === 0) ? 0 : 30000;
+    const shippingFee = (subtotal >= 1000000 || subtotal === 0)
+      ? 0
+      : (orderData.shippingFee !== undefined ? Number(orderData.shippingFee) : 30000);
     let discountAmount = 0;
     const voucherIds = [];
     const voucherCodes = voucherCode ? voucherCode.split(",").map((c) => c.trim()) : [];
@@ -307,6 +319,11 @@ class OrderService {
 
     const finalTotalPrice = Math.max(0, subtotal + shippingFee - discountAmount);
 
+    // Deduct stock atomically before creating the order
+    if (orderItems.length > 0) {
+      await productService.deductStock(orderItems);
+    }
+
     // Create order (Original fallback flow step 2)
     const order = await orderRepository.create({
       user_id: userId,
@@ -317,6 +334,7 @@ class OrderService {
       status: "pending",
       payment_method: paymentMethod.toLowerCase(),
       shipping_address: dbShippingAddress,
+      stock_deducted: true,
     });
 
     // Create VoucherUsage record (Original fallback flow step 3)
@@ -388,6 +406,7 @@ class OrderService {
           total_price: 1,
           status: 1,
           payment_method: 1,
+          payment_status: 1,
           shipping_address: 1,
           phone_number: 1,
           createdAt: 1,
@@ -461,28 +480,46 @@ class OrderService {
   }
 
   async updateOrder(id, orderBody) {
-    const updated = await orderRepository.findByIdAndUpdate(id, orderBody);
-    if (!updated) {
+    const order = await orderRepository.findById(id);
+    if (!order) {
       throw new AppError("Đơn hàng không tồn tại", 404);
     }
+
+    const oldStatus = order.status;
+    const oldPaymentStatus = order.payment_status;
+
+    Object.assign(order, orderBody);
+
+    if (
+      (order.status === "cancelled" && oldStatus !== "cancelled") ||
+      (order.payment_status === "failed" && oldPaymentStatus !== "failed")
+    ) {
+      await this.restoreOrderStock(order);
+    }
+
+    await order.save();
 
     // Trigger status change notification
     import("../../sockets/events.js")
       .then(({ emitOrderNotification }) => {
-        emitOrderNotification(updated);
+        emitOrderNotification(order);
       })
       .catch((err) =>
         console.error("Failed to emit order socket notification:", err.message),
       );
 
-    return updated;
+    return order;
   }
 
   async deleteOrder(id) {
-    const deleted = await orderRepository.findByIdAndDelete(id);
-    if (!deleted) {
+    const order = await orderRepository.findById(id);
+    if (!order) {
       throw new AppError("Đơn hàng không tồn tại", 404);
     }
+
+    await this.restoreOrderStock(order);
+
+    const deleted = await orderRepository.findByIdAndDelete(id);
     return deleted;
   }
 
@@ -924,8 +961,62 @@ class OrderService {
     if(!order) {
       throw new AppError("Đơn hàng không tồn tại", 404);
     }
+    
+    const oldStatus = order.status;
     order.status = status === "shipped" ? "shipping" : status;
+    
+    if (order.status === "cancelled" && oldStatus !== "cancelled") {
+      await this.restoreOrderStock(order);
+    }
+    
     await order.save();
+    return order;
+  }
+
+  async restoreOrderStock(order, session = null) {
+    // Atomic guard to prevent double restore
+    const updatedOrder = await Order.findOneAndUpdate(
+      { _id: order._id, stock_deducted: true },
+      { $set: { stock_deducted: false } },
+      { returnDocument: 'after', session }
+    );
+
+    if (!updatedOrder) {
+      return; // Already restored or never deducted
+    }
+
+    const orderItems = await OrderItem.find({ order_id: order._id }).session(session);
+    if (orderItems && orderItems.length > 0) {
+      await productService.restoreStock(orderItems, session);
+    }
+  }
+
+  async cancelExpiredOrder(orderId) {
+    const order = await orderRepository.findById(orderId);
+    if (!order) {
+      throw new AppError("Đơn hàng không tồn tại", 404);
+    }
+
+    if (order.status !== "pending") {
+      return order; // Already processed
+    }
+
+    console.log(`⏰ [Expired Check] Auto cancelling expired order ${orderId}...`);
+    order.status = "cancelled";
+    order.payment_status = "failed";
+
+    await this.restoreOrderStock(order);
+    await order.save();
+
+    // Trigger socket notification
+    import("../../sockets/events.js")
+      .then(({ emitOrderNotification }) => {
+        emitOrderNotification(order);
+      })
+      .catch((err) =>
+        console.error("Failed to emit order socket notification:", err.message),
+      );
+
     return order;
   }
 }

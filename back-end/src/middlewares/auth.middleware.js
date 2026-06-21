@@ -1,5 +1,8 @@
 import jwt from "jsonwebtoken";
 import User from "../modules/users/user.model.js";
+import getRedisConnection from "../configs/redis.js";
+
+const redis = getRedisConnection();
 
 export const protectedRoute = (req, res, next) => {
   try {
@@ -22,12 +25,12 @@ export const protectedRoute = (req, res, next) => {
         });
       }
 
-      // Try finding the user
-      const user = await User.findById(decodeUser.userId).select("-passWord");
-      if (!user) {
-        return res.status(404).json({
+      // Verify access token whitelist in Redis
+      const whitelistUser = await redis.get(`at:${decodeUser.jti}`);
+      if (!whitelistUser || whitelistUser !== String(decodeUser.userId)) {
+        return res.status(403).json({
           success: false,
-          message: "Người dùng không tồn tại!",
+          message: "Access token đã bị thu hồi hoặc không hợp lệ!",
         });
       }
 
@@ -59,8 +62,9 @@ export const optionalProtectedRoute = (req, res, next) => {
         return next();
       }
 
-      const user = await User.findById(decodeUser.userId).select("-passWord");
-      if (!user) {
+      // Verify access token whitelist in Redis
+      const whitelistUser = await redis.get(`at:${decodeUser.jti}`);
+      if (!whitelistUser || whitelistUser !== String(decodeUser.userId)) {
         req.user = null;
         return next();
       }

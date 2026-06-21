@@ -15,6 +15,7 @@ import ResetPassword from '../pages/ResetPassword';
 import VerifyOTP from '../pages/VerifyOTP';
 import Cart from '../pages/Cart';
 import Checkout from '../pages/Checkout';
+import PaymentResult from '../pages/PaymentResult';
 import Profile from '../pages/profile';
 import Order from '../pages/Order';
 import Review from '../pages/Review';
@@ -58,6 +59,7 @@ const router = createBrowserRouter([
       { path: 'product/:slug', element: <ProductDetail /> },
       { path: 'cart', element: <Cart /> },
       { path: 'checkout', element: <Checkout /> },
+      { path: 'payment-result', element: <PaymentResult /> },
       { path: 'profile', element: <Profile /> },
       { path: 'vouchers', element: <VoucherHunting /> },
       { path: 'my-coupons', element: <MyCoupons /> },

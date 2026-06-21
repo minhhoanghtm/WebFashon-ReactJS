@@ -22,7 +22,8 @@ const OrderItem = ({ item }) => {
 
   const variantImage = normalizeImageUrl(item.variant?.image_url);
   const productImage = normalizeImageUrl(item.product_image);
-  const imageUrl = variantImage || productImage || "";
+  const fallbackImg = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=60";
+  const imageUrl = variantImage || productImage || fallbackImg;
 
   return (
     <div className="flex items-start gap-4 py-4 border-b border-gray-100 last:border-b-0 animate-fadeIn">

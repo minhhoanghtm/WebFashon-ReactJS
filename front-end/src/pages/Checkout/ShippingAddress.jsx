@@ -40,21 +40,21 @@ const normalizeSearchText = (value = "") =>
     .toLowerCase();
 
 const normalizeProvince = (province) => ({
-  code: String(province.code),
-  name: province.name,
-  displayName: removeAdministrativePrefix(province.name),
+  code: String(province.ProvinceID || province.code || ""),
+  name: province.ProvinceName || province.name || "",
+  displayName: removeAdministrativePrefix(province.ProvinceName || province.name || ""),
   districts: province.districts || [],
 });
 
 const normalizeDistrict = (district) => ({
-  code: String(district.code),
-  name: district.name,
+  code: String(district.DistrictID || district.code || ""),
+  name: district.DistrictName || district.name || "",
   wards: district.wards || [],
 });
 
 const normalizeWard = (ward) => ({
-  code: String(ward.code),
-  name: ward.name,
+  code: String(ward.WardCode || ward.code || ""),
+  name: ward.WardName || ward.name || "",
 });
 
 const parseAddressParts = (address = "") => {
@@ -100,7 +100,7 @@ const buildFullAddress = ({ street, ward, district, province }) => {
   ].join(", ");
 };
 
-const ShippingAddress = forwardRef(({ value = "", onChange }, ref) => {
+const ShippingAddress = forwardRef(({ value = "", onChange, onLocationSelect }, ref) => {
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
@@ -154,10 +154,13 @@ const ShippingAddress = forwardRef(({ value = "", onChange }, ref) => {
 
     setLoadingDistrict(true);
     try {
-      const province = await getDistrictsService(nextProvinceCode);
-      const apiDistricts = Array.isArray(province?.districts)
-        ? province.districts.map(normalizeDistrict)
+      const data = await getDistrictsService(nextProvinceCode);
+      const districtsArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.districts)
+        ? data.districts
         : [];
+      const apiDistricts = districtsArray.map(normalizeDistrict);
 
       if (apiDistricts.length > 0) {
         return apiDistricts;
@@ -180,10 +183,13 @@ const ShippingAddress = forwardRef(({ value = "", onChange }, ref) => {
 
     setLoadingWard(true);
     try {
-      const district = await getWardsService(nextDistrictCode);
-      const apiWards = Array.isArray(district?.wards)
-        ? district.wards.map(normalizeWard)
+      const data = await getWardsService(nextDistrictCode);
+      const wardsArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.wards)
+        ? data.wards
         : [];
+      const apiWards = wardsArray.map(normalizeWard);
 
       if (apiWards.length > 0) {
         return apiWards;
@@ -291,6 +297,16 @@ const ShippingAddress = forwardRef(({ value = "", onChange }, ref) => {
 
     onChange("");
   }, [fullAddress, hasUserEdited, legacyAddress, onChange]);
+
+  useEffect(() => {
+    if (onLocationSelect) {
+      onLocationSelect({
+        provinceCode,
+        districtCode,
+        wardCode,
+      });
+    }
+  }, [provinceCode, districtCode, wardCode, onLocationSelect]);
 
   useEffect(() => {
     const hydrateFromExistingAddress = async () => {

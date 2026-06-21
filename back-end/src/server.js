@@ -3,6 +3,7 @@ import { connectDB } from "./configs/db.js";
 import { initSocketServer } from "./sockets/index.js";
 import { initEmailWorker } from "./queues/workers/email.worker.js";
 import { initVoucherCron } from "./cron/voucher.cron.js";
+import { initOrderCron } from "./cron/order.cron.js";
 import { createServer } from "http";
 import dotenv from "dotenv";
 dotenv.config();
@@ -25,6 +26,7 @@ const startServer = async () => {
 
     // 5. Khởi động các tác vụ lập lịch (Cron Job)
     initVoucherCron();
+    initOrderCron();
 
     // 6. Lắng nghe cổng kết nối
     server.listen(PORT, () => {

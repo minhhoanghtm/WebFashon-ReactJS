@@ -197,10 +197,12 @@ export const executeTool = async (toolName, args, { userId } = {}) => {
         const now = new Date();
 
         const vouchers = await Voucher.find({
-          is_active: true,
-          $or: [{ end_date: { $gte: now } }, { end_date: { $exists: false } }],
+          status: "ACTIVE",
+          isDeleted: false,
+          startDate: { $lte: now },
+          endDate: { $gte: now },
         }).select(
-          "code discount_type discount_value min_order_value description",
+          "code discountType discountValue minOrderValue description",
         );
 
         if (!vouchers.length) return "Hiện không có mã giảm giá nào.";
@@ -208,11 +210,11 @@ export const executeTool = async (toolName, args, { userId } = {}) => {
         return vouchers.map((v) => ({
           code: v.code,
           discount:
-            v.discount_type === "percentage"
-              ? `Giảm ${v.discount_value}%`
-              : `Giảm ${v.discount_value?.toLocaleString("vi-VN")}đ`,
-          min_order: v.min_order_value
-            ? `Đơn tối thiểu ${v.min_order_value?.toLocaleString("vi-VN")}đ`
+            v.discountType === "percentage"
+              ? `Giảm ${v.discountValue}%`
+              : `Giảm ${v.discountValue?.toLocaleString("vi-VN")}đ`,
+          min_order: v.minOrderValue
+            ? `Đơn tối thiểu ${v.minOrderValue?.toLocaleString("vi-VN")}đ`
             : "Không giới hạn",
           description: v.description || "",
         }));

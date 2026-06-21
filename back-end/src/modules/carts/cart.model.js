@@ -30,7 +30,7 @@ const cartItemSchema = new mongoose.Schema(
       required: true,
     },
     product_id: {
-      type: mongoose.Schema.Types.Mixed,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
       required: true,
     },

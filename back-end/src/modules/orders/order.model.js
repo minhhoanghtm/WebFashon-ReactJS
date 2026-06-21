@@ -40,6 +40,11 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    stock_deducted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     shipping_address: {
       full_name: {
         type: String,

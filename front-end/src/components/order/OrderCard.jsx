@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import OrderItem from "./OrderItem";
 import { formatCurrency, formatDate } from "@/utils/format";
-import { CreditCard, Calendar, Hash, Eye, RotateCcw, AlertTriangle, MessageSquare } from "lucide-react";
+import { CreditCard, Calendar, Hash, Eye, RotateCcw, AlertTriangle, MessageSquare, Loader2 } from "lucide-react";
+import { paymentApi } from "@/api/payment.api";
+import { toast } from "react-toastify";
 
 const paymentMethodMap = {
   cod: "Thanh toán COD",
@@ -18,14 +20,90 @@ const statusMap = {
   cancelled: { label: "Đã hủy", colorClass: "text-red-600 bg-red-50 border-red-100" },
 };
 
+const OrderCountdown = ({ createdAt }) => {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = new Date(createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now();
+      if (difference <= 0) {
+        return "Expired";
+      }
+
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const timer = setInterval(() => {
+      const formatted = calculateTimeLeft();
+      setTimeLeft(formatted);
+      if (formatted === "Expired") {
+        clearInterval(timer);
+        window.location.reload(); // Refresh the page to update status once expired
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [createdAt]);
+
+  if (timeLeft === "Expired" || !timeLeft) return null;
+
+  return (
+    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-100 animate-pulse">
+      Hủy sau: {timeLeft}
+    </span>
+  );
+};
+
 const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy }) => {
-  const statusInfo = statusMap[order.status] || { label: order.status, colorClass: "text-gray-600 bg-gray-50 border-gray-100" };
+  const [isPaying, setIsPaying] = useState(false);
+
+  const isPendingPayment =
+    order.status === "pending" &&
+    order.payment_method !== "cod" &&
+    order.payment_status === "pending";
+
+  const statusInfo = isPendingPayment
+    ? { label: "Chờ thanh toán", colorClass: "text-rose-600 bg-rose-50 border-rose-100" }
+    : statusMap[order.status] || { label: order.status, colorClass: "text-gray-600 bg-gray-50 border-gray-100" };
+
   const canCancel = ["pending", "confirmed"].includes(order.status);
   const isDelivered = order.status === "delivered";
   const isCancelled = order.status === "cancelled";
 
   // Helpers for review link
   const getProductSlug = (item) => item.product_slug || item.product?.slug;
+
+  const handlePayNow = async () => {
+    setIsPaying(true);
+    try {
+      let payRes;
+      const orderId = order._id;
+      if (order.payment_method === "momo") {
+        payRes = await paymentApi.createMomoPayment(orderId);
+      } else if (order.payment_method === "vnpay") {
+        payRes = await paymentApi.createVNPayPayment(orderId);
+      }
+
+      if (payRes && payRes.success && payRes.paymentUrl) {
+        window.location.href = payRes.paymentUrl;
+      } else {
+        toast.error("Không thể khởi tạo liên kết thanh toán. Vui lòng thử lại.");
+      }
+    } catch (err) {
+      console.error("Pay now error:", err);
+      toast.error("Gặp lỗi khi kết nối dịch vụ thanh toán.");
+    } finally {
+      setIsPaying(false);
+    }
+  };
 
   return (
     <div className="border border-gray-100 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col animate-fadeIn">
@@ -45,7 +123,8 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
             {paymentMethodMap[order.payment_method] || order.payment_method}
           </span>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
+          {isPendingPayment && <OrderCountdown createdAt={order.createdAt} />}
           <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusInfo.colorClass}`}>
             {statusInfo.label}
           </span>
@@ -109,6 +188,22 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
             <Eye className="w-4 h-4" />
             Xem chi tiết
           </button>
+
+          {/* Pay Now - for unpaid MoMo/VNPay orders */}
+          {isPendingPayment && (
+            <button
+              onClick={handlePayNow}
+              disabled={isPaying}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-400 text-white font-medium text-sm rounded-lg border border-transparent transition-colors duration-200 shadow-sm flex-1 sm:flex-none cursor-pointer"
+            >
+              {isPaying ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CreditCard className="w-4 h-4" />
+              )}
+              Thanh toán ngay
+            </button>
+          )}
 
           {/* Cancel Order - pending / confirmed */}
           {canCancel && (

@@ -1,44 +1,53 @@
-import { AppError } from "../../common/exceptions/AppError.js";
+/**
+ * WebsiteSettings validators — Zod schema-based.
+ * Giữ nguyên tên export để không break websiteSettings.route.js.
+ *
+ * Đặc biệt xử lý:
+ *  - Nested object `general` với các field bắt buộc
+ *  - Nested object `system` với boolean coercion (string "true"/"false" → boolean)
+ */
+import { z } from "zod";
+import { validate } from "../../common/utils/validate.js";
+import { zodEmail } from "../../common/utils/schemas.js";
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// ---------------------------------------------------------------------------
+// Boolean coercion — chấp nhận true/false/"true"/"false"
+// ---------------------------------------------------------------------------
 
-export const validateUpdateSettings = (req, res, next) => {
-  const data = req.body;
-  const errors = [];
+const zodBoolCoerce = z.preprocess(
+  (val) => {
+    if (typeof val === "string") return val === "true";
+    return val;
+  },
+  z.boolean().optional()
+);
 
-  if (!data.general) {
-    errors.push("Thiếu thông tin cấu hình chung (general)");
-    return next(new AppError(`Dữ liệu không hợp lệ: ${errors.join(". ")}`, 400));
-  }
+// ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
 
-  const { siteName, email, hotline, address } = data.general;
+const updateSettingsSchema = z.object({
+  general: z.object(
+    {
+      siteName: z.string({ required_error: "Tên website (siteName) không được để trống" }).trim().min(1, "Tên website (siteName) không được để trống"),
+      email:    zodEmail,
+      hotline:  z.string({ required_error: "Hotline không được để trống" }).trim().min(1, "Hotline không được để trống"),
+      address:  z.string({ required_error: "Địa chỉ không được để trống" }).trim().min(1, "Địa chỉ không được để trống"),
+    },
+    { required_error: "Thiếu thông tin cấu hình chung (general)" }
+  ),
+  system: z
+    .object({
+      maintenanceMode:    zodBoolCoerce,
+      allowGuestCheckout: zodBoolCoerce,
+      enableVoucher:      zodBoolCoerce,
+      enableReviews:      zodBoolCoerce,
+    })
+    .optional(),
+}).passthrough(); // cho phép các field cấu hình khác đi qua
 
-  if (!siteName || String(siteName).trim() === "") {
-    errors.push("Tên website (siteName) không được để trống");
-  }
-  if (!email || String(email).trim() === "") {
-    errors.push("Email liên hệ không được để trống");
-  } else if (!emailRegex.test(email)) {
-    errors.push("Email liên hệ không đúng định dạng");
-  }
-  if (!hotline || String(hotline).trim() === "") {
-    errors.push("Hotline không được để trống");
-  }
-  if (!address || String(address).trim() === "") {
-    errors.push("Địa chỉ không được để trống");
-  }
+// ---------------------------------------------------------------------------
+// Middleware export — tên giữ nguyên, backward compatible
+// ---------------------------------------------------------------------------
 
-  // Parse integration fields if they exist
-  if (data.system) {
-    req.body.system.maintenanceMode = data.system.maintenanceMode !== undefined ? (String(data.system.maintenanceMode) === "true" || data.system.maintenanceMode === true) : undefined;
-    req.body.system.allowGuestCheckout = data.system.allowGuestCheckout !== undefined ? (String(data.system.allowGuestCheckout) === "true" || data.system.allowGuestCheckout === true) : undefined;
-    req.body.system.enableVoucher = data.system.enableVoucher !== undefined ? (String(data.system.enableVoucher) === "true" || data.system.enableVoucher === true) : undefined;
-    req.body.system.enableReviews = data.system.enableReviews !== undefined ? (String(data.system.enableReviews) === "true" || data.system.enableReviews === true) : undefined;
-  }
-
-  if (errors.length > 0) {
-    return next(new AppError(`Dữ liệu không hợp lệ: ${errors.join(". ")}`, 400));
-  }
-
-  next();
-};
+export const validateUpdateSettings = validate(updateSettingsSchema);

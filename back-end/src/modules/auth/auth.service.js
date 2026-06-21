@@ -8,10 +8,17 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import dotenv from "dotenv";
+import getRedisConnection from "../../configs/redis.js";
 dotenv.config();
 
+const redis = getRedisConnection();
 const ACCESS_TOKEN_TTL = "30m";
-const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
+const ACCESS_TOKEN_REDIS_TTL = 30 * 60; // 30 minutes in seconds
+const REFRESH_TOKEN_REDIS_TTL = 14 * 24 * 60 * 60; // 14 days in seconds
+
+const hashToken = (token) => {
+  return crypto.createHash("sha256").update(token).digest("hex");
+};
 
 class AuthService {
   async signUp(userData) {
@@ -43,7 +50,7 @@ class AuthService {
     };
   }
 
-  async signIn(email, passWord) {
+  async signIn(email, passWord, ip = null, ua = null) {
     if (!email || !passWord) {
       throw new AppError("Thiếu email hoặc password", 400);
     }
@@ -63,18 +70,28 @@ class AuthService {
       throw new AppError("Email hoặc password không đúng", 401);
     }
 
+    const jti = crypto.randomUUID();
     const accessToken = jwt.sign(
-      { userId: user._id },
+      { userId: user._id, jti },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: ACCESS_TOKEN_TTL }
     );
 
     const refreshToken = crypto.randomBytes(60).toString("hex");
-    await authRepository.createSession({
-      userId: user._id,
-      refreshToken,
-      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
-    });
+    const hashedRt = hashToken(refreshToken);
+
+    const sessionKey = `sess:${user._id}:${jti}`;
+    const sessionData = {
+      refreshToken: hashedRt,
+      ip,
+      ua,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Store in Redis
+    await redis.set(sessionKey, JSON.stringify(sessionData), "EX", REFRESH_TOKEN_REDIS_TTL);
+    await redis.set(`rt:${hashedRt}`, sessionKey, "EX", REFRESH_TOKEN_REDIS_TTL);
+    await redis.set(`at:${jti}`, String(user._id), "EX", ACCESS_TOKEN_REDIS_TTL);
 
     return {
       accessToken,
@@ -88,10 +105,142 @@ class AuthService {
     };
   }
 
-  async signOut(refreshToken) {
+  async signOut(refreshToken, jti = null) {
     if (refreshToken) {
-      await authRepository.deleteSessionByRefreshToken(refreshToken);
+      const hashedRt = hashToken(refreshToken);
+      const sessionKey = await redis.get(`rt:${hashedRt}`);
+      if (sessionKey) {
+        await redis.del(`rt:${hashedRt}`);
+        await redis.del(sessionKey);
+        const parts = sessionKey.split(":");
+        if (parts.length === 3) {
+          const resolvedJti = parts[2];
+          await redis.del(`at:${resolvedJti}`);
+        }
+      }
     }
+    if (jti) {
+      await redis.del(`at:${jti}`);
+    }
+  }
+
+  async refreshAccessToken(refreshToken, ip = null, ua = null) {
+    if (!refreshToken) {
+      throw new AppError("Không tìm thấy refresh token", 401);
+    }
+
+    const hashedRt = hashToken(refreshToken);
+    const sessionKey = await redis.get(`rt:${hashedRt}`);
+    if (!sessionKey) {
+      throw new AppError("Refresh token không hợp lệ hoặc đã hết hạn", 403);
+    }
+
+    const sessionDataStr = await redis.get(sessionKey);
+    if (!sessionDataStr) {
+      await redis.del(`rt:${hashedRt}`);
+      throw new AppError("Refresh token không hợp lệ hoặc đã hết hạn", 403);
+    }
+
+    const sessionData = JSON.parse(sessionDataStr);
+    if (sessionData.refreshToken !== hashedRt) {
+      throw new AppError("Refresh token không khớp", 403);
+    }
+
+    const parts = sessionKey.split(":");
+    if (parts.length !== 3) {
+      throw new AppError("Session key format error", 500);
+    }
+    const userId = parts[1];
+    const oldJti = parts[2];
+
+    const user = await userRepository.findById(userId);
+    if (!user || user.status === "blocked") {
+      await this.signOutAll(userId);
+      throw new AppError("Người dùng không hợp lệ hoặc tài khoản đã bị khóa", 403);
+    }
+
+    // Revoke old access token
+    await redis.del(`at:${oldJti}`);
+    // Delete old session and lookup key
+    await redis.del(sessionKey);
+    await redis.del(`rt:${hashedRt}`);
+
+    // Generate new session & tokens (RTR)
+    const newJti = crypto.randomUUID();
+    const newAccessToken = jwt.sign(
+      { userId: user._id, jti: newJti },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: ACCESS_TOKEN_TTL }
+    );
+
+    const newRefreshToken = crypto.randomBytes(60).toString("hex");
+    const newHashedRt = hashToken(newRefreshToken);
+
+    const newSessionKey = `sess:${userId}:${newJti}`;
+    const newSessionData = {
+      refreshToken: newHashedRt,
+      ip: ip || sessionData.ip,
+      ua: ua || sessionData.ua,
+      createdAt: new Date().toISOString(),
+    };
+
+    await redis.set(newSessionKey, JSON.stringify(newSessionData), "EX", REFRESH_TOKEN_REDIS_TTL);
+    await redis.set(`rt:${newHashedRt}`, newSessionKey, "EX", REFRESH_TOKEN_REDIS_TTL);
+    await redis.set(`at:${newJti}`, String(userId), "EX", ACCESS_TOKEN_REDIS_TTL);
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      }
+    };
+  }
+
+  async signOutAll(userId) {
+    if (!userId) return;
+
+    let cursor = "0";
+    const pattern = `sess:${userId}:*`;
+    const sessionKeys = [];
+
+    do {
+      const reply = await redis.scan(cursor, "MATCH", pattern, "COUNT", 100);
+      cursor = reply[0];
+      sessionKeys.push(...reply[1]);
+    } while (cursor !== "0");
+
+    if (sessionKeys.length === 0) return;
+
+    const sessionDataList = await redis.mget(...sessionKeys);
+    const pipeline = redis.pipeline();
+
+    sessionKeys.forEach((sessionKey, index) => {
+      pipeline.del(sessionKey);
+
+      const parts = sessionKey.split(":");
+      if (parts.length === 3) {
+        const jti = parts[2];
+        pipeline.del(`at:${jti}`);
+      }
+
+      const dataStr = sessionDataList[index];
+      if (dataStr) {
+        try {
+          const sessionData = JSON.parse(dataStr);
+          if (sessionData.refreshToken) {
+            pipeline.del(`rt:${sessionData.refreshToken}`);
+          }
+        } catch (err) {
+          // Ignore parse errors
+        }
+      }
+    });
+
+    await pipeline.exec();
   }
 
   async sendOTP(email) {

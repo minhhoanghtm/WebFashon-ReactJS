@@ -1,116 +1,124 @@
-import { AppError } from "../../common/exceptions/AppError.js";
+/**
+ * Page validators — Zod schema-based.
+ * Giữ nguyên tên export để không break page.route.js.
+ *
+ * Sử dụng z.discriminatedUnion() cho polymorphic section types thay vì
+ * SectionValidator object thủ công.
+ */
+import { z } from "zod";
+import { validate } from "../../common/utils/validate.js";
 
-const validTypes = ["about", "policy", "faq", "guide", "lookbook", "landing", "blog"];
+// ---------------------------------------------------------------------------
+// Section data schemas theo từng type
+// ---------------------------------------------------------------------------
+
+const heroDataSchema = z.object({
+  title:       z.string().optional(),
+  subtitle:    z.string().optional(),
+  description: z.string().optional(),
+  coverImage:  z.string().optional(),
+  buttonText:  z.string().optional(),
+  buttonLink:  z.string().optional(),
+}).passthrough();
+
+const storyDataSchema = z.object({
+  heading: z.string().optional(),
+  content: z.string().optional(),
+}).passthrough();
+
+const galleryImageSchema = z.object({
+  imageUrl: z.string({ required_error: "Gallery image yêu cầu imageUrl là chuỗi" }),
+  caption:  z.string().optional(),
+}).passthrough();
+
+const galleryDataSchema = z.object({
+  images: z.array(galleryImageSchema).optional(),
+}).passthrough();
+
+const quoteDataSchema = z.object({
+  quote:  z.string({ required_error: "Quote text là bắt buộc và phải là chuỗi" }).min(1, "Quote text là bắt buộc và phải là chuỗi"),
+  author: z.string().optional(),
+}).passthrough();
+
+const imageTextDataSchema = z.object({
+  image:         z.string().optional(),
+  title:         z.string().optional(),
+  content:       z.string().optional(),
+  imagePosition: z.enum(["left", "right"], { message: "Image + Text imagePosition phải là 'left' hoặc 'right'" }).optional(),
+}).passthrough();
+
+const productsDataSchema = z.object({
+  productIds: z.array(z.string(), { required_error: "Products spotlight productIds phải là một mảng" }),
+}).passthrough();
+
+const bannerDataSchema = z.object({
+  image:      z.string().optional(),
+  title:      z.string().optional(),
+  subtitle:   z.string().optional(),
+  buttonText: z.string().optional(),
+  buttonLink: z.string().optional(),
+}).passthrough();
+
+const ctaDataSchema = z.object({
+  title:       z.string().optional(),
+  description: z.string().optional(),
+  buttonText:  z.string().optional(),
+  buttonLink:  z.string().optional(),
+}).passthrough();
+
+// ---------------------------------------------------------------------------
+// Section item schema — discriminated union trên field "type"
+// ---------------------------------------------------------------------------
+
+const sectionSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("hero"),       data: heroDataSchema.optional(),       sortOrder: z.number().optional() }).passthrough(),
+  z.object({ type: z.literal("story"),      data: storyDataSchema.optional(),      sortOrder: z.number().optional() }).passthrough(),
+  z.object({ type: z.literal("gallery"),    data: galleryDataSchema.optional(),    sortOrder: z.number().optional() }).passthrough(),
+  z.object({ type: z.literal("quote"),      data: quoteDataSchema.optional(),      sortOrder: z.number().optional() }).passthrough(),
+  z.object({ type: z.literal("image_text"), data: imageTextDataSchema.optional(),  sortOrder: z.number().optional() }).passthrough(),
+  z.object({ type: z.literal("products"),   data: productsDataSchema.optional(),   sortOrder: z.number().optional() }).passthrough(),
+  z.object({ type: z.literal("banner"),     data: bannerDataSchema.optional(),     sortOrder: z.number().optional() }).passthrough(),
+  z.object({ type: z.literal("cta"),        data: ctaDataSchema.optional(),        sortOrder: z.number().optional() }).passthrough(),
+]);
+
+// ---------------------------------------------------------------------------
+// Page schema
+// ---------------------------------------------------------------------------
+
+const validTypes    = ["about", "policy", "faq", "guide", "lookbook", "landing", "blog"];
 const validStatuses = ["draft", "published", "archived"];
 
-const SectionValidator = {
-  hero: (data, errors) => {
-    if (data.title && typeof data.title !== "string") errors.push("Hero title phải là chuỗi");
-    if (data.subtitle && typeof data.subtitle !== "string") errors.push("Hero subtitle phải là chuỗi");
-    if (data.description && typeof data.description !== "string") errors.push("Hero description phải là chuỗi");
-    if (data.coverImage && typeof data.coverImage !== "string") errors.push("Hero coverImage phải là chuỗi");
-    if (data.buttonText && typeof data.buttonText !== "string") errors.push("Hero buttonText phải là chuỗi");
-    if (data.buttonLink && typeof data.buttonLink !== "string") errors.push("Hero buttonLink phải là chuỗi");
-  },
-  story: (data, errors) => {
-    if (data.heading && typeof data.heading !== "string") errors.push("Story heading phải là chuỗi");
-    if (data.content && typeof data.content !== "string") errors.push("Story content phải là chuỗi");
-  },
-  gallery: (data, errors) => {
-    if (data.images && !Array.isArray(data.images)) {
-      errors.push("Gallery images phải là một mảng");
-    } else if (data.images) {
-      data.images.forEach((img, idx) => {
-        if (!img.imageUrl || typeof img.imageUrl !== "string") {
-          errors.push(`Gallery image tại vị trí ${idx} yêu cầu imageUrl là chuỗi`);
-        }
-        if (img.caption && typeof img.caption !== "string") {
-          errors.push(`Gallery caption tại vị trí ${idx} phải là chuỗi`);
-        }
-      });
-    }
-  },
-  quote: (data, errors) => {
-    if (!data.quote || typeof data.quote !== "string") errors.push("Quote text là bắt buộc và phải là chuỗi");
-    if (data.author && typeof data.author !== "string") errors.push("Quote author phải là chuỗi");
-  },
-  image_text: (data, errors) => {
-    if (data.image && typeof data.image !== "string") errors.push("Image + Text image phải là chuỗi");
-    if (data.title && typeof data.title !== "string") errors.push("Image + Text title phải là chuỗi");
-    if (data.content && typeof data.content !== "string") errors.push("Image + Text content phải là chuỗi");
-    if (data.imagePosition && !["left", "right"].includes(data.imagePosition)) {
-      errors.push("Image + Text imagePosition phải là 'left' hoặc 'right'");
-    }
-  },
-  products: (data, errors) => {
-    if (!data.productIds || !Array.isArray(data.productIds)) {
-      errors.push("Products spotlight productIds phải là một mảng");
-    }
-  },
-  banner: (data, errors) => {
-    if (data.image && typeof data.image !== "string") errors.push("Banner image phải là chuỗi");
-    if (data.title && typeof data.title !== "string") errors.push("Banner title phải là chuỗi");
-    if (data.subtitle && typeof data.subtitle !== "string") errors.push("Banner subtitle phải là chuỗi");
-    if (data.buttonText && typeof data.buttonText !== "string") errors.push("Banner buttonText phải là chuỗi");
-    if (data.buttonLink && typeof data.buttonLink !== "string") errors.push("Banner buttonLink phải là chuỗi");
-  },
-  cta: (data, errors) => {
-    if (data.title && typeof data.title !== "string") errors.push("CTA title phải là chuỗi");
-    if (data.description && typeof data.description !== "string") errors.push("CTA description phải là chuỗi");
-    if (data.buttonText && typeof data.buttonText !== "string") errors.push("CTA buttonText phải là chuỗi");
-    if (data.buttonLink && typeof data.buttonLink !== "string") errors.push("CTA buttonLink phải là chuỗi");
-  }
-};
+const pageSchema = z.object({
+  title:           z.string({ required_error: "Tiêu đề (title) không được để trống" }).trim().min(1, "Tiêu đề (title) không được để trống"),
+  slug:            z.string({ required_error: "Slug không được để trống" }).trim().min(1, "Slug không được để trống"),
+  type:            z.enum(validTypes, {
+                     required_error: "Loại trang (type) không được để trống",
+                     message: `Loại trang (type) phải thuộc một trong các giá trị: ${validTypes.join(", ")}`,
+                   }),
+  status:          z.enum(validStatuses, {
+                     message: `Trạng thái (status) phải thuộc một trong các giá trị: ${validStatuses.join(", ")}`,
+                   }).optional(),
+  sections:        z.array(sectionSchema, { invalid_type_error: "Bố cục các khối (sections) phải là một mảng" }).optional(),
+  relatedProducts: z.array(z.string()).optional(),
+}).passthrough();
 
-export const validatePage = (req, res, next) => {
-  if (req.body && req.body.page) {
-    req.body = {
-      ...req.body.page,
-      sections: req.body.sections || req.body.page.sections || []
+// ---------------------------------------------------------------------------
+// Pre-processing: hỗ trợ body có dạng { page: {...}, sections: [...] }
+// (tương thích với transform đang có trong handler cũ)
+// ---------------------------------------------------------------------------
+
+const pageSchemaWithPreprocess = z.preprocess((input) => {
+  if (input && typeof input === "object" && input.page) {
+    return {
+      ...input.page,
+      sections: input.sections || input.page.sections || [],
     };
   }
-  const data = req.body;
-  const errors = [];
+  return input;
+}, pageSchema);
 
-  if (!data.title || String(data.title).trim() === "") {
-    errors.push("Tiêu đề (title) không được để trống");
-  }
+// ---------------------------------------------------------------------------
+// Middleware export — tên giữ nguyên, backward compatible với page.route.js
+// ---------------------------------------------------------------------------
 
-  if (!data.slug || String(data.slug).trim() === "") {
-    errors.push("Slug không được để trống");
-  }
-
-  if (!data.type) {
-    errors.push("Loại trang (type) không được để trống");
-  } else if (!validTypes.includes(data.type)) {
-    errors.push(`Loại trang (type) phải thuộc một trong các giá trị: ${validTypes.join(", ")}`);
-  }
-
-  if (data.status && !validStatuses.includes(data.status)) {
-    errors.push(`Trạng thái (status) phải thuộc một trong các giá trị: ${validStatuses.join(", ")}`);
-  }
-
-  if (data.relatedProducts && !Array.isArray(data.relatedProducts)) {
-    errors.push("Sản phẩm liên kết (relatedProducts) phải là một mảng");
-  }
-
-  if (data.sections && Array.isArray(data.sections)) {
-    data.sections.forEach((sec, index) => {
-      if (!sec.type) {
-        errors.push(`Khối nội dung thứ ${index} thiếu loại (type)`);
-      } else if (!SectionValidator[sec.type]) {
-        errors.push(`Khối nội dung thứ ${index} chứa loại (type) không hợp lệ: ${sec.type}`);
-      } else {
-        SectionValidator[sec.type](sec.data || {}, errors);
-      }
-    });
-  } else if (data.sections) {
-    errors.push("Bố cục các khối (sections) phải là một mảng");
-  }
-
-  if (errors.length > 0) {
-    return next(new AppError(`Dữ liệu không hợp lệ: ${errors.join(". ")}`, 400));
-  }
-
-  next();
-};
+export const validatePage = validate(pageSchemaWithPreprocess);

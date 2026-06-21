@@ -1,81 +1,54 @@
-import { AppError } from "../../common/exceptions/AppError.js";
+/**
+ * Auth validators — Zod schema-based.
+ * Giữ nguyên tất cả tên export để không break auth.route.js.
+ */
+import { z } from "zod";
+import { validate } from "../../common/utils/validate.js";
+import { zodEmail, zodPassword } from "../../common/utils/schemas.js";
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// ---------------------------------------------------------------------------
+// Schemas
+// ---------------------------------------------------------------------------
 
-export const validateSignUp = (req, res, next) => {
-  const { email, passWord, firstName, lastName } = req.body;
+const signUpSchema = z.object({
+  email:     zodEmail,
+  passWord:  zodPassword,
+  firstName: z.string({ required_error: "firstName là bắt buộc" }).trim().min(1, "firstName không được để trống"),
+  lastName:  z.string({ required_error: "lastName là bắt buộc" }).trim().min(1, "lastName không được để trống"),
+  birthday:  z.string().optional(),
+  sex:       z.enum(["male", "female"], { message: "Giới tính không hợp lệ" }).optional(),
+});
 
-  if (!email || !passWord || !firstName || !lastName) {
-    return next(new AppError("Không thể thiếu passWord, lastName, firstName, email!", 400));
-  }
+const signInSchema = z.object({
+  email:    zodEmail,
+  passWord: z.string({ required_error: "Mật khẩu là bắt buộc" }).min(1, "Mật khẩu không được để trống"),
+});
 
-  if (!emailRegex.test(email)) {
-    return next(new AppError("Định dạng email không hợp lệ!", 400));
-  }
+const sendOTPSchema = z.object({
+  email: zodEmail,
+});
 
-  if (passWord.length < 6) {
-    return next(new AppError("Mật khẩu phải có ít nhất 6 ký tự!", 400));
-  }
+const verifyOTPSchema = z.object({
+  email: zodEmail,
+  otp:   z.string({ required_error: "OTP là bắt buộc" }).min(1, "OTP không được để trống"),
+});
 
-  next();
-};
+const resetPasswordSchema = z.object({
+  email:       zodEmail,
+  otp:         z.string({ required_error: "OTP là bắt buộc" }).min(1, "OTP không được để trống"),
+  newPassword: zodPassword.superRefine((val, ctx) => {
+    if (val.length < 6) {
+      ctx.addIssue({ code: z.ZodIssueCode.too_small, minimum: 6, type: "string", inclusive: true, message: "Mật khẩu mới phải có ít nhất 6 ký tự!" });
+    }
+  }),
+});
 
-export const validateSignIn = (req, res, next) => {
-  const { email, passWord } = req.body;
+// ---------------------------------------------------------------------------
+// Middleware exports — tên giữ nguyên, backward compatible với auth.route.js
+// ---------------------------------------------------------------------------
 
-  if (!email || !passWord) {
-    return next(new AppError("Thiếu email hoặc password", 400));
-  }
-
-  if (!emailRegex.test(email)) {
-    return next(new AppError("Định dạng email không hợp lệ!", 400));
-  }
-
-  next();
-};
-
-export const validateSendOTP = (req, res, next) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return next(new AppError("Email required", 400));
-  }
-
-  if (!emailRegex.test(email)) {
-    return next(new AppError("Định dạng email không hợp lệ!", 400));
-  }
-
-  next();
-};
-
-export const validateVerifyOTP = (req, res, next) => {
-  const { email, otp } = req.body;
-
-  if (!email || !otp) {
-    return next(new AppError("Thiếu email hoặc OTP", 400));
-  }
-
-  if (!emailRegex.test(email)) {
-    return next(new AppError("Định dạng email không hợp lệ!", 400));
-  }
-
-  next();
-};
-
-export const validateResetPassword = (req, res, next) => {
-  const { email, otp, newPassword } = req.body;
-
-  if (!email || !otp || !newPassword) {
-    return next(new AppError("Thiếu dữ liệu reset password", 400));
-  }
-
-  if (!emailRegex.test(email)) {
-    return next(new AppError("Định dạng email không hợp lệ!", 400));
-  }
-
-  if (newPassword.length < 6) {
-    return next(new AppError("Mật khẩu mới phải có ít nhất 6 ký tự!", 400));
-  }
-
-  next();
-};
+export const validateSignUp        = validate(signUpSchema);
+export const validateSignIn        = validate(signInSchema);
+export const validateSendOTP       = validate(sendOTPSchema);
+export const validateVerifyOTP     = validate(verifyOTPSchema);
+export const validateResetPassword = validate(resetPasswordSchema);

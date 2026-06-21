@@ -3,7 +3,14 @@ import { Order, OrderItem } from "./order.model.js";
 class OrderRepository {
   // Order methods
   async create(orderData, options = {}) {
-    return await Order.create(orderData, options);
+    if (Array.isArray(orderData)) {
+      return await Order.create(orderData, options);
+    }
+    // If it is a single document, avoid passing an empty options object directly to Model.create
+    const docs = Object.keys(options).length > 0
+      ? await Order.create([orderData], options)
+      : await Order.create(orderData);
+    return Array.isArray(docs) ? docs[0] : docs;
   }
 
   async save(orderDocument, options = {}) {

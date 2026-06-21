@@ -1,16 +1,16 @@
-import axios from "axios";
+import axiosClient from "./axiosClient";
 
 //lay tinh/thanh
 export const getProvincesApi = () => {
-    return axios.get("https://provinces.open-api.vn/api/p/")
+    return axiosClient.get("/shipping/provinces");
 };
 
 //lay quan/huyen theo tinh/thanh
 export const getDistrictsApi = (provinceCode) => {
-    return axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
+    return axiosClient.get(`/shipping/districts?provinceId=${provinceCode}`);
 };
 
 //lay phuong/xa theo quan/huyen
 export const getWardsApi = (districtCode) => {
-    return axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
+    return axiosClient.get(`/shipping/wards?districtId=${districtCode}`);
 };

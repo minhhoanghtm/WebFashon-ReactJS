@@ -19,12 +19,13 @@ import {
   customerCommunicationRouter,
 } from "../modules/communication/communication.route.js";
 import { protectedRoute, adminOnly } from "../middlewares/auth.middleware.js";
+import { authGlobalLimiter } from "../middlewares/rateLimiter.middleware.js";
 import shippingRouter from "../modules/shipping/shipping.routes.js";
 
 const rootRouter = express.Router();
 
 // Public routes
-rootRouter.use("/auth", authRouter);
+rootRouter.use("/auth", authGlobalLimiter, authRouter);
 rootRouter.use("/categories", categoryRouter);
 rootRouter.use("/products", productRouter);
 rootRouter.use("/product_variants", productVariantRouter);
@@ -45,7 +46,7 @@ rootRouter.use("/cart_items", protectedRoute, cartItemRouter);
 rootRouter.use("/favorites", protectedRoute, favoriteRouter);
 rootRouter.use("/order", protectedRoute, orderRouter);
 rootRouter.use("/order_items", protectedRoute, orderItemRouter);
-rootRouter.use("/payments", protectedRoute, paymentRouter);
+rootRouter.use("/payments", paymentRouter);
 rootRouter.use("/vouchers", voucherRouter);
 
 // Communication domain routes.

@@ -1,114 +1,102 @@
-import mongoose from "mongoose";
+/**
+ * User validators — Zod schema-based.
+ * Giữ nguyên tất cả tên export để không break user.route.js.
+ */
+import { z } from "zod";
+import { validate } from "../../common/utils/validate.js";
 import { AppError } from "../../common/exceptions/AppError.js";
+import { zodEmail, zodPassword, zodObjectId, zodPhone } from "../../common/utils/schemas.js";
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const phoneRegex = /^[0-9]{9,11}$/;
+// ---------------------------------------------------------------------------
+// Reused enum schemas
+// ---------------------------------------------------------------------------
 
-export const validateCreateUser = (req, res, next) => {
-  const { email, passWord, fullName, role, sex } = req.body;
+const sexEnum    = z.enum(["male", "female"],  { message: "Giới tính không hợp lệ! Chỉ chấp nhận: male, female" });
+const roleEnum   = z.enum(["user", "admin"],   { message: "Role không hợp lệ! Chỉ chấp nhận: user, admin" });
+const statusEnum = z.enum(["active", "blocked"], { message: "Trạng thái không hợp lệ! Chỉ chấp nhận: active, blocked" });
 
-  if (!email || !passWord || !fullName) {
-    return next(new AppError("Thiếu thông tin bắt buộc (email, passWord, fullName)", 400));
+// ---------------------------------------------------------------------------
+// Schemas
+// ---------------------------------------------------------------------------
+
+const createUserSchema = z.object({
+  email:    zodEmail,
+  passWord: zodPassword,
+  fullName: z.string({ required_error: "fullName là bắt buộc" }).trim().min(1, "fullName không được để trống"),
+  role:     roleEnum.optional(),
+  sex:      sexEnum.optional(),
+});
+
+// Schemas cho updateUser: params + body riêng biệt
+const updateUserParamsSchema = z.object({
+  id: zodObjectId,
+});
+
+const updateUserBodySchema = z.object({
+  email:    zodEmail.optional(),
+  passWord: zodPassword.optional(),
+  role:     roleEnum.optional(),
+  sex:      sexEnum.optional(),
+  status:   statusEnum.optional(),
+});
+
+const updatePasswordSchema = z.object({
+  currentPassword: z.string({ required_error: "Mật khẩu hiện tại là bắt buộc" }).min(1, "Mật khẩu hiện tại không được để trống"),
+  newPassword:     zodPassword,
+});
+
+// Address item schema
+const addressItemSchema = z.object({
+  phone: zodPhone.optional(),
+}).passthrough();
+
+const updateProfileSchema = z.object({
+  email:     zodEmail.optional(),
+  fullName:  z.string().trim().optional(),
+  sex:       sexEnum.optional(),
+  birthday:  z.string().optional(),
+  address:   addressItemSchema.optional(),
+  addresses: z.array(addressItemSchema).optional(),
+}).passthrough();
+
+const userIdParamSchema = z.object({
+  id: zodObjectId,
+});
+
+// ---------------------------------------------------------------------------
+// Helper: parse và trả về lỗi đồng bộ
+// ---------------------------------------------------------------------------
+function parseOrError(schema, data) {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    const messages = result.error.errors.map((e) => {
+      const field = e.path.length > 0 ? e.path.join(".") + ": " : "";
+      return `${field}${e.message}`;
+    });
+    return { error: new AppError(messages.join("; "), 400), data: null };
   }
+  return { error: null, data: result.data };
+}
 
-  if (!emailRegex.test(email)) {
-    return next(new AppError("Định dạng email không hợp lệ!", 400));
-  }
+// ---------------------------------------------------------------------------
+// Middleware exports — tên giữ nguyên, backward compatible với user.route.js
+// ---------------------------------------------------------------------------
 
-  if (passWord.length < 6) {
-    return next(new AppError("Mật khẩu phải có ít nhất 6 ký tự!", 400));
-  }
+export const validateCreateUser = validate(createUserSchema);
 
-  if (role && !["user",  "admin"].includes(role)) {
-    return next(new AppError("Role không hợp lệ! Chỉ chấp nhận: user, admin", 400));
-  }
-
-  if (sex && !["male", "female"].includes(sex)) {
-    return next(new AppError("Giới tính không hợp lệ! Chỉ chấp nhận: male, female", 400));
-  }
-
-  next();
-};
-
+// validateUpdateUser: validate cả params.id và body
 export const validateUpdateUser = (req, res, next) => {
-  const { id } = req.params;
-  const { email, passWord, role, sex, status } = req.body;
+  const paramsResult = parseOrError(updateUserParamsSchema, req.params);
+  if (paramsResult.error) return next(paramsResult.error);
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new AppError("ID người dùng không hợp lệ", 400));
-  }
+  const bodyResult = parseOrError(updateUserBodySchema, req.body);
+  if (bodyResult.error) return next(bodyResult.error);
 
-  if (email && !emailRegex.test(email)) {
-    return next(new AppError("Định dạng email không hợp lệ!", 400));
-  }
-
-  if (passWord && passWord.length < 6) {
-    return next(new AppError("Mật khẩu phải có ít nhất 6 ký tự!", 400));
-  }
-
-  if (role && !["user", "admin"].includes(role)) {
-    return next(new AppError("Role không hợp lệ! Chỉ chấp nhận: user, admin", 400));
-  }
-
-  if (sex && !["male", "female"].includes(sex)) {
-    return next(new AppError("Giới tính không hợp lệ! Chỉ chấp nhận: male, female", 400));
-  }
-
-  if (status && !["active", "blocked"].includes(status)) {
-    return next(new AppError("Trạng thái không hợp lệ! Chỉ chấp nhận: active, blocked", 400));
-  }
-
+  req.params = paramsResult.data;
+  req.body   = bodyResult.data;
   next();
 };
 
-export const validateUpdatePassword = (req, res, next) => {
-  const { currentPassword, newPassword } = req.body;
-
-  if (!currentPassword || !newPassword) {
-    return next(new AppError("Thiếu mật khẩu hiện tại hoặc mật khẩu mới", 400));
-  }
-
-  if (newPassword.length < 6) {
-    return next(new AppError("Mật khẩu mới phải có ít nhất 6 ký tự!", 400));
-  }
-
-  next();
-};
-
-export const validateUpdateProfile = (req, res, next) => {
-  const { email, sex, address, addresses } = req.body;
-
-  if (email && !emailRegex.test(email)) {
-    return next(new AppError("Định dạng email không hợp lệ!", 400));
-  }
-
-  if (sex && !["male", "female"].includes(sex)) {
-    return next(new AppError("Giới tính không hợp lệ! Chỉ chấp nhận: male, female", 400));
-  }
-
-  // Validate address elements if provided
-  const incomingAddr = addresses
-    ? Array.isArray(addresses)
-      ? addresses
-      : [addresses]
-    : address
-    ? [address]
-    : [];
-
-  if (incomingAddr.length > 0) {
-    const first = incomingAddr[0];
-    if (first.phone && !phoneRegex.test(first.phone)) {
-      return next(new AppError("Số điện thoại trong địa chỉ không hợp lệ! Phải có từ 9 đến 11 chữ số.", 400));
-    }
-  }
-
-  next();
-};
-
-export const validateUserIdParam = (req, res, next) => {
-  const { id } = req.params;
-  if (id && !mongoose.Types.ObjectId.isValid(id)) {
-    return next(new AppError("ID người dùng không hợp lệ", 400));
-  }
-  next();
-};
+export const validateUpdatePassword = validate(updatePasswordSchema);
+export const validateUpdateProfile  = validate(updateProfileSchema);
+export const validateUserIdParam    = validate(userIdParamSchema, "params");
