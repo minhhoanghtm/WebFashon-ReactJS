@@ -1,10 +1,10 @@
-import orderService from "./order.service.js";
+import orderFacade from "./order.facade.js";
 import { successResponse } from "../../common/responses/index.js";
 
 export const createOrder = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const order = await orderService.createOrder(userId, req.body);
+    const order = await orderFacade.createOrder(userId, req.body);
     return res.status(200).json({
       success: true,
       message: "Đặt hàng thành công",
@@ -18,7 +18,7 @@ export const createOrder = async (req, res, next) => {
 export const getOrdersByUser = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const orders = await orderService.getOrdersByUser(userId);
+    const orders = await orderFacade.getOrdersByUser(userId);
     return res.status(200).json({
       success: true,
       orders,
@@ -31,7 +31,7 @@ export const getOrdersByUser = async (req, res, next) => {
 export const updateOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await orderService.updateOrder(id, req.body);
+    await orderFacade.updateOrder(id, req.body);
     return successResponse(res, null, "Cập nhật đơn hàng thành công");
   } catch (error) {
     next(error);
@@ -41,7 +41,7 @@ export const updateOrder = async (req, res, next) => {
 export const deleteOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await orderService.deleteOrder(id);
+    await orderFacade.deleteOrder(id);
     return successResponse(res, null, "Xóa đơn hàng thành công");
   } catch (error) {
     next(error);
@@ -52,7 +52,7 @@ export const paymentOrder = async (req, res, next) => {
   try {
     const userId = req.user.userId;
     const { orderId, payment_method } = req.body;
-    const result = await orderService.paymentOrder(
+    const result = await orderFacade.paymentOrder(
       userId,
       orderId,
       payment_method,
@@ -79,7 +79,7 @@ export const paymentOrder = async (req, res, next) => {
 export const paymentCallback = async (req, res, next) => {
   try {
     const { orderId, status, transactionId } = req.query;
-    const order = await orderService.paymentCallback(
+    const order = await orderFacade.paymentCallback(
       orderId,
       status,
       transactionId,
@@ -95,7 +95,7 @@ export const paymentCallback = async (req, res, next) => {
 
 export const kpi = async (req, res, next) => {
   try {
-    const data = await orderService.getKPIs();
+    const data = await orderFacade.getKPIs();
     return successResponse(res, data, "Lấy dữ liệu thống kê thành công");
   } catch (error) {
     next(error);
@@ -105,7 +105,7 @@ export const kpi = async (req, res, next) => {
 export const getRevenueOverview = async (req, res, next) => {
   try {
     const { type } = req.query;
-    const data = await orderService.getRevenueOverview(type);
+    const data = await orderFacade.getRevenueOverview(type);
     return successResponse(res, data);
   } catch (error) {
     next(error);
@@ -115,7 +115,7 @@ export const getRevenueOverview = async (req, res, next) => {
 export const getOrderStats = async (req, res, next) => {
   try {
     const { userId } = req.query;
-    const stats = await orderService.getOrderStats(userId);
+    const stats = await orderFacade.getOrderStats(userId);
     return successResponse(res, stats, "Lấy dữ liệu thống kê thành công");
   } catch (error) {
     next(error);
@@ -132,7 +132,7 @@ export const dashboardUser = async (req, res, next) => {
 
 export const getPurchasePerformance = async (req, res, next) => {
   try {
-    const stats = await orderService.getPurchasePerformance();
+    const stats = await orderFacade.getPurchasePerformance();
     return successResponse(res, stats);
   } catch (error) {
     next(error);
@@ -141,7 +141,7 @@ export const getPurchasePerformance = async (req, res, next) => {
 
 export const createOrderItem = async (req, res, next) => {
   try {
-    await orderService.createOrderItem(req.body);
+    await orderFacade.createOrderItem(req.body);
     return res.status(200).json({
       success: true,
       message: "Thêm sản phẩm vào đơn hàng thành công",
@@ -154,7 +154,7 @@ export const createOrderItem = async (req, res, next) => {
 export const getOrderItemsByOrderId = async (req, res, next) => {
   try {
     const { order_id } = req.params;
-    const orderItems = await orderService.getOrderItemsByOrderId(order_id);
+    const orderItems = await orderFacade.getOrderItemsByOrderId(order_id);
     return res.status(200).json({
       success: true,
       data: orderItems,
@@ -167,7 +167,7 @@ export const getOrderItemsByOrderId = async (req, res, next) => {
 export const updateOrderItem = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await orderService.updateOrderItem(id, req.body);
+    await orderFacade.updateOrderItem(id, req.body);
     return res.status(200).json({
       success: true,
       message: "Cập nhật sản phẩm trong đơn hàng thành công",
@@ -180,7 +180,7 @@ export const updateOrderItem = async (req, res, next) => {
 export const deleteOrderItem = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await orderService.deleteOrderItem(id);
+    await orderFacade.deleteOrderItem(id);
     return res.status(200).json({
       success: true,
       message: "Xóa sản phẩm khỏi đơn hàng thành công",
@@ -193,7 +193,7 @@ export const deleteOrderItem = async (req, res, next) => {
 export const getAdminOrders = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, status, search } = req.query;
-    const result = await orderService.getAdminOrders({
+    const result = await orderFacade.getAdminOrders({
       page: parseInt(page),
       limit: parseInt(limit),
       status,
@@ -212,7 +212,7 @@ export const updateOrderStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const order = await orderService.updateOrderStatus(id, status);
+    const order = await orderFacade.updateOrderStatus(id, status);
     return res.status(200).json({
       success: true,
       message: "Cập nhật trạng thái đơn hàng thành công",

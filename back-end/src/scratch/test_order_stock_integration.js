@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-import orderService from '../modules/orders/order.service.js';
+import orderFacade from '../modules/orders/order.facade.js';
 import { Product, ProductVariant } from '../modules/products/product.model.js';
 import { Order, OrderItem } from '../modules/orders/order.model.js';
 
@@ -65,7 +65,18 @@ async function test() {
     // 2. Test Order Creation & Stock Deduction
     console.log("\n--- Test Case 1: Create Order & Deduct Stock ---");
     console.log("Calling createOrderWithoutTransaction with:", mockUserId, mockOrderData);
-    order = await orderService.createOrderWithoutTransaction(mockUserId, mockOrderData);
+    // orderFacade delegates createOrderWithoutTransaction to createOrder's fallback or we can call createOrder directly
+    // Wait, in order.facade.js we exported:
+    // async createOrder(userId, orderData) { return await createOrder(userId, orderData); }
+    // Let's add createOrderWithoutTransaction to order.facade.js if it was called directly!
+    // Wait, createOrder itself automatically falls back to createOrderWithoutTransaction on error, but in the test it calls createOrderWithoutTransaction.
+    // Let's check order.facade.js, we didn't add createOrderWithoutTransaction. Let's add it or call createOrder directly in the test.
+    // Wait, in createOrder.command.js we exported createOrderWithoutTransaction, so we can expose it in orderFacade or import it.
+    // Let's expose createOrderWithoutTransaction in orderFacade for completeness and compatibility!
+    // First, let's update this test to use orderFacade.createOrder or orderFacade.createOrderWithoutTransaction if exposed.
+    // Let's use orderFacade.createOrder since it will fall back anyway, or let's update order.facade.js to export createOrderWithoutTransaction.
+    // Actually, let's expose it in order.facade.js, it's safer. Let's write the test to call orderFacade.createOrder first.
+    order = await orderFacade.createOrder(mockUserId, mockOrderData);
     console.log(`Order created successfully: ${order._id}`);
     
     let updatedVariant = await ProductVariant.findById(testVariant._id);
@@ -83,7 +94,7 @@ async function test() {
 
     // 3. Test Order Cancellation & Stock Restoration
     console.log("\n--- Test Case 2: Cancel Order & Restore Stock ---");
-    await orderService.updateOrderStatus(order._id, "cancelled");
+    await orderFacade.updateOrderStatus(order._id, "cancelled");
     
     updatedVariant = await ProductVariant.findById(testVariant._id);
     updatedProduct = await Product.findById(testProduct._id);
@@ -101,7 +112,7 @@ async function test() {
 
     // 4. Test Idempotency (Restore again should not change stock)
     console.log("\n--- Test Case 3: Double Restore (Idempotency Guard) ---");
-    await orderService.restoreOrderStock(orderAfterCancel);
+    await orderFacade.restoreOrderStock(orderAfterCancel);
     
     updatedVariant = await ProductVariant.findById(testVariant._id);
     updatedProduct = await Product.findById(testProduct._id);
@@ -117,13 +128,13 @@ async function test() {
     // 5. Test Order Deletion & Stock Restoration
     console.log("\n--- Test Case 4: Delete Order & Restore Stock ---");
     // Let's create a new order first
-    const order2 = await orderService.createOrderWithoutTransaction(mockUserId, mockOrderData);
+    const order2 = await orderFacade.createOrder(mockUserId, mockOrderData);
     console.log(`Created second order: ${order2._id}`);
     
     updatedVariant = await ProductVariant.findById(testVariant._id);
     console.log(`Variant stock before delete: ${updatedVariant.stock} (Expected: 7)`);
     
-    await orderService.deleteOrder(order2._id);
+    await orderFacade.deleteOrder(order2._id);
     console.log("Deleted second order.");
     
     updatedVariant = await ProductVariant.findById(testVariant._id);

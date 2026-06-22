@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import Order from "../modules/orders/order.model.js";
-import orderService from "../modules/orders/order.service.js";
+import orderFacade from "../modules/orders/order.facade.js";
 
 // Time limit in milliseconds (15 minutes)
 const RESERVATION_TIMEOUT_MS = 15 * 60 * 1000;
@@ -41,7 +41,7 @@ export const initOrderCron = () => {
       // Process each order through the unified business flow
       for (const { _id } of expiredOrders) {
         try {
-          await orderService.cancelExpiredOrder(_id);
+          await orderFacade.cancelExpiredOrder(_id);
           console.log(`✅ [Cron] Cancelled order ${_id}`);
         } catch (err) {
           console.error(`❌ [Cron] Failed to cancel order ${_id}:`, err.message);

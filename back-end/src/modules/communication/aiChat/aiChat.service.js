@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import productService from "../../products/product.service.js";
+import productFacade from "../../products/product.facade.js";
 import conversationService from "../conversations/conversation.service.js";
 import messageService from "../messages/message.service.js";
 import assignmentService from "../supportChat/assignment/assignment.service.js";
@@ -33,7 +33,7 @@ class AiChatService {
 
   async buildProductContext(productId) {
     if (!productId) return null;
-    return productService.getProductDetail(productId);
+    return productFacade.getProductDetail(productId);
   }
 
   async sendMessage(userId, payload) {

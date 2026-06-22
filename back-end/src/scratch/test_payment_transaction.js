@@ -10,10 +10,10 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 import { Order } from '../modules/orders/order.model.js';
 import PaymentTransaction from '../modules/payments/paymentTransaction.model.js';
-import orderService from '../modules/orders/order.service.js';
+import orderFacade from '../modules/orders/order.facade.js';
 
 async function test() {
-  const uri = process.env.MONGO_CONNECTIONSTRING;
+  const uri = process.env.MONGO_CONNECTIONSTRING || "mongodb://localhost:27017/REACT-WebFashion";
   await mongoose.connect(uri);
   console.log("Connected to MongoDB successfully.");
 
@@ -58,7 +58,7 @@ async function test() {
     console.log(`Transaction logged: ${txn._id}`);
 
     // 2. Cập nhật Order sau
-    await orderService.paymentCallback(vnpayQuery.vnp_TxnRef, "success", vnpayQuery.vnp_TransactionNo);
+    await orderFacade.paymentCallback(vnpayQuery.vnp_TxnRef, "success", vnpayQuery.vnp_TransactionNo);
 
     // Verify DB records
     const verifiedTxn = await PaymentTransaction.findOne({ order_id: order._id });

@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-import orderService from '../modules/orders/order.service.js';
+import orderFacade from '../modules/orders/order.facade.js';
 import { Product, ProductVariant } from '../modules/products/product.model.js';
 import { Order, OrderItem } from '../modules/orders/order.model.js';
 
@@ -62,7 +62,7 @@ async function test() {
   try {
     // 1. Create order (stock is deducted: 10 -> 8)
     console.log("\n--- Step 1: Create Order ---");
-    order = await orderService.createOrderWithoutTransaction(mockUserId, mockOrderData);
+    order = await orderFacade.createOrder(mockUserId, mockOrderData);
     console.log(`Order created: ${order._id}, stock_deducted: ${order.stock_deducted}`);
     
     let variant = await ProductVariant.findById(testVariant._id);
@@ -70,7 +70,7 @@ async function test() {
 
     // 2. Simulate Payment Failure
     console.log("\n--- Step 2: Simulate Payment Failure (Expected: status=pending, payment_status=failed, stock reserved) ---");
-    await orderService.paymentCallback(order._id, "failed", null);
+    await orderFacade.paymentCallback(order._id, "failed", null);
     
     let updatedOrder = await Order.findById(order._id);
     console.log(`Order status: ${updatedOrder.status} (Expected: pending)`);
@@ -87,7 +87,7 @@ async function test() {
 
     // 3. Simulate Order Timeout Cancellation (e.g. after 24h)
     console.log("\n--- Step 3: Simulate 24h Expiration Cancellation (Expected: status=cancelled, payment_status=failed, stock restored) ---");
-    await orderService.cancelExpiredOrder(order._id);
+    await orderFacade.cancelExpiredOrder(order._id);
 
     updatedOrder = await Order.findById(order._id);
     console.log(`Order status after cancel: ${updatedOrder.status} (Expected: cancelled)`);

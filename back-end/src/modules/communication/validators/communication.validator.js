@@ -19,14 +19,17 @@ import { ValidationError } from "../errors/communication.errors.js";
 function parseOrThrow(schema, data, contextLabel = "") {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const messages = result.error.errors.map((e) => {
-      const field = e.path.length > 0 ? e.path.join(".") + ": " : "";
+    // Use Zod's issues array (compatible with newer Zod versions)
+    const issues = result.error?.issues ?? [];
+    const messages = issues.map((e) => {
+      const field = e.path && e.path.length > 0 ? e.path.join(".") + ": " : "";
       return `${field}${e.message}`;
     });
     throw new ValidationError(messages.join("; "));
   }
+  // Validation succeeded – return parsed data
   return result.data;
-}
+  }
 
 // ---------------------------------------------------------------------------
 // Zod schemas
@@ -52,11 +55,23 @@ const createMessageDtoSchema = z.object({
 
 const textMessageDtoSchema = z.object({
   conversationId:   z.any().optional(),
-  content:          z.string({ required_error: "content is required" }).max(10000, "content must be at most 10000 characters"),
+  // Accept either 'content' or 'message'
+  content:          z.string().max(10000, "content must be at most 10000 characters").optional(),
+  message:          z.string().max(10000).optional(),
   currentProductId: z.any().optional(),
   metadata:         z.record(z.any()).optional().default({}),
   history:          z.array(z.any()).optional(),
-});
+})
+  // Require at least one of the two fields
+  .refine((data) => !!data.content || !!data.message, {
+    message: "content is required (or message)",
+    path: ["content"],
+  })
+  // Normalize so downstream code always sees `content`
+  .transform((data) => ({
+    ...data,
+    content: data.content ?? data.message,
+  }));
 
 // ---------------------------------------------------------------------------
 // Utility exports — tên và signature giữ nguyên, backward compatible

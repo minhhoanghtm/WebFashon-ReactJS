@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-import productService from '../modules/products/product.service.js';
+import productFacade from '../modules/products/product.facade.js';
 import { Product, ProductVariant } from '../modules/products/product.model.js';
 
 async function test() {
@@ -46,7 +46,7 @@ async function test() {
   try {
     // 2. Test case 1: Deduct variant stock successfully
     console.log("\n--- Test Case 1: Deduct variant stock (Quantity = 3) ---");
-    await productService.deductStock([
+    await productFacade.deductStock([
       {
         product_id: testProduct._id,
         variant_id: testVariant._id,
@@ -69,7 +69,7 @@ async function test() {
     // 3. Test case 2: Deduct variant stock insufficient stock
     console.log("\n--- Test Case 2: Deduct variant stock insufficient (Quantity = 10) ---");
     try {
-      await productService.deductStock([
+      await productFacade.deductStock([
         {
           product_id: testProduct._id,
           variant_id: testVariant._id,
@@ -83,7 +83,7 @@ async function test() {
 
     // 4. Test case 3: Restore variant stock
     console.log("\n--- Test Case 3: Restore variant stock (Quantity = 3) ---");
-    await productService.restoreStock([
+    await productFacade.restoreStock([
       {
         product_id: testProduct._id,
         variant_id: testVariant._id,
@@ -105,7 +105,7 @@ async function test() {
 
     // 5. Test case 4: Deduct product stock (no variant) successfully
     console.log("\n--- Test Case 4: Deduct product stock (no variant) (Quantity = 5) ---");
-    await productService.deductStock([
+    await productFacade.deductStock([
       {
         product_id: testProduct._id,
         quantity: 5
@@ -125,7 +125,7 @@ async function test() {
     // 6. Test case 5: Deduct product stock insufficient
     console.log("\n--- Test Case 5: Deduct product stock insufficient (Quantity = 10) ---");
     try {
-      await productService.deductStock([
+      await productFacade.deductStock([
         {
           product_id: testProduct._id,
           quantity: 10
@@ -138,7 +138,7 @@ async function test() {
 
     // 7. Test case 6: Restore product stock
     console.log("\n--- Test Case 6: Restore product stock (Quantity = 5) ---");
-    await productService.restoreStock([
+    await productFacade.restoreStock([
       {
         product_id: testProduct._id,
         quantity: 5

@@ -1,6 +1,6 @@
 import Order from "../orders/order.model.js";
 import paymentService from "./payment.service.js";
-import orderService from "../orders/order.service.js";
+import orderFacade from "../orders/order.facade.js";
 import PaymentTransaction from "./paymentTransaction.model.js";
 
 class PaymentController {
@@ -70,9 +70,9 @@ class PaymentController {
 
       // 6. Update Order status
       if (isSuccess) {
-        await orderService.paymentCallback(orderId, "success", txnNo);
+        await orderFacade.paymentCallback(orderId, "success", txnNo);
       } else {
-        await orderService.paymentCallback(orderId, "failed", null);
+        await orderFacade.paymentCallback(orderId, "failed", null);
       }
 
       return res.status(200).json({ RspCode: "00", Message: "Confirm success" });
@@ -103,12 +103,22 @@ class PaymentController {
     }
   }
 
+/**
+ * MoMo IPN Compliance
+ * Always return HTTP 200.
+ * Business status is represented by resultCode.
+ * Prevents MoMo retry storm.
+ */
   async momoIpn(req, res, next) {
     try {
       const isValid = paymentService.verifyMomoReturn(req.body);
 
       if (!isValid) {
-        return res.status(400).json({ success: false, message: "Invalid payment signature" });
+        return res.status(200).json({
+          success: false,
+          resultCode: 97,
+          message: "Invalid payment signature",
+        });
       }
 
       const rawOrderId = req.body.orderId || "";
@@ -120,17 +130,29 @@ class PaymentController {
       // 2. Find order
       const order = await Order.findById(orderid);
       if (!order) {
-        return res.status(404).json({ success: false, message: "Order not found" });
+        return res.status(200).json({
+          success: false,
+          resultCode: 98,
+          message: "Order not found",
+        });
       }
 
       // 3. Verify amount
       if (Math.abs(order.total_price - amount) > 1) {
-        return res.status(400).json({ success: false, message: "Amount invalid" });
+        return res.status(200).json({
+          success: false,
+          resultCode: 97,
+          message: "Amount invalid",
+        });
       }
 
       // 4. Check if already processed
       if (order.payment_status === "paid") {
-        return res.status(204).send(); // Already confirmed
+        return res.status(200).json({
+          success: true,
+          resultCode: 0,
+          message: "Order already processed",
+        });
       }
 
       // 5. Log PaymentTransaction first
@@ -145,15 +167,23 @@ class PaymentController {
 
       // 6. Update Order status
       if (isSuccess) {
-        await orderService.paymentCallback(orderid, "success", transId);
+        await orderFacade.paymentCallback(orderid, "success", transId);
       } else {
-        await orderService.paymentCallback(orderid, "failed", null);
+        await orderFacade.paymentCallback(orderid, "failed", null);
       }
 
-      return res.status(204).send();
+      return res.status(200).json({
+        success: true,
+        resultCode: 0,
+        message: "Success",
+      });
     } catch (error) {
       console.error("MoMo IPN Error:", error);
-      return res.status(500).json({ success: false, message: "Internal server error" });
+      return res.status(200).json({
+        success: false,
+        resultCode: 99,
+        message: "Internal server error",
+      });
     }
   }
 }

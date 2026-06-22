@@ -81,6 +81,10 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    weight: {
+      type: Number,
+      default: 0,
+    },
     sold: {
       type: Number,
       default: 0,
@@ -103,6 +107,7 @@ const productSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+productSchema.index({ category_id: 1 });
 
 productSchema.virtual("variants", {
   ref: "product_variants",

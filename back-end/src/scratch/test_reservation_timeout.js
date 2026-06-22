@@ -10,7 +10,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 import { Order, OrderItem } from '../modules/orders/order.model.js';
 import { Product, ProductVariant } from '../modules/products/product.model.js';
-import orderService from '../modules/orders/order.service.js';
+import orderFacade from '../modules/orders/order.facade.js';
 
 async function test() {
   const uri = process.env.MONGO_CONNECTIONSTRING;
@@ -115,7 +115,7 @@ async function test() {
     console.log(`Found ${expiredOrders.length} expired orders (Expected: 2)`);
 
     for (const { _id } of expiredOrders) {
-      await orderService.cancelExpiredOrder(_id);
+      await orderFacade.cancelExpiredOrder(_id);
       console.log(`Cancelled order ${_id}`);
     }
 

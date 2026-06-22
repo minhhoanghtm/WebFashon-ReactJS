@@ -1,10 +1,10 @@
-import productService from "./product.service.js";
+import productFacade from "./product.facade.js";
 import { successResponse } from "../../common/responses/index.js";
 
 // Product controllers
 export const addProduct = async (req, res, next) => {
   try {
-    const product = await productService.addProduct(req.body);
+    const product = await productFacade.addProduct(req.body);
     return successResponse(res, product, "Tạo sản phẩm thành công", 201);
   } catch (error) {
     next(error);
@@ -13,8 +13,8 @@ export const addProduct = async (req, res, next) => {
 
 export const getAllProduct = async (req, res, next) => {
   try {
-    const { sort, order } = req.body;
-    const products = await productService.getAllProducts(sort, order);
+    const { sort, order } = req.query;
+    const products = await productFacade.getAllProducts(sort, order);
     return successResponse(res, products);
   } catch (error) {
     next(error);
@@ -24,7 +24,7 @@ export const getAllProduct = async (req, res, next) => {
 export const getProductBySlug = async (req, res, next) => {
   try {
     const { slug } = req.params;
-    const product = await productService.getProductBySlug(slug);
+    const product = await productFacade.getProductBySlug(slug);
     return successResponse(res, product);
   } catch (error) {
     next(error);
@@ -34,7 +34,7 @@ export const getProductBySlug = async (req, res, next) => {
 export const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const product = await productService.updateProduct(id, req.body);
+    const product = await productFacade.updateProduct(id, req.body);
     return successResponse(res, product, "Cập nhật sản phẩm thành công");
   } catch (error) {
     next(error);
@@ -44,7 +44,7 @@ export const updateProduct = async (req, res, next) => {
 export const deleteProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const data = await productService.deleteProduct(id);
+    const data = await productFacade.deleteProduct(id);
     return successResponse(res, data, "Xóa sản phẩm thành công");
   } catch (error) {
     next(error);
@@ -54,7 +54,7 @@ export const deleteProduct = async (req, res, next) => {
 export const getProductByCategory = async (req, res, next) => {
   try {
     const { categoryid } = req.params;
-    const products = await productService.getProductByCategory(categoryid, req.query.limit);
+    const products = await productFacade.getProductByCategory(categoryid, req.query.limit);
     return successResponse(res, products);
   } catch (error) {
     next(error);
@@ -64,7 +64,7 @@ export const getProductByCategory = async (req, res, next) => {
 export const getProductDetail = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const product = await productService.getProductDetail(id);
+    const product = await productFacade.getProductDetail(id);
     return successResponse(res, product);
   } catch (error) {
     next(error);
@@ -74,7 +74,7 @@ export const getProductDetail = async (req, res, next) => {
 export const suggestProducts = async (req, res, next) => {
   try {
     const { keyword } = req.query;
-    const products = await productService.suggestProducts(keyword);
+    const products = await productFacade.suggestProducts(keyword);
     return successResponse(res, products);
   } catch (error) {
     next(error);
@@ -83,7 +83,7 @@ export const suggestProducts = async (req, res, next) => {
 
 export const searchProducts = async (req, res, next) => {
   try {
-    const results = await productService.searchProducts(req.query);
+    const results = await productFacade.searchProducts(req.query);
     return res.status(200).json({
       success: true,
       data: results.products,
@@ -97,7 +97,7 @@ export const searchProducts = async (req, res, next) => {
 export const getSlugByProductId = async (req, res, next) => {
   try {
     const { productId } = req.params;
-    const slug = await productService.getSlugByProductId(productId);
+    const slug = await productFacade.getSlugByProductId(productId);
     return successResponse(res, { slug }, "Lấy slug thành công");
   } catch (error) {
     next(error);
@@ -107,7 +107,7 @@ export const getSlugByProductId = async (req, res, next) => {
 // Product Variant controllers
 export const createProductVariant = async (req, res, next) => {
   try {
-    const variant = await productService.createVariant(req.body);
+    const variant = await productFacade.createVariant(req.body);
     return successResponse(res, variant, "Thêm biến thể thành công", 201);
   } catch (error) {
     next(error);
@@ -117,7 +117,7 @@ export const createProductVariant = async (req, res, next) => {
 export const updateProductVariant = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const variant = await productService.updateVariant(id, req.body);
+    const variant = await productFacade.updateVariant(id, req.body);
     return successResponse(res, variant, "Cập nhật biến thể thành công");
   } catch (error) {
     next(error);
@@ -127,7 +127,7 @@ export const updateProductVariant = async (req, res, next) => {
 export const deleteProductVariant = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const variant = await productService.deleteVariant(id);
+    const variant = await productFacade.deleteVariant(id);
     return successResponse(res, variant, "Xóa biến thể sản phẩm thành công");
   } catch (error) {
     next(error);
@@ -137,7 +137,7 @@ export const deleteProductVariant = async (req, res, next) => {
 export const getProductVariantByProductId = async (req, res, next) => {
   try {
     const { product_id } = req.params;
-    const variants = await productService.getVariantsByProductId(product_id);
+    const variants = await productFacade.getVariantsByProductId(product_id);
     return successResponse(res, variants);
   } catch (error) {
     next(error);
@@ -147,7 +147,7 @@ export const getProductVariantByProductId = async (req, res, next) => {
 export const getProductVariantById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const variant = await productService.getVariantById(id);
+    const variant = await productFacade.getVariantById(id);
     return successResponse(res, variant);
   } catch (error) {
     next(error);
