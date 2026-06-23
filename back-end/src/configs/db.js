@@ -5,7 +5,8 @@ dotenv.config();
 export const connectDB = async () => {
   try {
     console.log("Attempting to connect to MongoDB...");
-    const conn = await mongoose.connect(process.env.MONGO_CONNECTIONSTRING, {
+    const connectionString = process.env.MONGO_CONNECTIONSTRING || "mongodb://127.0.0.1:27017/webfashion_test";
+  const conn = await mongoose.connect(connectionString, {
       serverSelectionTimeoutMS: 5000,
       connectTimeoutMS: 10000,
     });
