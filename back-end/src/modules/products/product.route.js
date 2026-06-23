@@ -1,10 +1,10 @@
 import express from "express";
 import validate from "../../middlewares/validateZod.js";
-import { createProductSchema, updateProductSchema, searchProductSchema, createVariantSchema, updateVariantSchema } from "../../validators/productValidators.js";
+import { createProductSchema, updateProductSchema, searchProductSchema, createVariantSchema, updateVariantSchema } from "./productValidators.js";
 import {
   addProduct,
   deleteProduct,
-  getAllProduct,
+  getProducts,
   getProductByCategory,
   getProductBySlug,
   getProductDetail,
@@ -18,6 +18,7 @@ import {
   getProductVariantByProductId,
   updateProductVariant,
 } from "./product.controller.js";
+import { getAllProducts } from "./queries/product.query.js";
 
 const productRouter = express.Router();
 
@@ -26,7 +27,7 @@ productRouter.get("/search", validate(searchProductSchema), searchProducts);
 productRouter.get("/category/:categoryid", getProductByCategory);
 productRouter.get("/detail/:id", getProductDetail);
 productRouter.post("/", validate(createProductSchema), addProduct);
-productRouter.get("/", getAllProduct);
+productRouter.get("/", getAllProducts);
 productRouter.put("/:id", validate(updateProductSchema), updateProduct);
 productRouter.delete("/:id", deleteProduct);
 productRouter.get("/:slug", getProductBySlug);

@@ -1,6 +1,6 @@
 import productFacade from "./product.facade.js";
 import validate from "../../middlewares/validateZod.js";
-import { createProductSchema, updateProductSchema, searchProductSchema, createVariantSchema, updateVariantSchema } from "../../validators/productValidators.js";
+import { createProductSchema, updateProductSchema, searchProductSchema, createVariantSchema, updateVariantSchema } from "./productValidators.js";
 import { successResponse } from "../../common/responses/index.js";
 import logger from "../../common/logger.js";
 import { getRedisConnection } from "../../configs/redis.js";
