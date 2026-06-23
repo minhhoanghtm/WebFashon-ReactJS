@@ -27,7 +27,7 @@ export const signIn = async (req, res, next) => {
       maxAge: REFRESH_TOKEN_TTL,
     });
 
-    return successResponse(res, { accessToken }, `User ${user.fullName} đã login!, UserId: ${user._id || user.id}`);
+    return successResponse(res, { accessToken, userId: user._id }, `User ${user.fullName} đã login!, UserId: ${user._id || user.id}`);
   } catch (error) {
     next(error);
   }
@@ -92,8 +92,8 @@ export const signOutAllDevices = async (req, res, next) => {
 export const sendOTPController = async (req, res, next) => {
   try {
     const { email } = req.body;
-    await authService.sendOTP(email);
-    return successResponse(res, null, "OTP sent");
+    const otp = await authService.sendOTP(email);
+    return successResponse(res, { otp }, "OTP sent");
   } catch (error) {
     next(error);
   }

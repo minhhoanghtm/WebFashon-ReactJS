@@ -9,8 +9,10 @@ let testData = {
     passWord: 'Test@123',
     firstName: 'Test',
     lastName: 'User',
-    userName: 'testuser'
+    userName: 'testuser',
   },
+  otpEmail: 'testotp@example.com',
+  otp: null,
   accessToken: null,
   refreshToken: null,
   userId: null,
@@ -18,7 +20,7 @@ let testData = {
   productId: null,
   productItemId: null,
   cartId: null,
-  orderId: null
+  orderId: null,
 };
 
 // Create axios instance
@@ -39,18 +41,20 @@ api.interceptors.request.use((config) => {
 const tests = {
   // ============== AUTH TESTS ==============
   async testSignUp() {
-    try {
-      console.log('\n✅ Testing Sign Up...');
-      const response = await api.post('/auth/signUp', {
-        email: testData.user.email,
-        passWord: testData.user.passWord,
-        firstName: testData.user.firstName,
-        lastName: testData.user.lastName,
-        userName: testData.user.userName
-      });
-      console.log('✓ Sign Up Success:', response.status);
-      return true;
-    } catch (error) {
+      try {
+        console.log('\n✅ Testing Sign Up...');
+        const randomEmail = `test${Date.now()}@example.com`;
+        testData.user.email = randomEmail;
+        const response = await api.post('/auth/signUp', {
+          email: randomEmail,
+          passWord: testData.user.passWord,
+          firstName: testData.user.firstName,
+          lastName: testData.user.lastName,
+          userName: testData.user.userName
+        });
+        console.log('✓ Sign Up Success:', response.status);
+        return true;
+      } catch (error) {
       console.error('✗ Sign Up Failed:', error.response?.data || error.message);
       return false;
     }
@@ -89,8 +93,8 @@ const tests = {
     try {
       console.log('\n✅ Testing Sign In...');
       const response = await api.post('/auth/signIn', {
-        userName: testData.user.userName,
-        passWord: testData.user.passWord
+        email: testData.user.email,
+        passWord: testData.user.passWord,
       });
       testData.accessToken = response.data.accessToken;
       testData.userId = response.data.userId;
