@@ -1,0 +1,46 @@
+# docker-compose.yml  (remove the old `version:` line)
+services:
+  api:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile          # <-- make sure this file exists
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./back-end/.env               
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+
+  front:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    env_file:
+      - ./front-end/.env             
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7.0
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret   
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  mongo-data:

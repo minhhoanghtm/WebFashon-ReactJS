@@ -61,14 +61,37 @@ class AuthService {
       throw new AppError("Email hoặc password không đúng", 401);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.", 403);
+    // Temporary lock check (Redis)
+    const lockKey = `login:lock:${user._id}`;
+    const isLocked = await redis.exists(lockKey);
+    if (isLocked) {
+      const ttl = await redis.ttl(lockKey);
+      throw new AppError(`Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau ${ttl} giây.`, 403);
     }
-
+    // Verify password
     const passWordCorrect = await bcrypt.compare(passWord, user.passWord);
     if (!passWordCorrect) {
+      const failKey = `login:fail:${user._id}`;
+      // Increment fail counter (atomic) and keep it for 30 minutes
+      const attempts = await redis.incr(failKey);
+      await redis.expire(failKey, 30 * 60);
+      // Determine lock duration based on progressive thresholds
+      let lockTtl = 0;
+      if (attempts >= 10) lockTtl = 60 * 60; // 1 hour
+      else if (attempts >= 5) lockTtl = 60; // 1 minute
+      else if (attempts >= 3) lockTtl = 30; // 30 seconds
+      if (lockTtl > 0) {
+        await redis.set(lockKey, '1', 'EX', lockTtl);
+        await redis.del(failKey);
+        logger.warn(`User ${user._id} locked for ${lockTtl}s after ${attempts} failed attempts`);
+        throw new AppError(`Quá giới hạn đăng nhập sai. Tài khoản bị khóa tạm thời ${lockTtl} giây.`, 403);
+      }
+      logger.warn(`Failed login attempt ${attempts} for user ${user._id}`);
       throw new AppError("Email hoặc password không đúng", 401);
     }
+    // Successful login – reset counters
+    await redis.del(`login:fail:${user._id}`);
+    await redis.del(lockKey);
 
     const jti = crypto.randomUUID();
     const accessToken = jwt.sign(

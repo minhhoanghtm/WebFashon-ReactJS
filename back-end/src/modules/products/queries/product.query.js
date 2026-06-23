@@ -64,26 +64,7 @@ export const searchProducts = async (filterQuery) => {
   const perPage = Math.max(Number(limit), 1);
   const skip = (currentPage - 1) * perPage;
 
-  let sortOption = { createdAt: -1 };
-  switch (sort) {
-    case "price_asc":
-      sortOption = { new_price: 1 };
-      break;
-    case "price_desc":
-      sortOption = { new_price: -1 };
-      break;
-    case "rating":
-      sortOption = { rating: -1 };
-      break;
-    case "newest":
-    default:
-      sortOption = { createdAt: -1 };
-  }
 
-  const [products, total] = await Promise.all([
-    productRepository.find(query, sortOption, skip, perPage),
-    productRepository.countDocuments(query),
-  ]);
 
   return {
     products,

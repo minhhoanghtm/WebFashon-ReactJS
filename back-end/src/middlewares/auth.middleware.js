@@ -1,8 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../modules/users/user.model.js";
-import getRedisConnection from "../configs/redis.js";
-
-const redis = getRedisConnection();
+import { isAccessValid, whitelistAccess, blacklistToken } from "../modules/auth/auth.redis.service.js";
 
 export const protectedRoute = (req, res, next) => {
   try {
@@ -25,9 +23,9 @@ export const protectedRoute = (req, res, next) => {
         });
       }
 
-      // Verify access token whitelist in Redis
-      const whitelistUser = await redis.get(`at:${decodeUser.jti}`);
-      if (!whitelistUser || whitelistUser !== String(decodeUser.userId)) {
+      // Verify token via Redis service (whitelist & blacklist)
+      const tokenValid = await isAccessValid(decodeUser.jti);
+      if (!tokenValid) {
         return res.status(403).json({
           success: false,
           message: "Access token đã bị thu hồi hoặc không hợp lệ!",

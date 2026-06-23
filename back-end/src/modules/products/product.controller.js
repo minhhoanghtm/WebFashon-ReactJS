@@ -1,5 +1,9 @@
 import productFacade from "./product.facade.js";
+import validate from "../../middlewares/validateZod.js";
+import { createProductSchema, updateProductSchema, searchProductSchema, createVariantSchema, updateVariantSchema } from "../../validators/productValidators.js";
 import { successResponse } from "../../common/responses/index.js";
+import logger from "../../common/logger.js";
+import { getRedisConnection } from "../../configs/redis.js";
 
 // Product controllers
 export const addProduct = async (req, res, next) => {
@@ -11,15 +15,7 @@ export const addProduct = async (req, res, next) => {
   }
 };
 
-export const getAllProduct = async (req, res, next) => {
-  try {
-    const { sort, order } = req.query;
-    const products = await productFacade.getAllProducts(sort, order);
-    return successResponse(res, products);
-  } catch (error) {
-    next(error);
-  }
-};
+
 
 export const getProductBySlug = async (req, res, next) => {
   try {
@@ -84,11 +80,7 @@ export const suggestProducts = async (req, res, next) => {
 export const searchProducts = async (req, res, next) => {
   try {
     const results = await productFacade.searchProducts(req.query);
-    return res.status(200).json({
-      success: true,
-      data: results.products,
-      pagination: results.pagination,
-    });
+    return successResponse(res, { products: results.products, pagination: results.pagination }, "Search successful");
   } catch (error) {
     next(error);
   }
@@ -151,5 +143,66 @@ export const getProductVariantById = async (req, res, next) => {
     return successResponse(res, variant);
   } catch (error) {
     next(error);
+  }
+};
+
+export const getProducts = async (req, res, next) => {
+  const redis = getRedisConnection();
+  const CACHE_KEY = 'products:all';
+  const CACHE_TTL = 600; // seconds
+  try {
+    const cached = await redis.get(CACHE_KEY);
+    if (cached) {
+      logger.info('Cache hit for %s', CACHE_KEY);
+      const products = JSON.parse(cached);
+      return successResponse(res, products, 'From cache');
+    }
+    logger.info('Cache miss for %s – querying DB', CACHE_KEY);
+    const { sort, order } = req.query;
+    const products = await productFacade.getAllProducts(sort, order);
+    await redis.set(CACHE_KEY, JSON.stringify(products), 'EX', CACHE_TTL);
+    logger.info('Cache set for %s with TTL %ds', CACHE_KEY, CACHE_TTL);
+    return successResponse(res, products);
+  } catch (err) {
+    logger.error('getProducts error: %s', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+export const getRandomProducts = async (req, res, next) => {
+  const { limit = 10, page = 1, seed } = req.query;
+  const numericLimit = parseInt(limit, 10);
+  const numericPage = parseInt(page, 10);
+  const skip = (numericPage - 1) * numericLimit;
+  const redis = getRedisConnection();
+  // Build cache key – if a seed is provided we can cache per seed to keep order stable for that seed
+  const cacheKey = seed
+    ? `products:random:${seed}:page:${numericPage}:limit:${numericLimit}`
+    : null;
+  try {
+    if (cacheKey) {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        logger.info('Cache hit for %s', cacheKey);
+        return successResponse(res, JSON.parse(cached), 'From cache');
+      }
+    }
+
+    // Aggregation pipeline: sample a larger set then paginate to keep randomness per page
+    const pipeline = [
+      { $sample: { size: numericLimit * numericPage } },
+      { $skip: skip },
+      { $limit: numericLimit }
+    ];
+    const products = await productFacade.aggregate(pipeline);
+
+    if (cacheKey) {
+      await redis.set(cacheKey, JSON.stringify(products), 'EX', 300); // 5 min
+      logger.info('Cache set for %s', cacheKey);
+    }
+
+    return successResponse(res, products);
+  } catch (err) {
+    logger.error('getRandomProducts error: %s', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };

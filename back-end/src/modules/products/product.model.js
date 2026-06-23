@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-
 const productVariantSchema = new mongoose.Schema(
   {
     product_id: {
@@ -41,6 +39,15 @@ productVariantSchema.index(
 );
 
 const ProductVariant = mongoose.model("product_variants", productVariantSchema);
+
+// Cascade delete variants when a product is removed
+productSchema.pre("findOneAndDelete", async function (next) {
+  const doc = await this.model.findOne(this.getFilter());
+  if (doc) {
+    await ProductVariant.deleteMany({ product_id: doc._id });
+  }
+  next();
+});
 
 const productSchema = new mongoose.Schema(
   {
@@ -107,7 +114,9 @@ const productSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
 productSchema.index({ category_id: 1 });
+productSchema.index({ weight: 1, category_id: 1 });
 
 productSchema.virtual("variants", {
   ref: "product_variants",
