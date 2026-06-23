@@ -1,21 +1,21 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import voucherService from "file:///d:/Project/REACT-404Studio/back-end/src/modules/vouchers/voucher.service.js";
-import voucherRepository from "file:///d:/Project/REACT-404Studio/back-end/src/modules/vouchers/voucher.repository.js";
-import orderService from "file:///d:/Project/REACT-404Studio/back-end/src/modules/orders/order.service.js";
-import orderRepository from "file:///d:/Project/REACT-404Studio/back-end/src/modules/orders/order.repository.js";
-import paymentService from "file:///d:/Project/REACT-404Studio/back-end/src/modules/payments/payment.service.js";
+import voucherService from "./src/modules/vouchers/voucher.service.js";
+import voucherRepository from "./src/modules/vouchers/voucher.repository.js";
+import orderService from "./src/modules/orders/order.service.js";
+import orderRepository from "./src/modules/orders/order.repository.js";
+import paymentService from "./src/modules/payments/payment.service.js";
 
 // Models for cleanup and assertions
-import Voucher from "file:///d:/Project/REACT-404Studio/back-end/src/modules/vouchers/voucher.model.js";
-import UserVoucher from "file:///d:/Project/REACT-404Studio/back-end/src/modules/vouchers/userVoucher.model.js";
-import VoucherUsage from "file:///d:/Project/REACT-404Studio/back-end/src/modules/vouchers/voucherUsage.model.js";
-import Product from "file:///d:/Project/REACT-404Studio/back-end/src/modules/products/product.model.js";
-import { Order, OrderItem } from "file:///d:/Project/REACT-404Studio/back-end/src/modules/orders/order.model.js";
+import Voucher from "./src/modules/vouchers/voucher.model.js";
+import UserVoucher from "./src/modules/vouchers/userVoucher.model.js";
+import VoucherUsage from "./src/modules/vouchers/voucherUsage.model.js";
+import Product from "./src/modules/products/product.model.js";
+import { Order, OrderItem } from "./src/modules/orders/order.model.js";
 
-import { connectDB } from "file:///d:/Project/REACT-404Studio/back-end/src/configs/db.js";
+import { connectDB } from "./src/configs/db.js";
 
-dotenv.config({ path: "d:/Project/REACT-404Studio/back-end/.env" });
+dotenv.config({ path: "./.env" });
 
 async function run() {
   console.log("Connecting to Database...");
