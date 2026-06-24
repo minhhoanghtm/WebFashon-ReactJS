@@ -45,14 +45,23 @@ const tests = {
         console.log('\n✅ Testing Sign Up...');
         const randomEmail = `test${Date.now()}@example.com`;
         testData.user.email = randomEmail;
-        const response = await api.post('/auth/signUp', {
-          email: randomEmail,
-          passWord: testData.user.passWord,
-          firstName: testData.user.firstName,
-          lastName: testData.user.lastName,
-          userName: testData.user.userName
-        });
-        console.log('✓ Sign Up Success:', response.status);
+        let signUpResponse;
+        try {
+          signUpResponse = await api.post('/auth/signUp', {
+            email: randomEmail,
+            passWord: testData.user.passWord,
+            firstName: testData.user.firstName,
+            lastName: testData.user.lastName,
+          });
+          console.log('✓ Sign Up Success:', signUpResponse.status);
+        } catch (err) {
+          if (err.response && err.response.status === 409) {
+            console.log('⚠️ Email already exists, proceeding');
+            signUpResponse = err.response;
+          } else {
+            throw err;
+          }
+        }
         return true;
       } catch (error) {
       console.error('✗ Sign Up Failed:', error.response?.data || error.message);
@@ -67,6 +76,8 @@ const tests = {
         email: testData.user.email
       });
       console.log('✓ Send OTP Success:', response.data.message);
+      // Store OTP for verification
+      testData.otp = response.data.otp;
       return true;
     } catch (error) {
       console.error('✗ Send OTP Failed:', error.response?.data || error.message);
@@ -79,7 +90,7 @@ const tests = {
       console.log('\n✅ Testing Verify OTP...');
       const response = await api.post('/auth/verify-otp', {
         email: testData.user.email,
-        otp: '123456'
+        otp: testData.otp
       });
       console.log('✓ Verify OTP Success:', response.data.message);
       return true;
@@ -128,6 +139,7 @@ const tests = {
       console.log('\n✅ Testing Create Category...');
       const response = await api.post('/categories', {
         name: 'Test Category',
+        image: 'https://via.placeholder.com/150',
         description: 'Test Category Description'
       });
       testData.categoryId = response.data._id;

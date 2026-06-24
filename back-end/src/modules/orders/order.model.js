@@ -29,12 +29,10 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
-      index: true,
     },
     transaction_id: {
       type: String,
       default: null,
-      index: true,
     },
     paid_at: {
       type: Date,
@@ -121,7 +119,6 @@ const orderItemSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
       required: true,
-      index: true,
     },
     product_id: {
       type: mongoose.Schema.Types.Mixed,

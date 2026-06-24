@@ -1,79 +1,81 @@
 import jwt from "jsonwebtoken";
 import User from "../modules/users/user.model.js";
-import { isAccessValid, whitelistAccess, blacklistToken } from "../modules/auth/auth.redis.service.js";
+import { isAccessValid } from "../modules/auth/auth.redis.service.js";
 
-export const protectedRoute = (req, res, next) => {
+const extractBearerToken = (req) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return null;
+
+  const [scheme, token] = authHeader.split(" ");
+  if (scheme !== "Bearer" || !token) return null;
+
+  return token;
+};
+
+const verifyAccessToken = async (token) => {
+  const decodedUser = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+  const tokenValid = await isAccessValid(decodedUser.jti, decodedUser.userId);
+
+  if (!tokenValid) {
+    const error = new Error("Access token has been revoked or is not whitelisted");
+    error.name = "RevokedAccessTokenError";
+    throw error;
+  }
+
+  return decodedUser;
+};
+
+export const protectedRoute = async (req, res, next) => {
+  const token = extractBearerToken(req);
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Khong tim thay access token",
+    });
+  }
+
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    
-    if (!token) {
-      return res.status(401).json({
+    req.user = await verifyAccessToken(token);
+    return next();
+  } catch (error) {
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      return res.status(403).json({
         success: false,
-        message: "Không tìm thấy access token",
+        message: "Access token het han hoac khong dung!",
       });
     }
 
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodeUser) => {
-      if (err) {
-        console.error("JWT Verify Error:", err.message);
-        return res.status(403).json({
-          success: false,
-          message: "Access token hết hạn hoặc không đúng!",
-        });
-      }
+    if (error.name === "RevokedAccessTokenError") {
+      return res.status(403).json({
+        success: false,
+        message: "Access token da bi thu hoi hoac khong hop le!",
+      });
+    }
 
-      // Verify token via Redis service (whitelist & blacklist)
-      const tokenValid = await isAccessValid(decodeUser.jti);
-      if (!tokenValid) {
-        return res.status(403).json({
-          success: false,
-          message: "Access token đã bị thu hồi hoặc không hợp lệ!",
-        });
-      }
-
-      req.user = decodeUser;
-      next();
-    });
-  } catch (error) {
-    console.error("Lỗi khi xác minh JWT trong auth.middleware:", error);
+    console.error("Loi khi xac minh JWT trong auth.middleware:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi hệ thống",
+      message: "Loi he thong",
     });
   }
 };
 
-export const optionalProtectedRoute = (req, res, next) => {
+export const optionalProtectedRoute = async (req, _res, next) => {
+  const token = extractBearerToken(req);
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-
-    if (!token) {
-      req.user = null;
-      return next();
-    }
-
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodeUser) => {
-      if (err) {
-        req.user = null;
-        return next();
-      }
-
-      // Verify access token whitelist in Redis
-      const whitelistUser = await redis.get(`at:${decodeUser.jti}`);
-      if (!whitelistUser || whitelistUser !== String(decodeUser.userId)) {
-        req.user = null;
-        return next();
-      }
-
-      req.user = decodeUser;
-      next();
-    });
+    req.user = await verifyAccessToken(token);
   } catch (error) {
     req.user = null;
-    next();
   }
+
+  return next();
 };
 
 export const adminOnly = async (req, res, next) => {
@@ -83,7 +85,7 @@ export const adminOnly = async (req, res, next) => {
     if (!userId) {
       return res.status(401).json({
         success: false,
-        message: "Không tìm thấy access token hợp lệ",
+        message: "Khong tim thay access token hop le",
       });
     }
 
@@ -91,23 +93,24 @@ export const adminOnly = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Người dùng không tồn tại!",
+        message: "Nguoi dung khong ton tai!",
       });
     }
 
     if (user.role !== "admin") {
       return res.status(403).json({
         success: false,
-        message: "Bạn không có quyền truy cập",
+        message: "Ban khong co quyen truy cap",
       });
     }
 
-    next();
+    req.user.role = user.role;
+    return next();
   } catch (error) {
-    console.error("Lỗi khi kiểm tra quyền admin:", error);
+    console.error("Loi khi kiem tra quyen admin:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi hệ thống",
+      message: "Loi he thong",
     });
   }
 };

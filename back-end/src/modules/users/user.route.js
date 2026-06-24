@@ -8,7 +8,7 @@ import {
   updateProfile,
   updateUser,
 } from "./user.controller.js";
-import { adminOnly } from "../../middlewares/auth.middleware.js";
+import { protectedRoute, adminOnly } from "../../middlewares/auth.middleware.js";
 import {
   validateCreateUser,
   validateUpdateUser,
@@ -25,9 +25,9 @@ router.put("/updatePassword", validateUpdatePassword, updatePassword);
 router.put("/updateProfile", validateUpdateProfile, updateProfile);
 
 // Chỉ Admin mới được truy cập
-router.get("/admin/users", adminOnly, getAllUsers);
-router.post("/admin/users", adminOnly, validateCreateUser, createUser);
-router.put("/admin/users/:id", adminOnly, validateUpdateUser, updateUser);
-router.delete("/admin/users/:id", adminOnly, validateUserIdParam, deleteUser);
+router.get("/admin/users", protectedRoute, adminOnly, getAllUsers);
+router.post("/admin/users", protectedRoute, adminOnly, validateCreateUser, createUser);
+router.put("/admin/users/:id", protectedRoute, adminOnly, validateUpdateUser, updateUser);
+router.delete("/admin/users/:id", protectedRoute, adminOnly, validateUserIdParam, deleteUser);
 
 export default router;

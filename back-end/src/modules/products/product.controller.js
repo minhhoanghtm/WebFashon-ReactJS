@@ -148,8 +148,9 @@ export const getProductVariantById = async (req, res, next) => {
 
 export const getProducts = async (req, res, next) => {
   const redis = getRedisConnection();
-  const CACHE_KEY = 'products:all';
   const CACHE_TTL = 600; // seconds
+  const { sort = "createdAt", order = "desc" } = req.query;
+  const CACHE_KEY = `products:all:sort:${sort}:order:${order}`;
   try {
     const cached = await redis.get(CACHE_KEY);
     if (cached) {
@@ -158,7 +159,6 @@ export const getProducts = async (req, res, next) => {
       return successResponse(res, products, 'From cache');
     }
     logger.info('Cache miss for %s – querying DB', CACHE_KEY);
-    const { sort, order } = req.query;
     const products = await productFacade.getAllProducts(sort, order);
     await redis.set(CACHE_KEY, JSON.stringify(products), 'EX', CACHE_TTL);
     logger.info('Cache set for %s with TTL %ds', CACHE_KEY, CACHE_TTL);

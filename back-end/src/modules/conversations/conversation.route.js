@@ -1,5 +1,5 @@
 import express from "express";
-import { adminOnly } from "../../middlewares/auth.middleware.js";
+import { protectedRoute, adminOnly } from "../../middlewares/auth.middleware.js";
 import {
   closeConversation,
   createConversation,
@@ -16,14 +16,14 @@ const markAdmin = (req, _res, next) => {
 
 const router = express.Router();
 
-router.get("/admin", adminOnly, markAdmin, getAdminConversations);
+router.get("/admin", protectedRoute, adminOnly, markAdmin, getAdminConversations);
 router.get("/", getMyConversations);
 router.post("/", createConversation);
 router.get("/:id", getConversationDetail);
 router.patch("/:id", updateConversation);
 router.patch("/:id/close", closeConversation);
-router.get("/admin/:id", adminOnly, markAdmin, getConversationDetail);
-router.patch("/admin/:id", adminOnly, markAdmin, updateConversation);
-router.patch("/admin/:id/close", adminOnly, markAdmin, closeConversation);
+router.get("/admin/:id", protectedRoute, adminOnly, markAdmin, getConversationDetail);
+router.patch("/admin/:id", protectedRoute, adminOnly, markAdmin, updateConversation);
+router.patch("/admin/:id/close", protectedRoute, adminOnly, markAdmin, closeConversation);
 
 export default router;

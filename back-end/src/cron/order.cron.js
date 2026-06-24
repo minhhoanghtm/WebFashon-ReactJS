@@ -4,6 +4,7 @@ import orderFacade from "../modules/orders/order.facade.js";
 
 // Time limit in milliseconds (15 minutes)
 const RESERVATION_TIMEOUT_MS = 15 * 60 * 1000;
+let isRunning = false;
 
 /**
  * Reservation Timeout Cron Job.
@@ -19,6 +20,11 @@ const RESERVATION_TIMEOUT_MS = 15 * 60 * 1000;
  */
 export const initOrderCron = () => {
   cron.schedule("* * * * *", async () => {
+    if (isRunning) {
+      console.log('⏰ [Cron] Previous order cron still running, skipping this tick');
+      return;
+    }
+    isRunning = true;
     try {
       const timeLimit = new Date(Date.now() - RESERVATION_TIMEOUT_MS);
 
@@ -49,6 +55,8 @@ export const initOrderCron = () => {
       }
     } catch (error) {
       console.error("❌ [Cron] Reservation timeout cron error:", error);
+    } finally {
+      isRunning = false;
     }
   });
 

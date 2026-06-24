@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff, LoaderCircle, CheckCircle2 } from "lucide-react";
-import { sendOTPServive, resetPasswordService } from "@/services/auth.service";
+import { ArrowLeft, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { sendResetOTPService, verifyOTPService, resetPasswordService } from "@/services/auth.service";
 import { toast } from "react-toastify";
+
+const RESEND_COOLDOWN = 60; // 60 seconds
 
 const ResetPasswordForm = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1: Enter email, 2: Enter OTP & New Password
+  const [step, setStep] = useState(1); // 1: Enter email, 2: Enter OTP, 3: Enter New Password
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -17,6 +19,31 @@ const ResetPasswordForm = () => {
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // States for Resend OTP
+  const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
+  const [canResend, setCanResend] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (step !== 2) return;
+    if (countdown <= 0) {
+      setCanResend(true);
+      return;
+    }
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          setCanResend(true);
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [countdown, step]);
 
   const validateStep1 = () => {
     const nextErrors = {};
@@ -34,9 +61,14 @@ const ResetPasswordForm = () => {
     if (!otp) {
       nextErrors.otp = "Vui lòng nhập mã OTP.";
     } else if (otp.length < 4) {
-      nextErrors.otp = "Mã OTP không hợp lệ.";
+      nextErrors.otp = "Mã OTP phải có ít nhất 4 ký tự.";
     }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
 
+  const validateStep3 = () => {
+    const nextErrors = {};
     if (!newPassword) {
       nextErrors.newPassword = "Vui lòng nhập mật khẩu mới.";
     } else if (newPassword.length < 6) {
@@ -58,9 +90,12 @@ const ResetPasswordForm = () => {
 
     try {
       setIsSubmitting(true);
-      // Gọi API gửi OTP (body dạng { email })
-      await sendOTPServive({ email });
+      const res = await sendResetOTPService({ email: email.trim() });
+      const receivedOtp = res?.otp || res?.data?.otp;
+      console.log(`🔑 [OTP Debug] Mã OTP nhận được: ${receivedOtp}`);
       toast.success("Mã OTP đã được gửi đến email của bạn!");
+      setCountdown(RESEND_COOLDOWN);
+      setCanResend(false);
       setStep(2);
     } catch (err) {
       console.error(err);
@@ -73,16 +108,56 @@ const ResetPasswordForm = () => {
     }
   };
 
-  const handleResetPassword = async (e) => {
+  const handleVerifyOTP = async (e) => {
     e.preventDefault();
     setErrors({});
     if (!validateStep2()) return;
 
     try {
       setIsSubmitting(true);
-      // Gọi API resetPassword (body dạng { email, otp, newPassword })
+      await verifyOTPService({ email: email.trim(), otp });
+      toast.success("Xác thực OTP thành công!");
+      setStep(3);
+    } catch (err) {
+      console.error(err);
+      setErrors({
+        otp: err.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn.",
+      });
+      toast.error(err.response?.data?.message || "Xác thực OTP thất bại");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (!canResend || isResending) return;
+    try {
+      setIsResending(true);
+      setErrors({});
+      const res = await sendResetOTPService({ email: email.trim() });
+      const receivedOtp = res?.otp || res?.data?.otp;
+      console.log(`🔑 [OTP Debug] Mã OTP gửi lại nhận được: ${receivedOtp}`);
+      toast.success("Mã OTP mới đã được gửi đến email của bạn!");
+      setOtp("");
+      setCountdown(RESEND_COOLDOWN);
+      setCanResend(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Gửi lại mã OTP thất bại");
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setErrors({});
+    if (!validateStep3()) return;
+
+    try {
+      setIsSubmitting(true);
       await resetPasswordService({
-        email,
+        email: email.trim(),
         otp,
         newPassword,
       });
@@ -99,32 +174,45 @@ const ResetPasswordForm = () => {
     }
   };
 
+  const handleBack = () => {
+    if (step === 3) {
+      setStep(2);
+      setErrors({});
+    } else if (step === 2) {
+      setStep(1);
+      setErrors({});
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
     <div className="reset-form-section">
       <div className="reset-form-container">
         <button
-          onClick={() => {
-            if (step === 2) {
-              setStep(1);
-              setErrors({});
-            } else {
-              navigate("/login");
-            }
-          }}
+          onClick={handleBack}
           className="reset-back-btn"
           type="button"
         >
           <ArrowLeft size={17} aria-hidden="true" />
-          <span>{step === 2 ? "Quay lại nhập email" : "Quay lại đăng nhập"}</span>
+          <span>
+            {step === 3 
+              ? "Quay lại nhập OTP" 
+              : step === 2 
+              ? "Quay lại nhập email" 
+              : "Quay lại đăng nhập"}
+          </span>
         </button>
 
         <header className="reset-header">
           <span className="reset-header__eyebrow">404Studio</span>
-          <h1 className="reset-header__title">Đặt lại mật khẩu</h1>
+          <h1 className="reset-header__title">
+            {step === 3 ? "Đặt mật khẩu mới" : "Đặt lại mật khẩu"}
+          </h1>
           <p className="reset-header__desc">
-            {step === 1
-              ? "Nhập email của bạn để nhận mã xác minh OTP khôi phục tài khoản."
-              : `Mã OTP đã được gửi. Hãy kiểm tra hộp thư email ${email}.`}
+            {step === 1 && "Nhập email của bạn để nhận mã xác minh OTP khôi phục tài khoản."}
+            {step === 2 && `Mã OTP đã được gửi. Hãy kiểm tra hộp thư email ${email}.`}
+            {step === 3 && `Tạo mật khẩu mới cho tài khoản ${email}.`}
           </p>
         </header>
 
@@ -132,7 +220,7 @@ const ResetPasswordForm = () => {
           <div className="reset-general-error">{errors.general}</div>
         )}
 
-        {step === 1 ? (
+        {step === 1 && (
           <form onSubmit={handleSendOTP}>
             <div className="reset-field-group">
               <div className="reset-field">
@@ -167,10 +255,11 @@ const ResetPasswordForm = () => {
               )}
             </button>
           </form>
-        ) : (
-          <form onSubmit={handleResetPassword}>
+        )}
+
+        {step === 2 && (
+          <form onSubmit={handleVerifyOTP}>
             <div className="reset-field-group">
-              {/* OTP Field */}
               <div className="reset-field">
                 <label htmlFor="otp" className="reset-field__label">
                   Mã xác minh OTP
@@ -191,7 +280,42 @@ const ResetPasswordForm = () => {
                 />
                 {errors.otp && <span className="reset-error">{errors.otp}</span>}
               </div>
+            </div>
 
+            <button type="submit" className="reset-button" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <LoaderCircle className="animate-spin h-5 w-5" aria-hidden="true" />
+                  <span>Đang xác thực OTP...</span>
+                </>
+              ) : (
+                "Xác nhận mã OTP"
+              )}
+            </button>
+
+            {/* Gửi lại OTP Row */}
+            <div className="reset-resend-row">
+              <span className="reset-resend-label">Không nhận được mã?</span>
+              <button
+                type="button"
+                className="reset-resend-btn"
+                onClick={handleResendOTP}
+                disabled={!canResend || isResending}
+              >
+                {isResending ? "Đang gửi lại…" : "Gửi lại mã"}
+              </button>
+              {!canResend && (
+                <span className="reset-resend-countdown">
+                  {countdown}s
+                </span>
+              )}
+            </div>
+          </form>
+        )}
+
+        {step === 3 && (
+          <form onSubmit={handleResetPassword}>
+            <div className="reset-field-group">
               {/* New Password Field */}
               <div className="reset-field">
                 <label htmlFor="newPassword" className="reset-field__label">

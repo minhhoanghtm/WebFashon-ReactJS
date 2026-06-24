@@ -350,6 +350,12 @@ const Profile = () => {
     },
   });
 
+  const [avatarError, setAvatarError] = useState(false);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [userProfile?.avatar_url, userProfile?.avatar, userProfile?.image]);
+
   const ordersQuery = useQuery({
     queryKey: ["profile-orders-summary"],
     queryFn: async () => {
@@ -682,8 +688,12 @@ const Profile = () => {
         <aside className="profile-sidebar">
           <div className="profile-sidebar__user">
             <div className="profile-sidebar__avatar">
-              {avatarUrl && avatarUrl !== DEFAULT_AVATAR ? (
-                <img src={avatarUrl} alt={getUserName(userProfile)} />
+              {avatarUrl && avatarUrl !== DEFAULT_AVATAR && !avatarError ? (
+                <img 
+                  src={avatarUrl} 
+                  alt={getUserName(userProfile)} 
+                  onError={() => setAvatarError(true)} 
+                />
               ) : (
                 <span>{getInitial(userProfile)}</span>
               )}
@@ -739,8 +749,12 @@ const Profile = () => {
             <div className="profile-hero__body">
               <div className="profile-hero__identity">
                 <div className="profile-hero__avatar">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt={getUserName(userProfile)} />
+                  {avatarUrl && !avatarError ? (
+                    <img 
+                      src={avatarUrl} 
+                      alt={getUserName(userProfile)} 
+                      onError={() => setAvatarError(true)} 
+                    />
                   ) : (
                     <span>{getInitial(userProfile)}</span>
                   )}

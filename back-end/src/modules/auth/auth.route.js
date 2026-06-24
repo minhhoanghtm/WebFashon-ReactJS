@@ -2,6 +2,7 @@ import express from "express";
 import {
   resetPassword,
   sendOTPController,
+  sendResetOTPController,
   signIn,
   signOut,
   signUp,
@@ -33,6 +34,7 @@ router.post("/signOut", optionalProtectedRoute, signOut);
 router.post("/signOutAll", protectedRoute, signOutAllDevices);
 router.post("/refreshToken", refreshAccessToken);
 router.post("/sendOTP", sendOtpLimiter, validateSendOTP, sendOTPController);
+router.post("/sendResetOTP", sendOtpLimiter, validateSendOTP, sendResetOTPController);
 router.post("/verify-otp", verifyOtpLimiter, validateVerifyOTP, verifyOTP);
 router.post("/resetPassword", resetPasswordLimiter, validateResetPassword, resetPassword);
 

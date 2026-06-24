@@ -14,6 +14,10 @@ export const sendOTPApi = (data) => {
   return api.post("/auth/sendOTP", data);
 }
 
+export const sendResetOTPApi = (data) => {
+  return api.post("/auth/sendResetOTP", data);
+}
+
 export const verifyOTPApi = (data) => {
   return api.post("/auth/verify-otp", data);
 }

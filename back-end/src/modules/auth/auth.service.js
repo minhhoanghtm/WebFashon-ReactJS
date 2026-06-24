@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import getRedisConnection from "../../configs/redis.js";
+import logger from "../../common/logger.js";
 dotenv.config();
 
 const redis = getRedisConnection();
@@ -293,6 +294,30 @@ class AuthService {
     return otp;
   }
 
+  async sendResetPasswordOTP(email) {
+    if (!email) {
+      throw new AppError("Email required", 400);
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    const existingUser = await userRepository.findByEmail(normalizedEmail);
+    if (!existingUser) {
+      throw new AppError("Email không tồn tại", 404);
+    }
+
+    const otp = generateOTP();
+
+    await authRepository.deleteOtpsByEmail(normalizedEmail);
+    await authRepository.createOtp({
+      email: normalizedEmail,
+      otp,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    await addEmailJob(normalizedEmail, otp);
+    return otp;
+  }
+
   async verifyOTP(email, otp) {
     if (!email || !otp) {
       throw new AppError("Thiếu email hoặc OTP", 400);
@@ -318,6 +343,7 @@ class AuthService {
   }
 
   async resetPassword(email, otp, newPassword) {
+    console.log("resetPassword inputs:", { email, otp, newPassword: newPassword ? "***" : "missing" });
     if (!email || !otp || !newPassword) {
       throw new AppError("Thiếu dữ liệu", 400);
     }
@@ -325,9 +351,20 @@ class AuthService {
     await this.verifyOTP(email, otp);
 
     const normalizedEmail = normalizeEmail(email);
+    console.log("resetPassword normalizedEmail:", normalizedEmail);
     const user = await userRepository.findByEmail(normalizedEmail);
+    console.log("resetPassword user found:", user ? user._id : "null");
     if (!user) {
-      throw new AppError("Không tìm thấy user", 404);
+      const fs = await import("fs");
+      try {
+        fs.appendFileSync(
+          "src/scratch/error_logs.txt",
+          `[${new Date().toISOString()}] ResetPassword fail: email="${email}", normalized="${normalizedEmail}", userNotFound\n`
+        );
+      } catch (e) {
+        console.error("Failed to write log file:", e);
+      }
+      throw new AppError(`Không tìm thấy user với email: "${normalizedEmail}" (gốc: "${email}")`, 404);
     }
 
     user.passWord = await bcrypt.hash(newPassword, 10);

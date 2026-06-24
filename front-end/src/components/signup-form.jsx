@@ -255,7 +255,7 @@ const validatePassword = (password) => {
         </Field>
         <FieldSeparator>Hoặc tiếp tục với</FieldSeparator>
         <Field>
-          <Button variant="outline" type="button">
+          {/* <Button variant="outline" type="button">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path
                 d="M22 12.07C22 6.48 17.52 2 11.93 2S1.86 6.48 1.86 12.07c0 5.02 3.66 9.18 8.44 9.93v-7.03H7.9v-2.9h2.4V9.41c0-2.37 1.41-3.68 3.57-3.68 1.03 0 2.1.18 2.1.18v2.31h-1.18c-1.16 0-1.52.72-1.52 1.46v1.76h2.59l-.41 2.9h-2.18v7.03c4.78-.75 8.44-4.91 8.44-9.93z"
@@ -263,8 +263,8 @@ const validatePassword = (password) => {
               />
             </svg>
             Đăng ký với Facebook
-          </Button>
-          <Button variant="outline" type="button">
+          </Button> */}
+          {/* <Button variant="outline" type="button">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path
                 d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
@@ -272,8 +272,8 @@ const validatePassword = (password) => {
               />
             </svg>
             Đăng ký với Gmail
-          </Button>
-          <Button variant="outline" type="button">
+          </Button> */}
+          {/* <Button variant="outline" type="button">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path
                 d="M18.244 2H21.5l-7.5 8.57L22 22h-6.828l-5.35-6.99L3.5 22H.244l8.02-9.17L2 2h6.828l4.86 6.39L18.244 2zm-2.4 18h1.8L7.6 4h-1.8l10.044 16z"
@@ -281,7 +281,7 @@ const validatePassword = (password) => {
               />
             </svg>
             Đăng ký với X
-          </Button>
+          </Button> */}
           <FieldDescription className="px-6 text-center">
             Bạn đã có tài khoản? <Link to="/login">Đăng nhập</Link>
           </FieldDescription>

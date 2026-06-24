@@ -1,4 +1,4 @@
-import { loginApi, registerApi, resetPasswordApi, sendOTPApi, verifyOTPApi } from "@/api/authApi";
+import { loginApi, registerApi, resetPasswordApi, sendOTPApi, sendResetOTPApi, verifyOTPApi } from "@/api/authApi";
 
 //login
 export const loginService = async (data) => {
@@ -20,6 +20,11 @@ export const logout = () => {
 
 export const sendOTPServive = async (data) => {
     const res = await sendOTPApi(data);
+    return res.data;
+}
+
+export const sendResetOTPService = async (data) => {
+    const res = await sendResetOTPApi(data);
     return res.data;
 }
 

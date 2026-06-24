@@ -219,7 +219,7 @@ export function LoginForm({ className, ...props }) {
                   <span className="sr-only">Đăng nhập với Google</span>
                 </Button>
 
-                <Button
+                {/* <Button
                   variant="outline"
                   type="button"
                   title="Đăng nhập với Facebook"
@@ -231,7 +231,7 @@ export function LoginForm({ className, ...props }) {
                 <Button variant="outline" type="button" title="Đăng nhập với X">
                   <XIcon />
                   <span className="sr-only">Đăng nhập với X</span>
-                </Button>
+                </Button> */}
               </Field>
 
               <FieldDescription className="text-center">

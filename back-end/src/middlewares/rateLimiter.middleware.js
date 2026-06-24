@@ -1,4 +1,6 @@
 import rateLimit from "express-rate-limit";
+// Environment flag to bypass rate limiting during automated tests
+const DISABLE_RATE_LIMIT_FOR_TESTS = process.env.DISABLE_RATE_LIMIT_FOR_TESTS === "true";
 
 /**
  * Rate limiter cho các route auth nhạy cảm.
@@ -10,8 +12,11 @@ import rateLimit from "express-rate-limit";
  * - global auth:     100 request / 15 phút mỗi IP → chống DDoS toàn bộ /auth.
  */
 
-const createLimiter = (windowMs, max, message) =>
-  rateLimit({
+const createLimiter = (windowMs, max, message) => {
+  if (DISABLE_RATE_LIMIT_FOR_TESTS) {
+    return (req, res, next) => next();
+  }
+  return rateLimit({
     windowMs,
     max,
     standardHeaders: true, // Trả về RateLimit-* headers (draft-6)
@@ -21,6 +26,7 @@ const createLimiter = (windowMs, max, message) =>
       message,
     },
   });
+};
 
 // ──────────────────────────────────────────────
 // Route-level limiters

@@ -29,6 +29,7 @@ const ProductToolbar = ({
             value={sortBy}
             onChange={(event) => onSortChange(event.target.value)}
           >
+            <option value="default">Mặc định</option>
             <option value="popular">Phổ biến</option>
             <option value="price_asc">Giá thấp đến cao</option>
             <option value="price_desc">Giá cao đến thấp</option>

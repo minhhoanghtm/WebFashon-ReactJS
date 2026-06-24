@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "dev": "nodemon src/server.js",
     "start": "node  src/server.js",
     "seed:pages": "node seed/pages.js"
@@ -39,6 +39,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }

@@ -18,7 +18,7 @@ import {
   getAdminOrders,
   updateOrderStatus,
 } from "./order.controller.js";
-import { adminOnly } from "../../middlewares/auth.middleware.js";
+import { protectedRoute, adminOnly } from "../../middlewares/auth.middleware.js";
 import { validateUpdateOrderStatus } from "./order.validator.js";
 
 const orderRouter = express.Router();
@@ -31,11 +31,11 @@ orderRouter.post("/payment", paymentOrder);
 orderRouter.get("/payment/callback", paymentCallback);
 
 // Admin reports
-orderRouter.get("/admin/kpi", adminOnly, kpi);
-orderRouter.get("/admin/revenue", adminOnly, getRevenueOverview);
-orderRouter.get("/admin/stats", adminOnly, getOrderStats);
-orderRouter.get("/admin/orders", adminOnly, getAdminOrders);
-orderRouter.patch("/admin/orders/:id/status", adminOnly, validateUpdateOrderStatus, updateOrderStatus);
+orderRouter.get("/admin/kpi", protectedRoute, adminOnly, kpi);
+orderRouter.get("/admin/revenue", protectedRoute, adminOnly, getRevenueOverview);
+orderRouter.get("/admin/stats", protectedRoute, adminOnly, getOrderStats);
+orderRouter.get("/admin/orders", protectedRoute, adminOnly, getAdminOrders);
+orderRouter.patch("/admin/orders/:id/status", protectedRoute, adminOnly, validateUpdateOrderStatus, updateOrderStatus);
 // User metrics
 orderRouter.get("/user/revenue", dashboardUser);
 orderRouter.get("/user/purchasing_performance", getPurchasePerformance);

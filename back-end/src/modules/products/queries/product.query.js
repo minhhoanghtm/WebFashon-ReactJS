@@ -5,9 +5,20 @@ import mongoose from "mongoose";
 
 export const getAllProducts = async (sort = "createdAt", order = "desc") => {
   const sortOption = {};
-  sort.split(",").forEach((element) => {
-    sortOption[element] = order === "asc" ? 1 : -1;
+  const sortFields = typeof sort === "string" && sort.trim() ? sort : "createdAt";
+  const sortOrder = order === "asc" ? 1 : -1;
+
+  sortFields.split(",").forEach((element) => {
+    const field = element.trim();
+    if (field) {
+      sortOption[field] = sortOrder;
+    }
   });
+
+  if (!sortOption._id) {
+    sortOption._id = sortOrder;
+  }
+
   return await productRepository.findWithoutPagination({}, sortOption);
 };
 
@@ -36,7 +47,7 @@ export const searchProducts = async (filterQuery) => {
     minPrice,
     maxPrice,
     rating,
-    sort,
+    sort = "default",
   } = filterQuery;
 
   const query = { is_active: true };
@@ -64,7 +75,20 @@ export const searchProducts = async (filterQuery) => {
   const perPage = Math.max(Number(limit), 1);
   const skip = (currentPage - 1) * perPage;
 
+  const sortOptions = {
+    default: { createdAt: -1, _id: -1 },
+    newest: { createdAt: -1, _id: -1 },
+    popular: { sold: -1, rating: -1, _id: -1 },
+    price_asc: { new_price: 1, _id: 1 },
+    price_desc: { new_price: -1, _id: -1 },
+    name_asc: { name: 1, _id: 1 },
+  };
+  const sortOption = sortOptions[sort] || sortOptions.default;
 
+  const [products, total] = await Promise.all([
+    productRepository.findPaginated(query, sortOption, skip, perPage),
+    productRepository.countDocuments(query),
+  ]);
 
   return {
     products,

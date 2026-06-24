@@ -17,7 +17,7 @@ export const getCart = async (req, res, next) => {
     const cartItems = await cartService.getCart(userId);
     return successResponse(res, cartItems);
   } catch (error) {
-    next(error);
+    next(error);cart.service.js
   }
 };
 

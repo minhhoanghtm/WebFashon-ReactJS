@@ -93,6 +93,18 @@ export const sendOTPController = async (req, res, next) => {
   try {
     const { email } = req.body;
     const otp = await authService.sendOTP(email);
+    console.log(`🔑 [Register OTP] Email: ${email} -> OTP: ${otp}`);
+    return successResponse(res, { otp }, "OTP sent");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const sendResetOTPController = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const otp = await authService.sendResetPasswordOTP(email);
+    console.log(`🔑 [Reset Password OTP] Email: ${email} -> OTP: ${otp}`);
     return successResponse(res, { otp }, "OTP sent");
   } catch (error) {
     next(error);

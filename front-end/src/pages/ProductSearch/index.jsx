@@ -29,6 +29,7 @@ const initialFilters = {
 };
 
 const validSortOptions = [
+  "default",
   "popular",
   "price_asc",
   "price_desc",
@@ -44,7 +45,7 @@ const ProductSearch = () => {
   );
   const [sortBy, setSortBy] = useState(() => {
     const initialSort = searchParams.get("sort");
-    return validSortOptions.includes(initialSort) ? initialSort : "popular";
+    return validSortOptions.includes(initialSort) ? initialSort : "default";
   });
   const [filters, setFilters] = useState(initialFilters);
   const favoriteItems = useFavoriteStore((state) => state.items);
@@ -72,7 +73,7 @@ const ProductSearch = () => {
         category: categoryIds || undefined,
         minPrice: filters.minPrice !== null && filters.minPrice !== undefined ? filters.minPrice : undefined,
         maxPrice: filters.maxPrice !== null && filters.maxPrice !== undefined ? filters.maxPrice : undefined,
-        sort: sortBy,
+        sort: sortBy !== "default" ? sortBy : undefined,
         limit: 1000,
       };
       return await searchProductsService(params);
@@ -186,6 +187,8 @@ const ProductSearch = () => {
 
     return result.sort((firstProduct, secondProduct) => {
       switch (sortBy) {
+        case "default":
+          return firstProduct.sourceIndex - secondProduct.sourceIndex;
         case "price_asc":
           return firstProduct.price - secondProduct.price;
         case "price_desc":

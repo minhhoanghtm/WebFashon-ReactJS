@@ -1,5 +1,6 @@
 import express from "express";
 import validate from "../../middlewares/validateZod.js";
+import { protectedRoute, adminOnly } from "../../middlewares/auth.middleware.js";
 import { createProductSchema, updateProductSchema, searchProductSchema, createVariantSchema, updateVariantSchema } from "./productValidators.js";
 import {
   addProduct,
@@ -18,7 +19,6 @@ import {
   getProductVariantByProductId,
   updateProductVariant,
 } from "./product.controller.js";
-import { getAllProducts } from "./queries/product.query.js";
 
 const productRouter = express.Router();
 
@@ -26,19 +26,19 @@ productRouter.get("/suggestions", suggestProducts);
 productRouter.get("/search", validate(searchProductSchema), searchProducts);
 productRouter.get("/category/:categoryid", getProductByCategory);
 productRouter.get("/detail/:id", getProductDetail);
-productRouter.post("/", validate(createProductSchema), addProduct);
-productRouter.get("/", getAllProducts);
-productRouter.put("/:id", validate(updateProductSchema), updateProduct);
-productRouter.delete("/:id", deleteProduct);
+productRouter.post("/", protectedRoute, adminOnly, validate(createProductSchema), addProduct);
+productRouter.get("/", getProducts);
+productRouter.put("/:id", protectedRoute, adminOnly, validate(updateProductSchema), updateProduct);
+productRouter.delete("/:id", protectedRoute, adminOnly, deleteProduct);
 productRouter.get("/:slug", getProductBySlug);
 productRouter.get("/slug/:productId", getSlugByProductId);
 
 const productVariantRouter = express.Router();
 
-productVariantRouter.post("/", validate(createVariantSchema), createProductVariant);
+productVariantRouter.post("/", protectedRoute, adminOnly, validate(createVariantSchema), createProductVariant);
 productVariantRouter.get("/:product_id", getProductVariantByProductId);
 productVariantRouter.get("/item/:id", getProductVariantById); // Use /item/:id to avoid conflict, but keep fallback if needed
-productVariantRouter.put("/:id", validate(updateVariantSchema), updateProductVariant);
-productVariantRouter.delete("/:id", deleteProductVariant);
+productVariantRouter.put("/:id", protectedRoute, adminOnly, validate(updateVariantSchema), updateProductVariant);
+productVariantRouter.delete("/:id", protectedRoute, adminOnly, deleteProductVariant);
 
 export { productRouter, productVariantRouter };
