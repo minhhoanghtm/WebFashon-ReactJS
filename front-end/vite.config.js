@@ -28,7 +28,6 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: true,
-    minify: 'terser',
+    sourcemap: false,
   },
 });

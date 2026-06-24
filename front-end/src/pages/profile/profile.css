@@ -1,8 +1,8 @@
 .profile-page {
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 28rem),
-    #f7f6fc;
+    radial-gradient(circle at top left, rgba(6, 182, 212, 0.08), transparent 28rem),
+    #ffffff;
   padding: 38px 20px 64px;
 }
 
@@ -17,9 +17,9 @@
 .profile-sidebar,
 .profile-card,
 .profile-hero {
-  border: 1px solid #cbc8dc;
+  border: 1px solid #e5e5e5;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.72);
+  background: #ffffff;
   box-shadow: 0 14px 35px rgba(31, 41, 55, 0.04);
 }
 
@@ -34,7 +34,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  border-bottom: 1px solid #e4e2ef;
+  border-bottom: 1px solid #f0f0f0;
   margin-bottom: 14px;
   padding: 8px 4px 18px;
 }
@@ -45,7 +45,7 @@
   place-items: center;
   overflow: hidden;
   border-radius: 999px;
-  background: linear-gradient(135deg, #6366f1, #4338ca);
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
   color: #ffffff;
   font-weight: 800;
 }
@@ -105,13 +105,13 @@
 }
 
 .profile-menu__item:hover {
-  border-color: #d7d5e8;
-  background: #ffffff;
+  border-color: #e5e5e5;
+  background: #f9f9f9;
   transform: translateY(-1px);
 }
 
 .profile-menu__item.is-active {
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
   color: #ffffff;
 }
 
@@ -122,8 +122,8 @@
   height: 34px;
   width: 34px;
   border-radius: 10px;
-  background: #f0efff;
-  color: #4f46e5;
+  background: #cffafe;
+  color: #06b6d4;
 }
 
 .profile-menu__item.is-active .profile-menu__icon {
@@ -162,7 +162,7 @@
   min-height: 96px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 42%),
-    linear-gradient(135deg, #4f46e5, #4248bd);
+    linear-gradient(135deg, #06b6d4, #0891b2);
 }
 
 .profile-hero__body {
@@ -203,8 +203,8 @@
   align-items: center;
   gap: 7px;
   border-radius: 999px;
-  background: #e8e7ff;
-  color: #1f2a7a;
+  background: #cffafe;
+  color: #06398b;
   font-size: 11px;
   font-weight: 750;
   padding: 5px 9px;
@@ -230,9 +230,9 @@
 }
 
 .profile-hero__actions button {
-  border: 1px solid #4f46e5;
+  border: 1px solid #06b6d4;
   background: #ffffff;
-  color: #3730a3;
+  color: #0891b2;
   padding: 0 16px;
 }
 
@@ -283,14 +283,14 @@
 }
 
 .profile-card__header a {
-  color: #3730a3;
+  color: #0891b2;
   font-size: 14px;
   font-weight: 750;
   text-decoration: none;
 }
 
 .profile-card__title-icon {
-  color: #4f46e5;
+  color: #06b6d4;
   flex: 0 0 auto;
 }
 
@@ -313,8 +313,8 @@
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: #eeedff;
-  color: #4f46e5;
+  background: #cffafe;
+  color: #06b6d4;
 }
 
 .profile-info-row small {
@@ -341,9 +341,9 @@
   grid-template-columns: 58px minmax(0, 1fr) 20px;
   align-items: center;
   gap: 16px;
-  border: 1px solid #d7d5e8;
+  border: 1px solid #e5e5e5;
   border-radius: 16px;
-  background: #f4f5ff;
+  background: #f0fdfb;
   color: #111827;
   min-height: 112px;
   padding: 18px;
@@ -355,7 +355,7 @@
 }
 
 .profile-action-card:hover {
-  border-color: #b9b6d6;
+  border-color: #cffafe;
   background: #ffffff;
   transform: translateY(-2px);
 }
@@ -370,7 +370,7 @@
 }
 
 .profile-action-card__icon.is-indigo {
-  background: #5b5ff2;
+  background: #06b6d4;
 }
 
 .profile-action-card__icon.is-rose {
@@ -404,7 +404,7 @@
 }
 
 .profile-stat {
-  border: 1px solid #e1dfed;
+  border: 1px solid #e5e5e5;
   border-radius: 15px;
   background: #ffffff;
   color: #111827;
@@ -418,7 +418,7 @@
 }
 
 .profile-stat:hover {
-  border-color: #c1bddc;
+  border-color: #cffafe;
   box-shadow: 0 12px 24px rgba(31, 41, 55, 0.06);
   transform: translateY(-2px);
 }
@@ -429,8 +429,8 @@
   width: 36px;
   height: 36px;
   border-radius: 11px;
-  background: #eeedff;
-  color: #4f46e5;
+  background: #cffafe;
+  color: #06b6d4;
   margin-bottom: 16px;
 }
 
@@ -468,7 +468,7 @@
 }
 
 .profile-order-table__head {
-  border-bottom: 1px solid #cbc8dc;
+  border-bottom: 1px solid #e5e5e5;
   color: #3f4054;
   font-size: 12px;
   font-weight: 850;
@@ -478,7 +478,7 @@
 }
 
 .profile-order-table__row {
-  border-bottom: 1px solid #e4e2ef;
+  border-bottom: 1px solid #f0f0f0;
   color: #111827;
   font-size: 14px;
   min-height: 64px;
@@ -491,7 +491,7 @@
 }
 
 .profile-order-table__row strong:first-child {
-  color: #3730a3;
+  color: #0891b2;
 }
 
 .profile-status {
@@ -533,7 +533,7 @@
 .profile-loading {
   display: grid;
   place-items: center;
-  border: 1px dashed #cbc8dc;
+  border: 1px dashed #e5e5e5;
   border-radius: 16px;
   color: #6b7280;
   min-height: 130px;
@@ -560,7 +560,7 @@
 .profile-empty button {
   border: 0;
   border-radius: 12px;
-  background: #4f46e5;
+  background: #06b6d4;
   color: #ffffff;
   cursor: pointer;
   font-weight: 750;
@@ -576,8 +576,8 @@
 .profile-spinner {
   width: 42px;
   height: 42px;
-  border: 4px solid #e0e7ff;
-  border-top-color: #4f46e5;
+  border: 4px solid #e0f2fe;
+  border-top-color: #06b6d4;
   border-radius: 999px;
   animation: profileSpin 800ms linear infinite;
 }
@@ -642,7 +642,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid #eceaf5;
+  border-bottom: 1px solid #f0f0f0;
   padding: 22px 24px;
 }
 
@@ -715,8 +715,8 @@
 
 .profile-form input:focus,
 .profile-form select:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.14);
 }
 
 .profile-form__full {
@@ -724,7 +724,7 @@
 }
 
 .profile-form__section {
-  border-top: 1px solid #eceaf5;
+  border-top: 1px solid #f0f0f0;
   padding-top: 18px;
 }
 
@@ -756,7 +756,7 @@
   grid-template-columns: 72px minmax(0, 1fr);
   gap: 14px;
   align-items: center;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e5e5;
   border-radius: 14px;
   background: #f9fafb;
   padding: 12px;
@@ -769,8 +769,8 @@
   height: 64px;
   overflow: hidden;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #4f46e5;
+  background: #cffafe;
+  color: #06b6d4;
 }
 
 .profile-avatar-upload__preview img {
@@ -791,10 +791,10 @@
   justify-content: center;
   justify-self: start;
   min-height: 38px;
-  border: 1px solid #4f46e5;
+  border: 1px solid #06b6d4;
   border-radius: 10px;
   background: #ffffff;
-  color: #3730a3;
+  color: #0891b2;
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
@@ -809,7 +809,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  border-top: 1px solid #eceaf5;
+  border-top: 1px solid #f0f0f0;
   padding-top: 18px;
 }
 
@@ -820,7 +820,7 @@
 }
 
 .profile-button.primary {
-  background: #4f46e5;
+  background: #06b6d4;
   color: #ffffff;
 }
 
