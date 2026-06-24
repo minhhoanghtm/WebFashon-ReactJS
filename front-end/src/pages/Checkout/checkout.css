@@ -1,18 +1,18 @@
 /* Premium styles and variables for checkout page */
 :root {
   --checkout-bg-card: #ffffff;
-  --checkout-border: #e5e7eb; /* gray-200 */
-  --checkout-border-focus: #6366f1; /* indigo-500 */
-  --checkout-text-main: #111827; /* gray-900 */
-  --checkout-text-muted: #6b7280; /* gray-500 */
+  --checkout-border: #e5e5e5; /* neutral-200 */
+  --checkout-border-focus: #06b6d4; /* cyan-500 */
+  --checkout-text-main: #0a0a0a; /* neutral-900 */
+  --checkout-text-muted: #999999; /* neutral-500 */
   --checkout-bg-input: #ffffff;
-  --checkout-bg-preview: #f9fafb;
+  --checkout-bg-preview: #f8f8f8;
   --checkout-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
   
   /* Brand Specific colors */
   --color-momo: #d82d8b;
   --color-vnpay: #005baa;
-  --color-cod: #4f46e5;
+  --color-cod: #06b6d4;
 }
 
 .dark {
@@ -52,7 +52,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(6, 182, 212, 0.1);
   color: var(--checkout-border-focus);
   transition: all 0.3s ease;
 }
@@ -159,29 +159,29 @@ select.checkout-address-field {
 
 /* Summary Card for Default/Loaded Address */
 .checkout-address-summary {
-  border: 1px solid rgba(99, 102, 241, 0.12);
-  background: rgba(99, 102, 241, 0.02);
+  border: 1px solid rgba(6, 182, 212, 0.12);
+  background: rgba(6, 182, 212, 0.02);
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.02);
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.02);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark .checkout-address-summary {
-  border-color: rgba(129, 140, 248, 0.15);
-  background: rgba(129, 140, 248, 0.02);
+  border-color: rgba(6, 182, 212, 0.15);
+  background: rgba(6, 182, 212, 0.02);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .checkout-address-summary:hover {
-  border-color: rgba(99, 102, 241, 0.3);
-  background: rgba(99, 102, 241, 0.04);
+  border-color: rgba(6, 182, 212, 0.3);
+  background: rgba(6, 182, 212, 0.04);
   transform: translateY(-1px);
 }
 
 .dark .checkout-address-summary:hover {
-  border-color: rgba(129, 140, 248, 0.3);
-  background: rgba(129, 140, 248, 0.04);
+  border-color: rgba(6, 182, 212, 0.3);
+  background: rgba(6, 182, 212, 0.04);
 }
 
 /* Shipping Address Previews */

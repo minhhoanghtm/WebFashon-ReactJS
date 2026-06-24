@@ -1,9 +1,9 @@
 .product-detail {
-  --detail-ink: #171717;
-  --detail-muted: #6f6b64;
-  --detail-line: #e8e4dc;
-  --detail-soft: #f6f4f0;
-  background: #fff;
+  --detail-ink: #0a0a0a;
+  --detail-muted: #999999;
+  --detail-line: #e5e5e5;
+  --detail-soft: #f8f8f8;
+  background: #ffffff;
   color: var(--detail-ink);
   padding: 34px 24px 88px;
 }
@@ -267,8 +267,8 @@
 
 .product-actions__choices button.is-active,
 .product-actions__choices button.product-option-active {
-  background: #1f1f1f;
-  border-color: #1f1f1f;
+  background: #0a0a0a;
+  border-color: #0a0a0a;
   color: #fff;
 }
 
@@ -351,12 +351,14 @@
 }
 
 .product-actions__cart {
-  background: #1f1f1f;
-  color: #fff;
+  background: #06b6d4;
+  color: #ffffff;
 }
 
 .product-actions__buy {
-  border: 1px solid #1f1f1f;
+  border: 1px solid #0a0a0a;
+  background: transparent;
+  color: #0a0a0a;
 }
 
 .product-info__benefits {
@@ -404,8 +406,8 @@
 }
 
 .product-tabs__nav button.is-active {
-  background: #1f1f1f;
-  border-color: #1f1f1f;
+  background: #0a0a0a;
+  border-color: #0a0a0a;
   color: #fff;
 }
 
@@ -551,7 +553,7 @@
 }
 
 .product-review__bars b {
-  background: #1f1f1f;
+  background: #0a0a0a;
   display: block;
   height: 100%;
 }
@@ -712,7 +714,7 @@
 }
 
 .product-detail-state a {
-  background: #1f1f1f;
+  background: #0a0a0a;
   border-radius: 999px;
   color: #fff;
   font-size: 13px;

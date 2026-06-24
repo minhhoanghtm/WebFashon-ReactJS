@@ -147,7 +147,7 @@ const Dashboard = () => {
       axisPointer: {
         type: "cross",
         label: {
-          backgroundColor: "#3b82f6",
+          backgroundColor: "#06b6d4",
         },
       },
     },
@@ -198,7 +198,7 @@ const Dashboard = () => {
         smooth: true,
         data: revenueOverview.map((item) => item.revenue),
         itemStyle: {
-          color: "#3b82f6",
+          color: "#06b6d4",
         },
         areaStyle: {
           opacity: 0.15,
@@ -209,8 +209,8 @@ const Dashboard = () => {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: "#3b82f6" },
-              { offset: 1, color: "rgba(59, 130, 246, 0.0)" },
+              { offset: 0, color: "#06b6d4" },
+              { offset: 1, color: "rgba(6, 182, 212, 0.0)" },
             ],
           },
         },
@@ -366,7 +366,7 @@ const Dashboard = () => {
                     </span>
                   </div>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <div className="h-12 w-12 rounded-xl bg-cyan-500 text-white flex items-center justify-center shadow-lg shadow-cyan-500/20">
                   <CreditCard className="h-6 w-6" />
                 </div>
               </div>
