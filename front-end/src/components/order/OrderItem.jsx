@@ -26,9 +26,9 @@ const OrderItem = ({ item }) => {
   const imageUrl = variantImage || productImage || fallbackImg;
 
   return (
-    <div className="flex items-start gap-4 py-4 border-b border-gray-100 last:border-b-0 animate-fadeIn">
+    <div className="flex items-start gap-4 py-4 border-b border-slate-200 last:border-b-0 animate-fadeIn">
       {/* Product Image */}
-      <Link to={href} className="block w-20 h-20 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+      <Link to={href} className="block w-20 h-20 bg-slate-50 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200">
         <img
           src={imageUrl}
           alt={item.product_name}
@@ -42,22 +42,22 @@ const OrderItem = ({ item }) => {
       {/* Product Info */}
       <div className="flex-1 min-w-0">
         <Link to={href} className="block group">
-          <h4 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-gray-700 transition-colors">
+          <h4 className="text-sm font-medium text-slate-900 line-clamp-2 group-hover:text-slate-700 transition-colors">
             {item.product_name}
           </h4>
         </Link>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-xs text-gray-500">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-xs text-slate-500">
           {color && (
-            <span className="bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+            <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
               Phân loại: {color}
             </span>
           )}
           {size && (
-            <span className="bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+            <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
               Size: {size}
             </span>
           )}
-          <span className="text-gray-400 self-center">
+          <span className="text-slate-400 self-center">
             SL: x{item.quantity}
           </span>
         </div>
@@ -65,7 +65,7 @@ const OrderItem = ({ item }) => {
 
       {/* Product Price */}
       <div className="text-right flex-shrink-0">
-        <span className="text-sm font-medium text-gray-900">
+        <span className="text-sm font-medium text-slate-900">
           {formatCurrency(item.price)}
         </span>
       </div>

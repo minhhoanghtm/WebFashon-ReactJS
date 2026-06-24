@@ -13,11 +13,11 @@ const paymentMethodMap = {
 };
 
 const statusMap = {
-  pending: { label: "Chờ xác nhận", colorClass: "text-orange-600 bg-orange-50 border-orange-100" },
-  confirmed: { label: "Chờ lấy hàng", colorClass: "text-blue-600 bg-blue-50 border-blue-100" },
-  shipping: { label: "Chờ giao hàng", colorClass: "text-purple-600 bg-purple-50 border-purple-100" },
-  delivered: { label: "Đã giao", colorClass: "text-green-600 bg-green-50 border-green-100" },
-  cancelled: { label: "Đã hủy", colorClass: "text-red-600 bg-red-50 border-red-100" },
+  pending: { label: "Chờ xác nhận", colorClass: "text-yellow-600 bg-yellow-100/30 border-yellow-200" },
+  confirmed: { label: "Chờ lấy hàng", colorClass: "text-cyan-600 bg-cyan-100/30 border-cyan-200" },
+  shipping: { label: "Chờ giao hàng", colorClass: "text-blue-600 bg-blue-100/30 border-blue-200" },
+  delivered: { label: "Đã giao", colorClass: "text-green-600 bg-green-100/30 border-green-200" },
+  cancelled: { label: "Đã hủy", colorClass: "text-red-600 bg-red-100/30 border-red-200" },
 };
 
 const OrderCountdown = ({ createdAt }) => {
@@ -106,20 +106,20 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
   };
 
   return (
-    <div className="border border-gray-100 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col animate-fadeIn">
+    <div className="border border-slate-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col animate-fadeIn">
       {/* Card Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-6 py-4 bg-gray-50/50 border-b border-gray-100 gap-3">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
-          <span className="flex items-center gap-1 text-gray-900 font-medium">
-            <Hash className="w-3.5 h-3.5 text-gray-400" />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-6 py-4 bg-slate-50/50 border-b border-slate-200 gap-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
+          <span className="flex items-center gap-1 text-slate-900 font-medium">
+            <Hash className="w-3.5 h-3.5 text-slate-400" />
             {order._id}
           </span>
           <span className="flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
             {formatDate(order.createdAt)}
           </span>
           <span className="flex items-center gap-1">
-            <CreditCard className="w-3.5 h-3.5 text-gray-400" />
+            <CreditCard className="w-3.5 h-3.5 text-slate-400" />
             {paymentMethodMap[order.payment_method] || order.payment_method}
           </span>
         </div>
@@ -132,7 +132,7 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
       </div>
 
       {/* Product List */}
-      <div className="px-6 py-2 divide-y divide-gray-100">
+      <div className="px-6 py-2 divide-y divide-slate-200">
         {order.items?.map((item) => (
           <div key={item._id}>
             <OrderItem item={item} />

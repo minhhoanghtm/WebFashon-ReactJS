@@ -1,16 +1,16 @@
 .main-footer {
-  --footer-bg: #111111;
+  --footer-bg: #0a0a0a;
   --footer-ink: #ffffff;
-  --footer-muted: #9c9a96;
-  --footer-accent: #365f56; /* sage green */
-  --footer-line: rgb(255 255 255 / 10%);
+  --footer-muted: #999999;
+  --footer-accent: #06b6d4;
+  --footer-line: rgb(255 255 255 / 8%);
   --footer-font-header: inherit;
   
   background-color: var(--footer-bg);
   border-top: 1px solid var(--footer-line);
   color: var(--footer-ink);
   font-family: var(--footer-font-header);
-  padding: 64px 0 24px;
+  padding: 60px 0 24px;
 }
 
 .footer-container {

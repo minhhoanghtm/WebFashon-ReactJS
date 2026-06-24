@@ -56,23 +56,23 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
   return (
     <article 
       onClick={handleCardClick}
-      className="group relative flex flex-col bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer w-full"
+      className="group relative flex flex-col bg-card border border-border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-md hover:border-accent cursor-pointer w-full"
     >
-      {/* Media section */}
-      <div className="relative w-full aspect-[4/5] sm:aspect-[3/4] overflow-hidden bg-slate-50 dark:bg-slate-950">
+      {/* Image Section */}
+      <div className="relative w-full aspect-[3/4] overflow-hidden bg-muted">
         <Link to={productPath} className="block w-full h-full">
           <img
             src={displayImage}
             alt={product.name}
             loading="lazy"
             onError={handleImageError}
-            className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
           />
         </Link>
         
         {/* Badge */}
         {product.badge && (
-          <span className="absolute top-3 left-3 bg-white/95 text-slate-900 text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider z-10">
+          <span className="absolute top-2 left-2 bg-accent text-accent-foreground text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider z-10">
             {product.badge}
           </span>
         )}
@@ -81,30 +81,34 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
         <button
           type="button"
           onClick={handleFavoriteClick}
-          className="favorite-btn absolute top-3 right-3 w-8 h-8 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 text-slate-400 hover:text-red-500 z-10"
-          aria-label="Yêu thích"
+          className="favorite-btn absolute top-2 right-2 w-9 h-9 bg-background border border-border rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-accent z-10"
+          aria-label="Favorite"
         >
-          <Heart size={16} fill={effectiveIsFavorite ? "rgb(239, 68, 68)" : "none"} className={effectiveIsFavorite ? "text-red-500" : ""} />
+          <Heart 
+            size={18} 
+            fill={effectiveIsFavorite ? "rgb(239, 68, 68)" : "none"} 
+            className={effectiveIsFavorite ? "text-red-500" : "text-muted-foreground"} 
+          />
         </button>
       </div>
 
-      {/* Content section */}
-      <div className="flex flex-col flex-1 p-4 text-left">
-        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+      {/* Content Section */}
+      <div className="flex flex-col flex-1 p-4">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
           {category}
         </span>
         <Link 
           to={productPath} 
-          className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-amber-700 dark:hover:text-amber-500 transition duration-200 mb-3"
+          className="text-sm font-semibold text-foreground line-clamp-2 hover:text-accent transition-colors mb-3"
         >
           {product.name}
         </Link>
 
-        {/* Rating and Price Row */}
-        <div className="flex items-end justify-between mt-auto pt-3 border-t border-slate-50 dark:border-slate-800/40">
+        {/* Rating and Price */}
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
           {/* Rating */}
-          <span className="flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 px-2 py-0.5 rounded-md">
-            <Star size={13} fill="currentColor" className="text-amber-500" />
+          <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            <Star size={14} fill="currentColor" className="text-yellow-500" />
             {rating.toLocaleString("vi-VN", {
               minimumFractionDigits: 1,
               maximumFractionDigits: 1,
@@ -112,12 +116,12 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
           </span>
 
           {/* Pricing */}
-          <div className="flex flex-col items-end">
-            <strong className="text-sm font-black text-slate-900 dark:text-white">
-              {price > 0 ? formatPrice(price) : "Liên hệ"}
+          <div className="flex flex-col items-end gap-1">
+            <strong className="text-sm font-bold text-foreground">
+              {price > 0 ? formatPrice(price) : "Contact"}
             </strong>
             {oldPrice > price && price > 0 && (
-              <del className="text-[11px] text-slate-400 dark:text-slate-600 font-medium line-through">
+              <del className="text-xs text-muted-foreground line-through">
                 {formatPrice(oldPrice)}
               </del>
             )}

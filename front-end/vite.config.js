@@ -11,10 +11,23 @@ export default defineConfig({
   ],
   server: {
     port: process.env.PORT || 3000,
+    strictPort: false,
+    middlewareMode: false,
+    watch: {
+      usePolling: false,
+    },
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      port: process.env.PORT || 3000,
+    },
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"), // 👈 thêm alias
+      "@": path.resolve(__dirname, "src"),
     },
+  },
+  build: {
+    sourcemap: false,
   },
 });
