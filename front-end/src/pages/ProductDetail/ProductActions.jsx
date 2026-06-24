@@ -9,7 +9,9 @@ const uniqueValues = (values) => [...new Set(values.filter(Boolean))];
 
 const ProductActions = ({ product, variants = [] }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const role = user?.role || user?.data?.role || "";
+  const isAdmin = role === "admin";
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -151,6 +153,11 @@ const ProductActions = ({ product, variants = [] }) => {
       selectedColor
     });
 
+    if (isAdmin) {
+      toast.error("Quản trị viên không thể mua hàng!");
+      return false;
+    }
+
     if (!canAdd) {
       toast.error(warningText || "Vui lòng chọn đầy đủ thông tin sản phẩm");
       return false;
@@ -184,6 +191,11 @@ const ProductActions = ({ product, variants = [] }) => {
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
       navigate("/login");
+      return;
+    }
+
+    if (isAdmin) {
+      toast.error("Quản trị viên không thể mua hàng!");
       return;
     }
 
@@ -287,19 +299,19 @@ const ProductActions = ({ product, variants = [] }) => {
           type="button"
           className="product-actions__cart"
           onClick={handleAddToCart}
-          disabled={isAdding || !canAdd}
+          disabled={isAdding || !canAdd || isAdmin}
         >
           <ShoppingBag size={18} aria-hidden="true" />
-          {isAdding ? "Đang xử lý..." : "Thêm vào giỏ hàng"}
+          {isAdmin ? "Không dành cho Admin" : (isAdding ? "Đang xử lý..." : "Thêm vào giỏ hàng")}
         </button>
         <button
           type="button"
           className="product-actions__buy"
           onClick={handleBuyNow}
-          disabled={isAdding || !canAdd}
+          disabled={isAdding || !canAdd || isAdmin}
         >
           <Zap size={18} aria-hidden="true" />
-          Mua ngay
+          {isAdmin ? "Không dành cho Admin" : "Mua ngay"}
         </button>
       </div>
     </div>

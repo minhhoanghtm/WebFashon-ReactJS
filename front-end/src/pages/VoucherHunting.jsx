@@ -7,7 +7,7 @@ import { useAuthStore } from "../store/auth.store";
 import VoucherDetailModal from "../components/VoucherDetailModal";
 import { getActiveBannersService, trackBannerClickService } from "../services/banner.service";
 
-const VoucherHunting = () => {
+const VoucherHunting = ({ isDashboard = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
@@ -124,11 +124,11 @@ const VoucherHunting = () => {
 
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900/40 py-12 px-6 font-sans">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <div className={isDashboard ? "w-full space-y-6" : "min-h-screen bg-slate-50/50 dark:bg-slate-900/40 py-12 px-6 font-sans"}>
+      <div className={isDashboard ? "space-y-6" : "mx-auto max-w-6xl space-y-8"}>
         
         {/* Banner Section */}
-        {!bannersLoading && promoBanners.length > 0 ? (
+        {!isDashboard && (!bannersLoading && promoBanners.length > 0 ? (
           // Dynamic Promotion Banner
           <div
             onClick={() => handleBannerClick(promoBanners[0])}
@@ -192,7 +192,7 @@ const VoucherHunting = () => {
               <div className="absolute inset-0 rounded-full bg-white/5 animate-ping"></div>
             </div>
           </div>
-        )}
+        ))}
 
         {/* List Section */}
         <div className="space-y-6">

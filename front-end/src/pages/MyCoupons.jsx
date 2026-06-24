@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import voucherApi from "../api/voucher.api";
 import { useAuthStore } from "../store/auth.store";
 
-const MyCoupons = () => {
+const MyCoupons = ({ isDashboard = false, onNavigateToHunt }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   
@@ -40,8 +40,8 @@ const MyCoupons = () => {
   }, [isAuthenticated, activeTab]);
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900/40 py-12 px-6 font-sans">
-      <div className="mx-auto max-w-4xl space-y-8">
+    <div className={isDashboard ? "w-full space-y-6" : "min-h-screen bg-slate-50/50 dark:bg-slate-900/40 py-12 px-6 font-sans"}>
+      <div className={isDashboard ? "space-y-6" : "mx-auto max-w-4xl space-y-8"}>
         
         {/* Title */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -56,7 +56,7 @@ const MyCoupons = () => {
           </div>
           
           <button
-            onClick={() => navigate("/vouchers")}
+            onClick={() => onNavigateToHunt ? onNavigateToHunt() : navigate("/vouchers")}
             className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/45 dark:text-indigo-400 dark:hover:bg-indigo-900 text-indigo-600 font-bold text-sm px-4 py-2 rounded-xl transition cursor-pointer"
           >
             <Sparkles className="h-4.5 w-4.5" />

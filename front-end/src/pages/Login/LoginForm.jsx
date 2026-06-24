@@ -227,18 +227,9 @@ const LoginForm = () => {
 
         <div className="login-divider">Hoặc tiếp tục với</div>
 
-        <div className="login-social-grid grid-cols-3 gap-4">
-          
-          {/* <button className="login-social-btn" type="button" title="Đăng nhập với Facebook">
-            <FacebookIcon />
-            <span>Facebook</span> */}
-          {/* </button>
-          <button className="login-social-btn" type="button" title="Đăng nhập với X">
-            <XIcon />
-            <span>X</span>
-          </button> */}
+        <div className="flex justify-center mb-2">
+          <GoogleLoginButton />
         </div>
-        <GoogleLoginButton />
 
 
         <p className="login-footer-desc">

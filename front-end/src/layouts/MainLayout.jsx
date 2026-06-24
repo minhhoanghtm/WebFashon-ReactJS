@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate, useSearchParams } from 'react-router-dom';
-import { Heart, Search, X } from 'lucide-react';
+import { ShoppingCart, Search, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '../store/auth.store';
 import { useCartStore } from '../store/cart.store';
@@ -8,9 +8,11 @@ import { useFavoriteStore } from '../store/favorite.store';
 import Footer from '../components/Footer';
 import CustomerChatWidget from '../components/CustomerChatWidget';
 import ScrollToTop from '../components/ScrollToTop';
+import { useWebsiteSettings } from '../hooks/useWebsiteSettings';
 
 const MainLayout = () => {
-  const { isAuthenticated, logout } = useAuthStore();
+  const { settings, loading } = useWebsiteSettings();
+  const { isAuthenticated, logout, user } = useAuthStore();
   const { items } = useCartStore();
   const favoriteItems = useFavoriteStore((state) => state.items);
   const [searchParams] = useSearchParams();
@@ -48,9 +50,20 @@ const MainLayout = () => {
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
           <Link
             to="/"
-            className="shrink-0 text-lg font-bold tracking-tight text-indigo-600 lg:text-2xl"
+            className="shrink-0 flex items-center gap-2"
           >
-            404Studio
+            {!loading && settings?.general?.logoUrl ? (
+              <img
+                src={settings.general.logoUrl}
+                alt={settings.general.siteName || "Logo"}
+                className="h-8 md:h-10 w-auto object-contain"
+              />
+            ) : null}
+            {!loading && settings?.general?.siteName ? (
+              <span className="text-lg font-bold tracking-tight text-indigo-600 lg:text-2xl">
+                {settings.general.siteName}
+              </span>
+            ) : null}
           </Link>
 
           <form
@@ -84,10 +97,10 @@ const MainLayout = () => {
           </form>
 
           <nav className="ml-auto flex shrink-0 items-center gap-2 lg:gap-5">
-            <Link to="/vouchers" className="text-sm font-medium hover:text-indigo-600 transition">
+            {/* <Link to="/vouchers" className="text-sm font-medium hover:text-indigo-600 transition">
               Voucher
-            </Link>
-            <Link to="/favorites" className="relative inline-flex items-center gap-1.5 text-sm font-medium hover:text-indigo-600 transition">
+            </Link> */}
+            {/* <Link to="/favorites" className="relative inline-flex items-center gap-1.5 text-sm font-medium hover:text-indigo-600 transition">
               <Heart size={16} aria-hidden="true" />
               Yêu thích
               {favoriteCount > 0 && (
@@ -95,9 +108,9 @@ const MainLayout = () => {
                   {favoriteCount}
                 </span>
               )}
-            </Link>
+            </Link> */}
             <Link to="/cart" className="relative text-sm font-medium hover:text-indigo-600 transition">
-              Giỏ hàng
+              <ShoppingCart />
               {cartCount > 0 && (
                 <span className="absolute -right-3 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                   {cartCount}
@@ -106,11 +119,11 @@ const MainLayout = () => {
             </Link>
             {isAuthenticated ? (
               <>
-                <Link to="/orders" className="text-sm font-medium hover:text-indigo-600 transition">
+                {/* <Link to="/orders" className="text-sm font-medium hover:text-indigo-600 transition">
                   Đơn hàng
-                </Link>
+                </Link> */}
                 <Link to="/profile" className="text-sm font-medium hover:text-indigo-600 transition">
-                  Tài khoản
+                  Xin chào, {user?.fullName || user?.data?.fullName || user?.name || user?.data?.name || user?.username || user?.data?.username || user?.email || user?.data?.email || 'Người dùng'}
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -168,7 +181,7 @@ const MainLayout = () => {
 
       {/* Footer */}
       <Footer />
-      <CustomerChatWidget />
+      {(!user || (user?.role !== "admin" && user?.data?.role !== "admin")) && <CustomerChatWidget />}
     </div>
   );
 };

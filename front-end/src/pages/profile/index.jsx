@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Order from "../Order";
+import MyCoupons from "../MyCoupons";
+import Favorites from "../Favorites";
 import {
   ArrowRight,
   CalendarDays,
@@ -8,6 +11,7 @@ import {
   Clock3,
   Edit3,
   Gift,
+  Heart,
   KeyRound,
   Mail,
   MapPin,
@@ -324,6 +328,8 @@ const buildProfileForm = (profile = {}) => {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "profile";
   const queryClient = useQueryClient();
   const setUser = useAuthStore((state) => state.setUser);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -480,29 +486,34 @@ const Profile = () => {
 
   const menuItems = [
     {
+      id: "profile",
       label: "Thông tin cá nhân",
       description: "Hồ sơ tài khoản",
-      to: "/profile",
       icon: User,
-      active: true,
     },
     {
+      id: "orders",
       label: "Đơn hàng của tôi",
       description: "Theo dõi mua hàng",
-      to: "/orders",
       icon: Package,
     },
     {
+      id: "coupons",
       label: "Ví voucher",
       description: "Mã đang sở hữu",
-      to: "/my-coupons",
       icon: WalletCards,
     },
     {
-      label: "Săn voucher",
-      description: "Ưu đãi đang mở",
-      to: "/vouchers",
-      icon: Sparkles,
+      id: "favorites",
+      label: "Yêu thích",
+      description: "Sản phẩm đã lưu",
+      icon: Heart,
+    },
+    {
+      id: "password",
+      label: "Đổi mật khẩu",
+      description: "Bảo mật tài khoản",
+      icon: KeyRound,
     },
   ];
 
@@ -707,12 +718,13 @@ const Profile = () => {
           <nav className="profile-menu" aria-label="Menu tài khoản">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const className = item.active
+              const isActive = activeTab === item.id;
+              const className = isActive
                 ? "profile-menu__item is-active"
                 : "profile-menu__item";
 
               return (
-                <Link key={item.label} to={item.to} className={className}>
+                <Link key={item.label} to={"/profile?tab=" + item.id} className={className}>
                   <span className="profile-menu__icon">
                     <Icon size={19} />
                   </span>
@@ -723,205 +735,257 @@ const Profile = () => {
                 </Link>
               );
             })}
-
-            <button
-              type="button"
-              className="profile-menu__item"
-              onClick={() => {
-                setNotice(null);
-                setIsPasswordOpen(true);
-              }}
-            >
-              <span className="profile-menu__icon">
-                <KeyRound size={19} />
-              </span>
-              <span>
-                <strong>Đổi mật khẩu</strong>
-                <small>Bảo mật tài khoản</small>
-              </span>
-            </button>
           </nav>
         </aside>
 
         <main className="profile-main">
-          <section className="profile-hero">
-            <div className="profile-hero__cover" aria-hidden="true" />
-            <div className="profile-hero__body">
-              <div className="profile-hero__identity">
-                <div className="profile-hero__avatar">
-                  {avatarUrl && !avatarError ? (
-                    <img 
-                      src={avatarUrl} 
-                      alt={getUserName(userProfile)} 
-                      onError={() => setAvatarError(true)} 
-                    />
-                  ) : (
-                    <span>{getInitial(userProfile)}</span>
-                  )}
-                </div>
-                <div>
-                  <h1>{getUserName(userProfile)}</h1>
-                  <span className="profile-role">
-                    <ShieldCheck size={14} />
-                    Vai trò: {userProfile.role || "user"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="profile-hero__actions">
-                <button type="button" onClick={openEditModal}>
-                  <Edit3 size={18} />
-                  Chỉnh sửa thông tin
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <section className="profile-grid profile-grid--two">
-            <article className="profile-card">
-              <div className="profile-card__header">
-                <div>
-                  <h2>Thông tin cá nhân</h2>
-                  <p>Dữ liệu lấy từ hồ sơ tài khoản hiện tại.</p>
-                </div>
-              </div>
-
-              <div className="profile-info-list">
-                <InfoRow
-                  icon={Mail}
-                  label="Email"
-                  value={getUserEmail(userProfile)}
-                />
-                <InfoRow icon={Phone} label="Số điện thoại" value={getPhone(userProfile)} />
-                <InfoRow
-                  icon={CalendarDays}
-                  label="Ngày sinh"
-                  value={formatDate(userProfile.birthday || userProfile.dateOfBirth)}
-                />
-                <InfoRow
-                  icon={User}
-                  label="Giới tính"
-                  value={getGenderLabel(userProfile.sex || userProfile.gender)}
-                />
-                <InfoRow
-                  icon={MapPin}
-                  label="Địa chỉ giao hàng"
-                  value={resolvedAddress}
-                />
-              </div>
-            </article>
-
-            <article className="profile-card">
-              <div className="profile-card__header">
-                <div>
-                  <h2>Voucher & ưu đãi</h2>
-                  <p>Liên kết đến các trang voucher hiện có.</p>
-                </div>
-                <Ticket className="profile-card__title-icon" size={22} />
-              </div>
-
-              <div className="profile-action-list">
-                <Link to="/my-coupons" className="profile-action-card">
-                  <span className="profile-action-card__icon is-indigo">
-                    <WalletCards size={24} />
-                  </span>
-                  <span>
-                    <strong>Ví voucher của tôi</strong>
-                    <small>
-                      {walletQuery.isLoading
-                        ? "Đang tải số voucher..."
-                        : walletQuery.error
-                          ? "Không tải được ví voucher"
-                          : `${walletStats.usable} voucher có thể dùng`}
-                    </small>
-                  </span>
-                  <ArrowRight size={18} />
-                </Link>
-
-                <Link to="/vouchers" className="profile-action-card">
-                  <span className="profile-action-card__icon is-rose">
-                    <Gift size={24} />
-                  </span>
-                  <span>
-                    <strong>Săn mã giảm giá</strong>
-                    <small>Nhận thêm ưu đãi đang mở trên hệ thống</small>
-                  </span>
-                  <ArrowRight size={18} />
-                </Link>
-              </div>
-            </article>
-          </section>
-
-          <section className="profile-card">
-            <div className="profile-card__header profile-card__header--row">
-              <div>
-                <h2>Tổng quan đơn hàng</h2>
-                <p>Thống kê từ lịch sử đơn hàng thật của tài khoản.</p>
-              </div>
-              <Link to="/orders">Xem tất cả</Link>
-            </div>
-
-            {ordersQuery.error ? (
-              <div className="profile-inline-state">
-                Không tải được dữ liệu đơn hàng.
-              </div>
-            ) : (
-              <div className="profile-order-stats">
-                {orderStats.map((stat) => (
-                  <Link key={stat.status} to="/orders" className="profile-stat">
-                    <span>
-                      <stat.Icon size={18} />
-                    </span>
-                    <strong>{stat.count}</strong>
-                    <small>{stat.label}</small>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="profile-card">
-            <div className="profile-card__header profile-card__header--row">
-              <div>
-                <h2>Hoạt động gần đây</h2>
-                <p>Các đơn hàng mới nhất của bạn.</p>
-              </div>
-              <Link to="/orders">Xem tất cả</Link>
-            </div>
-
-            {ordersQuery.isLoading ? (
-              <div className="profile-inline-state">Đang tải đơn hàng...</div>
-            ) : recentOrders.length === 0 ? (
-              <div className="profile-inline-state">Bạn chưa có đơn hàng nào.</div>
-            ) : (
-              <div className="profile-order-table" role="table">
-                <div className="profile-order-table__head" role="row">
-                  <span>Mã đơn</span>
-                  <span>Ngày đặt</span>
-                  <span>Trạng thái</span>
-                  <span>Tổng tiền</span>
-                </div>
-                {recentOrders.map((order) => {
-                  const meta = STATUS_META[order.status] || STATUS_META.pending;
-                  return (
-                    <Link
-                      key={order._id || order.id}
-                      to="/orders"
-                      className="profile-order-table__row"
-                      role="row"
-                    >
-                      <strong>{getOrderId(order)}</strong>
-                      <span>{formatDateTime(order.createdAt)}</span>
-                      <span className={`profile-status ${meta.className}`}>
-                        {meta.label}
+          {activeTab === "profile" && (
+            <>
+              <section className="profile-hero">
+                <div className="profile-hero__cover" aria-hidden="true" />
+                <div className="profile-hero__body">
+                  <div className="profile-hero__identity">
+                    <div className="profile-hero__avatar">
+                      {avatarUrl && !avatarError ? (
+                        <img 
+                          src={avatarUrl} 
+                          alt={getUserName(userProfile)} 
+                          onError={() => setAvatarError(true)} 
+                        />
+                      ) : (
+                        <span>{getInitial(userProfile)}</span>
+                      )}
+                    </div>
+                    <div>
+                      <h1>{getUserName(userProfile)}</h1>
+                      <span className="profile-role">
+                        <ShieldCheck size={14} />
+                        Vai trò: {userProfile.role || "user"}
                       </span>
-                      <strong>{formatCurrency(getOrderTotal(order))}</strong>
+                    </div>
+                  </div>
+
+                  <div className="profile-hero__actions">
+                    <button type="button" onClick={openEditModal}>
+                      <Edit3 size={18} />
+                      Chỉnh sửa thông tin
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section className="profile-grid profile-grid--two">
+                <article className="profile-card">
+                  <div className="profile-card__header">
+                    <div>
+                      <h2>Thông tin cá nhân</h2>
+                      <p>Dữ liệu lấy từ hồ sơ tài khoản hiện tại.</p>
+                    </div>
+                  </div>
+
+                  <div className="profile-info-list">
+                    <InfoRow
+                      icon={Mail}
+                      label="Email"
+                      value={getUserEmail(userProfile)}
+                    />
+                    <InfoRow icon={Phone} label="Số điện thoại" value={getPhone(userProfile)} />
+                    <InfoRow
+                      icon={CalendarDays}
+                      label="Ngày sinh"
+                      value={formatDate(userProfile.birthday || userProfile.dateOfBirth)}
+                    />
+                    <InfoRow
+                      icon={User}
+                      label="Giới tính"
+                      value={getGenderLabel(userProfile.sex || userProfile.gender)}
+                    />
+                    <InfoRow
+                      icon={MapPin}
+                      label="Địa chỉ giao hàng"
+                      value={resolvedAddress}
+                    />
+                  </div>
+                </article>
+
+                <article className="profile-card">
+                  <div className="profile-card__header">
+                    <div>
+                      <h2>Voucher & ưu đãi</h2>
+                      <p>Liên kết đến các trang voucher hiện có.</p>
+                    </div>
+                    <Ticket className="profile-card__title-icon" size={22} />
+                  </div>
+
+                  <div className="profile-action-list">
+                    <Link to="/profile?tab=coupons" className="profile-action-card">
+                      <span className="profile-action-card__icon is-indigo">
+                        <WalletCards size={24} />
+                      </span>
+                      <span>
+                        <strong>Ví voucher của tôi</strong>
+                        <small>
+                          {walletQuery.isLoading
+                            ? "Đang tải số voucher..."
+                            : walletQuery.error
+                              ? "Không tải được ví voucher"
+                              : `${walletStats.usable} voucher có thể dùng`}
+                        </small>
+                      </span>
+                      <ArrowRight size={18} />
                     </Link>
-                  );
-                })}
+
+                    <Link to="/profile?tab=favorites" className="profile-action-card">
+                      <span className="profile-action-card__icon is-rose">
+                        <Heart size={24} />
+                      </span>
+                      <span>
+                        <strong>Sản phẩm yêu thích</strong>
+                        <small>Xem danh sách sản phẩm đã thả tim</small>
+                      </span>
+                      <ArrowRight size={18} />
+                    </Link>
+                  </div>
+                </article>
+              </section>
+
+              <section className="profile-card">
+                <div className="profile-card__header profile-card__header--row">
+                  <div>
+                    <h2>Tổng quan đơn hàng</h2>
+                    <p>Thống kê từ lịch sử đơn hàng thật của tài khoản.</p>
+                  </div>
+                  <Link to="/profile?tab=orders">Xem tất cả</Link>
+                </div>
+
+                {ordersQuery.error ? (
+                  <div className="profile-inline-state">
+                    Không tải được dữ liệu đơn hàng.
+                  </div>
+                ) : (
+                  <div className="profile-order-stats">
+                    {orderStats.map((stat) => (
+                      <Link key={stat.status} to={`/profile?tab=orders&status=${stat.status}`} className="profile-stat">
+                        <span>
+                          <stat.Icon size={18} />
+                        </span>
+                        <strong>{stat.count}</strong>
+                        <small>{stat.label}</small>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="profile-card">
+                <div className="profile-card__header profile-card__header--row">
+                  <div>
+                    <h2>Hoạt động gần đây</h2>
+                    <p>Các đơn hàng mới nhất của bạn.</p>
+                  </div>
+                  <Link to="/profile?tab=orders">Xem tất cả</Link>
+                </div>
+
+                {ordersQuery.isLoading ? (
+                  <div className="profile-inline-state">Đang tải đơn hàng...</div>
+                ) : recentOrders.length === 0 ? (
+                  <div className="profile-inline-state">Bạn chưa có đơn hàng nào.</div>
+                ) : (
+                  <div className="profile-order-table" role="table">
+                    <div className="profile-order-table__head" role="row">
+                      <span>Mã đơn</span>
+                      <span>Ngày đặt</span>
+                      <span>Trạng thái</span>
+                      <span>Tổng tiền</span>
+                    </div>
+                    {recentOrders.map((order) => {
+                      const meta = STATUS_META[order.status] || STATUS_META.pending;
+                      return (
+                        <Link
+                          key={order._id || order.id}
+                          to={`/profile?tab=orders`}
+                          className="profile-order-table__row"
+                          role="row"
+                        >
+                          <strong>{getOrderId(order)}</strong>
+                          <span>{formatDateTime(order.createdAt)}</span>
+                          <span className={`profile-status ${meta.className}`}>
+                            {meta.label}
+                          </span>
+                          <strong>{formatCurrency(getOrderTotal(order))}</strong>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            </>
+          )}
+
+          {activeTab === "orders" && (
+            <div className="profile-card" style={{ padding: "24px" }}>
+              <Order isDashboard={true} />
+            </div>
+          )}
+
+          {activeTab === "coupons" && (
+            <div className="profile-card" style={{ padding: "24px" }}>
+              <MyCoupons isDashboard={true} />
+            </div>
+          )}
+
+          {activeTab === "favorites" && (
+            <div className="profile-card" style={{ padding: "24px" }}>
+              <Favorites isDashboard={true} />
+            </div>
+          )}
+
+          {activeTab === "password" && (
+            <div className="profile-card" style={{ padding: "28px" }}>
+              <div style={{ marginBottom: "24px", borderBottom: "1px solid #cbc8dc", paddingBottom: "16px" }}>
+                <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#111827", margin: 0 }}>Đổi mật khẩu</h2>
+                <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "4px", margin: "4px 0 0" }}>
+                  Sử dụng form dưới đây để đổi mật khẩu tài khoản của bạn.
+                </p>
               </div>
-            )}
-          </section>
+
+              <form className="profile-form" onSubmit={handleSubmitPassword} style={{ maxWidth: "480px" }}>
+                <label>
+                  <span>Mật khẩu hiện tại</span>
+                  <input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(event) => handlePasswordFormChange("currentPassword", event.target.value)}
+                    autoComplete="current-password"
+                  />
+                </label>
+                <label>
+                  <span>Mật khẩu mới</span>
+                  <input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(event) => handlePasswordFormChange("newPassword", event.target.value)}
+                    autoComplete="new-password"
+                  />
+                </label>
+                <label>
+                  <span>Nhập lại mật khẩu mới</span>
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(event) => handlePasswordFormChange("confirmPassword", event.target.value)}
+                    autoComplete="new-password"
+                  />
+                </label>
+
+                <div className="profile-form__actions" style={{ marginTop: "24px" }}>
+                  <button type="submit" className="profile-button primary" disabled={updatePasswordMutation.isPending}>
+                    {updatePasswordMutation.isPending ? "Đang lưu..." : "Đổi mật khẩu"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </main>
       </div>
 

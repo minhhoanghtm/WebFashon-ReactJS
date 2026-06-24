@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   getOrdersByUserIdService,
@@ -23,15 +23,24 @@ import EmptyOrders from "../../components/order/EmptyOrders";
 import OrderHistorySkeleton from "../../components/order/OrderHistorySkeleton";
 import OrderDetailModal from "../../components/order/OrderDetailModal";
 
-const UserAccountManagement = () => {
-  useDocumentTitle("Lịch sử mua hàng");
+const UserAccountManagement = ({ isDashboard = false }) => {
+  if (!isDashboard) {
+    useDocumentTitle("Lịch sử mua hàng");
+  }
 
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [searchParams] = useSearchParams();
+  const initialStatus = searchParams.get("status") || "all";
   const [orders, setOrders] = useState([]);
-  const [selectedOrderStatus, setSelectedOrderStatus] = useState("all");
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState(initialStatus);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const status = searchParams.get("status") || "all";
+    setSelectedOrderStatus(status);
+  }, [searchParams]);
   
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
@@ -212,6 +221,12 @@ const UserAccountManagement = () => {
 
   // Rebuy items handler (Single product or entire order)
   const handleRebuy = async (order, singleItem = null) => {
+    const role = user?.role || user?.data?.role || "";
+    if (role === "admin") {
+      toast.error("Quản trị viên không thể thực hiện chức năng mua hàng!");
+      return;
+    }
+
     const itemsToAdd = singleItem ? [singleItem] : (order.items || []);
     if (itemsToAdd.length === 0) return;
 
@@ -255,7 +270,7 @@ const UserAccountManagement = () => {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-50/30 pb-20 relative">
+    <div className={isDashboard ? "relative w-full" : "w-full min-h-screen bg-gray-50/30 pb-20 relative"}>
       {/* Rebuying overlay blocker */}
       {isRebuying && (
         <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px] flex items-center justify-center">
@@ -267,25 +282,27 @@ const UserAccountManagement = () => {
       )}
 
       {/* Header and Breadcrumbs */}
-      <div className="bg-white border-b border-gray-100 py-6">
-        <div className="max-w-6xl mx-auto px-4">
-          <nav className="flex items-center gap-2 text-xs text-gray-400 mb-3">
-            <Link to="/" className="hover:text-black transition-colors">Trang chủ</Link>
-            <span>/</span>
-            <span className="text-gray-500">Tài khoản</span>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">Lịch sử mua hàng</span>
-          </nav>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Lịch sử mua hàng</h1>
-          <p className="text-sm text-gray-500 mt-1">Theo dõi và quản lý toàn bộ đơn hàng của bạn.</p>
+      {!isDashboard && (
+        <div className="bg-white border-b border-gray-100 py-6">
+          <div className="max-w-6xl mx-auto px-4">
+            <nav className="flex items-center gap-2 text-xs text-gray-400 mb-3">
+              <Link to="/" className="hover:text-black transition-colors">Trang chủ</Link>
+              <span>/</span>
+              <span className="text-gray-500">Tài khoản</span>
+              <span>/</span>
+              <span className="text-gray-900 font-medium">Lịch sử mua hàng</span>
+            </nav>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Lịch sử mua hàng</h1>
+            <p className="text-sm text-gray-500 mt-1">Theo dõi và quản lý toàn bộ đơn hàng của bạn.</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Filter Tabs */}
       <OrderFilterTabs activeTab={selectedOrderStatus} onTabChange={setSelectedOrderStatus} />
 
       {/* Main Content Area */}
-      <div className="max-w-6xl mx-auto px-4 mt-6">
+      <div className={isDashboard ? "w-full mt-4" : "max-w-6xl mx-auto px-4 mt-6"}>
         {/* Search Bar */}
         <div className="relative mb-6">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">

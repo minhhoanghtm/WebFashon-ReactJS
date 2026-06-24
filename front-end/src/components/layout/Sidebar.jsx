@@ -1,6 +1,7 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Home,
   Key,
   LayoutDashboard,
   LayoutList,
@@ -318,8 +319,36 @@ const Sidebar = () => {
           )}
         </button>
 
+        {/* Explore Store Button */}
+        <div className={`mt-auto border-t border-gray-200 dark:border-slate-800 p-3 ${collapsed ? "flex justify-center" : ""}`}>
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-3 rounded-2xl bg-indigo-600 dark:bg-indigo-600 text-white p-3 hover:bg-indigo-700 transition shadow-md shadow-indigo-600/10 cursor-pointer
+              ${collapsed ? "h-11 w-11 justify-center p-0 rounded-xl" : "w-full"}`}
+            title="Khám phá cửa hàng"
+          >
+            <div className={`rounded-xl flex items-center justify-center text-white shrink-0
+              ${collapsed ? "h-9 w-9 bg-transparent" : "h-10 w-10 bg-white/20"}`}
+            >
+              <Home className="h-5 w-5" />
+            </div>
+            {!collapsed && (
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-semibold tracking-tight text-white leading-tight">
+                  Khám phá cửa hàng
+                </span>
+                <span className="text-[10px] text-indigo-200 mt-0.5 font-medium flex items-center">
+                  Xem cửa hàng của bạn ↗
+                </span>
+              </div>
+            )}
+          </a>
+        </div>
+
         {/* Profile Card Section at Bottom */}
-        <div className="mt-auto border-t border-gray-200 dark:border-slate-800 p-3 relative" ref={dropdownRef}>
+        <div className="p-3 relative" ref={dropdownRef}>
           {/* Dropdown Menu */}
           {isDropdownOpen && (
             <div className={`absolute bottom-full mb-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200 text-left

@@ -18,7 +18,7 @@ import {
   adminCommunicationRouter,
   customerCommunicationRouter,
 } from "../modules/communication/communication.route.js";
-import { protectedRoute, adminOnly } from "../middlewares/auth.middleware.js";
+import { protectedRoute, adminOnly, noAdmin } from "../middlewares/auth.middleware.js";
 import { authGlobalLimiter } from "../middlewares/rateLimiter.middleware.js";
 import shippingRouter from "../modules/shipping/shipping.routes.js";
 
@@ -41,8 +41,8 @@ rootRouter.use("/admin/page-sections", protectedRoute, adminOnly, adminPageSecti
 
 // Private routes
 rootRouter.use("/user", protectedRoute, userRouter);
-rootRouter.use("/cart", protectedRoute, cartRouter);
-rootRouter.use("/cart_items", protectedRoute, cartItemRouter);
+rootRouter.use("/cart", protectedRoute, noAdmin, cartRouter);
+rootRouter.use("/cart_items", protectedRoute, noAdmin, cartItemRouter);
 rootRouter.use("/favorites", protectedRoute, favoriteRouter);
 rootRouter.use("/order", protectedRoute, orderRouter);
 rootRouter.use("/order_items", protectedRoute, orderItemRouter);

@@ -230,7 +230,7 @@ const Dashboard = () => {
       },
     },
     legend: {
-      data: ["Lượt Nhận (Claim)", "Lượt Sử Dụng (Usage)"],
+      data: ["Lượt Nhận", "Lượt Sử Dụng"],
       bottom: 0,
       textStyle: {
         color: "#64748b",
@@ -277,7 +277,7 @@ const Dashboard = () => {
     ],
     series: [
       {
-        name: "Lượt Nhận (Claim)",
+        name: "Lượt Nhận",
         type: "line",
         smooth: true,
         areaStyle: {
@@ -286,7 +286,7 @@ const Dashboard = () => {
         data: voucherStats?.charts?.claims || [],
       },
       {
-        name: "Lượt Sử Dụng (Usage)",
+        name: "Lượt Sử Dụng",
         type: "line",
         smooth: true,
         areaStyle: {

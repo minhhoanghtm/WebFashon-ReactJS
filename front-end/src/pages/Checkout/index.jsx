@@ -74,6 +74,14 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const role = user?.role || user?.data?.role || "";
+    if (role === "admin") {
+      toast.error("Quản trị viên không thể thực hiện thanh toán mua hàng!");
+      navigate("/");
+    }
+  }, [user, navigate]);
+
   const [shippingFee, setShippingFee] = useState(30000); //mặc định 30k, sẽ được cập nhật nếu có voucher vận chuyển hoặc đơn hàng đủ điều kiện freeship
   const [loadingFee, setLoadingFee] = useState(false);
   //Tính lại phí vận chuyển mỗi khi địa chỉ hoặc giỏ hàng thay đổi, trừ khi đang áp dụng voucher freeship

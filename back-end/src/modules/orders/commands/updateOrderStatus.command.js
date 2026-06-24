@@ -20,6 +20,13 @@ export const updateOrder = async (id, orderBody) => {
     await restoreOrderStock(order);
   }
 
+  if (order.status === "delivered" && order.payment_method === "cod") {
+    order.payment_status = "paid";
+    if (!order.paid_at) {
+      order.paid_at = new Date();
+    }
+  }
+
   await order.save();
 
   // Trigger status change notification
@@ -45,6 +52,11 @@ export const updateOrderStatus = async (id, status) => {
   
   if (order.status === "cancelled" && oldStatus !== "cancelled") {
     await restoreOrderStock(order);
+  }
+  
+  if (order.status === "delivered" && order.payment_method === "cod") {
+    order.payment_status = "paid";
+    order.paid_at = new Date();
   }
   
   await order.save();
