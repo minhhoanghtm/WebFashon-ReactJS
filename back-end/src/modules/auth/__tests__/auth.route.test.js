@@ -90,7 +90,7 @@ describe("Auth routes", () => {
     authServiceMock.signIn.mockResolvedValue({
       accessToken: "access-token",
       refreshToken: "refresh-token",
-      user: { id: "user-1", fullName: "Linh Nguyen" },
+      user: { _id: "user-1", fullName: "Linh Nguyen" },
     });
 
     const response = await request(app)

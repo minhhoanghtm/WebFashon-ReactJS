@@ -4,6 +4,7 @@ import { ArrowLeft, ShieldCheck, LoaderCircle, RefreshCw, CheckCircle2 } from "l
 import { toast } from "react-toastify";
 import { registerService, sendOTPServive, verifyOTPService } from "@/services/auth.service";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60; // seconds
@@ -11,6 +12,8 @@ const RESEND_COOLDOWN = 60; // seconds
 const VerifyOTP = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "404Studio";
 
   // Lấy formData được truyền từ trang Register qua navigate state
   const formData = location.state?.formData || {};
@@ -177,7 +180,7 @@ const VerifyOTP = () => {
 
       // Bước 3: Hiển thị màn hình thành công rồi chuyển trang
       setSuccess(true);
-      toast.success("Tạo tài khoản thành công! Chào mừng bạn đến với 404Studio 🎉");
+      toast.success(`Tạo tài khoản thành công! Chào mừng bạn đến với ${siteName} 🎉`);
       setTimeout(() => navigate("/login", { replace: true }), 2200);
     } catch (err) {
       const msg =
@@ -209,7 +212,7 @@ const VerifyOTP = () => {
           </div>
           <h1 className="text-xl font-bold text-neutral-900 tracking-tight mb-2">Tài khoản đã được tạo!</h1>
           <p className="text-xs text-neutral-500 leading-relaxed">
-            Chào mừng bạn đến với <strong className="text-neutral-900">404Studio</strong>.<br />
+            Chào mừng bạn đến với <strong className="text-neutral-900">{siteName}</strong>.<br />
             Hệ thống đang chuyển hướng bạn sang trang đăng nhập…
           </p>
         </div>
@@ -235,7 +238,7 @@ const VerifyOTP = () => {
         {/* Brand Identity Branding */}
         <div className="text-center mb-6">
           <h2 className="text-2xl font-black tracking-tighter text-black uppercase mb-1">
-            404STUDIO
+            {siteName.toUpperCase()}
           </h2>
           <p className="text-[10px] tracking-wider uppercase text-neutral-400 font-medium">
             Discover premium fashion tailored to you.

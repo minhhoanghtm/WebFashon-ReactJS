@@ -22,13 +22,13 @@ import {
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import logo from "../../assets/logo.png";
 import { useAuthStore } from "@/store/auth.store";
 import { updateProfileService, updatePasswordService } from "@/services/user.service";
 import { io } from "socket.io-client";
 import { ENV } from "@/config/env";
 import { tokenStorage } from "@/utils/token";
 import { getAdminConversationsService } from "@/services/chat.service";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -55,7 +55,9 @@ const Sidebar = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-
+  const { settings } = useWebsiteSettings();
+  const general = settings?.general || {};
+  const logo = general?.logo || "/logo.png";
   const socketUrl = useMemo(() => {
     return ENV.API_BASE_URL.replace("/api", "");
   }, []);
@@ -107,7 +109,8 @@ const Sidebar = () => {
   // Profile Form States
   const [profileName, setProfileName] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
-
+  const [profileBirthday, setProfileBirthday] = useState("");
+  const [profileGender, setProfileGender] = useState("");
   // Password Form States
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -146,6 +149,8 @@ const Sidebar = () => {
       setProfileName(user.fullName || user.name || "");
       const phone = user.addresses?.[0]?.phone || user.phone || "";
       setProfilePhone(phone);
+      setProfileBirthday(user.birthday || "");
+      setProfileGender(user.gender || "");
     }
   }, [isProfileModalOpen, user]);
 
@@ -171,6 +176,14 @@ const Sidebar = () => {
       toast.error("Số điện thoại không hợp lệ (yêu cầu 9 đến 11 chữ số)!");
       return;
     }
+    if (profileBirthday && isNaN(Date.parse(profileBirthday))) {
+      toast.error("Ngày sinh không hợp lệ!");
+      return;
+    }
+    if (!profileGender) {
+      toast.error("Vui lòng chọn giới tính!");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -182,6 +195,8 @@ const Sidebar = () => {
             ...existingAddress,
             fullName: profileName,
             phone: profilePhone,
+            birthday: profileBirthday,
+            gender: profileGender
           }
         ]
       };
@@ -467,6 +482,46 @@ const Sidebar = () => {
                     placeholder="Nhập họ và tên"
                     required
                   />
+                </div>
+
+                {/* Số điện thoại */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Số điện thoại</label>
+                  <input
+                    type="tel"
+                    value={profilePhone}
+                    onChange={(e) => setProfilePhone(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
+                    placeholder="Nhập số điện thoại"
+                  />
+                </div>
+
+                {/* Ngày sinh  */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Ngày sinh</label>
+                  <input
+                    type="date"
+                    value={profileBirthday}
+                    onChange={(e) => setProfileBirthday(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
+                    placeholder="Nhập ngày sinh"
+                    required
+                  />
+                </div>
+
+                {/* Giới tính  */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Giới tính</label>
+                  <select
+                    value={profileGender}
+                    onChange={(e) => setProfileGender(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
+                  >
+                    <option value="">Chọn giới tính</option>
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                    <option value="other">Khác</option>
+                  </select>
                 </div>
 
                 {/* Email (Readonly) */}

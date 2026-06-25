@@ -68,7 +68,7 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
   const isPendingPayment =
     order.status === "pending" &&
     order.payment_method !== "cod" &&
-    order.payment_status === "pending";
+    (order.payment_status === "pending" || order.payment_status === "failed");
 
   const statusInfo = isPendingPayment
     ? { label: "Chờ thanh toán", colorClass: "text-rose-600 bg-rose-50 border-rose-100" }

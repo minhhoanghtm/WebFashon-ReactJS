@@ -11,14 +11,14 @@ import {
   toggleVoucherStatus,
   getDashboardStats,
 } from "./voucher.controller.js";
-import { protectedRoute, adminOnly } from "../../middlewares/auth.middleware.js";
+import { protectedRoute, adminOnly, noAdmin } from "../../middlewares/auth.middleware.js";
 import { claimRateLimiter } from "../../middlewares/rateLimit.middleware.js";
 
 const voucherRouter = express.Router();
 
 // Public / Client Voucher APIs
 voucherRouter.get("/", getPublicVouchers);
-voucherRouter.post("/claim", protectedRoute, claimRateLimiter, claimVoucher);
+voucherRouter.post("/claim", protectedRoute, noAdmin, claimRateLimiter, claimVoucher);
 voucherRouter.get("/wallet", protectedRoute, getUserWallet);
 voucherRouter.post("/validate", protectedRoute, validateVoucher);
 

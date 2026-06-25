@@ -8,6 +8,7 @@ import {
   deleteCategoryService,
 } from "@/services/category.service";
 import { getAllProductService } from "@/services/product.service";
+import Swal from "sweetalert2";
 
 const CatalogManagement = () => {
   const [categories, setCategories] = useState([]);
@@ -103,14 +104,24 @@ const CatalogManagement = () => {
   };
 
   const handleDeleteCategory = async (id, name) => {
-    if (window.confirm(`Bạn có chắc muốn xóa danh mục "${name}"?`)) {
+    const result = await Swal.fire({
+      title: "Bạn có chắc chắn muốn xóa?",
+      text: `Danh mục ${name} sẽ bị xóa khỏi hệ thống.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Đồng ý",
+      cancelButtonText: "Hủy",
+    });
+    if (result.isConfirmed) {
       try {
         await deleteCategoryService(id);
         toast.success("Đã xóa danh mục!");
         fetchData();
       } catch (err) {
-        console.error(err);
-        toast.error("Không thể xóa danh mục!");
+        const errorMsg = err.response?.data?.message || "Không thể xóa danh mục!";
+        toast.warning(errorMsg);
       }
     }
   };

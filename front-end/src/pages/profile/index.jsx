@@ -60,21 +60,21 @@ const normalizeSearchText = (value = "") =>
     .toLowerCase();
 
 const normalizeProvince = (province) => ({
-  code: String(province.code),
-  name: province.name,
-  displayName: removeAdministrativePrefix(province.name),
+  code: String(province.ProvinceID || province.code || ""),
+  name: province.ProvinceName || province.name || "",
+  displayName: removeAdministrativePrefix(province.ProvinceName || province.name || ""),
   districts: province.districts || [],
 });
 
 const normalizeDistrict = (district) => ({
-  code: String(district.code),
-  name: district.name,
+  code: String(district.DistrictID || district.code || ""),
+  name: district.DistrictName || district.name || "",
   wards: district.wards || [],
 });
 
 const normalizeWard = (ward) => ({
-  code: String(ward.code),
-  name: ward.name,
+  code: String(ward.WardCode || ward.code || ""),
+  name: ward.WardName || ward.name || "",
 });
 
 const findLocationByCodeOrName = (items, value, getDisplayName = (item) => item.name) => {
@@ -703,6 +703,7 @@ const Profile = () => {
                 <img 
                   src={avatarUrl} 
                   alt={getUserName(userProfile)} 
+                  referrerPolicy="no-referrer"
                   onError={() => setAvatarError(true)} 
                 />
               ) : (
@@ -750,6 +751,7 @@ const Profile = () => {
                         <img 
                           src={avatarUrl} 
                           alt={getUserName(userProfile)} 
+                          referrerPolicy="no-referrer"
                           onError={() => setAvatarError(true)} 
                         />
                       ) : (
@@ -760,7 +762,7 @@ const Profile = () => {
                       <h1>{getUserName(userProfile)}</h1>
                       <span className="profile-role">
                         <ShieldCheck size={14} />
-                        Vai trò: {userProfile.role || "user"}
+                        Vai trò: {userProfile.role == "user" ? "Khách hàng" : "Quản trị viên"}
                       </span>
                     </div>
                   </div>
@@ -1091,7 +1093,7 @@ const ProfileEditModal = ({
             <div className="profile-avatar-upload__body">
               <div className="profile-avatar-upload__preview">
                 {form.avatar_url ? (
-                  <img src={form.avatar_url} alt="Ảnh đại diện" />
+                  <img src={form.avatar_url} alt="Ảnh đại diện" referrerPolicy="no-referrer" />
                 ) : (
                   <User size={24} />
                 )}
@@ -1189,10 +1191,15 @@ const ProfileAddressSelects = ({
 
     setLoadingDistrict(true);
     try {
-      const province = await getDistrictsService(nextProvinceCode);
-      const apiDistricts = Array.isArray(province?.districts)
-        ? province.districts.map(normalizeDistrict)
+      const data = await getDistrictsService(nextProvinceCode);
+      const districtsArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.districts)
+        ? data.districts
         : [];
+      const apiDistricts = districtsArray.map(normalizeDistrict);
 
       if (apiDistricts.length > 0) return apiDistricts;
     } catch (error) {
@@ -1212,10 +1219,15 @@ const ProfileAddressSelects = ({
 
       setLoadingWard(true);
       try {
-        const district = await getWardsService(nextDistrictCode);
-        const apiWards = Array.isArray(district?.wards)
-          ? district.wards.map(normalizeWard)
+        const data = await getWardsService(nextDistrictCode);
+        const wardsArray = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data?.wards)
+          ? data.wards
           : [];
+        const apiWards = wardsArray.map(normalizeWard);
 
         if (apiWards.length > 0) return apiWards;
       } catch (error) {

@@ -6,11 +6,14 @@ import voucherApi from "../api/voucher.api";
 import { useAuthStore } from "../store/auth.store";
 import VoucherDetailModal from "../components/VoucherDetailModal";
 import { getActiveBannersService, trackBannerClickService } from "../services/banner.service";
+import { useWebsiteSettings } from "../hooks/useWebsiteSettings";
 
 const VoucherHunting = ({ isDashboard = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "404Studio";
 
   const [vouchers, setVouchers] = useState([]);
   const [claimedIds, setClaimedIds] = useState([]);
@@ -104,6 +107,11 @@ const VoucherHunting = ({ isDashboard = false }) => {
       return;
     }
 
+    if (user?.role === "admin") {
+      toast.warning("Quản trị viên không được phép lưu mã voucher!");
+      return;
+    }
+
     try {
       const res = await voucherApi.claimVoucher(voucherId);
       if (res.success) {
@@ -146,7 +154,7 @@ const VoucherHunting = ({ isDashboard = false }) => {
             
             {/* Text Content */}
             <div className="relative z-10 p-8 md:p-12 text-left max-w-[85%] space-y-3 select-none">
-              <span className="inline-flex items-center gap-1.5 bg-indigo-650/80 px-3.5 py-0.5 rounded-full text-[10px] font-black tracking-widest text-indigo-100 uppercase">
+              <span className="inline-flex items-center gap-1.5 bg-indigo-600/80 px-3.5 py-0.5 rounded-full text-[10px] font-black tracking-widest text-indigo-100 uppercase">
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>Ưu đãi đặc biệt</span>
               </span>
@@ -178,13 +186,13 @@ const VoucherHunting = ({ isDashboard = false }) => {
             <div className="space-y-3 max-w-lg text-center md:text-left">
               <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
                 <Sparkles className="h-4.5 w-4.5" />
-                <span>Ưu đãi từ 404Studio</span>
+                <span>Ưu đãi từ {siteName}</span>
               </div>
               <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
                 Săn Voucher Mỏi Tay <br/> Nhận Ngay Ưu Đãi
               </h1>
               <p className="text-sm text-indigo-100 font-medium">
-                Hàng ngàn mã giảm giá hấp dẫn áp dụng cho các sản phẩm của 404Studio. Săn ngay kẻo lỡ!
+                Hàng ngàn mã giảm giá hấp dẫn áp dụng cho các sản phẩm của {siteName}. Săn ngay kẻo lỡ!
               </p>
             </div>
             <div className="h-44 w-44 bg-white/10 dark:bg-white/5 border border-white/20 rounded-full flex items-center justify-center backdrop-blur-lg shadow-2xl relative shrink-0">

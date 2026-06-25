@@ -392,7 +392,7 @@ const Dashboard = () => {
               <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm flex items-center justify-between transition hover:shadow-md">
                 <div className="space-y-2">
                   <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Tổng sản phẩm
+                    Tổng sản phẩm tồn kho
                   </span>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-bold tracking-tight">
@@ -596,7 +596,7 @@ const Dashboard = () => {
                 <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm flex items-center justify-between transition hover:shadow-md">
                   <div className="space-y-2">
                     <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                      Đang chạy (Active)
+                      Còn hiệu lực
                     </span>
                     <div className="text-2xl font-bold tracking-tight text-emerald-600">
                       {voucherStats.stats.activeVouchers}

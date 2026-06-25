@@ -63,7 +63,7 @@ const Favorites = ({ isDashboard = false }) => {
               Hãy thả tim sản phẩm bạn thích, danh sách này sẽ tự động cập nhật.
             </p>
             <Link
-              to="/products"
+              to="/"
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
             >
               <ShoppingBag size={15} aria-hidden="true" />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useWebsiteSettings } from "../../hooks/useWebsiteSettings";
 import { uploadImageService } from "../../services/upload.service";
 import { 
@@ -44,7 +44,7 @@ const WebsiteSettingsManagement = () => {
         <p className="text-gray-500 dark:text-slate-400 text-sm max-w-md">Vui lòng kiểm tra kết nối mạng, đảm bảo rằng backend server đang chạy và bạn đã đăng nhập tài khoản Quản trị viên.</p>
         <button
           onClick={reload}
-          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-650 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition shadow-md cursor-pointer hover:scale-102 active:scale-98"
+          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition shadow-md cursor-pointer hover:scale-102 active:scale-98"
         >
           <RefreshCw className="h-4 w-4" />
           Tải lại cài đặt
@@ -72,7 +72,7 @@ const WebsiteSettingsManagement = () => {
       const url = await uploadImageService(file);
       handleInputChange(group, field, url);
       toast.success("Tải lên ảnh thành công! 🖼️");
-    } catch (err) {
+    } catch {
       toast.error("Tải ảnh lên thất bại. Vui lòng thử lại!");
     } finally {
       setUploadingField(null);
@@ -118,7 +118,7 @@ const WebsiteSettingsManagement = () => {
             disabled={!isDirty || saving}
             className={`flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-xl transition shadow-md cursor-pointer
               ${isDirty 
-                ? "bg-indigo-650 hover:bg-indigo-700 text-black dark:text-white hover:scale-102 active:scale-98" 
+                ? "bg-indigo-600 hover:bg-indigo-700 text-white hover:scale-102 active:scale-98" 
                 : "bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-650 cursor-not-allowed shadow-none"
               }`}
           >

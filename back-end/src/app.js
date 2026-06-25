@@ -29,7 +29,12 @@ app.use(
   })
 );
 app.options("*", cors());
-app.use(helmet()); // secure HTTP headers
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+); // secure HTTP headers
 app.use(mongoSanitize()); // prevent NoSQL injection
 
 // Payload parsing

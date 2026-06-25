@@ -44,7 +44,9 @@ const zodBoolCoerce = z.preprocess(
 
 const createBannerBaseSchema = z.object({
   title:      z.string({ required_error: "Tiêu đề (title) không được để trống" }).trim().min(1, "Tiêu đề (title) không được để trống"),
+  subtitle:   z.string().trim().optional(),
   imageUrl:   z.string({ required_error: "Đường dẫn hình ảnh (imageUrl) không được để trống" }).trim().min(1, "Đường dẫn hình ảnh (imageUrl) không được để trống"),
+  mobileImageUrl: z.string().trim().optional(),
   position:   z.string({ required_error: "Vị trí hiển thị (position) không được để trống" }).trim().min(1, "Vị trí hiển thị (position) không được để trống"),
   sortOrder:  z.coerce.number({ invalid_type_error: "Thứ tự hiển thị (sortOrder) phải là số" }).min(0, "Thứ tự hiển thị (sortOrder) phải là số lớn hơn hoặc bằng 0").optional(),
   startDate:  zodDate,
@@ -52,8 +54,8 @@ const createBannerBaseSchema = z.object({
   targetType: targetTypeEnum.default("external"),
   targetId:   z.string().trim().optional(),
   isActive:   zodBoolCoerce.optional(),
-  link:       z.string().trim().optional(),
-  description: z.string().trim().optional(),
+  linkUrl:    z.string().trim().optional(),
+  buttonText: z.string().trim().optional(),
 }).superRefine((data, ctx) => {
   // 1. Kiểm tra startDate < endDate
   if (data.startDate && data.endDate && data.startDate >= data.endDate) {
@@ -86,7 +88,9 @@ const createBannerBaseSchema = z.object({
 
 const updateBannerBaseSchema = z.object({
   title:      z.string().trim().min(1, "Tiêu đề (title) không được để trống").optional(),
+  subtitle:   z.string().trim().optional(),
   imageUrl:   z.string().trim().min(1, "Đường dẫn hình ảnh (imageUrl) không được để trống").optional(),
+  mobileImageUrl: z.string().trim().optional(),
   position:   z.string().trim().min(1, "Vị trí hiển thị (position) không được để trống").optional(),
   sortOrder:  z.coerce.number().min(0, "Thứ tự hiển thị (sortOrder) phải là số lớn hơn hoặc bằng 0").optional(),
   startDate:  zodDate.optional(),
@@ -94,8 +98,8 @@ const updateBannerBaseSchema = z.object({
   targetType: targetTypeEnum.optional(),
   targetId:   z.string().trim().optional(),
   isActive:   zodBoolCoerce.optional(),
-  link:       z.string().trim().optional(),
-  description: z.string().trim().optional(),
+  linkUrl:    z.string().trim().optional(),
+  buttonText: z.string().trim().optional(),
 }).superRefine((data, ctx) => {
   // Kiểm tra start < end chỉ khi cả hai đều được cung cấp
   if (data.startDate && data.endDate && data.startDate >= data.endDate) {

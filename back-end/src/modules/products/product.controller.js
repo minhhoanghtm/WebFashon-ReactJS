@@ -5,17 +5,32 @@ import { successResponse } from "../../common/responses/index.js";
 import logger from "../../common/logger.js";
 import { getRedisConnection } from "../../configs/redis.js";
 
+// Helper to invalidate product cache keys
+const clearProductCache = async () => {
+  try {
+    const redis = getRedisConnection();
+    const stream = redis.scanStream({ match: "products:*" });
+    for await (const keys of stream) {
+      if (keys.length) {
+        await redis.del(...keys);
+      }
+    }
+    logger.info("Cleared product cache keys in Redis");
+  } catch (err) {
+    logger.error("Failed to clear product cache: %s", err);
+  }
+};
+
 // Product controllers
 export const addProduct = async (req, res, next) => {
   try {
     const product = await productFacade.addProduct(req.body);
+    await clearProductCache();
     return successResponse(res, product, "Tạo sản phẩm thành công", 201);
   } catch (error) {
     next(error);
   }
 };
-
-
 
 export const getProductBySlug = async (req, res, next) => {
   try {
@@ -31,6 +46,7 @@ export const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
     const product = await productFacade.updateProduct(id, req.body);
+    await clearProductCache();
     return successResponse(res, product, "Cập nhật sản phẩm thành công");
   } catch (error) {
     next(error);
@@ -41,6 +57,7 @@ export const deleteProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = await productFacade.deleteProduct(id);
+    await clearProductCache();
     return successResponse(res, data, "Xóa sản phẩm thành công");
   } catch (error) {
     next(error);
@@ -100,6 +117,7 @@ export const getSlugByProductId = async (req, res, next) => {
 export const createProductVariant = async (req, res, next) => {
   try {
     const variant = await productFacade.createVariant(req.body);
+    await clearProductCache();
     return successResponse(res, variant, "Thêm biến thể thành công", 201);
   } catch (error) {
     next(error);
@@ -110,6 +128,7 @@ export const updateProductVariant = async (req, res, next) => {
   try {
     const { id } = req.params;
     const variant = await productFacade.updateVariant(id, req.body);
+    await clearProductCache();
     return successResponse(res, variant, "Cập nhật biến thể thành công");
   } catch (error) {
     next(error);
@@ -120,6 +139,7 @@ export const deleteProductVariant = async (req, res, next) => {
   try {
     const { id } = req.params;
     const variant = await productFacade.deleteVariant(id);
+    await clearProductCache();
     return successResponse(res, variant, "Xóa biến thể sản phẩm thành công");
   } catch (error) {
     next(error);

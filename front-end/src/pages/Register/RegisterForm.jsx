@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { sendOTPServive } from "@/services/auth.service";
 import { GoogleLoginButton } from "@/components/GoogleLoginButton";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const FacebookIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -73,6 +74,8 @@ const normalizeBackendMessage = (error) => {
 
 const RegisterForm = () => {
   const navigate = useNavigate();
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "404Studio";
   const [formData, setFormData] = useState(initialFormData);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
@@ -214,7 +217,7 @@ const RegisterForm = () => {
         </button>
 
         <header className="register-header">
-          <span className="register-header__eyebrow">404Studio</span>
+          <span className="register-header__eyebrow">{siteName}</span>
           <h1 className="register-header__title">Đăng ký</h1>
           <p className="register-header__desc">
             Tạo tài khoản để bắt đầu trải nghiệm mua sắm.

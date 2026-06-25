@@ -130,3 +130,24 @@ export const resetPassword = async (req, res, next) => {
     next(error);
   }
 };
+
+export const signInWithGoogle = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const ua = req.headers["user-agent"];
+    const { accessToken, refreshToken, user } = await authService.signInWithGoogle(idToken, ip, ua);
+
+    // Set refresh token in httpOnly cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: REFRESH_TOKEN_TTL,
+    });
+
+    return successResponse(res, { accessToken, userId: user._id }, `User ${user.fullName} đã login bằng Google!, UserId: ${user._id || user.id}`);
+  } catch (error) {
+    next(error);
+  }
+};

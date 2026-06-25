@@ -6,6 +6,7 @@ import { loginService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
 import { userApi } from "@/api/user.api";
 import { toast } from "react-toastify";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const FacebookIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -28,6 +29,8 @@ const XIcon = () => (
 const LoginForm = () => {
   const navigate = useNavigate();
   const { login, setUser } = useAuthStore();
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "404Studio";
   const [formData, setFormData] = useState({
     email: "",
     passWord: "",
@@ -131,7 +134,7 @@ const LoginForm = () => {
         </button>
 
         <header className="login-header">
-          <span className="login-header__eyebrow">404Studio</span>
+          <span className="login-header__eyebrow">{siteName}</span>
           <h1 className="login-header__title">Đăng nhập</h1>
           <p className="login-header__desc">
             Vui lòng nhập thông tin tài khoản của bạn.

@@ -26,6 +26,7 @@ import {
 import { toast } from "react-toastify";
 import { useChatContextStore } from "@/store/chatContext.store";
 import Markdown from "./Markdown";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
 
 const parseInlineProducts = (content) => {
   if (typeof content !== "string") return { cleanedContent: "", items: [] };
@@ -33,7 +34,8 @@ const parseInlineProducts = (content) => {
   const items = [];
   let cleanedContent = content;
 
-  const regex = /(?:[*+-]|\d+\.)\s+\*\*(.*?)\*\*[\s*]*[*+-]?\s*(?:Giá|Gia|Price):\s*([^*+-|\d.]+)(?:[\s*]*[*+-]?\s*(?:Link ảnh|Link anh|Image|Link):\s*(https?:\/\/\S+))?(?:\s*[*+-]?\s*(?:ID sản phẩm|ID san pham|ID):\s*`?([a-f0-9]+)`?)?/gi;
+  const regex =
+    /(?:[*+-]|\d+\.)\s+\*\*(.*?)\*\*[\s*]*[*+-]?\s*(?:Giá|Gia|Price):\s*([^*+-|\d.]+)(?:[\s*]*[*+-]?\s*(?:Link ảnh|Link anh|Image|Link):\s*(https?:\/\/\S+))?(?:\s*[*+-]?\s*(?:ID sản phẩm|ID san pham|ID):\s*`?([a-f0-9]+)`?)?/gi;
 
   let match;
   while ((match = regex.exec(content)) !== null) {
@@ -66,9 +68,14 @@ const CustomerChatWidget = () => {
   const AI_CHAT_STORAGE_KEY = `customer_ai_chat_history_${userKey}`;
   const AI_CHAT_METADATA_KEY = `customer_ai_chat_metadata_${userKey}`;
 
+  const { settings } = useWebsiteSettings();
+  const general = settings?.general || {};
+  const siteName = general?.siteName || "404Studio";
   const [messages, setMessages] = useState(() => {
     try {
-      const savedMessages = localStorage.getItem(`customer_ai_chat_history_${userKey}`);
+      const savedMessages = localStorage.getItem(
+        `customer_ai_chat_history_${userKey}`,
+      );
       return {
         ai: savedMessages ? JSON.parse(savedMessages) || [] : [],
         support: [],
@@ -80,8 +87,12 @@ const CustomerChatWidget = () => {
 
   const [aiMetadata, setAiMetadata] = useState(() => {
     try {
-      const savedMetadata = localStorage.getItem(`customer_ai_chat_metadata_${userKey}`);
-      return savedMetadata ? JSON.parse(savedMetadata) || { lastIntent: null, lastProductId: null } : { lastIntent: null, lastProductId: null };
+      const savedMetadata = localStorage.getItem(
+        `customer_ai_chat_metadata_${userKey}`,
+      );
+      return savedMetadata
+        ? JSON.parse(savedMetadata) || { lastIntent: null, lastProductId: null }
+        : { lastIntent: null, lastProductId: null };
     } catch {
       return { lastIntent: null, lastProductId: null };
     }
@@ -225,7 +236,10 @@ const CustomerChatWidget = () => {
     socket.on("connect", () => {
       console.log("Socket connected");
       if (selectedConversationIdRef.current) {
-        console.log("Joining room on connect:", selectedConversationIdRef.current);
+        console.log(
+          "Joining room on connect:",
+          selectedConversationIdRef.current,
+        );
         socket.emit("conversation:join", selectedConversationIdRef.current);
       }
     });
@@ -316,8 +330,11 @@ const CustomerChatWidget = () => {
       const savedMetadata = localStorage.getItem(AI_CHAT_METADATA_KEY);
       setAiMetadata(
         savedMetadata
-          ? JSON.parse(savedMetadata) || { lastIntent: null, lastProductId: null }
-          : { lastIntent: null, lastProductId: null }
+          ? JSON.parse(savedMetadata) || {
+              lastIntent: null,
+              lastProductId: null,
+            }
+          : { lastIntent: null, lastProductId: null },
       );
     } catch (error) {
       console.error("Lỗi khi tải metadata chat AI:", error);
@@ -338,7 +355,11 @@ const CustomerChatWidget = () => {
     if (!isLoadedRef.current) return;
     try {
       const currentSaved = localStorage.getItem(AI_CHAT_STORAGE_KEY);
-      if ((!messages.ai || messages.ai.length === 0) && currentSaved && JSON.parse(currentSaved).length > 0) {
+      if (
+        (!messages.ai || messages.ai.length === 0) &&
+        currentSaved &&
+        JSON.parse(currentSaved).length > 0
+      ) {
         return;
       }
 
@@ -421,9 +442,13 @@ const CustomerChatWidget = () => {
   }, [context, isOpen, AI_CHAT_METADATA_KEY]);
 
   const { pathname } = useLocation();
-  const isAuthOrAdminPage = ["/login", "/register", "/reset-password", "/verify-otp", "/admin"].some(
-    (path) => pathname.startsWith(path)
-  );
+  const isAuthOrAdminPage = [
+    "/login",
+    "/register",
+    "/reset-password",
+    "/verify-otp",
+    "/admin",
+  ].some((path) => pathname.startsWith(path));
 
   if (isAuthOrAdminPage) return null;
 
@@ -576,7 +601,7 @@ const CustomerChatWidget = () => {
                 </span>
                 <div>
                   <h2 className="text-sm font-extrabold tracking-tight">
-                    404Studio Support
+                    {siteName} Support
                   </h2>
                   <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -744,12 +769,16 @@ const CustomerChatWidget = () => {
                       }
 
                       // Parse inline products from AI message
-                      const { cleanedContent, items } = parseInlineProducts(m.content);
+                      const { cleanedContent, items } = parseInlineProducts(
+                        m.content,
+                      );
 
                       if (items.length > 0) {
                         return (
                           <div className="space-y-3">
-                            {cleanedContent && <Markdown>{cleanedContent}</Markdown>}
+                            {cleanedContent && (
+                              <Markdown>{cleanedContent}</Markdown>
+                            )}
                             <div className="grid grid-cols-1 gap-2.5 mt-2">
                               {items.map((item, idx) => (
                                 <div
@@ -775,9 +804,15 @@ const CustomerChatWidget = () => {
                                     <button
                                       onClick={() => {
                                         const targetMeta = item.id
-                                          ? { ...aiMetadata, lastProductId: item.id }
+                                          ? {
+                                              ...aiMetadata,
+                                              lastProductId: item.id,
+                                            }
                                           : aiMetadata;
-                                        sendMessageDirectly("chi tiết", targetMeta);
+                                        sendMessageDirectly(
+                                          "chi tiết",
+                                          targetMeta,
+                                        );
                                       }}
                                       className="mt-2 py-1 px-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white font-medium text-[9px] rounded-md transition-colors self-start duration-150 cursor-pointer"
                                     >

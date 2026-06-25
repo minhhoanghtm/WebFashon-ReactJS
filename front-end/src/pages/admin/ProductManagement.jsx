@@ -17,7 +17,7 @@ import {
 } from "@/services/product.service";
 import { getAllCategoriesService } from "@/services/category.service";
 import { getProductVariantByProductIdService } from "@/services/productItem.service";
-import { formatCurrency } from "@/utils/format";
+import Swal from "sweetalert2";
 
 const defaultProductImage = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500";
 
@@ -479,14 +479,25 @@ const ProductManagement = () => {
   };
 
   const handleDeleteProduct = async (id, name) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${name}"?`)) {
+    const result = await Swal.fire({
+      title: "Bạn có chắc chắn muốn xóa?",
+      text: `Sản phẩm "${name}" sẽ bị xóa khỏi hệ thống.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Đồng ý",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
       try {
         await deleteProductService(id);
         toast.success("Đã xóa sản phẩm!");
         fetchData();
       } catch (err) {
-        console.error(err);
-        toast.error("Không thể xóa sản phẩm!");
+        const errorMsg = err.response?.data?.message || "Không thể xóa sản phẩm!";
+        toast.warning(errorMsg);
       }
     }
   };

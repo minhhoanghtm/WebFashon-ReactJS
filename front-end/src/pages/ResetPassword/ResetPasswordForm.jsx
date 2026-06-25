@@ -3,11 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { sendResetOTPService, verifyOTPService, resetPasswordService } from "@/services/auth.service";
 import { toast } from "react-toastify";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const RESEND_COOLDOWN = 60; // 60 seconds
 
 const ResetPasswordForm = () => {
   const navigate = useNavigate();
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "404Studio";
   const [step, setStep] = useState(1); // 1: Enter email, 2: Enter OTP, 3: Enter New Password
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -205,7 +208,7 @@ const ResetPasswordForm = () => {
         </button>
 
         <header className="reset-header">
-          <span className="reset-header__eyebrow">404Studio</span>
+          <span className="reset-header__eyebrow">{siteName}</span>
           <h1 className="reset-header__title">
             {step === 3 ? "Đặt mật khẩu mới" : "Đặt lại mật khẩu"}
           </h1>

@@ -15,7 +15,7 @@ class WebsiteSettingsService {
           faviconUrl: "",
           hotline: "0900000000",
           email: "contact@404Studio.com",
-          address: "Hà Nội, Việt Nam",
+          address: "Thành phố Hồ Chí Minh, Việt Nam",
           workingHours: "8:00 - 22:00",
         },
         system: {

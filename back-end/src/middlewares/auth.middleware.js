@@ -40,14 +40,14 @@ export const protectedRoute = async (req, res, next) => {
     return next();
   } catch (error) {
     if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
         message: "Access token het han hoac khong dung!",
       });
     }
 
     if (error.name === "RevokedAccessTokenError") {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
         message: "Access token da bi thu hoi hoac khong hop le!",
       });
