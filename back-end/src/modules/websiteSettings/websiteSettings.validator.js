@@ -35,7 +35,7 @@ const updateSettingsSchema = z.object({
       address:  z.string({ required_error: "Địa chỉ không được để trống" }).trim().min(1, "Địa chỉ không được để trống"),
     },
     { required_error: "Thiếu thông tin cấu hình chung (general)" }
-  ),
+  ).passthrough(), // cho phép các field khác như logoUrl, faviconUrl, workingHours đi qua
   system: z
     .object({
       maintenanceMode:    zodBoolCoerce,
@@ -43,6 +43,7 @@ const updateSettingsSchema = z.object({
       enableVoucher:      zodBoolCoerce,
       enableReviews:      zodBoolCoerce,
     })
+    .passthrough() // cho phép các field cấu hình hệ thống khác đi qua nếu có
     .optional(),
 }).passthrough(); // cho phép các field cấu hình khác đi qua
 

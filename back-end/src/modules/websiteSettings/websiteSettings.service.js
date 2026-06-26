@@ -30,10 +30,19 @@ class WebsiteSettingsService {
   }
 
   async updateSettings(adminId, updateData) {
+    const sanitizedData = { ...updateData };
+    delete sanitizedData._id;
+    delete sanitizedData.id;
+    delete sanitizedData.createdAt;
+    delete sanitizedData.updatedAt;
+    delete sanitizedData.__v;
+    delete sanitizedData.singletonKey;
+    delete sanitizedData.createdBy;
+
     let settings = await websiteSettingsRepository.findOne({ singletonKey: "default" });
     if (!settings) {
       settings = await websiteSettingsRepository.create({
-        ...updateData,
+        ...sanitizedData,
         singletonKey: "default",
         createdBy: adminId,
         updatedBy: adminId,
@@ -41,7 +50,7 @@ class WebsiteSettingsService {
     } else {
       settings = await websiteSettingsRepository.findOneAndUpdate(
         { singletonKey: "default" },
-        { ...updateData, updatedBy: adminId },
+        { ...sanitizedData, updatedBy: adminId },
         { new: true }
       );
     }

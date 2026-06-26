@@ -569,7 +569,7 @@ const Checkout = () => {
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="h-16 w-16 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-950"
+                        className="h-16 w-16 rounded-xl object-contain border border-gray-100 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-950"
                       />
                     )}
                     <div className="flex-1 min-w-0">

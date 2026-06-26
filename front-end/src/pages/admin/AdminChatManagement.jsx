@@ -11,6 +11,7 @@ import {
   Send,
   UserCheck,
   XCircle,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { io } from "socket.io-client";
@@ -24,6 +25,8 @@ import {
 } from "@/services/chat.service";
 import { ENV } from "@/config/env";
 import { tokenStorage } from "@/utils/token";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const statusMeta = {
   waiting_admin: {
@@ -69,6 +72,10 @@ const getInitial = (conversation) => {
 };
 
 const AdminChatManagement = () => {
+   const { settings } = useWebsiteSettings();
+    const general = settings?.general || {};
+    const siteName = general.siteName || "";
+    useDocumentTitle(`Quản lý chat`);
   const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -450,15 +457,56 @@ const AdminChatManagement = () => {
                       return (
                         <div key={message._id} className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}>
                           <div className={`max-w-[78%] space-y-1 flex flex-col ${isAdmin ? "items-end text-right" : "items-start text-left"}`}>
-                            <p
-                              className={`rounded-2xl px-4 py-3 text-sm font-medium leading-relaxed shadow-sm ${
-                                isAdmin
-                                  ? "rounded-br-md bg-indigo-600 text-white"
-                                  : "rounded-bl-md border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-                              }`}
-                            >
-                              {message.content}
-                            </p>
+                            {message.messageType === "product" || message.metadata?.type === "product" ? (
+                              (() => {
+                                const productInfo = message.product || message.metadata?.product;
+                                if (!productInfo) return null;
+                                return (
+                                  <div className="w-[200px] bg-white dark:bg-slate-800 rounded-2xl rounded-tl-md rounded-bl-md border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm text-left">
+                                    <img
+                                      src={productInfo.image}
+                                      alt={productInfo.productName}
+                                      className="w-full h-28 object-cover"
+                                    />
+                                    <div className="p-3">
+                                      <span className="text-[10px] uppercase tracking-wider text-indigo-500 font-semibold">
+                                        Sản phẩm đang xem
+                                      </span>
+                                      <h4 className="mt-1 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                        {productInfo.productName}
+                                      </h4>
+                                      <div className="mt-2 text-sm font-bold text-indigo-600">
+                                        {Number(
+                                          productInfo.new_price ||
+                                            productInfo.price ||
+                                            0,
+                                        ).toLocaleString("vi-VN")}
+                                        đ
+                                      </div>
+                                      <a
+                                        href={`/product/${productInfo.slug}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-3 inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:underline"
+                                      >
+                                        <ExternalLink size={12} />
+                                        Xem chi tiết
+                                      </a>
+                                    </div>
+                                  </div>
+                                );
+                              })()
+                            ) : (
+                              <p
+                                className={`rounded-2xl px-4 py-3 text-sm font-medium leading-relaxed shadow-sm ${
+                                  isAdmin
+                                    ? "rounded-br-md bg-indigo-600 text-white"
+                                    : "rounded-bl-md border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                                }`}
+                              >
+                                {message.content}
+                              </p>
+                            )}
                             <span className="block text-[11px] font-semibold text-slate-400">
                               {isAdmin ? "Admin" : message.senderType === "ai" ? "AI" : "Khách"} • {formatTime(message.createdAt)}
                             </span>

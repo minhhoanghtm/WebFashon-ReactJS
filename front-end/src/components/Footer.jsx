@@ -14,7 +14,7 @@ const Footer = () => {
   const socialLinks = settings?.socialLinks || {};
   const footerData = settings?.footer || {};
 
-  const siteName = general.siteName || "404Studio";
+  const siteName = general.siteName || "";
   const siteDescription = general.siteDescription || "Thương hiệu thời trang cao cấp mang phong cách hiện đại, tối giản và tinh tế. Nâng tầm phong cách cá nhân của bạn mỗi ngày.";
   const facebookUrl = socialLinks.facebook || "https://facebook.com";
   const instagramUrl = socialLinks.instagram || "https://instagram.com";
@@ -84,6 +84,9 @@ const Footer = () => {
               </li>
               <li className="footer-link-item">
                 <Link to="/policy">Chính sách</Link>
+              </li>
+              <li className="footer-link-item">
+                <Link to="/guide">Hướng dẫn mua hàng</Link>
               </li>
             </ul>
           </div>

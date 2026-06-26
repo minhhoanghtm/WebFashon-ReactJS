@@ -114,7 +114,7 @@ export const normalizeProduct = (product = {}, index = 0, categoryMap = {}, isMo
     badge: firstValue(
       product.badge,
       product.tag,
-      oldPrice > price && price > 0 ? "Giảm giá" : "Mới",
+      oldPrice > price && price > 0 ? `-${Math.round(((oldPrice - price) / oldPrice) * 100)}%` : "Mới",
     ),
     isMock,
   };

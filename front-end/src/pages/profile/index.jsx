@@ -38,6 +38,8 @@ import { uploadImageService } from "../../services/upload.service";
 import { useAuthStore } from "../../store/auth.store";
 import { findFallbackProvince, vietnamAddressData } from "../Checkout/VietnamAddressData";
 import "./profile.css";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const DEFAULT_AVATAR =
   "https://cdn.sforum.vn/sforum/wp-content/uploads/2023/10/avatar-trang-4.jpg";
@@ -327,6 +329,10 @@ const buildProfileForm = (profile = {}) => {
 };
 
 const Profile = () => {
+   const { settings } = useWebsiteSettings();
+    const general = settings?.general || {};
+    const siteName = general.siteName || "";
+    useDocumentTitle("Thông tin cá nhân");
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "profile";

@@ -9,8 +9,14 @@ import {
 } from "@/services/category.service";
 import { getAllProductService } from "@/services/product.service";
 import Swal from "sweetalert2";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const CatalogManagement = () => {
+   const { settings } = useWebsiteSettings();
+    const general = settings?.general || {};
+    const siteName = general.siteName || "";
+    useDocumentTitle("Quản lý danh mục");
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);

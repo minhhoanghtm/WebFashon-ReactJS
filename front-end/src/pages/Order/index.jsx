@@ -28,9 +28,6 @@ const UserAccountManagement = ({ isDashboard = false }) => {
     useDocumentTitle("Lịch sử mua hàng");
   }
 
-  const navigate = useNavigate();
-  const location = useLocation();
-
   const [searchParams] = useSearchParams();
   const initialStatus = searchParams.get("status") || "all";
   const [orders, setOrders] = useState([]);

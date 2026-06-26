@@ -1,9 +1,9 @@
 .product-page {
-  --product-ink: #171717;
-  --product-muted: #716f6a;
-  --product-line: #e7e5e0;
-  --product-soft: #f6f5f2;
-  background: #fff;
+  --product-ink: #000000;
+  --product-muted: #6b7280;
+  --product-line: #e5e7eb;
+  --product-soft: #f9fafb;
+  background: #ffffff;
   color: var(--product-ink);
   min-height: 100%;
   padding: 46px 24px 80px;
@@ -20,7 +20,7 @@
 }
 
 .product-page__intro > span {
-  color: #9a7650;
+  color: #000000;
   display: block;
   font-size: 11px;
   font-weight: 750;
@@ -51,7 +51,7 @@
 
 .product-sidebar {
   background: var(--product-soft);
-  border: 1px solid #eeece7;
+  border: 1px solid var(--product-line);
   border-radius: 16px;
   overflow: hidden;
   position: sticky;
@@ -74,7 +74,7 @@
 }
 
 .product-sidebar__title span {
-  color: #96918a;
+  color: #9ca3af;
   display: block;
   font-size: 10px;
   font-weight: 700;
@@ -107,7 +107,7 @@
 
 .product-filter-group__options label {
   align-items: center;
-  color: #55524d;
+  color: #374151;
   cursor: pointer;
   display: flex;
   font-size: 13px;
@@ -131,7 +131,7 @@
 }
 
 .product-price-filter label > span {
-  color: #77736d;
+  color: #6b7280;
   font-size: 11px;
 }
 
@@ -147,7 +147,7 @@
 }
 
 .product-sidebar__clear {
-  border: 1px solid #cbc7bf;
+  border: 1px solid #000000;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
@@ -156,11 +156,13 @@
     background 160ms ease,
     color 160ms ease;
   width: 100%;
+  background: transparent;
+  color: #000000;
 }
 
 .product-sidebar__clear:hover {
-  background: #202020;
-  color: #fff;
+  background: #000000;
+  color: #ffffff;
 }
 
 .product-content {
@@ -180,7 +182,7 @@
 }
 
 .product-toolbar__top > div {
-  color: #6e6a64;
+  color: #4b5563;
   font-size: 13px;
 }
 
@@ -205,14 +207,14 @@
 }
 
 .product-sort span {
-  color: #76726c;
+  color: #4b5563;
   font-size: 12px;
   white-space: nowrap;
 }
 
 .product-sort select {
   background: #fff;
-  border: 1px solid #cbc7bf;
+  border: 1px solid var(--product-line);
   border-radius: 9px;
   font-size: 13px;
   min-width: 170px;
@@ -221,8 +223,8 @@
 }
 
 .product-sort select:focus {
-  border-color: #55514b;
-  box-shadow: 0 0 0 3px rgb(45 42 38 / 8%);
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 
 .product-search {
@@ -230,7 +232,7 @@
   background: var(--product-soft);
   border: 1px solid transparent;
   border-radius: 999px;
-  color: #85817a;
+  color: #9ca3af;
   display: flex;
   gap: 10px;
   margin-top: 18px;
@@ -240,8 +242,8 @@
 
 .product-search:focus-within {
   background: #fff;
-  border-color: #cbc7bf;
-  box-shadow: 0 0 0 4px rgb(45 42 38 / 5%);
+  border-color: var(--product-line);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.03);
 }
 
 .product-search input {
@@ -262,7 +264,7 @@
 }
 
 .product-search button:hover {
-  background: #e5e2dc;
+  background: #e5e7eb;
   color: var(--product-ink);
 }
 
@@ -285,7 +287,7 @@
 
 .product-card__media {
   aspect-ratio: 4 / 5;
-  background: #f1f0ed;
+  background: var(--product-soft);
   border-radius: 13px;
   overflow: hidden;
   position: relative;
@@ -293,7 +295,7 @@
 
 .product-card__media img {
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 320ms ease;
   width: 100%;
 }
@@ -325,7 +327,7 @@
 }
 
 .product-card__favorite.is-active {
-  color: #a43d38;
+  color: #ef4444;
 }
 
 .product-card__badge {
@@ -345,7 +347,7 @@
 }
 
 .product-card__category {
-  color: #918c84;
+  color: #9ca3af;
   display: block;
   font-size: 10px;
   font-weight: 700;
@@ -372,7 +374,7 @@
 
 .product-card__rating {
   align-items: center;
-  color: #b47a2f;
+  color: #eab308;
   display: flex;
   font-size: 11px;
   font-weight: 700;
@@ -394,7 +396,7 @@
 }
 
 .product-card__prices del {
-  color: #9c9891;
+  color: #9ca3af;
   font-size: 11px;
 }
 
@@ -402,7 +404,7 @@
   align-items: center;
   background: var(--product-soft);
   border-radius: 16px;
-  color: #716d66;
+  color: #4b5563;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -425,7 +427,7 @@
 }
 
 .product-state button {
-  background: #202020;
+  background: #000000;
   border-radius: 999px;
   color: #fff;
   font-size: 12px;
@@ -467,8 +469,8 @@
 
 .product-pagination button:hover:not(:disabled),
 .product-pagination button.is-active {
-  background: #202020;
-  border-color: #202020;
+  background: #000000;
+  border-color: #000000;
   color: #fff;
 }
 
@@ -484,7 +486,7 @@
 }
 
 .product-pagination__dots {
-  color: #8b877f;
+  color: #9ca3af;
   font-size: 12px;
   padding: 0 3px;
 }

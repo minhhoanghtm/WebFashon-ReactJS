@@ -15,8 +15,12 @@ import "./home.css";
 import { toast } from "react-toastify";
 import voucherApi from "../../api/voucher.api";
 import { useAuthStore } from "../../store/auth.store";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+
 
 const Home = () => {
+  
+  useDocumentTitle("Trang chủ");
   const { products: apiProducts, isLoading, error } = useProducts();
   const { homeSearchTerm = "" } = useOutletContext() || {};
   const favoriteItems = useFavoriteStore((state) => state.items);

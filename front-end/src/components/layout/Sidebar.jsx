@@ -23,7 +23,10 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuthStore } from "@/store/auth.store";
-import { updateProfileService, updatePasswordService } from "@/services/user.service";
+import {
+  updateProfileService,
+  updatePasswordService,
+} from "@/services/user.service";
 import { io } from "socket.io-client";
 import { ENV } from "@/config/env";
 import { tokenStorage } from "@/utils/token";
@@ -57,14 +60,20 @@ const Sidebar = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const { settings } = useWebsiteSettings();
   const general = settings?.general || {};
-  const logo = general?.logo || "/logo.png";
+  const siteName = general?.siteName || "Admin";
+  const logoUrl = general?.logoUrl || "";
+
   const socketUrl = useMemo(() => {
     return ENV.API_BASE_URL.replace("/api", "");
   }, []);
 
   const fetchUnreadCount = async () => {
     try {
-      const res = await getAdminConversationsService({ status: "waiting_admin", limit: 100, type: "support" });
+      const res = await getAdminConversationsService({
+        status: "waiting_admin",
+        limit: 100,
+        type: "support",
+      });
       setUnreadCount(res?.total || res?.items?.length || 0);
     } catch (error) {
       console.error("Lỗi khi lấy số tin nhắn chưa đọc:", error);
@@ -155,10 +164,16 @@ const Sidebar = () => {
   }, [isProfileModalOpen, user]);
 
   // Derived attributes
-  const adminName = user?.fullName || user?.name || user?.userName || user?.email || "Admin";
+  const adminName =
+    user?.fullName || user?.name || user?.userName || user?.email || "Admin";
   const avatarUrl = user?.avatar_url || user?.avatar || "";
   const firstLetter = adminName.charAt(0).toUpperCase();
-  const displayRole = user?.role === "admin" ? "Quản trị viên" : (user?.role === "staff" ? "Nhân viên" : "Người dùng");
+  const displayRole =
+    user?.role === "admin"
+      ? "Quản trị viên"
+      : user?.role === "staff"
+      ? "Nhân viên"
+      : "Người dùng";
 
   const handleLogout = () => {
     logout();
@@ -196,19 +211,22 @@ const Sidebar = () => {
             fullName: profileName,
             phone: profilePhone,
             birthday: profileBirthday,
-            gender: profileGender
-          }
-        ]
+            gender: profileGender,
+          },
+        ],
       };
       const response = await updateProfileService(payload);
-      
+
       // Update local state in Zustand store
       setUser(response);
       toast.success("Cập nhật thông tin thành công!");
       setIsProfileModalOpen(false);
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Chức năng cập nhật thông tin sẽ sớm được hỗ trợ.");
+      toast.error(
+        err.response?.data?.message ||
+          "Chức năng cập nhật thông tin sẽ sớm được hỗ trợ.",
+      );
     } finally {
       setLoading(false);
     }
@@ -239,7 +257,10 @@ const Sidebar = () => {
       setConfirmPassword("");
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Chức năng đổi mật khẩu chưa được hỗ trợ.");
+      toast.error(
+        err.response?.data?.message ||
+          "Chức năng đổi mật khẩu chưa được hỗ trợ.",
+      );
     } finally {
       setLoading(false);
     }
@@ -269,23 +290,41 @@ const Sidebar = () => {
         className={`sticky top-0 flex h-screen flex-col border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100
           transition-all duration-300 ease-in-out z-40 shrink-0
           max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:shadow-2xl
-          ${collapsed ? "w-16 max-md:-translate-x-full" : "w-64 max-md:translate-x-0"}`}
+          ${
+            collapsed
+              ? "w-16 max-md:-translate-x-full"
+              : "w-64 max-md:translate-x-0"
+          }`}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-center border-b border-gray-200 dark:border-slate-800 overflow-hidden">
+        <div className="flex h-16 items-center justify-center border-b border-gray-200 dark:border-slate-800 overflow-hidden px-3">
           {collapsed ? (
-            <img src={logo} alt="logo" className="h-8 w-8 object-contain" />
-          ) : (
+            logoUrl ? (
+              <img
+                src={logoUrl}
+                alt="logo"
+                className="h-8 w-8 object-contain"
+              />
+            ) : (
+              <span className="text-lg font-black text-gray-900 dark:text-white">
+                {siteName.charAt(0)}
+              </span>
+            )
+          ) : logoUrl ? (
             <img
-              src={logo}
-              alt="WebFashion logo"
-              className="h-15 w-auto object-contain"
+              src={logoUrl}
+              alt={`${siteName} logo`}
+              className="h-10 w-auto max-w-[180px] object-contain"
             />
+          ) : (
+            <span className="text-base font-black text-gray-900 dark:text-white tracking-tight truncate">
+              {siteName}
+            </span>
           )}
         </div>
 
         {/* Nav Links */}
-        <nav className="flex flex-1 flex-col gap-1 p-2 overflow-hidden">
+        <nav className="flex flex-1 flex-col gap-1 p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.path;
@@ -305,15 +344,15 @@ const Sidebar = () => {
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!collapsed && <span className="truncate">{item.label}</span>}
-                {item.path === "/admin/chats" && unreadCount > 0 && (
-                  collapsed ? (
+                {item.path === "/admin/chats" &&
+                  unreadCount > 0 &&
+                  (collapsed ? (
                     <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                   ) : (
                     <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white animate-pulse">
                       {unreadCount}
                     </span>
-                  )
-                )}
+                  ))}
               </Link>
             );
           })}
@@ -335,17 +374,26 @@ const Sidebar = () => {
         </button>
 
         {/* Explore Store Button */}
-        <div className={`mt-auto border-t border-gray-200 dark:border-slate-800 p-3 ${collapsed ? "flex justify-center" : ""}`}>
+        <div
+          className={`mt-auto border-t border-gray-200 dark:border-slate-800 p-3 ${
+            collapsed ? "flex justify-center" : ""
+          }`}
+        >
           <a
             href="/"
             target="_blank"
             rel="noopener noreferrer"
             className={`flex items-center gap-3 rounded-2xl bg-indigo-600 dark:bg-indigo-600 text-white p-3 hover:bg-indigo-700 transition shadow-md shadow-indigo-600/10 cursor-pointer
-              ${collapsed ? "h-11 w-11 justify-center p-0 rounded-xl" : "w-full"}`}
+              ${
+                collapsed ? "h-11 w-11 justify-center p-0 rounded-xl" : "w-full"
+              }`}
             title="Khám phá cửa hàng"
           >
-            <div className={`rounded-xl flex items-center justify-center text-white shrink-0
-              ${collapsed ? "h-9 w-9 bg-transparent" : "h-10 w-10 bg-white/20"}`}
+            <div
+              className={`rounded-xl flex items-center justify-center text-white shrink-0
+              ${
+                collapsed ? "h-9 w-9 bg-transparent" : "h-10 w-10 bg-white/20"
+              }`}
             >
               <Home className="h-5 w-5" />
             </div>
@@ -366,7 +414,8 @@ const Sidebar = () => {
         <div className="p-3 relative" ref={dropdownRef}>
           {/* Dropdown Menu */}
           {isDropdownOpen && (
-            <div className={`absolute bottom-full mb-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200 text-left
+            <div
+              className={`absolute bottom-full mb-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200 text-left
               ${collapsed ? "left-2 w-48" : "left-3 right-3"}`}
             >
               <button
@@ -442,7 +491,9 @@ const Sidebar = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 text-left">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Thông tin cá nhân</h3>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                Thông tin cá nhân
+              </h3>
               <button
                 onClick={() => setIsProfileModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
@@ -473,7 +524,9 @@ const Sidebar = () => {
               <div className="space-y-3.5">
                 {/* Full Name */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Họ và tên</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Họ và tên
+                  </label>
                   <input
                     type="text"
                     value={profileName}
@@ -486,7 +539,9 @@ const Sidebar = () => {
 
                 {/* Số điện thoại */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Số điện thoại</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Số điện thoại
+                  </label>
                   <input
                     type="tel"
                     value={profilePhone}
@@ -498,7 +553,9 @@ const Sidebar = () => {
 
                 {/* Ngày sinh  */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Ngày sinh</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Ngày sinh
+                  </label>
                   <input
                     type="date"
                     value={profileBirthday}
@@ -511,7 +568,9 @@ const Sidebar = () => {
 
                 {/* Giới tính  */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Giới tính</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Giới tính
+                  </label>
                   <select
                     value={profileGender}
                     onChange={(e) => setProfileGender(e.target.value)}
@@ -526,7 +585,9 @@ const Sidebar = () => {
 
                 {/* Email (Readonly) */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Email</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Email
+                  </label>
                   <input
                     type="email"
                     value={user?.email || ""}
@@ -565,7 +626,7 @@ const Sidebar = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4.5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/10 transition cursor-pointer disabled:opacity-50"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
                 >
                   {loading ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>
@@ -581,7 +642,9 @@ const Sidebar = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 text-left">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Đổi mật khẩu</h3>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                Đổi mật khẩu
+              </h3>
               <button
                 onClick={() => setIsPasswordModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
@@ -595,7 +658,9 @@ const Sidebar = () => {
               <div className="space-y-3.5">
                 {/* Current Password */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Mật khẩu hiện tại</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Mật khẩu hiện tại
+                  </label>
                   <input
                     type="password"
                     value={currentPassword}
@@ -608,7 +673,9 @@ const Sidebar = () => {
 
                 {/* New Password */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Mật khẩu mới</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Mật khẩu mới
+                  </label>
                   <input
                     type="password"
                     value={newPassword}
@@ -621,7 +688,9 @@ const Sidebar = () => {
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Xác nhận mật khẩu mới</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Xác nhận mật khẩu mới
+                  </label>
                   <input
                     type="password"
                     value={confirmPassword}

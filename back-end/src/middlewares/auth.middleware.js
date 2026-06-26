@@ -36,7 +36,18 @@ export const protectedRoute = async (req, res, next) => {
   }
 
   try {
-    req.user = await verifyAccessToken(token);
+    const decoded = await verifyAccessToken(token);
+    
+    // Check if user is blocked in the database
+    const user = await User.findById(decoded.userId).select("status");
+    if (!user || user.status === "blocked") {
+      return res.status(403).json({
+        success: false,
+        message: "Tài khoản của bạn đã bị khóa hoặc không tồn tại!",
+      });
+    }
+
+    req.user = decoded;
     return next();
   } catch (error) {
     if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
@@ -70,7 +81,13 @@ export const optionalProtectedRoute = async (req, _res, next) => {
   }
 
   try {
-    req.user = await verifyAccessToken(token);
+    const decoded = await verifyAccessToken(token);
+    const user = await User.findById(decoded.userId).select("status");
+    if (user && user.status !== "blocked") {
+      req.user = decoded;
+    } else {
+      req.user = null;
+    }
   } catch (error) {
     req.user = null;
   }

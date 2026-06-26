@@ -137,7 +137,11 @@ const ProductSearch = () => {
   }, [searchParams]);
 
   const normalizedProducts = useMemo(() => {
-    const sourceProducts = Array.isArray(apiProducts) ? apiProducts : [];
+    const sourceProducts = Array.isArray(apiProducts)
+      ? apiProducts
+      : (apiProducts && typeof apiProducts === "object" && Array.isArray(apiProducts.products)
+        ? apiProducts.products
+        : []);
 
     return sourceProducts.map((product, index) =>
       normalizeProduct(product, index, categoryMap, false),
@@ -249,13 +253,13 @@ const ProductSearch = () => {
   return (
     <div className="product-page">
       <div className="product-page__container">
-        <div className="product-page__intro">
+        {/* <div className="product-page__intro">
           <span>Cửa hàng thời trang</span>
           <h1>Khám phá sản phẩm</h1>
           <p>
             Lựa chọn những thiết kế phù hợp với phong cách của bạn.
           </p>
-        </div>
+        </div> */}
 
         <div className="product-layout">
           <ProductFilter

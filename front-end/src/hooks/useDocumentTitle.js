@@ -12,6 +12,6 @@ export const useDocumentTitle = (title) => {
 
     useEffect(() => {
         const siteName = settings?.general?.siteName || "404Studio";
-        document.title = `${title} - ${siteName}`;
+        document.title = `${title}`;
     }, [title, settings]);
 }

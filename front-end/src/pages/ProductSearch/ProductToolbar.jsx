@@ -1,4 +1,3 @@
-import { Search, X } from "lucide-react";
 
 const ProductToolbar = ({
   count,
@@ -38,26 +37,6 @@ const ProductToolbar = ({
           </select>
         </label>
       </div>
-
-      <label className="product-search">
-        <Search size={18} aria-hidden="true" />
-        <input
-          type="search"
-          value={searchTerm}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Tìm kiếm sản phẩm..."
-          aria-label="Tìm kiếm trong danh sách sản phẩm"
-        />
-        {searchTerm && (
-          <button
-            type="button"
-            onClick={() => onSearchChange("")}
-            aria-label="Xóa từ khóa tìm kiếm"
-          >
-            <X size={17} aria-hidden="true" />
-          </button>
-        )}
-      </label>
     </div>
   );
 };

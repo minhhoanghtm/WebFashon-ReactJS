@@ -28,21 +28,28 @@ const normalizeUser = (user = {}) => ({
       : [],
 });
 
-const normalizePayload = (payload = {}) => ({
-  email: payload.email || "",
-  passWord: payload.passWord || "",
-  fullName: payload.fullName || "",
-  sex: payload.gender === "other" ? undefined : payload.gender,
-  birthday: payload.dateOfBirth || null,
-  role: payload.role || "user",
-  avatar_url: payload.avatar_url || "",
-  status: payload.status,
-  addresses: Array.isArray(payload.addresses)
-    ? payload.addresses.map(normalizeAddress)
-    : payload.address
-      ? [normalizeAddress(payload.address)]
-      : [],
-});
+const normalizePayload = (payload = {}) => {
+  const normalized = {
+    email: payload.email || "",
+    fullName: payload.fullName || "",
+    sex: payload.gender === "other" ? undefined : payload.gender,
+    birthday: payload.dateOfBirth || null,
+    role: payload.role || "user",
+    avatar_url: payload.avatar_url || "",
+    status: payload.status,
+    addresses: Array.isArray(payload.addresses)
+      ? payload.addresses.map(normalizeAddress)
+      : payload.address
+        ? [normalizeAddress(payload.address)]
+        : [],
+  };
+
+  if (payload.passWord) {
+    normalized.passWord = payload.passWord;
+  }
+
+  return normalized;
+};
 
 const toFetchLikeResponse = (status, data, ok = status >= 200 && status < 300) => ({
   ok,

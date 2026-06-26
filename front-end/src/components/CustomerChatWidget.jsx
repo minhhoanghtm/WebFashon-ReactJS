@@ -309,6 +309,24 @@ const CustomerChatWidget = () => {
     console.log("Chat context updated:", context);
   }, [isOpen, context]);
 
+  const sendProductCardToSupport = async (prodContext, conversationId) => {
+    if (!prodContext || !isAuthenticated) return null;
+    try {
+      const res = await sendCustomerSupportMessageService({
+        content: `Khách hàng đang quan tâm đến sản phẩm: ${prodContext.productName}`,
+        conversationId: conversationId || undefined,
+        metadata: {
+          type: "product",
+          product: prodContext,
+        },
+      });
+      return res;
+    } catch (err) {
+      console.error("Lỗi khi gửi sản phẩm:", err);
+      return null;
+    }
+  };
+
   // Load AI chat history from localStorage
   useEffect(() => {
     try {
@@ -416,19 +434,19 @@ const CustomerChatWidget = () => {
     });
 
     setMessages((prev) => {
-      const lastProduct = [...prev.ai]
+      const lastProduct = [...prev.support]
         .reverse()
-        .find((m) => m.messageType === "product");
+        .find((m) => m.messageType === "product" || m.metadata?.product?.productid === context.productid);
 
       // Tránh thêm lại cùng 1 sản phẩm
-      if (lastProduct?.product?.productid === context.productid) {
+      if (lastProduct) {
         return prev;
       }
 
       return {
         ...prev,
-        ai: [
-          ...prev.ai,
+        support: [
+          ...prev.support,
           {
             _id: `product_${context.productid}_${Date.now()}`,
             senderType: "system",
@@ -440,6 +458,34 @@ const CustomerChatWidget = () => {
       };
     });
   }, [context, isOpen, AI_CHAT_METADATA_KEY]);
+
+  // Auto-send product card to support when switching to support tab
+  useEffect(() => {
+    if (!isOpen || chatMode !== "support" || !context?.productid) return;
+    if (!conversations.support?._id) return;
+
+    const unsentProductMsg = messages.support.find(
+      (m) => m.messageType === "product" && !m.metadata?.type
+    );
+    if (!unsentProductMsg) return;
+
+    const autoSendProduct = async () => {
+      const prodRes = await sendProductCardToSupport(context, conversations.support._id);
+      if (prodRes) {
+        setMessages((prev) => ({
+          ...prev,
+          support: prev.support
+            .filter((m) => m._id !== unsentProductMsg._id)
+            .concat({
+              ...prodRes.message,
+              messageType: "product",
+              product: context,
+            }),
+        }));
+      }
+    };
+    autoSendProduct();
+  }, [isOpen, chatMode, context, conversations.support?._id, messages.support]);
 
   const { pathname } = useLocation();
   const isAuthOrAdminPage = [
@@ -534,6 +580,36 @@ const CustomerChatWidget = () => {
           });
         }
       } else {
+        let currentConvId = activeConv?._id;
+
+        // Check if there is an unsent product card in messages.support
+        const unsentProductMsg = messages.support.find(
+          (m) => m.messageType === "product" && !m.metadata?.type
+        );
+
+        if (unsentProductMsg && context?.type === "product") {
+          const prodRes = await sendProductCardToSupport(context, currentConvId);
+          if (prodRes) {
+            currentConvId = prodRes.conversationId;
+            if (!conversations.support) {
+              setConversations((prev) => ({
+                ...prev,
+                support: { _id: prodRes.conversationId, type: "support" },
+              }));
+            }
+            setMessages((prev) => ({
+              ...prev,
+              support: prev.support
+                .filter((m) => m._id !== unsentProductMsg._id)
+                .concat({
+                  ...prodRes.message,
+                  messageType: "product",
+                  product: context,
+                }),
+            }));
+          }
+        }
+
         // Send support message
         const tempUserMsg = {
           _id: Date.now().toString(),
@@ -548,7 +624,7 @@ const CustomerChatWidget = () => {
 
         const res = await sendCustomerSupportMessageService({
           content: text,
-          conversationId: activeConv?._id || undefined,
+          conversationId: currentConvId || undefined,
         });
 
         if (!conversations.support && res?.conversationId) {
@@ -710,13 +786,15 @@ const CustomerChatWidget = () => {
 
                   {/* 3. Active messages mapping  */}
                   {activeMessages.map((msg) => {
-                    if (msg.messageType === "product") {
+                    if (msg.messageType === "product" || msg.metadata?.type === "product") {
+                      const productInfo = msg.product || msg.metadata?.product;
+                      if (!productInfo) return null;
                       return (
-                        <div key={msg._id} className="flex justify-end">
+                        <div key={msg._id} className="flex justify-end animate-in fade-in-50 duration-250">
                           <div className="w-[200px] bg-white dark:bg-slate-800 rounded-2xl rounded-tr-none border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                             <img
-                              src={msg.product.image}
-                              alt={msg.product.productName}
+                              src={productInfo.image}
+                              alt={productInfo.productName}
                               className="w-full h-28 object-cover"
                             />
 
@@ -725,22 +803,22 @@ const CustomerChatWidget = () => {
                                 Sản phẩm đang xem
                               </span>
 
-                              <h4 className="mt-1 text-sm font-semibold">
-                                {msg.product.productName}
+                              <h4 className="mt-1 text-sm font-semibold text-left">
+                                {productInfo.productName}
                               </h4>
 
-                              <div className="mt-2 text-lg font-bold text-indigo-600">
+                              <div className="mt-2 text-lg font-bold text-indigo-600 text-left">
                                 {Number(
-                                  msg.product.new_price ||
-                                    msg.product.price ||
+                                  productInfo.new_price ||
+                                    productInfo.price ||
                                     0,
                                 ).toLocaleString("vi-VN")}
                                 đ
                               </div>
 
                               <a
-                                href={`/product/${msg.product.slug}`}
-                                className="mt-3 inline-flex items-center gap-1"
+                                href={`/product/${productInfo.slug}`}
+                                className="mt-3 inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:underline"
                               >
                                 <ExternalLink size={13} />
                                 Xem chi tiết

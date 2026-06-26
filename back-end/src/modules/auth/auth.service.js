@@ -64,6 +64,10 @@ class AuthService {
       throw new AppError("Email hoặc password không đúng", 401);
     }
 
+    if (user.status === "blocked") {
+      throw new AppError("Tài khoản của bạn đã bị khóa.", 403);
+    }
+
     // Temporary lock check (Redis)
     const lockKey = `login:lock:${user._id}`;
     const isLocked = await redis.exists(lockKey);

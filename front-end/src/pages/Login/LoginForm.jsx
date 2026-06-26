@@ -40,6 +40,14 @@ const LoginForm = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  React.useEffect(() => {
+    const blockedMsg = sessionStorage.getItem("blockedMessage");
+    if (blockedMsg) {
+      toast.error(blockedMsg);
+      sessionStorage.removeItem("blockedMessage");
+    }
+  }, []);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({

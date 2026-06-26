@@ -51,7 +51,7 @@ const LookbookSection = () => {
           const firstHero = item.sections?.find(
             (s) => s.type === "hero" || s.type === "banner" || s.type === "image_text"
           );
-          const resolvedCover = firstHero?.data?.coverImage || firstHero?.data?.image || item.thumbnailUrl || item.bannerUrl || "";
+          const resolvedCover = item.thumbnailUrl || item.bannerUrl || firstHero?.data?.coverImage || firstHero?.data?.image || "";
 
           return (
             <article

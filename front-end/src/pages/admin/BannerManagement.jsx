@@ -18,8 +18,14 @@ import {
   Upload,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const BannerManagement = () => {
+   const { settings } = useWebsiteSettings();
+    const general = settings?.general || {};
+    const siteName = general.siteName || "";
+    useDocumentTitle("Quản lý banner");
   const {
     banners,
     loading,
@@ -226,7 +232,7 @@ const BannerManagement = () => {
         </div>
         <button
           onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-md hover:scale-102 active:scale-98 transition cursor-pointer shrink-0"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           Thêm Banner mới
@@ -805,7 +811,7 @@ const BannerManagement = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center justify-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition shadow-md cursor-pointer hover:scale-102 active:scale-98 disabled:opacity-50 disabled:pointer-events-none min-w-[120px]"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   <span>

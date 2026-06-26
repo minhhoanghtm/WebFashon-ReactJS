@@ -5,8 +5,14 @@ import Swal from "sweetalert2";
 import voucherApi from "../../api/voucher.api";
 import { getAllProductService } from "@/services/product.service";
 import { getAllCategoriesService } from "@/services/category.service";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const CouponManagement = () => {
+   const { settings } = useWebsiteSettings();
+    const general = settings?.general || {};
+    const siteName = general.siteName || "";
+    useDocumentTitle("Quản lý mã giảm giá");
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -340,7 +346,7 @@ const CouponManagement = () => {
         {/* Add Button */}
         <button
           onClick={handleOpenAddModal}
-          className="w-full md:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
         >
           <Plus className="h-4.5 w-4.5" />
           <span>Tạo Voucher</span>
@@ -576,7 +582,7 @@ const CouponManagement = () => {
                     <input
                       type="text"
                       required
-                      placeholder="Ví dụ: PETHAPPY30"
+                      placeholder="Ví dụ: WEEKEND15"
                       value={formCode}
                       onChange={(e) => setFormCode(e.target.value.toUpperCase())}
                       className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono font-bold"
@@ -600,7 +606,7 @@ const CouponManagement = () => {
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Mô tả chi tiết</label>
                   <textarea
                     rows={2}
-                    placeholder="Voucher áp dụng giảm giá cho tất cả phụ kiện thú cưng tại PetShop..."
+                    placeholder="Voucher áp dụng giảm giá cho tất cả sản phẩm trong cửa hàng..."
                     value={formDescription}
                     onChange={(e) => setFormDescription(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -762,8 +768,8 @@ const CouponManagement = () => {
                       onChange={(e) => setFormStatus(e.target.value)}
                       className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
-                      <option value="ACTIVE">Kích hoạt ngay (ACTIVE)</option>
-                      <option value="INACTIVE">Tạm ẩn (INACTIVE)</option>
+                      <option value="ACTIVE">Kích hoạt ngay</option>
+                      <option value="INACTIVE">Tạm ẩn</option>
                     </select>
                   </div>
                 </div>
@@ -804,7 +810,7 @@ const CouponManagement = () => {
                     type="submit"
                     className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition shadow-md shadow-indigo-500/20 cursor-pointer"
                   >
-                    Lưu cấu hình
+                    Tạo voucher
                   </button>
                 </div>
               </form>
@@ -1085,7 +1091,7 @@ const CouponManagement = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-black text-sm font-semibold transition shadow-md shadow-indigo-500/20 cursor-pointer"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
                   >
                     Lưu thay đổi
                   </button>

@@ -135,6 +135,32 @@ api.interceptors.response.use(
       }
     }
 
+    if (response && response.status === 403) {
+      const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
+      if (!isAuthPage) {
+        const msg = response.data?.message || "";
+        const isBlocked = msg.includes("khóa") || msg.includes("chặn") || msg.toLowerCase().includes("blocked");
+        const isPermissionChange = msg.toLowerCase().includes("quyen") || msg.toLowerCase().includes("quyền") || msg.toLowerCase().includes("access");
+
+        if (isBlocked || isPermissionChange) {
+          try {
+            const { useAuthStore } = await import("../store/auth.store");
+            useAuthStore.getState().logout();
+          } catch (storeErr) {
+            localStorage.removeItem("accessToken");
+          }
+
+          const noticeMsg = isBlocked 
+            ? (msg || "Tài khoản của bạn đã bị khóa hoặc không tồn tại!") 
+            : "Quyền truy cập của bạn đã thay đổi. Vui lòng đăng nhập lại.";
+
+          sessionStorage.setItem("blockedMessage", noticeMsg);
+          window.location.href = '/login';
+          return Promise.reject(error);
+        }
+      }
+    }
+
     return Promise.reject(error);
   }
 );

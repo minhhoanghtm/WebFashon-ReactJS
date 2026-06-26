@@ -50,13 +50,13 @@ const EditorialCard = ({ title, excerpt, image, href, publishedAt, priority = fa
         ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
     >
       {/* Thumbnail */}
-      <div className="aspect-[16/9.5] w-full overflow-hidden bg-neutral-950 rounded-t-[12px]">
+      <div className="aspect-[16/9.5] w-full overflow-hidden bg-neutral-950 rounded-t-[12px] flex items-center justify-center">
         <img
           src={displayImage}
           alt={title}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
-          className="w-full h-full object-cover object-center group-hover:scale-[1.025] transition-transform duration-750 rounded-t-[12px]"
+          className="max-w-full max-h-full object-contain group-hover:scale-[1.025] transition-transform duration-750 rounded-t-[12px]"
         />
       </div>
 

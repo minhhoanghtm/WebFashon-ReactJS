@@ -42,7 +42,11 @@ export const deleteProductService = async (id) => {
 export const searchProductsService = async (params) => {
     try {
         const res = await searchProductsApi(params);
-        return res.data?.data ?? res.data ?? [];
+        const data = res.data?.data ?? res.data;
+        if (data && typeof data === 'object' && Array.isArray(data.products)) {
+            return data.products;
+        }
+        return Array.isArray(data) ? data : [];
     } catch (error) {
         console.error('searchProductsService error:', error);
         return [];

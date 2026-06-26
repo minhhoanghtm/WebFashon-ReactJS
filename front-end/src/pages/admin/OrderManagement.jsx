@@ -4,6 +4,8 @@ import { toast } from "react-toastify";
 import { getAdminOrdersService, updateOrderStatusService } from "@/services/order.service";
 import { getOrderItemsByOrderIdService } from "@/services/orderItem.service";
 import { formatCurrency } from "@/utils/format";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const statusTabs = [
   { key: "All", label: "Tất cả" },
@@ -39,6 +41,10 @@ const getStatusLabel = (status) => {
 };
 
 const OrderManagement = () => {
+   const { settings } = useWebsiteSettings();
+    const general = settings?.general || {};
+    const siteName = general.siteName || "";
+    useDocumentTitle("Quản lý đơn hàng");
   const [orders, setOrders] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
   const [activeTab, setActiveTab] = useState("All");
