@@ -50,6 +50,7 @@ const ProductManagement = () => {
   const [formStock, setFormStock] = useState("");
   const [formImages, setFormImages] = useState([""]);
   const [formDescription, setFormDescription] = useState("");
+  const [formWeight, setFormWeight] = useState("0.5");
 
   // Variant States
   const [formVariants, setFormVariants] = useState([]);
@@ -108,6 +109,7 @@ const ProductManagement = () => {
     setVarStock("");
     setVarImage("");
     setEditingVariantIndex(null);
+    setFormWeight("0.5");
     setIsAddModalOpen(true);
   };
 
@@ -136,6 +138,7 @@ const ProductManagement = () => {
     setVarStock("");
     setVarImage("");
     setEditingVariantIndex(null);
+    setFormWeight((product.weight ?? 0.5).toString());
     setIsEditModalOpen(true);
 
     try {
@@ -482,6 +485,7 @@ const ProductManagement = () => {
         displayProduct,
         description: formDescription,
         variants: finalVars,
+        weight: parseFloat(formWeight || "0.5"),
       });
       toast.success("Thêm sản phẩm thành công!");
       setIsAddModalOpen(false);
@@ -519,6 +523,7 @@ const ProductManagement = () => {
         displayProduct,
         description: formDescription,
         variants: finalVars,
+        weight: parseFloat(formWeight || "0.5"),
       });
       toast.success("Cập nhật sản phẩm thành công!");
       setIsEditModalOpen(false);
@@ -852,7 +857,7 @@ const ProductManagement = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
                     Giá cũ ($)
@@ -880,6 +885,9 @@ const ProductManagement = () => {
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400 flex items-center justify-between">
                     <span>Số lượng kho</span>
@@ -897,6 +905,20 @@ const ProductManagement = () => {
                     onChange={(e) => setFormStock(e.target.value)}
                     disabled={formVariants.length > 0}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200 disabled:opacity-75 disabled:bg-slate-100 dark:disabled:bg-slate-850"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-slate-400">
+                    Cân nặng (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={formWeight}
+                    onChange={(e) => setFormWeight(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
               </div>
@@ -1162,7 +1184,7 @@ const ProductManagement = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
                     Giá cũ ($)
@@ -1190,6 +1212,9 @@ const ProductManagement = () => {
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400 flex items-center justify-between">
                     <span>Số lượng kho</span>
@@ -1207,6 +1232,20 @@ const ProductManagement = () => {
                     onChange={(e) => setFormStock(e.target.value)}
                     disabled={formVariants.length > 0}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200 disabled:opacity-75 disabled:bg-slate-100 dark:disabled:bg-slate-850"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-slate-400">
+                    Cân nặng (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={formWeight}
+                    onChange={(e) => setFormWeight(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
               </div>
