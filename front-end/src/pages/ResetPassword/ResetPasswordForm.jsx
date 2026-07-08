@@ -95,7 +95,7 @@ const ResetPasswordForm = () => {
       setIsSubmitting(true);
       const res = await sendResetOTPService({ email: email.trim() });
       const receivedOtp = res?.otp || res?.data?.otp;
-      console.log(`🔑 [OTP Debug] Mã OTP nhận được: ${receivedOtp}`);
+      // console.log(`🔑 [OTP Debug] Mã OTP nhận được: ${receivedOtp}`);
       toast.success("Mã OTP đã được gửi đến email của bạn!");
       setCountdown(RESEND_COOLDOWN);
       setCanResend(false);
@@ -139,7 +139,7 @@ const ResetPasswordForm = () => {
       setErrors({});
       const res = await sendResetOTPService({ email: email.trim() });
       const receivedOtp = res?.otp || res?.data?.otp;
-      console.log(`🔑 [OTP Debug] Mã OTP gửi lại nhận được: ${receivedOtp}`);
+      // console.log(`🔑 [OTP Debug] Mã OTP gửi lại nhận được: ${receivedOtp}`);
       toast.success("Mã OTP mới đã được gửi đến email của bạn!");
       setOtp("");
       setCountdown(RESEND_COOLDOWN);

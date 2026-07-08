@@ -113,8 +113,13 @@ const BannerManagement = () => {
     setFormPosition(banner.position);
     setFormTargetType(banner.targetType || "external");
     setFormTargetId(banner.targetId || "");
-    setFormStartDate(banner.startDate ? banner.startDate.slice(0, 16) : "");
-    setFormEndDate(banner.endDate ? banner.endDate.slice(0, 16) : "");
+    const formatForInput = (dateVal) => {
+      if (!dateVal) return "";
+      const d = new Date(dateVal);
+      return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 16);
+    };
+    setFormStartDate(formatForInput(banner.startDate));
+    setFormEndDate(formatForInput(banner.endDate));
     setFormSortOrder(banner.sortOrder || 0);
     setFormIsActive(banner.isActive);
     setIsOpenModal(true);
@@ -537,7 +542,7 @@ const BannerManagement = () => {
                     required
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
                     placeholder="Tiêu đề chính"
                   />
                 </div>
@@ -549,7 +554,7 @@ const BannerManagement = () => {
                     type="text"
                     value={formSubtitle}
                     onChange={(e) => setFormSubtitle(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
                     placeholder="Mô tả phụ ngắn"
                   />
                 </div>
@@ -663,7 +668,7 @@ const BannerManagement = () => {
                   <select
                     value={formPosition}
                     onChange={(e) => setFormPosition(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl bg-white text-sm font-semibold text-gray-700 focus:outline-hidden focus:border-indigo-500 cursor-pointer"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl bg-white text-sm font-medium text-slate-900 focus:outline-hidden focus:border-indigo-500 cursor-pointer"
                   >
                     {bannerPositions.map((pos) => (
                       <option key={pos.value} value={pos.value}>
@@ -680,7 +685,7 @@ const BannerManagement = () => {
                     type="text"
                     value={formButtonText}
                     onChange={(e) => setFormButtonText(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
                     placeholder="Ví dụ: Mua ngay, Xem thêm"
                   />
                 </div>
@@ -693,7 +698,7 @@ const BannerManagement = () => {
                     min="0"
                     value={formSortOrder}
                     onChange={(e) => setFormSortOrder(Number(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
                   />
                 </div>
               </div>
@@ -707,7 +712,7 @@ const BannerManagement = () => {
                   <select
                     value={formTargetType}
                     onChange={(e) => setFormTargetType(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl bg-white text-sm font-semibold text-gray-700 focus:outline-hidden focus:border-indigo-500 cursor-pointer"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl bg-white text-sm font-medium text-slate-900 focus:outline-hidden focus:border-indigo-500 cursor-pointer"
                   >
                     <option value="external">Liên kết ngoài (URL)</option>
                     <option value="product">Sản phẩm cụ thể</option>
@@ -726,7 +731,7 @@ const BannerManagement = () => {
                       // required
                       value={formLinkUrl}
                       onChange={(e) => setFormLinkUrl(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
                       placeholder="https://..."
                     />
                   </div>
@@ -740,7 +745,7 @@ const BannerManagement = () => {
                       required
                       value={formTargetId}
                       onChange={(e) => setFormTargetId(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
                       placeholder={
                         formTargetType === "product"
                           ? "Nhập ID sản phẩm"
@@ -764,7 +769,7 @@ const BannerManagement = () => {
                     required
                     value={formStartDate}
                     onChange={(e) => setFormStartDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -776,7 +781,7 @@ const BannerManagement = () => {
                     required
                     value={formEndDate}
                     onChange={(e) => setFormEndDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-black"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
                   />
                 </div>
               </div>

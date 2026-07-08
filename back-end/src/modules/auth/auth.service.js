@@ -10,7 +10,8 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import getRedisConnection from "../../configs/redis.js";
 import logger from "../../common/logger.js";
-import { OAuth2Client } from "google-auth-library";
+import googleAuth from "google-auth-library";
+const { OAuth2Client } = googleAuth;
 dotenv.config();
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);

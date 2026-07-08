@@ -27,6 +27,36 @@ import Swal from "sweetalert2";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import useWebsiteSettings from "@/hooks/useWebsiteSettings";
 
+const mockCustomers = [
+  {
+    _id: "mock-customer-1",
+    fullName: "Nguyễn Văn A",
+    email: "nguyenvana@example.com",
+    phone: "0901234567",
+    createdAt: "2026-01-10T12:00:00Z",
+    role: "customer",
+    status: "active",
+  },
+  {
+    _id: "mock-customer-2",
+    fullName: "Trần Thị B",
+    email: "tranthib@example.com",
+    phone: "0912345678",
+    createdAt: "2026-02-15T12:00:00Z",
+    role: "customer",
+    status: "active",
+  },
+  {
+    _id: "mock-customer-3",
+    fullName: "Lê Văn C",
+    email: "levanc@example.com",
+    phone: "0987654321",
+    createdAt: "2026-03-20T12:00:00Z",
+    role: "staff",
+    status: "active",
+  },
+];
+
 const UserManagement = () => {
   const { settings } = useWebsiteSettings();
   const general = settings?.general || {};

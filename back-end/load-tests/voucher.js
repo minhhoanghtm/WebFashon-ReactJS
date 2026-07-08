@@ -1,89 +1,235 @@
 import http from "k6/http";
-import { check, sleep, group } from "k6";
+import { check, group, sleep } from "k6";
 import { Counter, Rate, Trend } from "k6/metrics";
 
-const BASE_URL = __ENV.BASE_URL || "http://localhost:5000";
-const VOUCHER_CODE = __ENV.VOUCHER_CODE || "HELLO"; // minOrderValue=100000
-const SUBTOTAL = Number(__ENV.SUBTOTAL || 200000); // minOrderValue=100000
+// ===============================
+// Environment
+// ===============================
 
-export const successRate = new Rate("successRate");
-export const errorCounter = new Counter("errorCounter");
-export const latencyTrend = new Trend("latencyTrend");
-export const throughput = new Counter("voucher_apply_throughput");
+const BASE_URL = __ENV.BASE_URL || "http://localhost:5001";
+
+const TOTAL_USERS = Number(__ENV.TOTAL_USERS || 1000);
+
+const PASSWORD = __ENV.TEST_PASSWORD || "Minhhoang123";
+
+// ===============================
+// Metrics
+// ===============================
+
+export const voucherSuccessRate = new Rate("voucherSuccessRate");
+
+export const voucherErrorCounter = new Counter("voucherErrorCounter");
+
+export const voucherLatency = new Trend("voucherLatency");
+
+// ===============================
+// Options
+// ===============================
 
 export const options = {
-  vus: 30,
-  duration: "30s",
+  stages: [
+    {
+      duration: "30s",
+      target: 50,
+    },
+
+    {
+      duration: "1m",
+      target: 50,
+    },
+
+    {
+      duration: "30s",
+      target: 200,
+    },
+
+    {
+      duration: "1m",
+      target: 200,
+    },
+
+    {
+      duration: "30s",
+      target: 0,
+    },
+  ],
+
   thresholds: {
-    successRate: ["rate>0.98"],
-    errorCounter: ["count<20"],
-    latencyTrend: ["p(95)<700", "p(99)<1200"],
-    http_req_failed: ["rate<0.02"],
+    "http_req_duration{endpoint:voucher_validate}": ["p(95)<800"],
+
+    voucherSuccessRate: ["rate>0.98"],
+
+    http_req_failed: ["rate<0.01"],
   },
 };
 
-export function setup() {
-  const loginRes = http.post(
+// ===============================
+// Token cache
+// ===============================
+
+const tokenCache = {};
+
+function getToken() {
+  if (tokenCache[__VU]) {
+    return tokenCache[__VU];
+  }
+
+  const userIndex = ((__VU - 1) % TOTAL_USERS) + 1;
+
+  const email = `loadtest${userIndex}@gmail.com`;
+
+  const res = http.post(
     `${BASE_URL}/api/auth/signIn`,
+
     JSON.stringify({
-      email: __ENV.TEST_EMAIL || "khongcotien.2023@gmail.com",
-      passWord: __ENV.TEST_PASSWORD || "Minhhoang123",
+      email,
+
+      passWord: PASSWORD,
     }),
-    { headers: { "Content-Type": "application/json" } }
+
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      tags: {
+        endpoint: "signin",
+      },
+    },
   );
 
-  console.log(`Login status: ${loginRes.status}`);
+  const ok = check(res, {
+    "login status 200": (r) => r.status === 200,
+  });
 
-  // token nằm trong data.accessToken
-  const token = loginRes.json("data.accessToken");
-  if (!token) throw new Error(`Login failed: ${loginRes.body}`);
+  if (!ok) {
+    return null;
+  }
 
-  console.log(`Token acquired: ${token.substring(0, 20)}...`);
-  return { token };
+  const token = res.json("data.accessToken") || res.json("accessToken");
+
+  tokenCache[__VU] = token;
+
+  return token;
 }
 
-export default function (data) {
-  const params = {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${data.token}`,
-    },
+// ===============================
+// Setup get vouchers
+// ===============================
+
+export function setup() {
+  const res = http.get(`${BASE_URL}/api/vouchers`);
+
+  check(res, {
+    "get vouchers success": (r) => r.status === 200,
+  });
+
+  let vouchers = [];
+
+  try {
+    const body = res.json();
+
+    vouchers = body.data?.vouchers || body.data || body.vouchers || [];
+  } catch (e) {
+    vouchers = [];
+  }
+
+  // chỉ lấy voucher active
+
+  vouchers = vouchers.filter((v) => {
+    return v.status === "ACTIVE" || v.isActive === true;
+  });
+
+  if (vouchers.length === 0) {
+    throw new Error("Không tìm thấy voucher ACTIVE");
+  }
+
+  return {
+    vouchers,
   };
+}
+
+// ===============================
+// Main
+// ===============================
+
+export default function (data) {
+  const token = getToken();
+
+  if (!token) {
+    sleep(1);
+
+    return;
+  }
+
+  // Select the first active voucher (which is seeded as CLAIMED for all test VUs in _seedUserWalletIfEmpty)
+  const voucher = data.vouchers[0];
+
+  /*
+        tạo subtotal hợp lệ
+
+        tránh fail vì minOrderValue
+    */
+
+  const minValue = voucher.minOrderValue || 0;
+
+  const subtotal = minValue + Math.floor(Math.random() * 500000);
 
   group("POST /api/vouchers/validate", () => {
     const payload = JSON.stringify({
-      code: VOUCHER_CODE,       // ✅ "code" theo controller
-      subtotal: SUBTOTAL,       // ✅ "subtotal" theo controller
-      items: [],                // optional nhưng truyền để tránh undefined
-      shippingFee: 0,           // optional
+      code: voucher.code,
+
+      subtotal,
+
+      items: [],
+
+      shippingFee: 0,
     });
 
     const res = http.post(
       `${BASE_URL}/api/vouchers/validate`,
+
       payload,
-      params
+
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+
+          "Content-Type": "application/json",
+        },
+
+        tags: {
+          endpoint: "voucher_validate",
+        },
+      },
     );
 
-    const ok = check(res, {
-      "status is exactly 200": (r) => r.status === 200,
-      "voucher response is successful": (r) => {
+    const success = check(res, {
+      "status 200": (r) => r.status === 200,
+
+      "success true": (r) => {
         try {
           return r.json("success") === true;
-        } catch (_) {
+        } catch (e) {
           return false;
         }
       },
     });
 
-    successRate.add(ok);
-    latencyTrend.add(res.timings.duration);
-    throughput.add(1);
+    voucherSuccessRate.add(success);
 
-    if (!ok) {
-      errorCounter.add(1);
-      console.log(`FAILED: status=${res.status}, body=${res.body}`);
+    voucherLatency.add(res.timings.duration);
+
+    if (!success) {
+      voucherErrorCounter.add(1);
+
+      if (__ENV.DEBUG === "true") {
+        console.log(
+          `[VOUCHER FAIL] code: ${voucher.code} status: ${res.status} duration: ${res.timings.duration}ms body: ${res.body}`,
+        );
+      }
     }
   });
 
-  sleep(1);
+  sleep(Math.random() * 2 + 0.5);
 }

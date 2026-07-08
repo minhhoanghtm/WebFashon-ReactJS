@@ -719,8 +719,8 @@ const ProductManagement = () => {
                     </td>
 
                     {/* Price */}
-                    <td className="px-6 py-4 text-slate-900 dark:text-slate-100">
-                      ${(product.new_price ?? product.price ?? 0).toFixed(2)}
+                    <td className="px-6 py-4 text-slate-900 dark:text-slate-100 font-semibold">
+                      {(product.new_price ?? product.price ?? 0).toLocaleString("vi-VN")} đ
                     </td>
 
                     {/* Stock badge with warning */}
@@ -860,11 +860,11 @@ const ProductManagement = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá cũ ($)
+                    Giá cũ (đ)
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="1"
                     min="0"
                     value={formOldPrice}
                     onChange={(e) => setFormOldPrice(e.target.value)}
@@ -873,7 +873,7 @@ const ProductManagement = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá mới ($)
+                    Giá mới (đ)
                   </label>
                   <input
                     type="number"
@@ -1187,11 +1187,11 @@ const ProductManagement = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá cũ ($)
+                    Giá cũ (đ)
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="1"
                     min="0"
                     value={formOldPrice}
                     onChange={(e) => setFormOldPrice(e.target.value)}
@@ -1200,7 +1200,7 @@ const ProductManagement = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá mới ($)
+                    Giá mới (đ)
                   </label>
                   <input
                     type="number"

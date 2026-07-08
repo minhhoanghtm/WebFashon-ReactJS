@@ -1,4 +1,5 @@
 import cartRepository from "./cart.repository.js";
+import { Cart, CartItem } from "./cart.model.js";
 import { AppError } from "../../common/exceptions/AppError.js";
 
 class CartService {
@@ -37,32 +38,29 @@ class CartService {
       throw new AppError("Thiếu dữ liệu sản phẩm để thêm vào giỏ hàng", 400);
     }
 
-    let cart = await cartRepository.findByUserId(userId);
-    if (!cart) {
-      cart = await cartRepository.create({ user_id: userId });
-    }
+    // 1. Get or create cart in 1 query
+    const cart = await Cart.findOneAndUpdate(
+      { user_id: userId },
+      { $setOnInsert: { total_items: 0, total_price: 0 } },
+      { upsert: true, new: true }
+    );
 
     const cartId = cart._id;
     const normalizedVariantId = variant_id || null;
 
-    const existingItem = await cartRepository.findOneItem({
-      cart_id: cartId,
-      product_id,
-      variant_id: normalizedVariantId,
-    });
-
-    if (existingItem) {
-      existingItem.quantity += Number(quantity);
-      await existingItem.save();
-    } else {
-      await cartRepository.createItem({
+    // 2. Upsert cart item in 1 query
+    await CartItem.findOneAndUpdate(
+      {
         cart_id: cartId,
         product_id,
         variant_id: normalizedVariantId,
-        quantity: Number(quantity),
-        price: Number(price),
-      });
-    }
+      },
+      {
+        $inc: { quantity: Number(quantity) },
+        $setOnInsert: { price: Number(price) },
+      },
+      { upsert: true }
+    );
 
     return await this._recalculateCart(cartId);
   }
@@ -93,22 +91,27 @@ class CartService {
 
   // Private helper to recalculate cart items and update cart totals
   async _recalculateCart(cartId) {
-    const updatedItems = await cartRepository.findItemsWithDetails({ cart_id: cartId });
+    // Query items without populating for extremely fast total calculation
+    const items = await CartItem.find({ cart_id: cartId }).select("quantity price");
 
-    const totalItemsCount = updatedItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    const totalPrice = updatedItems.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);
+    const totalItemsCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const totalPrice = items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);
 
-    const updatedCart = await cartRepository.updateCart(
-      cartId,
-      {
-        total_items: totalItemsCount,
-        total_price: totalPrice,
-      },
-      { new: true }
-    );
+    // Parallelize updating the cart totals and fetching populated items for the response
+    const [updatedCart, populatedItems] = await Promise.all([
+      Cart.findByIdAndUpdate(
+        cartId,
+        {
+          total_items: totalItemsCount,
+          total_price: totalPrice,
+        },
+        { new: true }
+      ),
+      cartRepository.findItemsWithDetails({ cart_id: cartId }),
+    ]);
 
     return {
-      items: updatedItems,
+      items: populatedItems,
       cart: updatedCart,
       total: totalPrice,
     };

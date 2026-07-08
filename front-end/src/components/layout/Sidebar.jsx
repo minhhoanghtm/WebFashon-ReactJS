@@ -102,11 +102,11 @@ const Sidebar = () => {
     });
 
     socket.on("connect", () => {
-      console.log("Admin Sidebar Socket connected");
+      // console.log("Admin Sidebar Socket connected");
     });
 
     socket.on("message:new", (message) => {
-      console.log("Sidebar: new message received, updating count");
+      // console.log("Sidebar: new message received, updating count");
       fetchUnreadCount();
     });
 

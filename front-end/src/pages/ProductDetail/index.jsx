@@ -56,7 +56,7 @@ const ProductDetail = () => {
   const setContext = useChatContextStore((state) => state.setContext);
   useEffect(() => {
     if(!product) return;
-    console.log("Product: ", product);
+    // console.log("Product: ", product);
     setContext({
       type: 'product',
       productid: product?.id,
@@ -73,7 +73,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     if (product) {
-      console.log("Chi tiết sản phẩm:", product);
+      // console.log("Chi tiết sản phẩm:", product);
     }
   }, [product]);
 
@@ -88,17 +88,17 @@ const ProductDetail = () => {
 
       try {
         let productData;
-        console.log("ID route (slug param):", slug);
+        // console.log("ID route (slug param):", slug);
 
         // Thử tải sản phẩm theo slug
         try {
           productData = await getProductBySlugService(slug);
-          console.log("Loaded product by slug:", productData);
+          // console.log("Loaded product by slug:", productData);
         } catch {
           // Nếu lỗi, thử tải theo ID
           try {
             productData = await getProductDetailByIdService(slug);
-            console.log("Loaded product by ID:", productData);
+            // console.log("Loaded product by ID:", productData);
           } catch (idError) {
             console.warn("API chi tiết theo ID thất bại:", idError);
           }
@@ -107,9 +107,9 @@ const ProductDetail = () => {
         // Nếu vẫn không thấy, thử tìm trong toàn bộ sản phẩm của shop
         if (!productData) {
           try {
-            console.log("Đang thử fallback tìm trong toàn bộ sản phẩm...");
+            // console.log("Đang thử fallback tìm trong toàn bộ sản phẩm...");
             const allProducts = await getAllProductService();
-            console.log("Product list (all products loaded):", allProducts);
+            // console.log("Product list (all products loaded):", allProducts);
 
             if (Array.isArray(allProducts)) {
               productData = allProducts.find(
@@ -118,7 +118,7 @@ const ProductDetail = () => {
                   item.slug === slug
               );
               if (productData) {
-                console.log("Tìm thấy sản phẩm trong danh sách fallback:", productData);
+                // console.log("Tìm thấy sản phẩm trong danh sách fallback:", productData);
               }
             }
           } catch (listError) {
@@ -173,7 +173,7 @@ const ProductDetail = () => {
 
         if (!isMounted) return;
 
-        console.log("Variants data loaded:", variantData);
+        // console.log("Variants data loaded:", variantData);
         setVariants(Array.isArray(variantData) ? variantData : []);
         setReviews(Array.isArray(reviewData) ? reviewData : []);
         setRelatedProducts(Array.isArray(relatedData) ? relatedData : []);
