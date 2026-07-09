@@ -3,6 +3,39 @@ import { ENV } from '../config/env';
 import { tokenStorage } from '../utils/token';
 import { useAuthStore } from '../store/auth.store';
 
+const cleanUrls = (obj) => {
+  if (!obj) return obj;
+  if (typeof obj === 'string') {
+    if (obj.startsWith('/uploads/')) {
+      const backendUrl = ENV.API_BASE_URL.replace("/api", "");
+      return `${backendUrl}${obj}`;
+    }
+    const uploadsIndex = obj.indexOf("/uploads/");
+    if (uploadsIndex !== -1 && (obj.startsWith("http://404studio.website") || obj.startsWith("https://404studio.website"))) {
+      const filename = obj.substring(uploadsIndex + "/uploads/".length);
+      const backendUrl = ENV.API_BASE_URL.replace("/api", "");
+      return `${backendUrl}/uploads/${filename}`;
+    }
+    return obj;
+  }
+  if (typeof obj === 'object') {
+    if (Array.isArray(obj)) {
+      return obj.map(cleanUrls);
+    }
+    const proto = Object.getPrototypeOf(obj);
+    if (proto === null || proto === Object.prototype) {
+      const cleaned = {};
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          cleaned[key] = cleanUrls(obj[key]);
+        }
+      }
+      return cleaned;
+    }
+  }
+  return obj;
+};
+
 const axiosClient = axios.create({
   baseURL: ENV.API_BASE_URL,
   headers: {
@@ -101,6 +134,9 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => {
     // Return standard success response data (typically { success: true, data: ..., message: ... })
+    if (response && response.data) {
+      response.data = cleanUrls(response.data);
+    }
     return response.data;
   },
   async (error) => {

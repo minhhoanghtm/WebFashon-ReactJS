@@ -11,7 +11,7 @@ const AuthLayout = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  if (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/reset-password') {
+  if (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/reset-password' || location.pathname === '/verify-otp') {
     return <Outlet />;
   }
 

@@ -3,23 +3,12 @@ import { toNoAccent } from "../../../common/utils/removeAccents.js";
 import { AppError } from "../../../common/exceptions/AppError.js";
 import mongoose from "mongoose";
 
-export const getAllProducts = async (sort = "createdAt", order = "desc") => {
-  const sortOption = {};
-  const sortFields = typeof sort === "string" && sort.trim() ? sort : "createdAt";
-  const sortOrder = order === "asc" ? 1 : -1;
-
-  sortFields.split(",").forEach((element) => {
-    const field = element.trim();
-    if (field) {
-      sortOption[field] = sortOrder;
-    }
-  });
-
-  if (!sortOption._id) {
-    sortOption._id = sortOrder;
+export const getAllProducts = async (limit = 20) => {
+  const products = await productRepository.findRandomProducts({}, limit);
+  if(!products || products.length === 0) {
+    throw new AppError("Không tìm thấy sản phẩm nào", 404);
   }
-
-  return await productRepository.findWithoutPagination({}, sortOption);
+  return products;
 };
 
 export const getProductDetail = async (id) => {

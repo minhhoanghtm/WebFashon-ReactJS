@@ -8,7 +8,9 @@
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "dev": "nodemon src/server.js",
     "start": "node  src/server.js",
-    "seed:pages": "node seed/pages.js"
+    "seed:pages": "node seed/pages.js",
+    "k6:all": "powershell -ExecutionPolicy Bypass -File load-tests/run-all.ps1",
+    "k6:run": "powershell -ExecutionPolicy Bypass -Command \"$n=$env:TEST; k6 run load-tests/$n.js; $t=Get-Date -Format 'yyyy-MM-dd_HH-mm'; Copy-Item load-tests/results/TEMPLATE.md load-tests/results/${n}_${t}.md; Write-Host 'Report: load-tests/results/${n}_${t}.md'\""
   },
   "keywords": [],
   "author": "",

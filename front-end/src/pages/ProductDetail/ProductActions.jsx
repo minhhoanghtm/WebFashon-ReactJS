@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ShoppingBag, Zap } from "lucide-react";
@@ -98,6 +98,15 @@ const ProductActions = ({ product, variants = [] }) => {
       : null;
   const stockLimit = variantStock ?? product.stock ?? 99;
 
+  useEffect(() => {
+    if (stockLimit !== null && stockLimit !== undefined) {
+      const maxAllowed = Math.max(1, stockLimit);
+      if (quantity > maxAllowed) {
+        setQuantity(maxAllowed);
+      }
+    }
+  }, [stockLimit, quantity]);
+
   const hasRequiredColor = !colorOptions.length || Boolean(selectedColor);
   const hasRequiredSize = !sizeOptions.length || Boolean(selectedSize);
 
@@ -163,6 +172,11 @@ const ProductActions = ({ product, variants = [] }) => {
       return false;
     }
 
+    if (stockLimit !== null && stockLimit !== undefined && quantity > stockLimit) {
+      toast.error(`Số lượng trong kho không đủ (chỉ còn lại ${stockLimit} sản phẩm)`);
+      return false;
+    }
+
     try {
       setIsAdding(true);
       const result = await addCartItemService(buildCartPayload());
@@ -201,6 +215,11 @@ const ProductActions = ({ product, variants = [] }) => {
 
     if (!canAdd) {
       toast.error(warningText || "Vui lòng chọn đầy đủ thông tin sản phẩm");
+      return;
+    }
+
+    if (stockLimit !== null && stockLimit !== undefined && quantity > stockLimit) {
+      toast.error(`Số lượng trong kho không đủ (chỉ còn lại ${stockLimit} sản phẩm)`);
       return;
     }
 

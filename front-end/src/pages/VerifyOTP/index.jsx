@@ -269,7 +269,7 @@ const VerifyOTP = () => {
 
         {/* Ô nhập mã OTP */}
         <div
-          className="flex justify-between gap-2.5 my-8"
+          className="flex justify-center gap-1.5 sm:gap-2.5 my-8"
           role="group"
           aria-label="Nhập mã OTP"
         >
@@ -284,7 +284,7 @@ const VerifyOTP = () => {
               value={digit}
               placeholder="·"
               aria-label={`Chữ số thứ ${i + 1}`}
-              className={`w-12 h-14 md:w-14 md:h-16 text-center text-lg font-bold font-mono rounded-xl border outline-none transition-all shadow-inner 
+              className={`flex-1 max-w-[44px] sm:max-w-[56px] aspect-[5/6] text-center text-lg font-bold font-mono rounded-xl border outline-none transition-all shadow-inner 
                 ${digit ? "border-black bg-white text-black ring-1 ring-black" : "border-neutral-200 bg-neutral-50 text-neutral-400 placeholder-neutral-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black"}
                 ${error ? "border-red-500 bg-red-50/30 text-red-600 focus:border-red-500 focus:ring-red-500" : ""}
               `}

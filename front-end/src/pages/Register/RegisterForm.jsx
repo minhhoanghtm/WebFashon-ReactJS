@@ -134,9 +134,9 @@ const RegisterForm = () => {
     } else {
       const dob = new Date(formData.dateOfBirth);
       const minAge = new Date();
-      minAge.setFullYear(minAge.getFullYear() - 10);
+      minAge.setFullYear(minAge.getFullYear() - 18);
       if (dob > minAge) {
-        nextErrors.dateOfBirth = "Bạn phải ít nhất 10 tuổi.";
+        nextErrors.dateOfBirth = "Bạn phải ít nhất 18 tuổi.";
       }
     }
 

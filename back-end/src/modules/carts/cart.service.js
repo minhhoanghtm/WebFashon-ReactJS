@@ -62,7 +62,7 @@ class CartService {
       { upsert: true }
     );
 
-    return await this._recalculateCart(cartId);
+    return await this._recalculateCart(cartId, false); // không cần populate khi add
   }
 
   async getCartItems(cartId) {
@@ -89,26 +89,28 @@ class CartService {
     return await this._recalculateCart(cartItem.cart_id);
   }
 
-  // Private helper to recalculate cart items and update cart totals
-  async _recalculateCart(cartId) {
-    // Query items without populating for extremely fast total calculation
+  // Private helper to recalculate cart totals
+  // populate=true: trả full item detail (dùng cho GET cart)
+  // populate=false: chỉ trả totals (dùng cho add/update/delete → nhanh hơn)
+  async _recalculateCart(cartId, populate = true) {
     const items = await CartItem.find({ cart_id: cartId }).select("quantity price");
 
     const totalItemsCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    const totalPrice = items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);
+    const totalPrice = items.reduce(
+      (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+      0
+    );
 
-    // Parallelize updating the cart totals and fetching populated items for the response
-    const [updatedCart, populatedItems] = await Promise.all([
-      Cart.findByIdAndUpdate(
-        cartId,
-        {
-          total_items: totalItemsCount,
-          total_price: totalPrice,
-        },
-        { new: true }
-      ),
-      cartRepository.findItemsWithDetails({ cart_id: cartId }),
-    ]);
+    const updatedCart = await Cart.findByIdAndUpdate(
+      cartId,
+      { total_items: totalItemsCount, total_price: totalPrice },
+      { new: true }
+    );
+
+    // Chỉ populate khi caller thực sự cần (GET cart)
+    const populatedItems = populate
+      ? await cartRepository.findItemsWithDetails({ cart_id: cartId })
+      : null;
 
     return {
       items: populatedItems,

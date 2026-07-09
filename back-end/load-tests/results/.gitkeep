@@ -1,0 +1,2 @@
+# Folder này chứa kết quả k6 load test (auto-generated bởi run-and-save.js)
+# Raw output files (*_result.txt) được gitignore, chỉ commit summary.md

@@ -283,7 +283,13 @@ const CustomerChatWidget = () => {
     });
 
     return () => {
-      socket.disconnect();
+      if (socket.connected) {
+        socket.disconnect();
+      } else {
+        socket.once("connect", () => {
+          socket.disconnect();
+        });
+      }
       socketRef.current = null;
     };
   }, [isAuthenticated, socketUrl]);

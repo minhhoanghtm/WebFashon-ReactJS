@@ -46,6 +46,11 @@ const LoginForm = () => {
       toast.error(blockedMsg);
       sessionStorage.removeItem("blockedMessage");
     }
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setFormData((prev) => ({ ...prev, email: savedEmail }));
+      setRememberMe(true);
+    }
   }, []);
 
   const handleChange = (event) => {
@@ -93,6 +98,11 @@ const LoginForm = () => {
       const token = response.data?.accessToken;
       if (token) {
         login(token);
+        if (rememberMe) {
+          localStorage.setItem("rememberedEmail", formData.email);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+        }
         let userRole = "";
         try {
           const userRes = await userApi.getMe();

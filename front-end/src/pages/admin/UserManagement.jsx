@@ -88,7 +88,7 @@ const UserManagement = () => {
   const [addAdminLoading, setAddAdminLoading] = useState(false);
   //Role
   const { user, isAuthenticated } = useAuthStore();
-  console.log("Authenticated User:", user.role);
+  console.log("Authenticated User:", user?.role);
 
   // Fetch users from API
   const fetchUsers = async () => {
@@ -97,25 +97,23 @@ const UserManagement = () => {
       const response = await getAllUsersApi();
       if (response.ok) {
         const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setUsers(data);
-          setIsUsingMock(false);
-        } else {
-          setUsers(mockCustomers);
-          setIsUsingMock(true);
-        }
+        setUsers(Array.isArray(data) ? data : []);
+        setIsUsingMock(false);
       } else {
-        setUsers(mockCustomers);
-        setIsUsingMock(true);
-        console.warn("API returned error status. Using mock data fallback.");
+        const errData = await response.json();
+        console.error("fetchUsers API error response:", errData, response.status);
+        const errMsg = typeof errData === "string" 
+          ? errData 
+          : (errData?.message || `Không thể tải danh sách tài khoản (Mã lỗi: ${response.status})`);
+        toast.error(errMsg);
+        setUsers([]);
+        setIsUsingMock(false);
       }
     } catch (err) {
-      setUsers(mockCustomers);
-      setIsUsingMock(true);
-      console.error(
-        "Failed to load user list from API. Fallback to mock data:",
-        err,
-      );
+      console.error("Failed to load user list from API:", err);
+      toast.error("Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối API.");
+      setUsers([]);
+      setIsUsingMock(false);
     } finally {
       setLoading(false);
     }
@@ -207,15 +205,16 @@ const UserManagement = () => {
   // Date formatter
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
+    if (typeof dateStr === "object" && !(dateStr instanceof Date)) return "-";
     try {
       const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
+      if (isNaN(d.getTime())) return typeof dateStr === "string" ? dateStr : "-";
       const day = String(d.getDate()).padStart(2, "0");
       const month = String(d.getMonth() + 1).padStart(2, "0");
       const year = d.getFullYear();
       return `${day}/${month}/${year}`;
     } catch (e) {
-      return dateStr;
+      return typeof dateStr === "string" ? dateStr : "-";
     }
   };
 
@@ -276,6 +275,26 @@ const UserManagement = () => {
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
+  };
+
+  const getPaginationRange = () => {
+    const delta = 2;
+    const range = [];
+    range.push(1);
+    if (totalPages <= 1) return range;
+    const start = Math.max(2, currentPage - delta);
+    const end = Math.min(totalPages - 1, currentPage + delta);
+    if (start > 2) {
+      range.push("...");
+    }
+    for (let i = start; i <= end; i++) {
+      range.push(i);
+    }
+    if (end < totalPages - 1) {
+      range.push("...");
+    }
+    range.push(totalPages);
+    return range;
   };
 
   useEffect(() => {
@@ -561,11 +580,6 @@ const UserManagement = () => {
           {/* List Indicator */}
           <div className="flex items-center justify-between text-xs text-slate-400 font-semibold px-1">
             <span>Tìm thấy {filteredUsers.length} khách hàng trùng khớp</span>
-            {isUsingMock && (
-              <span className="text-amber-500 font-bold bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 rounded-full">
-                Mock Data Fallback
-              </span>
-            )}
           </div>
 
           {/* Table List (Desktop & Tablet) */}
@@ -895,8 +909,18 @@ const UserManagement = () => {
                   <ChevronLeft className="h-4 w-4" />
                 </button>
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (pageNum) => (
+                {getPaginationRange().map((pageNum, index) => {
+                  if (pageNum === "...") {
+                    return (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="px-2 text-slate-400 dark:text-slate-600 font-bold select-none"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  return (
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
@@ -908,8 +932,8 @@ const UserManagement = () => {
                     >
                       {pageNum}
                     </button>
-                  ),
-                )}
+                  );
+                })}
 
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}

@@ -700,23 +700,27 @@
 .profile-form input,
 .profile-form select {
   width: 100%;
-  min-height: 42px;
-  border: 1px solid #d1d5db;
-  border-radius: 11px;
+  min-height: 46px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   background: #ffffff;
-  color: #111827;
+  color: #0f172a;
   font-size: 14px;
   outline: none;
-  padding: 0 12px;
+  padding: 10px 16px;
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
 }
 
+.profile-form input::placeholder {
+  color: #94a3b8;
+}
+
 .profile-form input:focus,
 .profile-form select:focus {
-  border-color: #111827;
-  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
 
 .profile-form__full {

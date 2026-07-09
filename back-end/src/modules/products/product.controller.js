@@ -169,8 +169,9 @@ export const getProductVariantById = async (req, res, next) => {
 export const getProducts = async (req, res, next) => {
   const redis = getRedisConnection();
   const CACHE_TTL = 600; // seconds
-  const { sort = "createdAt", order = "desc" } = req.query;
-  const CACHE_KEY = `products:all:sort:${sort}:order:${order}`;
+  const { limit } = req.query;
+  const numericLimit = limit ? parseInt(limit, 10) : undefined;
+  const CACHE_KEY = `products:all:limit:${numericLimit || "default"}`;
   try {
     const cached = await redis.get(CACHE_KEY);
     if (cached) {
@@ -179,7 +180,7 @@ export const getProducts = async (req, res, next) => {
       return successResponse(res, products, 'From cache');
     }
     logger.info('Cache miss for %s – querying DB', CACHE_KEY);
-    const products = await productFacade.getAllProducts(sort, order);
+    const products = await productFacade.getAllProducts(numericLimit);
     await redis.set(CACHE_KEY, JSON.stringify(products), 'EX', CACHE_TTL);
     logger.info('Cache set for %s with TTL %ds', CACHE_KEY, CACHE_TTL);
     return successResponse(res, products);

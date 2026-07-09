@@ -543,6 +543,14 @@ const Profile = () => {
     }));
   }, []);
 
+  const handleCancelPasswordChange = useCallback(() => {
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+  }, []);
+
   const handleAvatarFileSelect = useCallback(async (file) => {
     if (!file) return;
 
@@ -965,6 +973,7 @@ const Profile = () => {
                     value={passwordForm.currentPassword}
                     onChange={(event) => handlePasswordFormChange("currentPassword", event.target.value)}
                     autoComplete="current-password"
+                    placeholder="Nhập mật khẩu hiện tại"
                   />
                 </label>
                 <label>
@@ -974,6 +983,7 @@ const Profile = () => {
                     value={passwordForm.newPassword}
                     onChange={(event) => handlePasswordFormChange("newPassword", event.target.value)}
                     autoComplete="new-password"
+                    placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                   />
                 </label>
                 <label>
@@ -983,11 +993,28 @@ const Profile = () => {
                     value={passwordForm.confirmPassword}
                     onChange={(event) => handlePasswordFormChange("confirmPassword", event.target.value)}
                     autoComplete="new-password"
+                    placeholder="Xác nhận mật khẩu mới"
                   />
                 </label>
 
-                <div className="profile-form__actions" style={{ marginTop: "24px" }}>
-                  <button type="submit" className="profile-button primary" disabled={updatePasswordMutation.isPending}>
+                <div className="profile-form__actions" style={{ marginTop: "24px", display: "flex", gap: "12px" }}>
+                  <button
+                    type="button"
+                    className="profile-button secondary"
+                    onClick={handleCancelPasswordChange}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="profile-button primary"
+                    disabled={
+                      !passwordForm.currentPassword ||
+                      !passwordForm.newPassword ||
+                      !passwordForm.confirmPassword ||
+                      updatePasswordMutation.isPending
+                    }
+                  >
                     {updatePasswordMutation.isPending ? "Đang lưu..." : "Đổi mật khẩu"}
                   </button>
                 </div>
@@ -1450,6 +1477,7 @@ const PasswordModal = ({ form, isSaving, onChange, onClose, onSubmit }) => (
             value={form.currentPassword}
             onChange={(event) => onChange("currentPassword", event.target.value)}
             autoComplete="current-password"
+            placeholder="Nhập mật khẩu hiện tại"
           />
         </label>
         <label>
@@ -1459,6 +1487,7 @@ const PasswordModal = ({ form, isSaving, onChange, onClose, onSubmit }) => (
             value={form.newPassword}
             onChange={(event) => onChange("newPassword", event.target.value)}
             autoComplete="new-password"
+            placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
           />
         </label>
         <label>
@@ -1468,6 +1497,7 @@ const PasswordModal = ({ form, isSaving, onChange, onClose, onSubmit }) => (
             value={form.confirmPassword}
             onChange={(event) => onChange("confirmPassword", event.target.value)}
             autoComplete="new-password"
+            placeholder="Xác nhận mật khẩu mới"
           />
         </label>
 
@@ -1475,7 +1505,16 @@ const PasswordModal = ({ form, isSaving, onChange, onClose, onSubmit }) => (
           <button type="button" className="profile-button secondary" onClick={onClose}>
             Hủy
           </button>
-          <button type="submit" className="profile-button primary" disabled={isSaving}>
+          <button
+            type="submit"
+            className="profile-button primary"
+            disabled={
+              !form.currentPassword ||
+              !form.newPassword ||
+              !form.confirmPassword ||
+              isSaving
+            }
+          >
             {isSaving ? "Đang lưu..." : "Đổi mật khẩu"}
           </button>
         </div>

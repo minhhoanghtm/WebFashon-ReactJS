@@ -25,7 +25,10 @@ export const options = {
   ],
 
   thresholds: {
-    // chỉ quan tâm API business chính
+    // Sau khi optimize (bỏ populate khỏi add response):
+    // trước: p95 = 1.73s | sau: kỳ vọng p95 < 1s
+    // Bottleneck cũ: findItemsWithDetails() populate product+variant
+    // cho toàn bộ giỏ hàng sau mỗi lần thêm item → O(n) theo số items.
     "http_req_duration{endpoint:cart_add}": ["p(95) < 1500"],
     cartAddSuccessRate: ["rate>0.98"],
     http_req_failed: ["rate<0.01"],
