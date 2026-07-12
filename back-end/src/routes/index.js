@@ -26,7 +26,6 @@ import { getRedisConnection } from "../configs/redis.js";
 
 const rootRouter = express.Router();
 
-<<<<<<< HEAD
 // Health check endpoint
 rootRouter.get("/health", async (req, res) => {
   try {
@@ -51,10 +50,6 @@ rootRouter.get("/health", async (req, res) => {
   } catch (error) {
     res.status(500).json({ status: "ERROR", message: error.message });
   }
-=======
-rootRouter.get("/health", (req, res) => {
-  res.status(200).json({ status: "UP", timestamp: new Date() });
->>>>>>> main
 });
 
 // Public routes
