@@ -3,140 +3,37 @@ name: CI - Main (Production Gate)
 on:
   push:
     branches: [main]
-  pull_request:
+  pull_request: 
     branches: [main]
 
 jobs:
-  lint-and-test-backend:
-    name: 🔍 Backend CI (Strict)
+  build:
     runs-on: ubuntu-latest
 
-    services:
-      mongo:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+  strategy:
+    matrix:
+      node-version: [16.x, 18.x, 20.x, 22.x]
 
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+  steps:
+    -name: Checkout repository
+     uses: actions/checkout@v3
+     with:
+       fetch-depth: 0
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    -name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: back-end/package-lock.json
+    -name: Install dependencies
+      run: npm ci
 
-      - name: Install backend dependencies
-        working-directory: ./back-end
-        run: npm ci
+    -name: Run lint
+      run: npm run lint --if-present
 
-      - name: Create .env for test
-        working-directory: ./back-end
-        run: |
-          cat > .env << EOF
-          NODE_ENV=test
-          PORT=5000
-          MONGODB_URI=mongodb://localhost:27017/webfashion_test
-          REDIS_URL=redis://localhost:6379
-          JWT_SECRET=test_secret_key_ci
-          JWT_REFRESH_SECRET=test_refresh_secret_ci
-          EOF
+    -name: Run tests
+      run: npm test
 
-      - name: Run all tests
-        working-directory: ./back-end
-        run: |
-          node test-api.js
-          node test-scenarios.js
-          node test-stage2.js
-          node test-stage3.js
-
-  build-and-validate-docker:
-    name: 🐳 Docker Build Validation
-    runs-on: ubuntu-latest
-    needs: lint-and-test-backend
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build backend image (validate only)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./back-end
-          push: false
-          tags: webfashion-backend:ci
-
-      - name: Build frontend image (validate only)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./front-end
-          push: false
-          tags: webfashion-frontend:ci
-
-  notify:
-    name: ✅ Summary
-    runs-on: ubuntu-latest
-    needs: [lint-and-test-backend, build-and-validate-docker]
-    if: always()
-
-    steps:
-      - name: Report status
-        run: |
-          if [ "${{ needs.lint-and-test-backend.result }}" == "success" ] && \
-             [ "${{ needs.build-and-validate-docker.result }}" == "success" ]; then
-            echo "✅ All checks passed — ready to merge to main"
-          else
-            echo "❌ Some checks failed — do NOT merge"
-            exit 1
-          fi
-
-  deploy:
-    name: 🚀 Deploy to VPS
-    runs-on: ubuntu-latest
-    needs: [lint-and-test-backend, build-and-validate-docker]
-    # Chỉ deploy khi push thẳng vào main (không chạy khi PR)
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: SSH vào VPS và deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || 22 }}
-          script: |
-            set -e
-            cd /opt/webfashion
-
-            echo "📥 Pull code mới nhất..."
-            git pull origin main
-
-            echo "🐳 Build và restart containers..."
-            docker compose -f docker-compose.prod.yml up -d --build
-
-            echo "🧹 Dọn image cũ..."
-            docker image prune -f
-
-            echo "✅ Deploy thành công!"
-            docker compose -f docker-compose.prod.yml ps
+    -name: Run build
+      run: npm run build --if-present

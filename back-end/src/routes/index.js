@@ -24,6 +24,10 @@ import shippingRouter from "../modules/shipping/shipping.routes.js";
 
 const rootRouter = express.Router();
 
+rootRouter.get("/health", (req, res) => {
+  res.status(200).json({ status: "UP", timestamp: new Date() });
+});
+
 // Public routes
 rootRouter.use("/auth", authGlobalLimiter, authRouter);
 rootRouter.use("/categories", categoryRouter);
