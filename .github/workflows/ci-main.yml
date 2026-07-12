@@ -66,27 +66,16 @@ jobs:
         run: npm install --no-audit --no-fund
 
 
-      - name: Run lint
-        run: npm run lint --if-present
-
-      - name: Start backend server
+      - name: Run Backend CI pipeline (Lint, Test, Build)
         working-directory: ./back-end
-        run: npm start &
-
-      - name: Wait for server to be ready
-        run: npx wait-on http://localhost:5000/api/health --timeout 30000
-
-      - name: Run Jest Unit & Route Tests
-        working-directory: ./back-end
-        run: npm test
-
-      - name: Run E2E API tests
-        working-directory: ./back-end
-        run: node test-api.js
-
-
-      - name: Build project
-        run: npm run build --if-present
+        run: |
+          npm run lint --if-present
+          npm start &
+          npx wait-on http://localhost:5000/api/health --timeout 30000
+          npm test
+          node test-api.js
+          npm run build --if-present
 
       - name: Build Docker image
+        working-directory: .
         run: docker compose build
