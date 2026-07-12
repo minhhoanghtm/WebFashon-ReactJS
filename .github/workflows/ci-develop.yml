@@ -1,49 +1,81 @@
-name:  CI - Develop
+name: CI/CD - Develop
 
 on:
   push:
-    branches: [main]
-  pull_request: 
-    branches: [main]
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
 
-jobs: 
-  deloy: 
-    runs-on: unbuntu-latest
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18.x
-        cache: 'npm'
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
-    - name: Install dependencies
-      run: npm ci
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://localhost:27017/webfashion_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: test-secret
 
-    - name: Run lint
-      run: npm run lint --if-present
+    defaults:
+      run:
+        working-directory: back-end
 
-    - name: Run tests
-      run: npm test
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Run build
-      run: npm run build --if-present
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: back-end/package-lock.json
 
-    - name:  Deloy to VPS
-      uses: appleboy/ssh-action@v1.2.2
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_PRIVATE_KEY }}
-        port: ${{ secrets.VPS_PORT }}
-        script: |
-          cd /root/WebFashon
-          git pull origin main
-          npm install
-          docker compose up -d --build
-          pm2 restart all
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint --if-present
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build --if-present
+
+      - name: Build Docker image
+        run: docker compose build
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd /root/WebFashon
+            git pull origin develop
+            docker compose up -d --build

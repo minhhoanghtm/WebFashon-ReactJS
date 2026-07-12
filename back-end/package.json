@@ -10,7 +10,9 @@
     "start": "node  src/server.js",
     "seed:pages": "node seed/pages.js",
     "k6:all": "powershell -ExecutionPolicy Bypass -File load-tests/run-all.ps1",
-    "k6:run": "powershell -ExecutionPolicy Bypass -Command \"$n=$env:TEST; k6 run load-tests/$n.js; $t=Get-Date -Format 'yyyy-MM-dd_HH-mm'; Copy-Item load-tests/results/TEMPLATE.md load-tests/results/${n}_${t}.md; Write-Host 'Report: load-tests/results/${n}_${t}.md'\""
+    "k6:run": "powershell -ExecutionPolicy Bypass -Command \"$n=$env:TEST; k6 run load-tests/$n.js; $t=Get-Date -Format 'yyyy-MM-dd_HH-mm'; Copy-Item load-tests/results/TEMPLATE.md load-tests/results/${n}_${t}.md; Write-Host 'Report: load-tests/results/${n}_${t}.md'\"",
+    "wait": "wait-on http://localhost:5000/api/health"
+    
   },
   "keywords": [],
   "author": "",
@@ -45,6 +47,7 @@
   "devDependencies": {
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "wait-on": "^9.0.10"
   }
 }
