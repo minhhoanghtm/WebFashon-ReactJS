@@ -27,7 +27,7 @@ export const signIn = async (req, res, next) => {
       maxAge: REFRESH_TOKEN_TTL,
     });
 
-    return successResponse(res, { accessToken, userId: user._id }, `User ${user.fullName} đã login!, UserId: ${user._id || user.id}`);
+    return successResponse(res, { accessToken, userId: user.id || user._id }, `User ${user.fullName} đã login!, UserId: ${user.id || user._id}`);
   } catch (error) {
     next(error);
   }

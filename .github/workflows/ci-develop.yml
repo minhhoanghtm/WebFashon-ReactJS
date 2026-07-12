@@ -59,13 +59,20 @@ jobs:
           JWT_REFRESH_SECRET=test_refresh_secret_ci
           EOF
 
-      - name: Run tests
+      - name: Start backend server
+        working-directory: ./back-end
+        run: npm start &
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:5000/api/health --timeout 30000
+
+      - name: Run Jest Unit & Route Tests
+        working-directory: ./back-end
+        run: npm test
+
+      - name: Run E2E API tests
         working-directory: ./back-end
         run: node test-api.js
-
-      - name: Run scenario tests
-        working-directory: ./back-end
-        run: node test-scenarios.js
 
   build-frontend:
     name: 🏗️ Frontend Build Check

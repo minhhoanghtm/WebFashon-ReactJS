@@ -21,8 +21,36 @@ import {
 import { protectedRoute, adminOnly } from "../middlewares/auth.middleware.js";
 import { authGlobalLimiter } from "../middlewares/rateLimiter.middleware.js";
 import shippingRouter from "../modules/shipping/shipping.routes.js";
+import mongoose from "mongoose";
+import { getRedisConnection } from "../configs/redis.js";
 
 const rootRouter = express.Router();
+
+// Health check endpoint
+rootRouter.get("/health", async (req, res) => {
+  try {
+    const mongoStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+    let redisStatus = "disconnected";
+    try {
+      const redisClient = getRedisConnection();
+      redisStatus = redisClient.status === "ready" || redisClient.status === "connect" ? "connected" : "disconnected";
+    } catch (redisErr) {
+      // Ignore redis retrieval errors
+    }
+    
+    const isHealthy = mongoStatus === "connected" && redisStatus === "connected";
+    res.status(isHealthy ? 200 : 500).json({
+      status: isHealthy ? "OK" : "ERROR",
+      services: {
+        mongodb: mongoStatus,
+        redis: redisStatus
+      },
+      timestamp: new Date()
+    });
+  } catch (error) {
+    res.status(500).json({ status: "ERROR", message: error.message });
+  }
+});
 
 // Public routes
 rootRouter.use("/auth", authGlobalLimiter, authRouter);
