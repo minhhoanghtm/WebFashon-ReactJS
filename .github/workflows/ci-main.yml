@@ -45,7 +45,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: ./back-end
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Create .env for test
         working-directory: ./back-end
