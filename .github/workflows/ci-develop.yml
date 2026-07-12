@@ -63,26 +63,20 @@ jobs:
           cat > .env << EOF
           NODE_ENV=test
           PORT=5000
-          MONGODB_URI=mongodb://localhost:27017/webfashion_test
-          REDIS_URL=redis://localhost:6379
+          MONGO_CONNECTIONSTRING=mongodb://127.0.0.1:27017/webfashion_test
+          MONGODB_URI=mongodb://127.0.0.1:27017/webfashion_test
+          REDIS_URL=redis://127.0.0.1:6379
           JWT_SECRET=test_secret_key_ci
           JWT_REFRESH_SECRET=test_refresh_secret_ci
           EOF
 
-      - name: Start backend server
+      - name: Run Backend Tests
         working-directory: ./back-end
-        run: npm start &
-
-      - name: Wait for server to be ready
-        run: npx wait-on http://localhost:5000/api/health --timeout 30000
-
-      - name: Run Jest Unit & Route Tests
-        working-directory: ./back-end
-        run: npm test
-
-      - name: Run E2E API tests
-        working-directory: ./back-end
-        run: node test-api.js
+        run: |
+          npm start > server.log 2>&1 &
+          npx wait-on http://localhost:5000/api/health --timeout 60000 || (cat server.log && exit 1)
+          npm test
+          node test-api.js
 
   build-frontend:
     name: 🏗️ Frontend Build Check
@@ -94,25 +88,28 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
-      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: back-end/package-lock.json
+          cache-dependency-path: front-end/package-lock.json
       - name: Show versions
         run: |
           node -v
           npm -v
       - name: Install dependencies
-        run: npm ci
+        working-directory: ./front-end
+        run: npm install --legacy-peer-deps --no-audit --no-fund
 
       - name: Run lint
+        working-directory: ./front-end
         run: npm run lint --if-present
 
       - name: Run tests
-        run: npm test
+        working-directory: ./front-end
+        run: npm test --if-present
 
       - name: Build project
+        working-directory: ./front-end
         run: npm run build --if-present
 
       - name: Build Docker image

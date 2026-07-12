@@ -65,28 +65,29 @@ jobs:
         working-directory: ./back-end
         run: npm install --no-audit --no-fund
 
-
-      - name: Run lint
-        run: npm run lint --if-present
-
-      - name: Start backend server
+      - name: Create .env for test
         working-directory: ./back-end
-        run: npm start &
+        run: |
+          cat > .env << EOF
+          NODE_ENV=test
+          PORT=5000
+          MONGO_CONNECTIONSTRING=mongodb://127.0.0.1:27017/webfashion_test
+          MONGODB_URI=mongodb://127.0.0.1:27017/webfashion_test
+          REDIS_URL=redis://127.0.0.1:6379
+          JWT_SECRET=test_secret_key_ci
+          JWT_REFRESH_SECRET=test_refresh_secret_ci
+          EOF
 
-      - name: Wait for server to be ready
-        run: npx wait-on http://localhost:5000/api/health --timeout 30000
-
-      - name: Run Jest Unit & Route Tests
+      - name: Run Backend CI pipeline (Lint, Test, Build)
         working-directory: ./back-end
-        run: npm test
-
-      - name: Run E2E API tests
-        working-directory: ./back-end
-        run: node test-api.js
-
-
-      - name: Build project
-        run: npm run build --if-present
+        run: |
+          npm run lint --if-present
+          npm start > server.log 2>&1 &
+          npx wait-on http://localhost:5000/api/health --timeout 60000 || (cat server.log && exit 1)
+          npm test
+          node test-api.js
+          npm run build --if-present
 
       - name: Build Docker image
+        working-directory: .
         run: docker compose build
