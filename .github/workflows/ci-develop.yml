@@ -63,8 +63,9 @@ jobs:
           cat > .env << EOF
           NODE_ENV=test
           PORT=5000
-          MONGODB_URI=mongodb://localhost:27017/webfashion_test
-          REDIS_URL=redis://localhost:6379
+          MONGO_CONNECTIONSTRING=mongodb://127.0.0.1:27017/webfashion_test
+          MONGODB_URI=mongodb://127.0.0.1:27017/webfashion_test
+          REDIS_URL=redis://127.0.0.1:6379
           JWT_SECRET=test_secret_key_ci
           JWT_REFRESH_SECRET=test_refresh_secret_ci
           EOF
@@ -72,8 +73,8 @@ jobs:
       - name: Run Backend Tests
         working-directory: ./back-end
         run: |
-          npm start &
-          npx wait-on http://localhost:5000/api/health --timeout 30000
+          npm start > server.log 2>&1 &
+          npx wait-on http://localhost:5000/api/health --timeout 60000 || (cat server.log && exit 1)
           npm test
           node test-api.js
 
