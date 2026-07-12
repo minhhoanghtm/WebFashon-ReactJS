@@ -141,12 +141,20 @@ const normalizeCartItems = (backendItems) => {
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { isAuthenticated: isLoggedIn } = useAuthStore();
+  const { isAuthenticated: isLoggedIn, user } = useAuthStore();
   const { items, setCartItems } = useCartStore();
 
   const [loading, setLoading] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [isDemoMode, setIsDemoMode] = useState(false);
+
+  useEffect(() => {
+    const role = user?.role || user?.data?.role || "";
+    if (role === "admin") {
+      toast.error("Quản trị viên không thể thực hiện chức năng mua hàng!");
+      navigate("/");
+    }
+  }, [user, navigate]);
   
   // Voucher / Coupon states
   const [couponCode, setCouponCode] = useState("");

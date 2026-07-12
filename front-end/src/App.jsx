@@ -43,7 +43,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AppRouter />
-      <ToastContainer position="bottom-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={3000} />
     </QueryClientProvider>
   );
 };

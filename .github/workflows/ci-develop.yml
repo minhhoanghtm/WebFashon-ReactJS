@@ -1,41 +1,51 @@
-name: CI - Develop
+name: CI/CD - Develop
 
 on:
   push:
-    branches: [develop]
+    branches:
+      - develop
   pull_request:
-    branches: [develop]
+    branches:
+      - develop
 
 jobs:
-  lint-and-test-backend:
-    name: 🔍 Backend CI
+  deploy:
     runs-on: ubuntu-latest
 
     services:
       mongo:
-        image: mongo:7
+        image: mongo:6
         ports:
           - 27017:27017
         options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
       redis:
-        image: redis:7-alpine
+        image: redis:7
         ports:
           - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://localhost:27017/webfashion_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: test-secret
+
+    defaults:
+      run:
+        working-directory: back-end
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -84,22 +94,38 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: front-end/package-lock.json
+          cache-dependency-path: back-end/package-lock.json
+      - name: Show versions
+        run: |
+          node -v
+          npm -v
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Install frontend dependencies
-        working-directory: ./front-end
-        run: npm ci --legacy-peer-deps
+      - name: Run lint
+        run: npm run lint --if-present
 
-      - name: Build Vite
-        working-directory: ./front-end
-        run: npm run build
+      - name: Run tests
+        run: npm test
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Build project
+        run: npm run build --if-present
+
+      - name: Build Docker image
+        run: docker compose build
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.2
         with:
-          name: frontend-dist-develop
-          path: front-end/dist
-          retention-days: 3
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd /root/WebFashon
+            git pull origin develop
+            docker compose up -d --build

@@ -16,7 +16,8 @@ const validate = (schema) => (req, res, next) => {
     error.statusCode = 400;
     error.isOperational = true;
     // Attach detailed messages for debugging (optional)
-    error.details = result.error.errors.map((e) => e.message);
+    const issues = result.error.issues ?? result.error.errors ?? [];
+    error.details = issues.map((e) => e.message);
     return next(error);
   }
   // Replace request data with parsed (and possibly coerced) values

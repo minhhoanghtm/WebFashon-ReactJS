@@ -20,7 +20,7 @@ const normalizeUser = (user = {}) => ({
       : user.sex === "female"
         ? "female"
         : "other"),
-  dateOfBirth: user.dateOfBirth || (user.birthday ? user.birthday.split("T")[0] : ""),
+  dateOfBirth: user.dateOfBirth || (user.birthday ? (typeof user.birthday.split === "function" ? user.birthday.split("T")[0] : (isNaN(new Date(user.birthday).getTime()) ? "" : new Date(user.birthday).toISOString().split("T")[0])) : ""),
   addresses: Array.isArray(user.addresses)
     ? user.addresses.map(normalizeAddress)
     : user.address
@@ -28,21 +28,28 @@ const normalizeUser = (user = {}) => ({
       : [],
 });
 
-const normalizePayload = (payload = {}) => ({
-  email: payload.email || "",
-  passWord: payload.passWord || "",
-  fullName: payload.fullName || "",
-  sex: payload.gender === "other" ? undefined : payload.gender,
-  birthday: payload.dateOfBirth || null,
-  role: payload.role || "user",
-  avatar_url: payload.avatar_url || "",
-  status: payload.status,
-  addresses: Array.isArray(payload.addresses)
-    ? payload.addresses.map(normalizeAddress)
-    : payload.address
-      ? [normalizeAddress(payload.address)]
-      : [],
-});
+const normalizePayload = (payload = {}) => {
+  const normalized = {
+    email: payload.email || "",
+    fullName: payload.fullName || "",
+    sex: payload.gender === "other" ? undefined : payload.gender,
+    birthday: payload.dateOfBirth || null,
+    role: payload.role || "user",
+    avatar_url: payload.avatar_url || "",
+    status: payload.status,
+    addresses: Array.isArray(payload.addresses)
+      ? payload.addresses.map(normalizeAddress)
+      : payload.address
+        ? [normalizeAddress(payload.address)]
+        : [],
+  };
+
+  if (payload.passWord) {
+    normalized.passWord = payload.passWord;
+  }
+
+  return normalized;
+};
 
 const toFetchLikeResponse = (status, data, ok = status >= 200 && status < 300) => ({
   ok,
@@ -51,6 +58,13 @@ const toFetchLikeResponse = (status, data, ok = status >= 200 && status < 300) =
 });
 
 const toErrorResponse = (error, fallbackMessage) => {
+  console.error("adminUserApi error object:", error);
+  if (error?.response) {
+    console.error("error.response status:", error.response.status);
+    console.error("error.response data:", error.response.data);
+  } else {
+    console.error("error.response is undefined (could be CORS, Network Error, or Server Offline)");
+  }
   const responseData = error?.response?.data || { message: fallbackMessage };
   const status = error?.response?.status || 500;
   return toFetchLikeResponse(status, responseData, false);

@@ -10,8 +10,11 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import getRedisConnection from "../../configs/redis.js";
 import logger from "../../common/logger.js";
+import googleAuth from "google-auth-library";
+const { OAuth2Client } = googleAuth;
 dotenv.config();
 
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const redis = getRedisConnection();
 const ACCESS_TOKEN_TTL = "30m";
 const ACCESS_TOKEN_REDIS_TTL = 30 * 60; // 30 minutes in seconds
@@ -60,6 +63,10 @@ class AuthService {
     const user = await userRepository.findByEmail(normalizedEmail);
     if (!user) {
       throw new AppError("Email hoặc password không đúng", 401);
+    }
+
+    if (user.status === "blocked") {
+      throw new AppError("Tài khoản của bạn đã bị khóa.", 403);
     }
 
     // Temporary lock check (Redis)
@@ -371,6 +378,86 @@ class AuthService {
     await user.save();
 
     await authRepository.deleteOtpsByEmail(normalizedEmail);
+  }
+
+  async signInWithGoogle(idToken, ip = null, ua = null) {
+    if (!idToken) {
+      throw new AppError("Thiếu idToken Google", 400);
+    }
+
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: [
+          process.env.GOOGLE_CLIENT_ID,
+          process.env.VITE_GOOGLE_CLIENT_ID
+        ].filter(Boolean),
+      });
+      payload = ticket.getPayload();
+    } catch (error) {
+      logger.error("Xác thực Google ID Token thất bại:", error);
+      throw new AppError("Xác thực ID Token Google không hợp lệ hoặc đã hết hạn", 401);
+    }
+
+    const email = payload.email;
+    if (!email) {
+      throw new AppError("Không lấy được email từ Google account", 400);
+    }
+
+    const fullName = payload.name || `${payload.family_name || ""} ${payload.given_name || ""}`.trim() || "Google User";
+    const avatarUrl = payload.picture;
+
+    const normalizedEmail = normalizeEmail(email);
+    let user = await userRepository.findByEmail(normalizedEmail);
+
+    if (!user) {
+      // Create user automatically
+      const randomPassword = crypto.randomBytes(32).toString("hex");
+      const hashedPass = await bcrypt.hash(randomPassword, 10);
+      user = await userRepository.create({
+        passWord: hashedPass,
+        fullName,
+        email: normalizedEmail,
+        avatar_url: avatarUrl,
+      });
+    } else if (user.status === "blocked") {
+      throw new AppError("Tài khoản của bạn đã bị khóa.", 403);
+    }
+
+    const jti = crypto.randomUUID();
+    const accessToken = jwt.sign(
+      { userId: user._id, jti },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: ACCESS_TOKEN_TTL }
+    );
+
+    const refreshToken = crypto.randomBytes(60).toString("hex");
+    const hashedRt = hashToken(refreshToken);
+
+    const sessionKey = `sess:${user._id}:${jti}`;
+    const sessionData = {
+      refreshToken: hashedRt,
+      ip,
+      ua,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Store session in Redis
+    await redis.set(sessionKey, JSON.stringify(sessionData), "EX", REFRESH_TOKEN_REDIS_TTL);
+    await redis.set(`rt:${hashedRt}`, sessionKey, "EX", REFRESH_TOKEN_REDIS_TTL);
+    await redis.set(`at:${jti}`, String(user._id), "EX", ACCESS_TOKEN_REDIS_TTL);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      },
+    };
   }
 }
 

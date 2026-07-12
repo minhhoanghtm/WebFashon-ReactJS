@@ -6,27 +6,34 @@ import {
   Search,
   AlertTriangle,
   X,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   getAllProductService,
   addProductService,
   updateProductService,
-  deleteProductService
+  deleteProductService,
 } from "@/services/product.service";
 import { getAllCategoriesService } from "@/services/category.service";
 import { getProductVariantByProductIdService } from "@/services/productItem.service";
-import { formatCurrency } from "@/utils/format";
+import Swal from "sweetalert2";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
-const defaultProductImage = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500";
+const defaultProductImage =
+  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500";
 
 const ProductManagement = () => {
+  const { settings } = useWebsiteSettings();
+  const general = settings?.general || {};
+  const siteName = general.siteName || "";
+  useDocumentTitle("Quản lý sản phẩm");
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [search, setSearch] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("Tất cả");
 
@@ -41,8 +48,9 @@ const ProductManagement = () => {
   const [formPrice, setFormPrice] = useState("");
   const [formOldPrice, setFormOldPrice] = useState("");
   const [formStock, setFormStock] = useState("");
-  const [formImage, setFormImage] = useState("");
+  const [formImages, setFormImages] = useState([""]);
   const [formDescription, setFormDescription] = useState("");
+  const [formWeight, setFormWeight] = useState("0.5");
 
   // Variant States
   const [formVariants, setFormVariants] = useState([]);
@@ -79,7 +87,10 @@ const ProductManagement = () => {
 
   useEffect(() => {
     if (formVariants.length > 0) {
-      const totalStock = formVariants.reduce((sum, v) => sum + (v.stock || 0), 0);
+      const totalStock = formVariants.reduce(
+        (sum, v) => sum + (v.stock || 0),
+        0,
+      );
       setFormStock(totalStock.toString());
     }
   }, [formVariants]);
@@ -90,7 +101,7 @@ const ProductManagement = () => {
     setFormPrice("");
     setFormOldPrice("");
     setFormStock("");
-    setFormImage("");
+    setFormImages([""]);
     setFormDescription("");
     setFormVariants([]);
     setVarColor("");
@@ -98,18 +109,28 @@ const ProductManagement = () => {
     setVarStock("");
     setVarImage("");
     setEditingVariantIndex(null);
+    setFormWeight("0.5");
     setIsAddModalOpen(true);
   };
 
   const handleOpenEditModal = async (product) => {
     setCurrentProduct(product);
     setFormName(product.name || "");
-    const catId = typeof product.category_id === "object" ? product.category_id?._id : product.category_id;
-    setFormCategoryId(catId || (categories[0]?._id || ""));
+    const catId =
+      typeof product.category_id === "object"
+        ? product.category_id?._id
+        : product.category_id;
+    setFormCategoryId(catId || categories[0]?._id || "");
     setFormPrice((product.new_price ?? product.price ?? 0).toString());
     setFormOldPrice((product.old_price ?? product.price ?? 0).toString());
     setFormStock((product.stock ?? 0).toString());
-    setFormImage(product.displayProduct?.[0] || product.image || "");
+    const displayImgs =
+      Array.isArray(product.displayProduct) && product.displayProduct.length > 0
+        ? product.displayProduct
+        : product.image
+        ? [product.image]
+        : [""];
+    setFormImages(displayImgs);
     setFormDescription(product.description || "");
     setFormVariants([]);
     setVarColor("");
@@ -117,6 +138,7 @@ const ProductManagement = () => {
     setVarStock("");
     setVarImage("");
     setEditingVariantIndex(null);
+    setFormWeight((product.weight ?? 0.5).toString());
     setIsEditModalOpen(true);
 
     try {
@@ -152,7 +174,10 @@ const ProductManagement = () => {
       return;
     }
 
-    const finalImage = varImage.trim() || formImage.trim() || defaultProductImage;
+    const finalImage =
+      varImage.trim() ||
+      formImages.find((img) => img.trim() !== "") ||
+      defaultProductImage;
     const sizesStr = varSize.trim();
 
     if (editingVariantIndex !== null) {
@@ -167,14 +192,14 @@ const ProductManagement = () => {
         (existingV, idx) =>
           idx !== editingVariantIndex &&
           existingV.color.toLowerCase() === updated.color.toLowerCase() &&
-          existingV.size.toLowerCase() === updated.size.toLowerCase()
+          existingV.size.toLowerCase() === updated.size.toLowerCase(),
       );
 
       if (isDuplicate) {
         toast.warning(
           `Biến thể màu ${updated.color} - kích cỡ ${
             updated.size || "K/C"
-          } đã tồn tại ở dòng khác!`
+          } đã tồn tại ở dòng khác!`,
         );
         return;
       }
@@ -219,8 +244,8 @@ const ProductManagement = () => {
               !formVariants.some(
                 (existingV) =>
                   existingV.color.toLowerCase() === newV.color.toLowerCase() &&
-                  existingV.size.toLowerCase() === newV.size.toLowerCase()
-              )
+                  existingV.size.toLowerCase() === newV.size.toLowerCase(),
+              ),
           );
 
           if (filteredNewVariants.length === 0) {
@@ -230,7 +255,9 @@ const ProductManagement = () => {
 
           setFormVariants([...formVariants, ...filteredNewVariants]);
           toast.success(
-            `Đã thêm ${filteredNewVariants.length} biến thể kích cỡ cho màu ${varColor.trim()}!`
+            `Đã thêm ${
+              filteredNewVariants.length
+            } biến thể kích cỡ cho màu ${varColor.trim()}!`,
           );
         }
       } else if (sizesStr.includes(":")) {
@@ -246,14 +273,14 @@ const ProductManagement = () => {
           const isDuplicate = formVariants.some(
             (existingV) =>
               existingV.color.toLowerCase() === newVar.color.toLowerCase() &&
-              existingV.size.toLowerCase() === newVar.size.toLowerCase()
+              existingV.size.toLowerCase() === newVar.size.toLowerCase(),
           );
 
           if (isDuplicate) {
             toast.warning(
               `Biến thể màu ${newVar.color} - kích cỡ ${
                 newVar.size || "K/C"
-              } đã tồn tại trong danh sách!`
+              } đã tồn tại trong danh sách!`,
             );
             return;
           }
@@ -271,14 +298,14 @@ const ProductManagement = () => {
         const isDuplicate = formVariants.some(
           (existingV) =>
             existingV.color.toLowerCase() === newVar.color.toLowerCase() &&
-            existingV.size.toLowerCase() === newVar.size.toLowerCase()
+            existingV.size.toLowerCase() === newVar.size.toLowerCase(),
         );
 
         if (isDuplicate) {
           toast.warning(
             `Biến thể màu ${newVar.color} - kích cỡ ${
               newVar.size || "K/C"
-            } đã tồn tại trong danh sách!`
+            } đã tồn tại trong danh sách!`,
           );
           return;
         }
@@ -302,7 +329,10 @@ const ProductManagement = () => {
       return formVariants;
     }
 
-    const finalImage = varImage.trim() || formImage.trim() || defaultProductImage;
+    const finalImage =
+      varImage.trim() ||
+      formImages.find((img) => img.trim() !== "") ||
+      defaultProductImage;
     const sizesStr = varSize.trim();
 
     if (editingVariantIndex !== null) {
@@ -317,7 +347,7 @@ const ProductManagement = () => {
         (existingV, idx) =>
           idx !== editingVariantIndex &&
           existingV.color.toLowerCase() === updated.color.toLowerCase() &&
-          existingV.size.toLowerCase() === updated.size.toLowerCase()
+          existingV.size.toLowerCase() === updated.size.toLowerCase(),
       );
 
       if (isDuplicate) {
@@ -362,8 +392,8 @@ const ProductManagement = () => {
               !formVariants.some(
                 (existingV) =>
                   existingV.color.toLowerCase() === newV.color.toLowerCase() &&
-                  existingV.size.toLowerCase() === newV.size.toLowerCase()
-              )
+                  existingV.size.toLowerCase() === newV.size.toLowerCase(),
+              ),
           );
           return [...formVariants, ...filteredNewVariants];
         }
@@ -381,7 +411,7 @@ const ProductManagement = () => {
           const isDuplicate = formVariants.some(
             (existingV) =>
               existingV.color.toLowerCase() === newVar.color.toLowerCase() &&
-              existingV.size.toLowerCase() === newVar.size.toLowerCase()
+              existingV.size.toLowerCase() === newVar.size.toLowerCase(),
           );
 
           if (isDuplicate) {
@@ -402,7 +432,7 @@ const ProductManagement = () => {
         const isDuplicate = formVariants.some(
           (existingV) =>
             existingV.color.toLowerCase() === newVar.color.toLowerCase() &&
-            existingV.size.toLowerCase() === newVar.size.toLowerCase()
+            existingV.size.toLowerCase() === newVar.size.toLowerCase(),
         );
 
         if (isDuplicate) {
@@ -414,17 +444,36 @@ const ProductManagement = () => {
     }
   };
 
+  const handleAddImageUrl = () => {
+    setFormImages([...formImages, ""]);
+  };
+
+  const handleRemoveImageUrl = (index) => {
+    setFormImages(formImages.filter((_, idx) => idx !== index));
+  };
+
+  const handleImageChange = (index, value) => {
+    const nextImages = [...formImages];
+    nextImages[index] = value;
+    setFormImages(nextImages);
+  };
+
   const handleAddProduct = async (e) => {
     e.preventDefault();
     const finalVars = getFinalVariants();
-    const totalStock = finalVars.length > 0
-      ? finalVars.reduce((sum, v) => sum + (v.stock || 0), 0)
-      : parseInt(formStock || "0", 10);
+    const totalStock =
+      finalVars.length > 0
+        ? finalVars.reduce((sum, v) => sum + (v.stock || 0), 0)
+        : parseInt(formStock || "0", 10);
 
     if (!formName || !formCategoryId || !formPrice) {
       toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
+
+    const cleanedImages = formImages.filter((img) => img.trim() !== "");
+    const displayProduct =
+      cleanedImages.length > 0 ? cleanedImages : [defaultProductImage];
 
     try {
       await addProductService({
@@ -433,9 +482,10 @@ const ProductManagement = () => {
         new_price: parseFloat(formPrice),
         old_price: parseFloat(formOldPrice || formPrice),
         stock: totalStock,
-        displayProduct: [formImage || defaultProductImage],
+        displayProduct,
         description: formDescription,
         variants: finalVars,
+        weight: parseFloat(formWeight || "0.5"),
       });
       toast.success("Thêm sản phẩm thành công!");
       setIsAddModalOpen(false);
@@ -449,14 +499,19 @@ const ProductManagement = () => {
   const handleEditProduct = async (e) => {
     e.preventDefault();
     const finalVars = getFinalVariants();
-    const totalStock = finalVars.length > 0
-      ? finalVars.reduce((sum, v) => sum + (v.stock || 0), 0)
-      : parseInt(formStock || "0", 10);
+    const totalStock =
+      finalVars.length > 0
+        ? finalVars.reduce((sum, v) => sum + (v.stock || 0), 0)
+        : parseInt(formStock || "0", 10);
 
     if (!formName || !formCategoryId || !formPrice) {
       toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
+
+    const cleanedImages = formImages.filter((img) => img.trim() !== "");
+    const displayProduct =
+      cleanedImages.length > 0 ? cleanedImages : [defaultProductImage];
 
     try {
       await updateProductService(currentProduct._id, {
@@ -465,9 +520,10 @@ const ProductManagement = () => {
         new_price: parseFloat(formPrice),
         old_price: parseFloat(formOldPrice || formPrice),
         stock: totalStock,
-        displayProduct: [formImage || defaultProductImage],
+        displayProduct,
         description: formDescription,
         variants: finalVars,
+        weight: parseFloat(formWeight || "0.5"),
       });
       toast.success("Cập nhật sản phẩm thành công!");
       setIsEditModalOpen(false);
@@ -479,14 +535,26 @@ const ProductManagement = () => {
   };
 
   const handleDeleteProduct = async (id, name) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${name}"?`)) {
+    const result = await Swal.fire({
+      title: "Bạn có chắc chắn muốn xóa?",
+      text: `Sản phẩm "${name}" sẽ bị xóa khỏi hệ thống.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Đồng ý",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
       try {
         await deleteProductService(id);
         toast.success("Đã xóa sản phẩm!");
         fetchData();
       } catch (err) {
-        console.error(err);
-        toast.error("Không thể xóa sản phẩm!");
+        const errorMsg =
+          err.response?.data?.message || "Không thể xóa sản phẩm!";
+        toast.warning(errorMsg);
       }
     }
   };
@@ -496,7 +564,10 @@ const ProductManagement = () => {
     const matchesSearch =
       product.name?.toLowerCase().includes(search.toLowerCase()) ||
       product.slug?.toLowerCase().includes(search.toLowerCase());
-    const pCatId = typeof product.category_id === "object" ? product.category_id?._id : product.category_id;
+    const pCatId =
+      typeof product.category_id === "object"
+        ? product.category_id?._id
+        : product.category_id;
     const matchesCategory =
       selectedCategoryId === "Tất cả" || pCatId === selectedCategoryId;
     return matchesSearch && matchesCategory;
@@ -515,7 +586,9 @@ const ProductManagement = () => {
     return (
       <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 space-y-4">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
-        <h3 className="text-lg font-bold text-red-800 dark:text-red-400">Không thể kết nối API</h3>
+        <h3 className="text-lg font-bold text-red-800 dark:text-red-400">
+          Không thể kết nối API
+        </h3>
         <p className="text-red-600 dark:text-red-300 text-sm">{error}</p>
         <button
           onClick={fetchData}
@@ -531,7 +604,9 @@ const ProductManagement = () => {
     <div className="space-y-8 relative">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Quản lý sản phẩm</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          Quản lý sản phẩm
+        </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
           Quản lý hoạt động kinh doanh thương mại điện tử thời trang của bạn
         </p>
@@ -582,7 +657,9 @@ const ProductManagement = () => {
       {/* Product Catalog Section */}
       <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm space-y-4 transition-all duration-300">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold tracking-tight">Danh mục sản phẩm</h2>
+          <h2 className="text-xl font-bold tracking-tight">
+            Danh mục sản phẩm
+          </h2>
           <span className="text-xs text-slate-400">
             Hiển thị {filteredProducts.length} sản phẩm
           </span>
@@ -611,7 +688,11 @@ const ProductManagement = () => {
                     {/* Image */}
                     <td className="px-6 py-4">
                       <img
-                        src={product.displayProduct?.[0] || product.image || defaultProductImage}
+                        src={
+                          product.displayProduct?.[0] ||
+                          product.image ||
+                          defaultProductImage
+                        }
                         alt={product.name}
                         className="h-12 w-12 rounded-lg object-cover shadow-sm border border-slate-200/60 dark:border-slate-700/60"
                         onError={(e) => {
@@ -628,15 +709,18 @@ const ProductManagement = () => {
                     {/* Category */}
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                       {(() => {
-                        const pCatId = typeof product.category_id === "object" ? product.category_id?._id : product.category_id;
+                        const pCatId =
+                          typeof product.category_id === "object"
+                            ? product.category_id?._id
+                            : product.category_id;
                         const cat = categories.find((c) => c._id === pCatId);
                         return cat ? cat.name : "Chưa phân loại";
                       })()}
                     </td>
 
                     {/* Price */}
-                    <td className="px-6 py-4 text-slate-900 dark:text-slate-100">
-                      ${(product.new_price ?? product.price ?? 0).toFixed(2)}
+                    <td className="px-6 py-4 text-slate-900 dark:text-slate-100 font-semibold">
+                      {(product.new_price ?? product.price ?? 0).toLocaleString("vi-VN")} đ
                     </td>
 
                     {/* Stock badge with warning */}
@@ -678,7 +762,10 @@ const ProductManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-slate-400">
+                  <td
+                    colSpan="6"
+                    className="px-6 py-8 text-center text-slate-400"
+                  >
                     Không tìm thấy sản phẩm nào phù hợp.
                   </td>
                 </tr>
@@ -716,44 +803,68 @@ const ProductManagement = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-slate-400">
+                  Danh mục
+                </label>
+                <select
+                  value={formCategoryId}
+                  onChange={(e) => setFormCategoryId(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Hình ảnh (URL)
+                    Hình ảnh sản phẩm (URL)
                   </label>
-                  <input
-                    type="text"
-                    value={formImage}
-                    onChange={(e) => setFormImage(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase text-slate-400">
-                    Danh mục
-                  </label>
-                  <select
-                    value={formCategoryId}
-                    onChange={(e) => setFormCategoryId(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                  <button
+                    type="button"
+                    onClick={handleAddImageUrl}
+                    className="text-xs text-blue-500 hover:text-blue-700 font-semibold cursor-pointer"
                   >
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
+                    + Thêm ảnh
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {formImages.map((imgUrl, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={imgUrl}
+                        onChange={(e) => handleImageChange(idx, e.target.value)}
+                        placeholder="Nhập URL ảnh..."
+                        className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                      />
+                      {formImages.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImageUrl(idx)}
+                          className="text-red-550 hover:text-red-700 p-2 cursor-pointer text-xs font-bold uppercase"
+                        >
+                          Xóa
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá cũ ($)
+                    Giá cũ (đ)
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="1"
                     min="0"
                     value={formOldPrice}
                     onChange={(e) => setFormOldPrice(e.target.value)}
@@ -762,7 +873,7 @@ const ProductManagement = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá mới ($)
+                    Giá mới (đ)
                   </label>
                   <input
                     type="number"
@@ -774,11 +885,16 @@ const ProductManagement = () => {
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400 flex items-center justify-between">
                     <span>Số lượng kho</span>
                     {formVariants.length > 0 && (
-                      <span className="text-[10px] text-blue-500 font-bold normal-case">Tự động tính từ biến thể</span>
+                      <span className="text-[10px] text-blue-500 font-bold normal-case">
+                        Tự động tính từ biến thể
+                      </span>
                     )}
                   </label>
                   <input
@@ -789,6 +905,20 @@ const ProductManagement = () => {
                     onChange={(e) => setFormStock(e.target.value)}
                     disabled={formVariants.length > 0}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200 disabled:opacity-75 disabled:bg-slate-100 dark:disabled:bg-slate-850"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-slate-400">
+                    Cân nặng (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={formWeight}
+                    onChange={(e) => setFormWeight(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
               </div>
@@ -809,22 +939,35 @@ const ProductManagement = () => {
               <div className="border-t border-slate-100 dark:border-slate-700 pt-4 space-y-3">
                 <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
                   <span>Biến thể sản phẩm ({formVariants.length})</span>
-                  <span className="text-xs font-normal text-slate-400">Màu sắc và hình ảnh là bắt buộc</span>
+                  <span className="text-xs font-normal text-slate-400">
+                    Màu sắc và hình ảnh là bắt buộc
+                  </span>
                 </h4>
 
                 {/* List of Added Variants */}
                 {formVariants.length > 0 && (
                   <div className="space-y-2 max-h-60 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-xl p-2.5 bg-slate-50/50 dark:bg-slate-900/20 scrollbar-thin scrollbar-thumb-slate-250 dark:scrollbar-thumb-slate-700">
                     {formVariants.map((v, idx) => (
-                      <div key={idx} className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800 shadow-xs">
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800 shadow-xs"
+                      >
                         <div className="flex items-center gap-2.5 min-w-0">
                           {v.image_url ? (
-                            <img src={v.image_url} alt="variant" className="h-8 w-8 rounded-md object-cover border border-slate-200 dark:border-slate-800" />
+                            <img
+                              src={v.image_url}
+                              alt="variant"
+                              className="h-8 w-8 rounded-md object-cover border border-slate-200 dark:border-slate-800"
+                            />
                           ) : (
-                            <div className="h-8 w-8 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs text-slate-400 font-bold">V</div>
+                            <div className="h-8 w-8 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs text-slate-400 font-bold">
+                              V
+                            </div>
                           )}
                           <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                            <span className="font-bold text-slate-800 dark:text-slate-100">{v.color}</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-100">
+                              {v.color}
+                            </span>
                             {v.size && ` - Size: ${v.size}`}
                             {` (${v.stock} sản phẩm)`}
                           </div>
@@ -856,7 +999,9 @@ const ProductManagement = () => {
                 <div className="bg-slate-50 dark:bg-slate-900/30 border border-slate-150 dark:border-slate-800 p-3 rounded-xl space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Màu sắc *</label>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">
+                        Màu sắc *
+                      </label>
                       <input
                         type="text"
                         placeholder="VD: Đỏ, Đen..."
@@ -866,7 +1011,9 @@ const ProductManagement = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Kích cỡ</label>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">
+                        Kích cỡ
+                      </label>
                       <input
                         type="text"
                         placeholder="VD: S, M, XL..."
@@ -879,7 +1026,9 @@ const ProductManagement = () => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Số lượng</label>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">
+                        Số lượng
+                      </label>
                       <input
                         type="number"
                         min="0"
@@ -890,7 +1039,9 @@ const ProductManagement = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Hình ảnh URL (tùy chọn)</label>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">
+                        Hình ảnh URL (tùy chọn)
+                      </label>
                       <input
                         type="text"
                         placeholder="Nhập link ảnh"
@@ -979,44 +1130,68 @@ const ProductManagement = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-slate-400">
+                  Danh mục
+                </label>
+                <select
+                  value={formCategoryId}
+                  onChange={(e) => setFormCategoryId(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Hình ảnh (URL)
+                    Hình ảnh sản phẩm (URL)
                   </label>
-                  <input
-                    type="text"
-                    value={formImage}
-                    onChange={(e) => setFormImage(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase text-slate-400">
-                    Danh mục
-                  </label>
-                  <select
-                    value={formCategoryId}
-                    onChange={(e) => setFormCategoryId(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                  <button
+                    type="button"
+                    onClick={handleAddImageUrl}
+                    className="text-xs text-blue-500 hover:text-blue-700 font-semibold cursor-pointer"
                   >
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
+                    + Thêm ảnh
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {formImages.map((imgUrl, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={imgUrl}
+                        onChange={(e) => handleImageChange(idx, e.target.value)}
+                        placeholder="Nhập URL ảnh..."
+                        className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+                      />
+                      {formImages.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImageUrl(idx)}
+                          className="text-red-550 hover:text-red-700 p-2 cursor-pointer text-xs font-bold uppercase"
+                        >
+                          Xóa
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá cũ ($)
+                    Giá cũ (đ)
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="1"
                     min="0"
                     value={formOldPrice}
                     onChange={(e) => setFormOldPrice(e.target.value)}
@@ -1025,7 +1200,7 @@ const ProductManagement = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400">
-                    Giá mới ($)
+                    Giá mới (đ)
                   </label>
                   <input
                     type="number"
@@ -1037,11 +1212,16 @@ const ProductManagement = () => {
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase text-slate-400 flex items-center justify-between">
                     <span>Số lượng kho</span>
                     {formVariants.length > 0 && (
-                      <span className="text-[10px] text-blue-500 font-bold normal-case">Tự động tính từ biến thể</span>
+                      <span className="text-[10px] text-blue-500 font-bold normal-case">
+                        Tự động tính từ biến thể
+                      </span>
                     )}
                   </label>
                   <input
@@ -1052,6 +1232,20 @@ const ProductManagement = () => {
                     onChange={(e) => setFormStock(e.target.value)}
                     disabled={formVariants.length > 0}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200 disabled:opacity-75 disabled:bg-slate-100 dark:disabled:bg-slate-850"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold uppercase text-slate-400">
+                    Cân nặng (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={formWeight}
+                    onChange={(e) => setFormWeight(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
                   />
                 </div>
               </div>
@@ -1072,22 +1266,35 @@ const ProductManagement = () => {
               <div className="border-t border-slate-100 dark:border-slate-700 pt-4 space-y-3">
                 <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
                   <span>Biến thể sản phẩm ({formVariants.length})</span>
-                  <span className="text-xs font-normal text-slate-400">Màu sắc và hình ảnh là bắt buộc</span>
+                  <span className="text-xs font-normal text-slate-400">
+                    Màu sắc và hình ảnh là bắt buộc
+                  </span>
                 </h4>
 
                 {/* List of Added Variants */}
                 {formVariants.length > 0 && (
                   <div className="space-y-2 max-h-60 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-xl p-2.5 bg-slate-50/50 dark:bg-slate-900/20 scrollbar-thin scrollbar-thumb-slate-250 dark:scrollbar-thumb-slate-700">
                     {formVariants.map((v, idx) => (
-                      <div key={idx} className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800 shadow-xs">
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800 shadow-xs"
+                      >
                         <div className="flex items-center gap-2.5 min-w-0">
                           {v.image_url ? (
-                            <img src={v.image_url} alt="variant" className="h-8 w-8 rounded-md object-cover border border-slate-200 dark:border-slate-800" />
+                            <img
+                              src={v.image_url}
+                              alt="variant"
+                              className="h-8 w-8 rounded-md object-cover border border-slate-200 dark:border-slate-800"
+                            />
                           ) : (
-                            <div className="h-8 w-8 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs text-slate-400 font-bold">V</div>
+                            <div className="h-8 w-8 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs text-slate-400 font-bold">
+                              V
+                            </div>
                           )}
                           <div className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                            <span className="font-bold text-slate-800 dark:text-slate-100">{v.color}</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-100">
+                              {v.color}
+                            </span>
                             {v.size && ` - Size: ${v.size}`}
                             {` (${v.stock} sản phẩm)`}
                           </div>
@@ -1119,7 +1326,9 @@ const ProductManagement = () => {
                 <div className="bg-slate-50 dark:bg-slate-900/30 border border-slate-150 dark:border-slate-800 p-3 rounded-xl space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Màu sắc *</label>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">
+                        Màu sắc *
+                      </label>
                       <input
                         type="text"
                         placeholder="VD: Đỏ, Đen..."
@@ -1129,7 +1338,9 @@ const ProductManagement = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Kích cỡ</label>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">
+                        Kích cỡ
+                      </label>
                       <input
                         type="text"
                         placeholder="VD: S, M, XL..."
@@ -1142,7 +1353,9 @@ const ProductManagement = () => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Số lượng</label>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">
+                        Số lượng
+                      </label>
                       <input
                         type="number"
                         min="0"
@@ -1153,7 +1366,9 @@ const ProductManagement = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Hình ảnh URL (tùy chọn)</label>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">
+                        Hình ảnh URL (tùy chọn)
+                      </label>
                       <input
                         type="text"
                         placeholder="Nhập link ảnh"

@@ -1,7 +1,11 @@
 import React from "react";
 import registerImage from "@/assets/register.png";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
 
 const RegisterBanner = () => {
+  const {settings} = useWebsiteSettings();
+  const general = settings?.general || {};
+  const siteName = general.siteName || "";
   return (
     <div className="register-banner">
       <img
@@ -11,7 +15,7 @@ const RegisterBanner = () => {
         loading="eager"
       />
       <div className="register-banner__overlay">
-        <span className="register-banner__badge">Thành viên mới</span>
+        <span className="register-banner__badge">{siteName}</span>
         <h2 className="register-banner__title">Gia nhập cùng chúng tôi</h2>
         <p className="register-banner__desc">
           Tạo tài khoản để lưu lại sản phẩm yêu thích, theo dõi đơn hàng và khám

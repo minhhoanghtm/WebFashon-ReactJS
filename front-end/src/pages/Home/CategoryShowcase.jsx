@@ -1,5 +1,5 @@
-import React from "react";
-import { AlertCircle } from "lucide-react";
+import React, { useRef } from "react";
+import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import SectionHeader from "./SectionHeader";
 
 const CategoryShowcase = ({
@@ -10,6 +10,19 @@ const CategoryShowcase = ({
   selectedCategoryId = "all",
   onSelectCategory,
 }) => {
+  const scrollContainerRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft } = scrollContainerRef.current;
+      const scrollAmount = direction === "left" ? -250 : 250;
+      scrollContainerRef.current.scrollTo({
+        left: scrollLeft + scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
   if (!loading && !error && categories.length === 0) {
     return null; // Gracefully hide section if no categories exist
   }
@@ -51,7 +64,30 @@ const CategoryShowcase = ({
       ) : (
         // Horizontal Scrollable Cards
         <div className="relative group/scroll mt-6">
-          <div className="flex gap-6 overflow-x-auto pb-4 pt-2 scrollbar-none snap-x snap-mandatory">
+          {/* Left Arrow Button */}
+          <button
+            type="button"
+            onClick={() => scroll("left")}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 dark:bg-black/90 text-black dark:text-white border border-gray-200 dark:border-slate-800 shadow-md hover:scale-110 hover:bg-white dark:hover:bg-black transition-all cursor-pointer opacity-0 group-hover/scroll:opacity-100 focus:opacity-100"
+            aria-label="Xem danh mục trước"
+          >
+            <ChevronLeft size={20} />
+          </button>
+
+          {/* Right Arrow Button */}
+          <button
+            type="button"
+            onClick={() => scroll("right")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 dark:bg-black/90 text-black dark:text-white border border-gray-200 dark:border-slate-800 shadow-md hover:scale-110 hover:bg-white dark:hover:bg-black transition-all cursor-pointer opacity-0 group-hover/scroll:opacity-100 focus:opacity-100"
+            aria-label="Xem danh mục tiếp theo"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          <div
+            ref={scrollContainerRef}
+            className="flex gap-6 overflow-x-auto pb-4 pt-2 scrollbar-none snap-x snap-mandatory"
+          >
             {/* "Tất cả" (All) Category Card */}
             <button
               type="button"

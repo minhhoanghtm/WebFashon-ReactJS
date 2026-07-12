@@ -86,7 +86,7 @@ const productSchema = new mongoose.Schema(
     },
     weight: {
       type: Number,
-      default: 0,
+      default: 0.5,
     },
     sold: {
       type: Number,
@@ -120,12 +120,11 @@ productSchema.virtual("variants", {
   foreignField: "product_id",
 });
 
-productSchema.pre("findOneAndDelete", async function (next) {
+productSchema.pre("findOneAndDelete", async function () {
   const doc = await this.model.findOne(this.getFilter());
   if (doc) {
     await ProductVariant.deleteMany({ product_id: doc._id });
   }
-  next();
 });
 
 const Product = mongoose.model("Product", productSchema);

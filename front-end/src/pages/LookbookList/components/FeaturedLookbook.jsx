@@ -45,19 +45,19 @@ const FeaturedLookbook = ({ lookbook }) => {
     >
       <div className="flex flex-col md:flex-row gap-12 md:gap-20 items-center rounded-none">
         {/* Large Image (70% on Desktop) */}
-        <div className="w-full md:w-[70%] overflow-hidden bg-neutral-100 rounded-none">
+        <div className="w-full md:w-[70%] overflow-hidden bg-neutral-900 rounded-none flex items-center justify-center">
           <Link 
             to={detailUrl} 
             rel="bookmark"
             aria-label={`Xem bộ sưu tập nổi bật: ${lookbook.title}`}
-            className="block aspect-[16/10] overflow-hidden group relative rounded-none"
+            className="block aspect-[16/10] w-full overflow-hidden group relative rounded-none flex items-center justify-center"
           >
             <img
               src={lookbook.bannerUrl || lookbook.thumbnailUrl}
               alt={`Hình ảnh bộ sưu tập ${lookbook.title}`}
               loading="eager"
               decoding="async"
-              className="w-full h-full object-cover object-center group-hover:scale-[1.01] transition-transform duration-[1200ms] ease-out rounded-none"
+              className="max-w-full max-h-full object-contain group-hover:scale-[1.01] transition-transform duration-[1200ms] ease-out rounded-none"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500 rounded-none" />
           </Link>

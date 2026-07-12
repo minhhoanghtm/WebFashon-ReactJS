@@ -18,7 +18,7 @@ import {
   adminCommunicationRouter,
   customerCommunicationRouter,
 } from "../modules/communication/communication.route.js";
-import { protectedRoute, adminOnly } from "../middlewares/auth.middleware.js";
+import { protectedRoute, adminOnly, noAdmin } from "../middlewares/auth.middleware.js";
 import { authGlobalLimiter } from "../middlewares/rateLimiter.middleware.js";
 import shippingRouter from "../modules/shipping/shipping.routes.js";
 import mongoose from "mongoose";
@@ -26,6 +26,7 @@ import { getRedisConnection } from "../configs/redis.js";
 
 const rootRouter = express.Router();
 
+<<<<<<< HEAD
 // Health check endpoint
 rootRouter.get("/health", async (req, res) => {
   try {
@@ -50,6 +51,10 @@ rootRouter.get("/health", async (req, res) => {
   } catch (error) {
     res.status(500).json({ status: "ERROR", message: error.message });
   }
+=======
+rootRouter.get("/health", (req, res) => {
+  res.status(200).json({ status: "UP", timestamp: new Date() });
+>>>>>>> main
 });
 
 // Public routes
@@ -69,8 +74,8 @@ rootRouter.use("/admin/page-sections", protectedRoute, adminOnly, adminPageSecti
 
 // Private routes
 rootRouter.use("/user", protectedRoute, userRouter);
-rootRouter.use("/cart", protectedRoute, cartRouter);
-rootRouter.use("/cart_items", protectedRoute, cartItemRouter);
+rootRouter.use("/cart", protectedRoute, noAdmin, cartRouter);
+rootRouter.use("/cart_items", protectedRoute, noAdmin, cartItemRouter);
 rootRouter.use("/favorites", protectedRoute, favoriteRouter);
 rootRouter.use("/order", protectedRoute, orderRouter);
 rootRouter.use("/order_items", protectedRoute, orderItemRouter);

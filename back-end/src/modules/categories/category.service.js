@@ -1,6 +1,7 @@
 import categoryRepository from "./category.repository.js";
 import { createSlug } from "../../common/utils/slug.js";
 import { AppError } from "../../common/exceptions/AppError.js";
+import Product from "../products/product.model.js";
 
 class CategoryService {
   async getAllCategories() {
@@ -47,6 +48,12 @@ class CategoryService {
   }
 
   async deleteCategory(id) {
+    // Check if category has any products
+    const hasProducts = await Product.findOne({ category_id: id }).select("_id").lean();
+    if (hasProducts) {
+      throw new AppError("Không thể xóa danh mục này vì vẫn còn sản phẩm thuộc danh mục", 400);
+    }
+
     const deleted = await categoryRepository.findByIdAndDelete(id);
     if (!deleted) {
       throw new AppError("Không tìm thấy danh mục", 404);

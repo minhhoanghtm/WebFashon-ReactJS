@@ -36,18 +36,29 @@ export const protectedRoute = async (req, res, next) => {
   }
 
   try {
-    req.user = await verifyAccessToken(token);
+    const decoded = await verifyAccessToken(token);
+    
+    // Check if user is blocked in the database
+    const user = await User.findById(decoded.userId).select("status");
+    if (!user || user.status === "blocked") {
+      return res.status(403).json({
+        success: false,
+        message: "Tài khoản của bạn đã bị khóa hoặc không tồn tại!",
+      });
+    }
+
+    req.user = decoded;
     return next();
   } catch (error) {
     if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
         message: "Access token het han hoac khong dung!",
       });
     }
 
     if (error.name === "RevokedAccessTokenError") {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
         message: "Access token da bi thu hoi hoac khong hop le!",
       });
@@ -70,7 +81,13 @@ export const optionalProtectedRoute = async (req, _res, next) => {
   }
 
   try {
-    req.user = await verifyAccessToken(token);
+    const decoded = await verifyAccessToken(token);
+    const user = await User.findById(decoded.userId).select("status");
+    if (user && user.status !== "blocked") {
+      req.user = decoded;
+    } else {
+      req.user = null;
+    }
   } catch (error) {
     req.user = null;
   }
@@ -114,3 +131,33 @@ export const adminOnly = async (req, res, next) => {
     });
   }
 };
+
+export const noAdmin = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Không tìm thấy access token hợp lệ",
+      });
+    }
+
+    const user = await User.findById(userId).select("role");
+    if (user && user.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Quản trị viên không được phép thực hiện chức năng mua hàng và thanh toán",
+      });
+    }
+
+    return next();
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra quyền admin trong noAdmin:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi hệ thống",
+    });
+  }
+};
+

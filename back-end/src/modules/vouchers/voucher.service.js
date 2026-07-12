@@ -34,16 +34,29 @@ class VoucherService {
         isDeleted: false,
       });
       if (count === 0) {
+        let siteName = "404Studio";
+        try {
+          const { default: websiteSettingsService } = await import("../websiteSettings/websiteSettings.service.js");
+          const settings = await websiteSettingsService.getSettings();
+          if (settings?.general?.siteName) {
+            siteName = settings.general.siteName;
+          }
+        } catch (err) {
+          console.error("Failed to get website settings for seeding:", err);
+        }
+
         const now = new Date();
         const nextMonth = new Date();
         nextMonth.setMonth(now.getMonth() + 1);
 
+        const cleanCodePart = siteName.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
         await voucherRepository.insertMany([
           {
-            code: "PETWELCOME",
-            name: "Chào mừng thành viên mới",
+            code: `WELCOME${cleanCodePart}`,
+            name: `${siteName} Xin Chào!`,
             description:
-              "Giảm 10% tối đa 50.000 VNĐ cho tất cả đơn hàng phụ kiện & thức ăn thú cưng tại PetShop.",
+              `Giảm 10% tối đa 50.000 VNĐ cho tất cả đơn hàng tại ${siteName}.`,
             discountType: "percentage",
             discountValue: 10,
             maxDiscountAmount: 50000,
@@ -57,10 +70,10 @@ class VoucherService {
             status: "ACTIVE",
           },
           {
-            code: "PETLOVE50K",
-            name: "PetShop Yêu Thương",
+            code: `${cleanCodePart}XINCHAO`,
+            name: `${siteName} Xin Chào!`,
             description:
-              "Giảm trực tiếp 50.000 VNĐ cho đơn hàng phụ kiện từ 300.000 VNĐ.",
+              `Giảm trực tiếp 50.000 VNĐ cho đơn hàng từ 300.000 VNĐ tại ${siteName}.`,
             discountType: "fixed",
             discountValue: 50000,
             maxDiscountAmount: 0,
@@ -75,7 +88,7 @@ class VoucherService {
           },
           {
             code: "FREESHIP30K",
-            name: "Miễn phí vận chuyển Petship",
+            name: "Miễn phí vận chuyển",
             description:
               "Giảm 30.000 VNĐ phí vận chuyển cho đơn hàng từ 150.000 VNĐ.",
             discountType: "fixed",
@@ -90,25 +103,8 @@ class VoucherService {
             endDate: nextMonth,
             status: "ACTIVE",
           },
-          {
-            code: "SUPERPET",
-            name: "Siêu ưu đãi Pet VIP",
-            description:
-              "Giảm giá 20% tối đa 150.000 VNĐ cho đơn hàng từ 500.000 VNĐ trở lên.",
-            discountType: "percentage",
-            discountValue: 20,
-            maxDiscountAmount: 150000,
-            minOrderValue: 500000,
-            totalQuantity: 10,
-            remainingQuantity: 10,
-            claimedQuantity: 0,
-            usedQuantity: 0,
-            startDate: now,
-            endDate: nextMonth,
-            status: "ACTIVE",
-          },
         ]);
-        console.log("Seeded default vouchers successfully.");
+        // console.log("Seeded default vouchers successfully.");
       }
     } catch (error) {
       console.error("Failed to seed default vouchers:", error.message);

@@ -146,7 +146,7 @@ export const normalizeProductDetail = (product, variants = [], reviews = []) => 
     badge: firstValue(
       product.badge,
       product.tag,
-      oldPrice > price && price > 0 ? "Giảm giá" : "",
+      oldPrice > price && price > 0 ? `-${Math.round(((oldPrice - price) / oldPrice) * 100)}%` : "",
     ),
     variants: normalizedOptions.variants,
     colors: normalizedOptions.colors,
@@ -176,6 +176,16 @@ export const normalizeReviews = (reviews = []) =>
         review.comment,
         "Sản phẩm đúng mô tả và chất lượng tốt.",
       ),
+      images: Array.isArray(review.content?.images)
+        ? review.content.images
+        : Array.isArray(review.images)
+        ? review.images
+        : [],
+      videos: Array.isArray(review.content?.videos)
+        ? review.content.videos
+        : Array.isArray(review.videos)
+        ? review.videos
+        : [],
       date: date
         ? new Date(date).toLocaleDateString("vi-VN", {
             day: "numeric",

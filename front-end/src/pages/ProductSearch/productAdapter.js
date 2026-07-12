@@ -151,7 +151,7 @@ export const normalizeProduct = (
     badge: firstValue(
       product.badge,
       product.tag,
-      oldPrice > price && price > 0 ? "Giảm giá" : "",
+      oldPrice > price && price > 0 ? `-${Math.round(((oldPrice - price) / oldPrice) * 100)}%` : "",
     ),
     brand: String(firstValue(product.brand, product.thuongHieu, "")),
     status: getStatus(product),

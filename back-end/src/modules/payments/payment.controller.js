@@ -18,8 +18,40 @@ class PaymentController {
 
   async vnpayReturn(req, res, next) {
     try {
-      // Return URL only redirects to frontend. No DB updates here.
+      const query = { ...req.query };
+      const isValid = paymentService.verifyVNPayReturn(query);
+
       const isSuccess = req.query.vnp_ResponseCode === "00";
+      const rawTxnRef = req.query.vnp_TxnRef || "";
+      const orderId = rawTxnRef.split("_")[0];
+      const amount = Number(req.query.vnp_Amount || 0) / 100;
+      const txnNo = req.query.vnp_TransactionNo || null;
+
+      if (isValid && orderId) {
+        const order = await Order.findById(orderId);
+        if (order && order.payment_status !== "paid") {
+          if (Math.abs(order.total_price - amount) <= 1) {
+            const existingTxn = await PaymentTransaction.findOne({ order_id: orderId, transaction_id: txnNo });
+            if (!existingTxn) {
+              await PaymentTransaction.create({
+                order_id: orderId,
+                provider: "vnpay",
+                transaction_id: txnNo,
+                amount: amount,
+                status: isSuccess ? "success" : "failed",
+                raw_response: req.query,
+              });
+            }
+
+            if (isSuccess) {
+              await orderFacade.paymentCallback(orderId, "success", txnNo);
+            } else {
+              await orderFacade.paymentCallback(orderId, "failed", null);
+            }
+          }
+        }
+      }
+
       const paymentStatus = isSuccess ? "paid" : "failed";
       return res.redirect(`${process.env.FRONTEND_URL}/orders?paymentStatus=${paymentStatus}`);
     } catch (error) {
@@ -37,7 +69,8 @@ class PaymentController {
         return res.status(200).json({ RspCode: "97", Message: "Invalid checksum" });
       }
 
-      const orderId = req.query.vnp_TxnRef;
+      const rawTxnRef = req.query.vnp_TxnRef || "";
+      const orderId = rawTxnRef.split("_")[0];
       const amount = Number(req.query.vnp_Amount || 0) / 100;
       const isSuccess = req.query.vnp_ResponseCode === "00";
       const txnNo = req.query.vnp_TransactionNo || null;
@@ -94,8 +127,40 @@ class PaymentController {
 
   async momoReturn(req, res, next) {
     try {
-      // Return URL only redirects to frontend. No DB updates here.
+      const query = { ...req.query };
+      const isValid = paymentService.verifyMomoReturn(query);
+
       const isSuccess = req.query.resultCode === "0";
+      const rawOrderId = req.query.orderId || "";
+      const orderId = rawOrderId.split('_')[0];
+      const amount = Number(req.query.amount || 0);
+      const transId = req.query.transId || null;
+
+      if (isValid && orderId) {
+        const order = await Order.findById(orderId);
+        if (order && order.payment_status !== "paid") {
+          if (Math.abs(order.total_price - amount) <= 1) {
+            const existingTxn = await PaymentTransaction.findOne({ order_id: orderId, transaction_id: transId });
+            if (!existingTxn) {
+              await PaymentTransaction.create({
+                order_id: orderId,
+                provider: "momo",
+                transaction_id: transId,
+                amount: amount,
+                status: isSuccess ? "success" : "failed",
+                raw_response: req.query,
+              });
+            }
+
+            if (isSuccess) {
+              await orderFacade.paymentCallback(orderId, "success", transId);
+            } else {
+              await orderFacade.paymentCallback(orderId, "failed", null);
+            }
+          }
+        }
+      }
+
       const paymentStatus = isSuccess ? "paid" : "failed";
       return res.redirect(`${process.env.FRONTEND_URL}/orders?paymentStatus=${paymentStatus}`);
     } catch (error) {

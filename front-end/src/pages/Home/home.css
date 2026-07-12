@@ -335,9 +335,10 @@
 }
 
 .home-lookbook-card {
-  background-color: #373430;
+  background-color: #0a0a0a;
   background-position: center;
-  background-size: cover;
+  background-size: contain;
+  background-repeat: no-repeat;
   border-radius: 18px;
   min-height: 500px;
   overflow: hidden;

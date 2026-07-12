@@ -31,8 +31,8 @@ class ProductFacade {
   }
 
   // Queries & Variant Management (both under queries/product.query.js)
-  async getAllProducts(sort, order) {
-    return await productQueries.getAllProducts(sort, order);
+  async getAllProducts(limit) {
+    return await productQueries.getAllProducts(limit);
   }
 
   async getProductDetail(id) {

@@ -32,7 +32,7 @@ const OrderItem = ({ item }) => {
         <img
           src={imageUrl}
           alt={item.product_name}
-          className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-200"
+          className="w-full h-full object-contain object-center hover:scale-105 transition-transform duration-200"
           onError={(e) => {
             e.target.src = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=60";
           }}

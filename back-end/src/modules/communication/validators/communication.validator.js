@@ -59,6 +59,7 @@ const textMessageDtoSchema = z.object({
   content:          z.string().max(10000, "content must be at most 10000 characters").optional(),
   message:          z.string().max(10000).optional(),
   currentProductId: z.any().optional(),
+  messageType:      z.enum(["text", "image", "file", "product_card", "order_card", "system"]).optional(),
   metadata:         z.record(z.any()).optional().default({}),
   history:          z.array(z.any()).optional(),
 })

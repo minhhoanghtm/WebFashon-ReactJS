@@ -1,8 +1,10 @@
-import React from 'react';
-import { GoogleLogin } from '@react-oauth/google';
-import { loginWithGoogle } from '@/api/googleAuth.api';
-import { useAuthStore } from '@/store/auth.store';
-import { toast } from 'react-toastify';
+import React from "react";
+import { GoogleLogin } from "@react-oauth/google";
+import { useNavigate } from "react-router-dom";
+import { loginWithGoogle } from "@/api/googleAuth.api";
+import { useAuthStore } from "@/store/auth.store";
+import { userApi } from "@/api/user.api";
+import { toast } from "react-toastify";
 
 /**
  * Google login button component.
@@ -10,27 +12,57 @@ import { toast } from 'react-toastify';
  * On success response, stores the access token and user in the auth store.
  */
 export const GoogleLoginButton = () => {
-  const { login } = useAuthStore();
+  const { login, setUser } = useAuthStore();
+  const navigate = useNavigate();
+  const isSuccessRef = React.useRef(false);
 
   const handleSuccess = async (credentialResponse) => {
     try {
       const res = await loginWithGoogle(credentialResponse.credential);
       if (res?.success && res?.data) {
-        const { accessToken, user } = res.data;
-        login(accessToken, user);
-        toast.success('Đăng nhập Google thành công!');
+        isSuccessRef.current = true;
+        const token = res.data.accessToken;
+        login(token);
+
+        let userRole = "";
+        try {
+          const userRes = await userApi.getMe();
+          if (userRes.success && userRes.data) {
+            setUser(userRes.data);
+            userRole = userRes.data.role || userRes.data.data?.role || "";
+          }
+        } catch (err) {
+          console.error("Lỗi khi lấy thông tin user sau khi đăng nhập:", err);
+        }
+
+        toast.success("Đăng nhập Google thành công!");
+        if (userRole === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
       } else {
-        toast.error('Google login failed');
+        toast.error("Đăng nhập Google thất bại");
       }
     } catch (err) {
-      console.error('Google login error:', err);
-      toast.error('Google login error');
+      console.error("Google login error:", err);
+      const errMsg = err.response?.data?.message || "Đăng nhập Google thất bại";
+      toast.error(errMsg);
     }
   };
 
   const handleError = () => {
-    toast.error('Google login error');
+    // We do not show a toast error here because:
+    // 1. Google GSI already handles popup closing naturally (user cancellation is not a system failure).
+    // 2. React StrictMode/unmounting triggers this callback as a false-positive on load or redirect.
+    // 3. Real server-side auth errors are caught and toasted in handleSuccess's catch block.
+    console.warn('Google GSI button initialization or popup closed.');
   };
 
-  return <GoogleLogin onSuccess={handleSuccess} onError={handleError} />;
+  return (
+    <GoogleLogin
+      onSuccess={handleSuccess}
+      onError={handleError}
+    />
+  );
 };
