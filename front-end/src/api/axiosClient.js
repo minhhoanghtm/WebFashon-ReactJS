@@ -6,16 +6,24 @@ import { useAuthStore } from '../store/auth.store';
 const cleanUrls = (obj) => {
   if (!obj) return obj;
   if (typeof obj === 'string') {
+    const backendUrl = ENV.API_BASE_URL.replace("/api", "");
+
+    // Case 1: relative /uploads/ path → prepend backend origin
     if (obj.startsWith('/uploads/')) {
-      const backendUrl = ENV.API_BASE_URL.replace("/api", "");
       return `${backendUrl}${obj}`;
     }
+
+    // Case 2: absolute URL containing /uploads/ that does NOT already
+    // point to the current backend (covers old domains like 404studio.website,
+    // any future domain changes, http vs https mismatches, etc.)
     const uploadsIndex = obj.indexOf("/uploads/");
-    if (uploadsIndex !== -1 && (obj.startsWith("http://404studio.website") || obj.startsWith("https://404studio.website"))) {
-      const filename = obj.substring(uploadsIndex + "/uploads/".length);
-      const backendUrl = ENV.API_BASE_URL.replace("/api", "");
-      return `${backendUrl}/uploads/${filename}`;
+    if (uploadsIndex !== -1 && (obj.startsWith('http://') || obj.startsWith('https://'))) {
+      if (!obj.startsWith(backendUrl)) {
+        const filename = obj.substring(uploadsIndex + "/uploads/".length);
+        return `${backendUrl}/uploads/${filename}`;
+      }
     }
+
     return obj;
   }
   if (typeof obj === 'object') {
