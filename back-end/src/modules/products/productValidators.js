@@ -53,12 +53,17 @@ export const updateProductSchema = z.object({
 
 export const searchProductSchema = z.object({
   query: z.object({
+    search: z.string().optional(),
     keyword: z.string().optional(),
+    category: z.string().optional(),
+    minPrice: z.string().optional(),
+    maxPrice: z.string().optional(),
+    rating: z.string().optional(),
     page: z.string().optional(),
     limit: z.string().optional(),
     sort: z.string().optional(),
     order: z.enum(["asc", "desc"]).optional(),
-  }),
+  }).passthrough(),
 });
 
 export const createVariantSchema = z.object({

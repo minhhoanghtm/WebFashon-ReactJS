@@ -28,20 +28,23 @@ export const shopTools = [
   {
     name: "get_product_details",
     description:
-      "Lấy thông tin chi tiết của sản phẩm theo ID. Dùng khi khách hỏi 'cho tôi xem chi tiết sản phẩm này', 'có thể cho tôi biết thêm về sản phẩm này không?'",
+      "Lấy thông tin chi tiết của sản phẩm (giá, màu sắc, kích thước, tồn kho, mô tả). Dùng khi khách hỏi 'xem thông tin áo thể thao', 'chi tiết sản phẩm này'... Có thể dùng ID, tên sản phẩm hoặc từ khóa.",
     parameters: {
       type: "object",
       properties: {
         product_id: {
           type: "string",
-          description: "ID của sản phẩm cần lấy thông tin chi tiết",
+          description: "ID hoặc Tên sản phẩm",
         },
         slug: {
           type: "string",
-          description: "Slug của sản phẩm cần lấy thông tin chi tiết",
+          description: "Slug của sản phẩm",
+        },
+        keyword: {
+          type: "string",
+          description: "Tên sản phẩm hoặc từ khóa (ví dụ: Áo thể thao, Áo thun basic)",
         },
       },
-      required: ["product_id"],
     },
   },
   {

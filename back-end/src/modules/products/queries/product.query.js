@@ -30,6 +30,7 @@ export const getProductBySlug = async (slug) => {
 export const searchProducts = async (filterQuery) => {
   const {
     search = "",
+    keyword = "",
     page = 1,
     limit = 10,
     category,
@@ -39,11 +40,25 @@ export const searchProducts = async (filterQuery) => {
     sort = "default",
   } = filterQuery;
 
+  const rawSearchTerm = (search || keyword).trim();
   const query = { is_active: true };
 
-  if (search?.trim()) {
-    const keyword = toNoAccent(search.trim());
-    query.name_no_accents = { $regex: keyword, $options: "i" };
+  if (rawSearchTerm) {
+    const cleanSearch = toNoAccent(rawSearchTerm);
+    const words = cleanSearch.split(/\s+/).filter(Boolean);
+
+    if (words.length > 0) {
+      query.$and = words.map((w) => {
+        const escapedWord = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return {
+          $or: [
+            { name_no_accents: { $regex: escapedWord, $options: "i" } },
+            { name: { $regex: escapedWord, $options: "i" } },
+            { description: { $regex: escapedWord, $options: "i" } },
+          ],
+        };
+      });
+    }
   }
 
   if (category) {
@@ -94,16 +109,28 @@ export const suggestProducts = async (keyword) => {
   if (!keyword) {
     throw new AppError("Vui lòng cung cấp từ khóa gợi ý", 400);
   }
-  const key = toNoAccent(keyword.trim());
-  return await productRepository.find(
-    {
-      is_active: true,
-      name_no_accents: { $regex: key, $options: "i" },
-    },
-    { createdAt: -1 },
-    0,
-    10
-  );
+  const rawKey = keyword.trim();
+  const cleanKey = toNoAccent(rawKey);
+  const words = cleanKey.split(/\s+/).filter(Boolean);
+
+  if (words.length === 0) {
+    return [];
+  }
+
+  const query = {
+    is_active: true,
+    $and: words.map((w) => {
+      const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return {
+        $or: [
+          { name_no_accents: { $regex: escaped, $options: "i" } },
+          { name: { $regex: escaped, $options: "i" } },
+        ],
+      };
+    }),
+  };
+
+  return await productRepository.find(query, { createdAt: -1 }, 0, 10);
 };
 
 export const getProductByCategory = async (categoryId, limitOption = 6) => {

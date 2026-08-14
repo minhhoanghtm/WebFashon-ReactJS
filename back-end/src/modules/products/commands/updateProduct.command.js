@@ -1,5 +1,7 @@
 import productRepository from "../product.repository.js";
 import { AppError } from "../../../common/exceptions/AppError.js";
+import { createSlug } from "../../../common/utils/slug.js";
+import { toNoAccent } from "../../../common/utils/removeAccents.js";
 import mongoose from "mongoose";
 
 export const updateProduct = async (id, productData) => {
@@ -10,10 +12,19 @@ export const updateProduct = async (id, productData) => {
     finalStock = variants.reduce((sum, v) => sum + Number(v.stock || 0), 0);
   }
 
-  const updatedProduct = await productRepository.findByIdAndUpdate(id, {
+  const updateFields = {
     ...productBody,
     stock: finalStock,
-  });
+  };
+
+  if (productBody.name) {
+    updateFields.name_no_accents = toNoAccent(productBody.name);
+    if (!productBody.slug) {
+      updateFields.slug = createSlug(productBody.name);
+    }
+  }
+
+  const updatedProduct = await productRepository.findByIdAndUpdate(id, updateFields);
   if (!updatedProduct) {
     throw new AppError("Sản phẩm không tồn tại", 404);
   }

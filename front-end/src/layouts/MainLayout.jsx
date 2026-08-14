@@ -77,12 +77,12 @@ const MainLayout = () => {
               aria-hidden="true"
             />
             <input
-              type="search"
+              type="text"
               value={homeSearchTerm}
               onChange={(event) => setHomeSearchTerm(event.target.value)}
               placeholder="Tìm kiếm sản phẩm..."
               aria-label="Tìm kiếm sản phẩm"
-              className="h-11 w-full rounded-full border border-transparent bg-gray-100 py-2 pl-11 pr-10 text-sm outline-none transition focus:border-gray-300 focus:bg-white focus:ring-4 focus:ring-gray-100"
+              className="h-11 w-full rounded-full border border-transparent bg-gray-100 py-2 pl-11 pr-10 text-sm outline-none transition focus:border-gray-300 focus:bg-white focus:ring-4 focus:ring-gray-100 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
             />
             {homeSearchTerm && (
               <button
@@ -154,12 +154,12 @@ const MainLayout = () => {
             aria-hidden="true"
           />
           <input
-            type="search"
+            type="text"
             value={homeSearchTerm}
             onChange={(event) => setHomeSearchTerm(event.target.value)}
             placeholder="Tìm kiếm sản phẩm..."
             aria-label="Tìm kiếm sản phẩm"
-            className="h-11 w-full rounded-full border border-transparent bg-gray-100 py-2 pl-11 pr-10 text-sm outline-none transition focus:border-gray-300 focus:bg-white focus:ring-4 focus:ring-gray-100"
+            className="h-11 w-full rounded-full border border-transparent bg-gray-100 py-2 pl-11 pr-10 text-sm outline-none transition focus:border-gray-300 focus:bg-white focus:ring-4 focus:ring-gray-100 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
           />
           {homeSearchTerm && (
             <button

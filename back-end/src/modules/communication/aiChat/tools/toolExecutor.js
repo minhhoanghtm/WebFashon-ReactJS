@@ -1,7 +1,9 @@
-import mongoose from "mongoose";
-
-// Lazy-load models để tránh circular import
-const getModel = (name) => mongoose.model(name);
+import Product, { ProductVariant } from "../../../products/product.model.js";
+import Category from "../../../categories/category.model.js";
+import { Order, OrderItem } from "../../../orders/order.model.js";
+import Voucher from "../../../vouchers/voucher.model.js";
+import Review from "../../../reviews/review.model.js";
+import { toNoAccent } from "../../../../common/utils/removeAccents.js";
 
 const ORDER_STATUS_MAP = {
   pending: "Chờ xác nhận",
@@ -48,7 +50,6 @@ export const executeTool = async (toolName, args, { userId } = {}) => {
   try {
     switch (toolName) {
       case "search_products": {
-        const Product = getModel("Product");
         const query = { is_active: true };
 
         if (args.keyword) {
@@ -59,7 +60,6 @@ export const executeTool = async (toolName, args, { userId } = {}) => {
         }
         if (args.category_slug) {
           // Tìm category_id từ slug
-          const Category = getModel("Category");
           const cat = await Category.findOne({ slug: args.category_slug });
           if (cat) query.category_id = cat._id.toString();
         }
@@ -95,14 +95,26 @@ export const executeTool = async (toolName, args, { userId } = {}) => {
 
       case "get_product_detail":
       case "get_product_details": {
-        const Product = getModel("Product");
-        const ProductVariant = getModel("product_variants");
-
+        const identifier = args.product_id || args.slug || args.keyword || args.name;
         let product = null;
-        if (args.product_id) {
-          product = await Product.findById(args.product_id);
-        } else if (args.slug) {
-          product = await Product.findOne({ slug: args.slug });
+
+        if (identifier) {
+          if (/^[a-f\d]{24}$/i.test(identifier)) {
+            product = await Product.findById(identifier);
+          }
+          if (!product) {
+            const cleanTerm = toNoAccent(String(identifier).trim());
+            const escaped = cleanTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            product = await Product.findOne({
+              is_active: true,
+              $or: [
+                { slug: identifier },
+                { slug: { $regex: escaped, $options: "i" } },
+                { name_no_accents: { $regex: escaped, $options: "i" } },
+                { name: { $regex: escaped, $options: "i" } },
+              ],
+            });
+          }
         }
 
         if (!product) return "Không tìm thấy sản phẩm.";
@@ -133,9 +145,6 @@ export const executeTool = async (toolName, args, { userId } = {}) => {
 
       case "check_order_status": {
         if (!userId) return "Bạn cần đăng nhập để xem đơn hàng.";
-
-        const Order = getModel("Order");
-        const OrderItem = getModel("OrderItem");
 
         const order = await Order.findOne({
           _id: args.order_id,
@@ -174,7 +183,6 @@ export const executeTool = async (toolName, args, { userId } = {}) => {
       case "get_my_orders": {
         if (!userId) return "Bạn cần đăng nhập để xem đơn hàng.";
 
-        const Order = getModel("Order");
         const limit = args.limit || 3;
 
         const orders = await Order.find({ user_id: userId })
@@ -193,7 +201,6 @@ export const executeTool = async (toolName, args, { userId } = {}) => {
       }
 
       case "get_vouchers": {
-        const Voucher = getModel("Voucher");
         const now = new Date();
 
         const vouchers = await Voucher.find({
@@ -221,14 +228,35 @@ export const executeTool = async (toolName, args, { userId } = {}) => {
       }
 
       case "get_categories": {
-        const Category = getModel("Category");
         const cats = await Category.find().select("name slug");
         return cats.map((c) => ({ name: c.name, slug: c.slug }));
       }
 
       case "get_product_reviews": {
-        const Review = getModel("Review");
-        const reviews = await Review.find({ product_id: args.product_id })
+        const identifier = args.product_id || args.slug || args.keyword || args.name;
+        let product = null;
+
+        if (identifier) {
+          if (/^[a-f\d]{24}$/i.test(identifier)) {
+            product = await Product.findById(identifier);
+          }
+          if (!product) {
+            const cleanTerm = toNoAccent(String(identifier).trim());
+            const escaped = cleanTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            product = await Product.findOne({
+              is_active: true,
+              $or: [
+                { slug: identifier },
+                { slug: { $regex: escaped, $options: "i" } },
+                { name_no_accents: { $regex: escaped, $options: "i" } },
+                { name: { $regex: escaped, $options: "i" } },
+              ],
+            });
+          }
+        }
+
+        const targetId = product ? product._id : identifier;
+        const reviews = await Review.find({ product_id: targetId })
           .sort({ createdAt: -1 })
           .limit(5)
           .select("rating content createdAt");

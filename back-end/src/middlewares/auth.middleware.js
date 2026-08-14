@@ -136,19 +136,14 @@ export const noAdmin = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
 
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Không tìm thấy access token hợp lệ",
-      });
-    }
-
-    const user = await User.findById(userId).select("role");
-    if (user && user.role === "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Quản trị viên không được phép thực hiện chức năng mua hàng và thanh toán",
-      });
+    if (userId) {
+      const user = await User.findById(userId).select("role");
+      if (user && user.role === "admin") {
+        return res.status(403).json({
+          success: false,
+          message: "Quản trị viên không được phép thực hiện chức năng này",
+        });
+      }
     }
 
     return next();

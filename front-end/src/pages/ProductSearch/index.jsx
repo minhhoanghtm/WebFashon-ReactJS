@@ -170,11 +170,15 @@ const ProductSearch = () => {
       return selectedValues.some((value) => values.includes(value));
     };
 
+    const searchWords = keyword.split(/\s+/).filter(Boolean);
+
     const result = normalizedProducts.filter((product) => {
       const matchesKeyword =
-        !keyword ||
-        [product.name, product.category, product.description, product.sku].some(
-          (value) => normalizeSearchText(value).includes(keyword),
+        searchWords.length === 0 ||
+        searchWords.every((word) =>
+          [product.name, product.category, product.description, product.sku].some(
+            (value) => normalizeSearchText(value).includes(word),
+          ),
         );
 
       return (
