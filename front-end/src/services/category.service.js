@@ -8,7 +8,7 @@ import {
 
 export const getAllCategoriesService = async () => {
   const response = await getAllCategoriesApi();
-  const payload = response.data?.data ?? response.data ?? response;
+  const payload = response?.data?.data ?? response?.data ?? response;
   if (Array.isArray(payload)) return payload;
   if (payload && Array.isArray(payload.data)) return payload.data;
   return [];
@@ -16,20 +16,20 @@ export const getAllCategoriesService = async () => {
 
 export const getCategoryByIdService = async (id) => {
   const response = await getCategoryApi(id);
-  return response.data;
+  return response?.data ?? response;
 };
 
 export const createCategoryService = async (data) => {
   const response = await createCategoryApi(data);
-  return response.data;
+  return response?.data ?? response;
 };
 
 export const updateCategoryService = async (id, data) => {
   const response = await updateCategoryApi(id, data);
-  return response.data;
+  return response?.data ?? response;
 };
 
 export const deleteCategoryService = async (id) => {
   const response = await deleteCategoryApi(id);
-  return response.data;
+  return response?.data ?? response;
 };

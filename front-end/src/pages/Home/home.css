@@ -3,10 +3,10 @@
   --home-muted: #6f6d68;
   --home-line: #e8e5df;
   --home-soft: #f5f3ef;
-  background: #fff;
+  background: #FCFAF7;
   color: var(--home-ink);
   min-height: 100%;
-  padding: 28px 24px 88px;
+  padding: 24px 20px 88px;
 }
 
 .home-page__container {
@@ -52,11 +52,11 @@
 }
 
 .home-hero h1 {
-  font-size: clamp(42px, 6vw, 76px);
-  font-weight: 650;
-  letter-spacing: 0;
-  line-height: 0.98;
-  max-width: 560px;
+  font-size: clamp(38px, 5.5vw, 68px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  max-width: 580px;
 }
 
 .home-hero p {
@@ -441,11 +441,25 @@
   }
 
   .home-hero__content {
-    padding: 34px 24px;
+    padding: 28px 20px 36px;
   }
 
   .home-hero h1 {
-    font-size: clamp(38px, 13vw, 52px);
+    font-size: clamp(26px, 8vw, 36px);
+    line-height: 1.15;
+    margin-top: 6px;
+  }
+
+  .home-hero p {
+    font-size: 14px;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  .home-hero button {
+    margin-top: 20px;
+    padding: 10px 18px;
+    font-size: 13px;
   }
 
   .home-section {
@@ -477,8 +491,8 @@
   }
 
   .home-products__grid {
-    gap: 30px;
-    grid-template-columns: 1fr;
+    gap: 16px 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .home-product-card__media {

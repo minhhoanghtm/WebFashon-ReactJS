@@ -1,12 +1,14 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 export const uploadImageApi = async (file) => {
   const formData = new FormData();
   formData.append("image", file);
 
-  const res = await api.post("/upload", formData, {
-    skipAuth: true, // 👈 tự xử lý trong interceptor
+  const res = await axiosClient.post("/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 
-  return res.data;
+  return res?.data ?? res;
 };

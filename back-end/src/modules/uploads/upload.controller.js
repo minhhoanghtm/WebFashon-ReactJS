@@ -5,7 +5,7 @@ export const uploadSingleImage = (req, res, next) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "No image file was uploaded.",
+        message: "Không tìm thấy file ảnh để tải lên.",
       });
     }
 

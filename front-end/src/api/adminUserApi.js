@@ -1,4 +1,4 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 const normalizeAddress = (address = {}) => ({
   fullName: address.fullName || "",
@@ -59,14 +59,8 @@ const toFetchLikeResponse = (status, data, ok = status >= 200 && status < 300) =
 
 const toErrorResponse = (error, fallbackMessage) => {
   console.error("adminUserApi error object:", error);
-  if (error?.response) {
-    console.error("error.response status:", error.response.status);
-    console.error("error.response data:", error.response.data);
-  } else {
-    console.error("error.response is undefined (could be CORS, Network Error, or Server Offline)");
-  }
-  const responseData = error?.response?.data || { message: fallbackMessage };
-  const status = error?.response?.status || 500;
+  const responseData = error?.response?.data || error?.data || { message: fallbackMessage };
+  const status = error?.response?.status || error?.status || 500;
   return toFetchLikeResponse(status, responseData, false);
 };
 
@@ -76,9 +70,10 @@ export const initializeAdminUserApi = async () => {
 
 export const getAllUsersApi = async () => {
   try {
-    const res = await api.get("/user/admin/users");
-    const users = Array.isArray(res.data?.data) ? res.data.data.map(normalizeUser) : [];
-    return toFetchLikeResponse(res.status, users);
+    const res = await axiosClient.get("/user/admin/users");
+    const rawList = res?.data ?? res;
+    const users = Array.isArray(rawList) ? rawList.map(normalizeUser) : [];
+    return toFetchLikeResponse(200, users);
   } catch (error) {
     return toErrorResponse(error, "Không thể tải danh sách tài khoản.");
   }
@@ -86,8 +81,9 @@ export const getAllUsersApi = async () => {
 
 export const addUserApi = async (payload) => {
   try {
-    const res = await api.post("/user/admin/users", normalizePayload(payload));
-    return toFetchLikeResponse(res.status, normalizeUser(res.data?.data));
+    const res = await axiosClient.post("/user/admin/users", normalizePayload(payload));
+    const rawUser = res?.data ?? res;
+    return toFetchLikeResponse(200, normalizeUser(rawUser));
   } catch (error) {
     return toErrorResponse(error, "Không thể tạo tài khoản.");
   }
@@ -95,8 +91,9 @@ export const addUserApi = async (payload) => {
 
 export const updateUserApi = async (id, payload) => {
   try {
-    const res = await api.put(`/user/admin/users/${id}`, normalizePayload(payload));
-    return toFetchLikeResponse(res.status, normalizeUser(res.data?.data));
+    const res = await axiosClient.put(`/user/admin/users/${id}`, normalizePayload(payload));
+    const rawUser = res?.data ?? res;
+    return toFetchLikeResponse(200, normalizeUser(rawUser));
   } catch (error) {
     return toErrorResponse(error, "Không thể cập nhật tài khoản.");
   }
@@ -104,8 +101,9 @@ export const updateUserApi = async (id, payload) => {
 
 export const deleteUserApi = async (id) => {
   try {
-    const res = await api.delete(`/user/admin/users/${id}`);
-    return toFetchLikeResponse(res.status, normalizeUser(res.data?.data));
+    const res = await axiosClient.delete(`/user/admin/users/${id}`);
+    const rawUser = res?.data ?? res;
+    return toFetchLikeResponse(200, normalizeUser(rawUser));
   } catch (error) {
     return toErrorResponse(error, "Không thể xóa tài khoản.");
   }

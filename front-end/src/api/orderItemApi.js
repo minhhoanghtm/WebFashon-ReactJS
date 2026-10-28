@@ -1,17 +1,17 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 export const getOrderItemsByOrderIdApi = (orderId) => {
-    return api.get(`/order_items/${orderId}`);
+  return axiosClient.get(`/order_items/${orderId}`);
 };
 
 export const createOrderItemApi = (orderItem) => {
-    return api.post("/order_items", orderItem);
+  return axiosClient.post("/order_items", orderItem);
 };
 
 export const updateOrderItemApi = (id, orderItem) => {
-    return api.put(`/order_items/${id}`, orderItem);
+  return axiosClient.put(`/order_items/${id}`, orderItem);
 };
 
 export const deleteOrderItemApi = (id) => {
-    return api.delete(`/order_items/${id}`);
+  return axiosClient.delete(`/order_items/${id}`);
 };

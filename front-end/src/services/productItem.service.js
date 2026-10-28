@@ -11,25 +11,25 @@ export const getProductVariantByProductIdService = async (productId) => {
     return [];
   }
   const response = await getProductVariantByProductIdApi(productId);
-  return response.data?.data ?? response.data;
+  return response?.data?.data ?? response?.data ?? response;
 };
 
 export const getProductVariantByIdService = async (id) => {
   const response = await getProductVariantByIdApi(id);
-  return response.data?.data ?? response.data;
+  return response?.data?.data ?? response?.data ?? response;
 };
 
 export const createProductVariantService = async (data) => {
   const response = await createProductVariantApi(data);
-  return response.data;
+  return response?.data ?? response;
 };
 
 export const updateProductVariantService = async (id, data) => {
   const response = await updateProductVariantApi(id, data);
-  return response.data;
+  return response?.data ?? response;
 };
 
 export const deleteProductVariantService = async (id) => {
   const response = await deleteProductVariantApi(id);
-  return response.data;
+  return response?.data ?? response;
 };

@@ -254,27 +254,58 @@ const ProductSearch = () => {
     setCurrentPage(1);
   };
 
-  return (
-    <div className="product-page">
-      <div className="product-page__container">
-        {/* <div className="product-page__intro">
-          <span>Cửa hàng thời trang</span>
-          <h1>Khám phá sản phẩm</h1>
-          <p>
-            Lựa chọn những thiết kế phù hợp với phong cách của bạn.
-          </p>
-        </div> */}
+  const handleRemoveFilter = (type, value) => {
+    if (type === "price") {
+      setFilters((prev) => ({
+        ...prev,
+        minPrice: null,
+        maxPrice: null,
+      }));
+    } else {
+      setFilters((prev) => ({
+        ...prev,
+        [type]: (prev[type] || []).filter((item) => item !== value),
+      }));
+    }
+    setCurrentPage(1);
+  };
 
-        <div className="product-layout">
+  return (
+    <div className="product-page min-h-screen bg-[#FCFAF7] py-8">
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header / Breadcrumb thanh lịch */}
+        <div className="mb-6 flex flex-col gap-1 border-b border-black/[0.06] pb-4">
+          <div className="flex items-center gap-2 text-xs font-medium text-neutral-400">
+            <a href="/" className="hover:text-neutral-700 transition">Trang chủ</a>
+            <span>/</span>
+            <span className="text-neutral-800 font-semibold">Sản phẩm</span>
+            {searchTerm && (
+              <>
+                <span>/</span>
+                <span className="text-amber-800 font-semibold truncate max-w-[200px]">
+                  "{searchTerm}"
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex items-baseline justify-between mt-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
+              Tất cả sản phẩm
+            </h1>
+          </div>
+        </div>
+
+        <div className="product-layout flex flex-col lg:flex-row gap-8 items-start">
           <ProductFilter
             options={filterOptions}
             priceBounds={priceBounds}
             filters={filters}
             onChange={handleFiltersChange}
             onClear={clearFilters}
+            totalResultsCount={filteredProducts.length}
           />
 
-          <main className="product-content">
+          <main className="product-content flex-1 min-w-0 w-full">
             <ProductToolbar
               count={filteredProducts.length}
               searchTerm={searchTerm}
@@ -283,6 +314,10 @@ const ProductSearch = () => {
               onSortChange={handleSortChange}
               isUsingFallback={false}
               hasApiError={Boolean(error)}
+              filters={filters}
+              priceBounds={priceBounds}
+              onRemoveFilter={handleRemoveFilter}
+              onClearAll={clearAll}
             />
 
             {isLoading ? (

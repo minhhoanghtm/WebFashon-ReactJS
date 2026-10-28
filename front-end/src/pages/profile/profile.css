@@ -1,8 +1,8 @@
 .profile-page {
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(0, 0, 0, 0.02), transparent 28rem),
-    #fafafa;
+    radial-gradient(circle at top left, color-mix(in srgb, var(--wf-accent) 9%, transparent), transparent 28rem),
+    var(--wf-paper);
   padding: 38px 20px 64px;
 }
 
@@ -17,10 +17,10 @@
 .profile-sidebar,
 .profile-card,
 .profile-hero {
-  border: 1px solid #cbc8dc;
+  border: 1px solid var(--wf-line);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 14px 35px rgba(31, 41, 55, 0.04);
+  background: color-mix(in srgb, var(--wf-surface) 90%, transparent);
+  box-shadow: var(--wf-shadow);
 }
 
 .profile-sidebar {
@@ -34,7 +34,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  border-bottom: 1px solid #e4e2ef;
+  border-bottom: 1px solid var(--wf-line);
   margin-bottom: 14px;
   padding: 8px 4px 18px;
 }
@@ -45,7 +45,7 @@
   place-items: center;
   overflow: hidden;
   border-radius: 999px;
-  background: #111827;
+  background: var(--wf-ink);
   color: #ffffff;
   font-weight: 800;
 }
@@ -64,7 +64,7 @@
 }
 
 .profile-sidebar__user h2 {
-  color: #111827;
+  color: var(--wf-ink);
   font-size: 16px;
   font-weight: 800;
   line-height: 1.25;
@@ -92,7 +92,7 @@
   border: 1px solid transparent;
   border-radius: 14px;
   background: transparent;
-  color: #2f3142;
+  color: var(--wf-ink);
   cursor: pointer;
   padding: 13px 14px;
   text-align: left;
@@ -105,13 +105,13 @@
 }
 
 .profile-menu__item:hover {
-  border-color: #d7d5e8;
-  background: #ffffff;
+  border-color: var(--wf-line);
+  background: var(--wf-surface);
   transform: translateY(-1px);
 }
 
 .profile-menu__item.is-active {
-  background: #111827;
+  background: var(--wf-ink);
   color: #ffffff;
 }
 
@@ -162,7 +162,7 @@
   min-height: 96px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent 42%),
-    #111827;
+    var(--wf-ink);
 }
 
 .profile-hero__body {
@@ -190,7 +190,7 @@
 }
 
 .profile-hero h1 {
-  color: #111827;
+  color: var(--wf-ink);
   font-size: 20px;
   font-weight: 850;
   letter-spacing: 0;

@@ -7,20 +7,20 @@ import {
 
 export const getReviewsByProductIdService = async (productId) => {
   const res = await getReviewsByProductIdApi(productId);
-  return res.data?.data ?? res.data;
+  return res?.data?.data ?? res?.data ?? res;
 };
 
 export const createReviewService = async (data) => {
   const res = await createReviewApi(data);
-  return res.data;
+  return res?.data ?? res;
 };
 
 export const updateReviewService = async (reviewId, data) => {
   const res = await updateReviewApi(reviewId, data);
-  return res.data?.data ?? res.data;
+  return res?.data?.data ?? res?.data ?? res;
 };
 
 export const deleteReviewService = async (reviewId) => {
   const res = await deleteReviewApi(reviewId);
-  return res.data;
+  return res?.data ?? res;
 };

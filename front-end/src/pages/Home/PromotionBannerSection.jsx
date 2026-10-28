@@ -62,59 +62,81 @@ const PromotionBannerSection = () => {
     }
   };
 
-  if (loading || promoBanners.length === 0) {
+  const fallbackPromoBanners = [
+    {
+      _id: "promo-signature",
+      title: "Ưu đãi 15% Đơn Hàng Đầu Tiên",
+      subtitle: "Nhập mã WELCOME15 khi thanh toán để trải nghiệm phong cách may đo cao cấp.",
+      imageUrl: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&auto=format&fit=crop&q=80",
+      buttonText: "Mua sắm ngay",
+      targetType: "category",
+      targetId: "all",
+      isApi: false,
+    },
+    {
+      _id: "promo-lookbook",
+      title: "Cảm Hứng Phối Đồ Mùa Mới",
+      subtitle: "Khám phá phong cách thanh lịch đương đại được tuyển chọn kỹ lưỡng bởi các stylist.",
+      imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80",
+      buttonText: "Xem Lookbook",
+      targetType: "lookbook",
+      targetId: "",
+      isApi: false,
+    },
+  ];
+
+  const displayBanners = promoBanners.length > 0 ? promoBanners : fallbackPromoBanners;
+
+  if (loading) {
     return null;
   }
 
   // Grid layout class based on number of banners
   const getGridClass = () => {
-    const count = promoBanners.length;
+    const count = displayBanners.length;
     if (count === 1) return "grid-cols-1";
     if (count === 2) return "grid-cols-1 md:grid-cols-2";
     return "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
   };
 
   return (
-    <section className="home-section home-promotions mt-12 animate-in fade-in duration-500">
+    <section className="home-section home-promotions mt-14">
       <div className={`grid gap-6 ${getGridClass()}`}>
-        {promoBanners.map((banner) => (
+        {displayBanners.map((banner) => (
           <div
             key={banner._id || banner.id}
             onClick={() => handleBannerClick(banner)}
-            className="group relative h-[240px] rounded-[22px] overflow-hidden cursor-pointer shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-150/40 bg-gray-50 flex items-center"
+            className="group relative h-[250px] sm:h-[270px] rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500 border border-black/5 bg-neutral-900 flex items-center"
           >
             {/* Background Image */}
             <img
               src={banner.imageUrl}
               alt={banner.title}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-103 transition duration-700 pointer-events-none"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-700 pointer-events-none opacity-85"
             />
 
-            {/* Dark/Glassy overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent transition-opacity duration-300" />
+            {/* Dark Vignette Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent transition-opacity duration-300" />
 
             {/* Text Content */}
-            <div className="relative z-10 p-8 text-left max-w-[80%] space-y-3 select-none">
-              <span className="inline-block text-[10px] font-black tracking-widest text-indigo-400 uppercase">
-                Ưu đãi đặc biệt
+            <div className="relative z-10 p-7 sm:p-9 text-left max-w-[85%] space-y-2.5 select-none">
+              <span className="inline-block text-[10px] font-extrabold tracking-[0.2em] text-amber-400 uppercase">
+                Ưu đãi đặc quyền
               </span>
-              <h3 className="text-xl font-bold text-white leading-tight drop-shadow-sm">
+              <h3 className="text-xl sm:text-2xl font-black text-white leading-tight drop-shadow-sm font-heading">
                 {banner.title}
               </h3>
               {banner.subtitle && (
-                <p className="text-xs text-gray-250 font-medium line-clamp-2">
+                <p className="text-xs text-neutral-300 font-medium line-clamp-2 max-w-sm">
                   {banner.subtitle}
                 </p>
               )}
-              <button className="mt-2 flex items-center gap-1.5 text-xs font-bold text-white border-b border-white pb-0.5 hover:gap-2.5 transition-all duration-300">
-                {banner.buttonText && (
-                  <div>
-                    <span>{banner.buttonText}</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </div>
-                )}
-                {/* <ArrowRight className="h-3.5 w-3.5" /> */}
-              </button>
+              <div className="pt-2">
+                <span className="inline-flex items-center gap-2 text-xs font-bold text-white border-b-2 border-amber-400 pb-1 group-hover:gap-3 transition-all">
+                  <span>{banner.buttonText || "Khám phá ngay"}</span>
+                  <ArrowRight size={14} className="text-amber-400" />
+                </span>
+              </div>
             </div>
           </div>
         ))}

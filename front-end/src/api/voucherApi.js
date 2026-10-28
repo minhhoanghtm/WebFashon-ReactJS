@@ -1,9 +1,9 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 export const validateVoucherApi = (code, subtotal, items, shippingFee) => {
-  return api.post("/vouchers/validate", { code, subtotal, items, shippingFee });
+  return axiosClient.post("/vouchers/validate", { code, subtotal, items, shippingFee });
 };
 
 export const getVouchersApi = () => {
-  return api.get("/vouchers");
+  return axiosClient.get("/vouchers");
 };

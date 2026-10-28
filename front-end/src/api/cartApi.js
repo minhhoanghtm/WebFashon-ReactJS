@@ -1,17 +1,17 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 export const getCartApi = () => {
-    return api.get("/cart");
-}
+  return axiosClient.get("/cart");
+};
 
 export const addCartApi = (data) => {
-    return api.post("/cart", data);
-}
+  return axiosClient.post("/cart", data);
+};
 
 export const updateCartApi = (id, data) => {
-    return api.put(`/cart/${id}`, data);
-}
+  return axiosClient.put(`/cart/${id}`, data);
+};
 
 export const deleteCartApi = (id) => {
-    return api.delete(`/cart/${id}`);
-}
+  return axiosClient.delete(`/cart/${id}`);
+};

@@ -1,27 +1,27 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 // login
 export const loginApi = (data) => {
-  return api.post("/auth/signIn", data);
+  return axiosClient.post("/auth/signIn", data);
 };
 
 // register
 export const registerApi = (data) => {
-  return api.post("/auth/signUp", data);
+  return axiosClient.post("/auth/signUp", data);
 };
 
 export const sendOTPApi = (data) => {
-  return api.post("/auth/sendOTP", data);
-}
+  return axiosClient.post("/auth/sendOTP", data);
+};
 
 export const sendResetOTPApi = (data) => {
-  return api.post("/auth/sendResetOTP", data);
-}
+  return axiosClient.post("/auth/sendResetOTP", data);
+};
 
 export const verifyOTPApi = (data) => {
-  return api.post("/auth/verify-otp", data);
-}
+  return axiosClient.post("/auth/verify-otp", data);
+};
 
 export const resetPasswordApi = (data) => {
-  return api.post("/auth/resetPassword", data);
-}
+  return axiosClient.post("/auth/resetPassword", data);
+};
