@@ -21,20 +21,20 @@ const CartItem = ({
   const isOutOfStock = item.stock !== undefined && item.stock <= 0;
 
   return (
-    <div className="flex gap-4 p-4 md:p-5 border border-slate-100 dark:border-slate-800/60 rounded-2xl bg-white dark:bg-slate-900/20 hover:shadow-md transition-shadow relative text-left">
+    <div className="flex gap-4 p-4 border border-border rounded-lg bg-card hover:shadow-sm transition-shadow relative text-left">
       {/* Checkbox Selector */}
-      <div className="flex items-center">
+      <div className="flex items-start">
         <input
           type="checkbox"
           checked={selected}
           disabled={isOutOfStock}
           onChange={() => onToggleSelect(item._id)}
-          className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-5 w-5 rounded border-border bg-background text-accent focus:ring-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 
       {/* Image thumbnail */}
-      <div className="h-24 w-24 md:h-28 md:w-28 shrink-0 overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-border bg-muted flex items-center justify-center">
         <img
           src={item.image || item.productImage || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=60"}
           alt={item.name}
@@ -49,26 +49,26 @@ const CartItem = ({
         />
       </div>
 
-      {/* Product Details info */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between space-y-2">
-        <div className="flex justify-between items-start gap-2">
-          <div>
-            <h4 className={`text-sm md:text-base font-bold text-slate-900 dark:text-white truncate ${isOutOfStock ? "line-through text-slate-400" : ""}`}>
+      {/* Product Details */}
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div className="flex justify-between items-start gap-2 mb-2">
+          <div className="flex-1 min-w-0">
+            <h4 className={`text-sm font-semibold text-foreground truncate ${isOutOfStock ? "line-through text-muted-foreground" : ""}`}>
               {item.name}
             </h4>
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+            <p className="text-xs text-muted-foreground font-medium">
               {item.category}
             </p>
             
-            {/* Color & Size display */}
+            {/* Variants display */}
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               {item.variants?.[0]?.color && (
-                <span className="inline-block text-[11px] bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-800 px-2 py-0.5 rounded">
-                  Màu: {item.variants[0].color}
+                <span className="text-xs bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded">
+                  Color: {item.variants[0].color}
                 </span>
               )}
               {item.variants?.[0]?.size && (
-                <span className="inline-block text-[11px] bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-800 px-2 py-0.5 rounded">
+                <span className="text-xs bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded">
                   Size: {item.variants[0].size}
                 </span>
               )}
@@ -78,26 +78,26 @@ const CartItem = ({
           {/* Delete Button */}
           <button
             onClick={() => onRemove(item._id)}
-            className="p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-800 transition cursor-pointer"
-            title="Xóa sản phẩm"
+            className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-muted transition cursor-pointer"
+            title="Remove"
           >
-            <Trash2 className="h-4.5 w-4.5" />
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Price & Quantity adjusting controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-          {/* Price details */}
+        {/* Price & Quantity Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Price */}
           <div className="flex items-baseline gap-2">
-            <span className="text-sm md:text-base font-extrabold text-slate-950 dark:text-white">
+            <span className="text-sm font-bold text-foreground">
               {formatPrice(item.new_price)}
             </span>
             {hasDiscount && (
               <>
-                <span className="text-xs line-through text-slate-400 dark:text-slate-600">
+                <span className="text-xs line-through text-muted-foreground">
                   {formatPrice(item.old_price)}
                 </span>
-                <span className="text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 px-1.5 py-0.2 rounded">
+                <span className="text-xs font-bold text-red-500 bg-red-100/20 px-1.5 py-0.5 rounded border border-red-200/50">
                   -{discountPercent}%
                 </span>
               </>
@@ -107,36 +107,34 @@ const CartItem = ({
           {/* Quantity selector */}
           <div className="flex items-center gap-3">
             {isOutOfStock ? (
-              <span className="text-xs font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/30 px-2.5 py-1 rounded-full flex items-center gap-1">
-                <AlertTriangle className="h-3.5 w-3.5" /> Hết hàng
+              <span className="text-xs font-bold text-destructive bg-destructive/10 px-2.5 py-1 rounded-full flex items-center gap-1 border border-destructive/30">
+                <AlertTriangle className="h-3 w-3" /> Out of stock
               </span>
             ) : (
               <>
-                {/* Quantity select inputs */}
-                <div className="flex items-center border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden h-8">
+                <div className="flex items-center border border-border rounded overflow-hidden h-8 bg-muted/50">
                   <button
                     onClick={() => onQuantityChange(item._id, item.quantity - 1)}
                     disabled={item.quantity <= 1}
-                    className="w-8 h-full bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 flex items-center justify-center disabled:opacity-40 disabled:hover:bg-slate-50 transition cursor-pointer border-none"
+                    className="w-8 h-full hover:bg-muted text-foreground flex items-center justify-center disabled:opacity-50 transition cursor-pointer border-none bg-transparent"
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </button>
-                  <span className="w-10 text-center text-xs font-bold text-slate-800 dark:text-slate-200">
+                  <span className="w-8 text-center text-xs font-bold text-foreground">
                     {item.quantity}
                   </span>
                   <button
                     onClick={() => onQuantityChange(item._id, item.quantity + 1)}
                     disabled={item.quantity >= (item.stock ?? 99)}
-                    className="w-8 h-full bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 flex items-center justify-center disabled:opacity-40 disabled:hover:bg-slate-50 transition cursor-pointer border-none"
+                    className="w-8 h-full hover:bg-muted text-foreground flex items-center justify-center disabled:opacity-50 transition cursor-pointer border-none bg-transparent"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
                 </div>
 
-                {/* Stock warnings */}
                 {isLowStock && (
-                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/30 px-2 py-0.5 rounded-full animate-pulse">
-                    Chỉ còn {item.stock} sản phẩm
+                  <span className="text-xs font-bold text-yellow-600 bg-yellow-100/20 px-2 py-0.5 rounded-full animate-pulse border border-yellow-200/50">
+                    Only {item.stock} left
                   </span>
                 )}
               </>

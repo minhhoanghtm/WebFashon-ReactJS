@@ -56,8 +56,10 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
   return (
     <article 
       onClick={handleCardClick}
-      className="group relative flex flex-col bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer w-full"
+      className="group relative flex flex-col bg-card border border-border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-md hover:border-accent cursor-pointer w-full"
     >
+      {/* Image Section */}
+      <div className="relative w-full aspect-[3/4] overflow-hidden bg-muted">
       {/* Media section */}
       <div className="relative w-full aspect-[3/4] overflow-hidden bg-neutral-100">
         <Link to={productPath} className="block w-full h-full">
@@ -66,12 +68,14 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
             alt={product.name}
             loading="lazy"
             onError={handleImageError}
+            className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
             className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-108"
           />
         </Link>
         
         {/* Badge */}
         {product.badge && (
+          <span className="absolute top-2 left-2 bg-accent text-accent-foreground text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider z-10">
           <span className="absolute top-3 left-3 bg-[#18181B]/90 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm uppercase tracking-wider z-10">
             {product.badge}
           </span>
@@ -81,6 +85,20 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
         <button
           type="button"
           onClick={handleFavoriteClick}
+          className="favorite-btn absolute top-2 right-2 w-9 h-9 bg-background border border-border rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-accent z-10"
+          aria-label="Favorite"
+        >
+          <Heart 
+            size={18} 
+            fill={effectiveIsFavorite ? "rgb(239, 68, 68)" : "none"} 
+            className={effectiveIsFavorite ? "text-red-500" : "text-muted-foreground"} 
+          />
+        </button>
+      </div>
+
+      {/* Content Section */}
+      <div className="flex flex-col flex-1 p-4">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
           className="favorite-btn absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-xs rounded-full flex items-center justify-center shadow-md hover:bg-white hover:scale-110 active:scale-95 transition-all text-neutral-400 hover:text-red-500 z-10 cursor-pointer"
           aria-label="Yêu thích"
         >
@@ -95,11 +113,17 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
         </span>
         <Link 
           to={productPath} 
+          className="text-sm font-semibold text-foreground line-clamp-2 hover:text-accent transition-colors mb-3"
           className="text-sm font-bold text-neutral-900 line-clamp-2 hover:text-amber-800 transition duration-200 mb-3 min-h-[40px]"
         >
           {product.name}
         </Link>
 
+        {/* Rating and Price */}
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
+          {/* Rating */}
+          <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            <Star size={14} fill="currentColor" className="text-yellow-500" />
         {/* Rating and Price Row */}
         <div className="flex items-end justify-between mt-auto pt-3 border-t border-neutral-100">
           {/* Rating */}
@@ -112,6 +136,12 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite }) => {
           </span>
 
           {/* Pricing */}
+          <div className="flex flex-col items-end gap-1">
+            <strong className="text-sm font-bold text-foreground">
+              {price > 0 ? formatPrice(price) : "Contact"}
+            </strong>
+            {oldPrice > price && price > 0 && (
+              <del className="text-xs text-muted-foreground line-through">
           <div className="flex flex-col items-end">
             <strong className="text-sm font-extrabold text-neutral-950 tabular-nums">
               {price > 0 ? formatPrice(price) : "Liên hệ"}

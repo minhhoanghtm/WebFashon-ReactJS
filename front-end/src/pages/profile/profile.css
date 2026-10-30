@@ -1,6 +1,8 @@
 .profile-page {
   min-height: 100%;
   background:
+    radial-gradient(circle at top left, rgba(6, 182, 212, 0.08), transparent 28rem),
+    #ffffff;
     radial-gradient(circle at top left, color-mix(in srgb, var(--wf-accent) 9%, transparent), transparent 28rem),
     var(--wf-paper);
   padding: 38px 20px 64px;
@@ -17,6 +19,10 @@
 .profile-sidebar,
 .profile-card,
 .profile-hero {
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 14px 35px rgba(31, 41, 55, 0.04);
   border: 1px solid var(--wf-line);
   border-radius: 18px;
   background: color-mix(in srgb, var(--wf-surface) 90%, transparent);
@@ -34,6 +40,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  border-bottom: 1px solid #f0f0f0;
   border-bottom: 1px solid var(--wf-line);
   margin-bottom: 14px;
   padding: 8px 4px 18px;
@@ -45,6 +52,7 @@
   place-items: center;
   overflow: hidden;
   border-radius: 999px;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
   background: var(--wf-ink);
   color: #ffffff;
   font-weight: 800;
@@ -105,12 +113,15 @@
 }
 
 .profile-menu__item:hover {
+  border-color: #e5e5e5;
+  background: #f9f9f9;
   border-color: var(--wf-line);
   background: var(--wf-surface);
   transform: translateY(-1px);
 }
 
 .profile-menu__item.is-active {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
   background: var(--wf-ink);
   color: #ffffff;
 }
@@ -122,6 +133,8 @@
   height: 34px;
   width: 34px;
   border-radius: 10px;
+  background: #cffafe;
+  color: #06b6d4;
   background: #f3f4f6;
   color: #1f2937;
 }
@@ -161,6 +174,8 @@
 .profile-hero__cover {
   min-height: 96px;
   background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 42%),
+    linear-gradient(135deg, #06b6d4, #0891b2);
     linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent 42%),
     var(--wf-ink);
 }
@@ -203,6 +218,8 @@
   align-items: center;
   gap: 7px;
   border-radius: 999px;
+  background: #cffafe;
+  color: #06398b;
   background: #f3f4f6;
   color: #374151;
   font-size: 11px;
@@ -230,6 +247,9 @@
 }
 
 .profile-hero__actions button {
+  border: 1px solid #06b6d4;
+  background: #ffffff;
+  color: #0891b2;
   border: 1px solid #111827;
   background: #ffffff;
   color: #111827;
@@ -283,6 +303,7 @@
 }
 
 .profile-card__header a {
+  color: #0891b2;
   color: #111827;
   font-size: 14px;
   font-weight: 750;
@@ -290,6 +311,7 @@
 }
 
 .profile-card__title-icon {
+  color: #06b6d4;
   color: #111827;
   flex: 0 0 auto;
 }
@@ -313,6 +335,8 @@
   width: 44px;
   height: 44px;
   border-radius: 999px;
+  background: #cffafe;
+  color: #06b6d4;
   background: #f3f4f6;
   color: #111827;
 }
@@ -341,6 +365,9 @@
   grid-template-columns: 58px minmax(0, 1fr) 20px;
   align-items: center;
   gap: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  background: #f0fdfb;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   background: #f9fafb;
@@ -355,6 +382,7 @@
 }
 
 .profile-action-card:hover {
+  border-color: #cffafe;
   border-color: #111827;
   background: #ffffff;
   transform: translateY(-2px);
@@ -370,6 +398,7 @@
 }
 
 .profile-action-card__icon.is-indigo {
+  background: #06b6d4;
   background: #111827;
 }
 
@@ -404,7 +433,7 @@
 }
 
 .profile-stat {
-  border: 1px solid #e1dfed;
+  border: 1px solid #e5e5e5;
   border-radius: 15px;
   background: #ffffff;
   color: #111827;
@@ -418,7 +447,7 @@
 }
 
 .profile-stat:hover {
-  border-color: #c1bddc;
+  border-color: #cffafe;
   box-shadow: 0 12px 24px rgba(31, 41, 55, 0.06);
   transform: translateY(-2px);
 }
@@ -429,6 +458,8 @@
   width: 36px;
   height: 36px;
   border-radius: 11px;
+  background: #cffafe;
+  color: #06b6d4;
   background: #f3f4f6;
   color: #111827;
   margin-bottom: 16px;
@@ -468,7 +499,7 @@
 }
 
 .profile-order-table__head {
-  border-bottom: 1px solid #cbc8dc;
+  border-bottom: 1px solid #e5e5e5;
   color: #3f4054;
   font-size: 12px;
   font-weight: 850;
@@ -478,7 +509,7 @@
 }
 
 .profile-order-table__row {
-  border-bottom: 1px solid #e4e2ef;
+  border-bottom: 1px solid #f0f0f0;
   color: #111827;
   font-size: 14px;
   min-height: 64px;
@@ -491,6 +522,7 @@
 }
 
 .profile-order-table__row strong:first-child {
+  color: #0891b2;
   color: #111827;
 }
 
@@ -533,7 +565,7 @@
 .profile-loading {
   display: grid;
   place-items: center;
-  border: 1px dashed #cbc8dc;
+  border: 1px dashed #e5e5e5;
   border-radius: 16px;
   color: #6b7280;
   min-height: 130px;
@@ -560,6 +592,7 @@
 .profile-empty button {
   border: 0;
   border-radius: 12px;
+  background: #06b6d4;
   background: #111827;
   color: #ffffff;
   cursor: pointer;
@@ -576,6 +609,8 @@
 .profile-spinner {
   width: 42px;
   height: 42px;
+  border: 4px solid #e0f2fe;
+  border-top-color: #06b6d4;
   border: 4px solid #f3f4f6;
   border-top-color: #111827;
   border-radius: 999px;
@@ -642,7 +677,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid #eceaf5;
+  border-bottom: 1px solid #f0f0f0;
   padding: 22px 24px;
 }
 
@@ -719,6 +754,8 @@
 
 .profile-form input:focus,
 .profile-form select:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.14);
   border-color: #0f172a;
   box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
@@ -728,7 +765,7 @@
 }
 
 .profile-form__section {
-  border-top: 1px solid #eceaf5;
+  border-top: 1px solid #f0f0f0;
   padding-top: 18px;
 }
 
@@ -760,7 +797,7 @@
   grid-template-columns: 72px minmax(0, 1fr);
   gap: 14px;
   align-items: center;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e5e5;
   border-radius: 14px;
   background: #f9fafb;
   padding: 12px;
@@ -773,6 +810,8 @@
   height: 64px;
   overflow: hidden;
   border-radius: 999px;
+  background: #cffafe;
+  color: #06b6d4;
   background: #f3f4f6;
   color: #111827;
 }
@@ -795,6 +834,10 @@
   justify-content: center;
   justify-self: start;
   min-height: 38px;
+  border: 1px solid #06b6d4;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0891b2;
   border: 1px solid #111827;
   border-radius: 10px;
   background: #ffffff;
@@ -813,7 +856,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  border-top: 1px solid #eceaf5;
+  border-top: 1px solid #f0f0f0;
   padding-top: 18px;
 }
 
@@ -824,6 +867,7 @@
 }
 
 .profile-button.primary {
+  background: #06b6d4;
   background: #111827;
   color: #ffffff;
 }

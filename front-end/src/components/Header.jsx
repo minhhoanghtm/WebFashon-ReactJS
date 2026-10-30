@@ -207,39 +207,48 @@ const Header = () => {
   const totalItems = cartItemCount;
   return (
     <div
-      className={`sticky top-0 z-50 flex justify-between items-center h-16 min-w-min px-5 transition-all duration-300 ${
+      className={`sticky top-0 z-50 flex justify-between items-center h-16 px-6 transition-all duration-300 ${
         isScrolled
-          ? "bg-black bg-opacity-30 backdrop-blur-md shadow-lg"
-          : "bg-gray-800"
-      } text-white`}
+          ? "bg-background border-b border-border shadow-sm"
+          : "bg-background border-b border-border"
+      }`}
     >
-      {/* Image  */}
+      {/* Logo */}
       <Link to="/" onClick={handleGoHome} className="h-full flex items-center">
         <img
           src={logo}
-          alt="404Studio"
-          className="h-12 w-auto object-contain"
+          alt="WebFashion"
+          className="h-10 w-auto object-contain"
         />
       </Link>
-      {/* Navigation  */}
-      <div className="relative">
+
+      {/* Navigation Menu */}
+      <div className="flex-1 flex justify-center">
         {search ? (
-          <form onSubmit={handleSubmit}>
-            <input
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className="border rounded-l-lg text-white placeholder:text-gray-400  focus:outline-none focus:ring-2 focus:ring-blue-500 px-2"
-            />
-            {/* // Hiển thị gợi ý tìm kiếm */}
+          <form onSubmit={handleSubmit} className="w-96">
+            <div className="relative flex">
+              <input
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                type="text"
+                placeholder="Search products..."
+                className="w-full px-4 py-2 border border-border rounded-l-lg bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-r-lg hover:opacity-90 transition-opacity"
+              >
+                Search
+              </button>
+            </div>
+            {/* Search Suggestions */}
             {showSuggest && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 w-full bg-white text-black shadow-md rounded-md z-50">
+              <div className="absolute top-full left-0 w-96 mt-1 bg-card border border-border rounded-lg shadow-lg z-50">
                 {suggestions.map((item) => (
                   <Link
                     key={item._id}
                     to={`/products?search=${encodeURIComponent(item.name)}&page=1`}
-                    className="block px-4 py-2 hover:bg-gray-200"
+                    className="block px-4 py-2 hover:bg-muted text-foreground transition-colors first:rounded-t-lg last:rounded-b-lg"
                     onClick={() => {
                       setKeyword("");
                       setShowSuggest(false);
@@ -250,54 +259,61 @@ const Header = () => {
                 ))}
               </div>
             )}
-            <button type="submit" className="border rounded-r-lg px-4">
-              Tìm
-            </button>
           </form>
         ) : (
-          <menu className="flex gap-6">
-            <Link to="/">
-              <li className="hover:underline">Home</li>
+          <menu className="flex gap-8 text-sm font-medium">
+            <Link to="/" className="text-foreground hover:text-accent transition-colors">
+              Home
             </Link>
-            <Link to="/lookbooks">
-              <li className="hover:underline">Lookbook</li>
+            <Link to="/lookbooks" className="text-foreground hover:text-accent transition-colors">
+              Lookbook
             </Link>
-            <Link to="/about">
-              <li className="hover:underline">About</li>
+            <Link to="/about" className="text-foreground hover:text-accent transition-colors">
+              About
             </Link>
-            <Link to="/contact">
-              <li className="hover:underline">Contact</li>
+            <Link to="/contact" className="text-foreground hover:text-accent transition-colors">
+              Contact
             </Link>
           </menu>
         )}
       </div>
-      <div className="flex items-center gap-4">
-        {/* Search  */}
-        <button onClick={() => setSearch(!search)} className="">
-          <FaSearch className="text-xl" />
+
+      {/* Right Actions */}
+      <div className="flex items-center gap-6">
+        {/* Search Icon */}
+        <button
+          onClick={() => setSearch(!search)}
+          className="text-foreground hover:text-accent transition-colors"
+          title="Search"
+        >
+          <FaSearch className="text-lg" />
         </button>
-        {/* Cart */}
+
+        {/* Cart Icon */}
         <Link to={isLoggedIn ? "/cart" : "/login"} className="relative">
-          <Badge count={cartItemCount}>
-            <div ref={cartRef}>
-              <FaShoppingBag className="text-white text-xl" />
+          <Badge count={cartItemCount} color="cyan">
+            <div ref={cartRef} className="text-foreground hover:text-accent transition-colors">
+              <FaShoppingBag className="text-lg" />
             </div>
           </Badge>
         </Link>
-        {/* Me  */}
-        <Dropdown menu={{ items }} placement="topRight">
+
+        {/* User Menu */}
+        <Dropdown menu={{ items }} placement="bottomRight">
           {isLoggedIn ? (
-            <div className="flex items-center gap-1 cursor-pointer">
+            <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
               <img
-                src={user?.data.avatar || "/default-avatar.png"}
-                alt={user?.data.fullName}
-                className="w-8 h-8 rounded-full object-cover object-center"
+                src={user?.data?.avatar || "/default-avatar.png"}
+                alt={user?.data?.fullName}
+                className="w-8 h-8 rounded-full object-cover"
               />
-              <span>{user?.data.fullName || "Tài khoản"}</span>
+              <span className="text-sm text-foreground hidden sm:inline">
+                {user?.data?.fullName || "Account"}
+              </span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 cursor-pointer">
-              <MdOutlineAccountCircle className="text-2xl" />
+            <div className="flex items-center cursor-pointer hover:text-accent transition-colors">
+              <MdOutlineAccountCircle className="text-2xl text-foreground" />
             </div>
           )}
         </Dropdown>

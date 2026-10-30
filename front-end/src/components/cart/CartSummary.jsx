@@ -15,8 +15,8 @@ const CartSummary = ({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm space-y-6 text-left lg:sticky lg:top-24 transition-all duration-300">
-      <h3 className="text-lg font-bold border-b border-slate-100 dark:border-slate-800 pb-3 text-slate-900 dark:text-white">
+    <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6 text-left lg:sticky lg:top-24 transition-all duration-300">
+      <h3 className="text-lg font-bold border-b border-slate-200 dark:border-slate-700 pb-3 text-slate-900 dark:text-white">
         Tóm tắt đơn hàng
       </h3>
 
@@ -46,7 +46,7 @@ const CartSummary = ({
         </div>
 
         {/* Total separator line */}
-        <div className="border-t border-slate-100 dark:border-slate-800/80 my-4"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-4"></div>
 
         {/* Grand Total */}
         <div className="flex justify-between text-base font-extrabold text-slate-900 dark:text-white">
@@ -61,7 +61,7 @@ const CartSummary = ({
       <button
         onClick={onCheckout}
         disabled={selectedCount === 0 || isCheckingOut}
-        className="w-full py-4 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-sm uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+        className="w-full py-4 bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-500 dark:hover:bg-cyan-600 text-white font-semibold text-sm uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
       >
         {isCheckingOut ? (
           <>

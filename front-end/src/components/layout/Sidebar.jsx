@@ -293,7 +293,7 @@ const Sidebar = () => {
 
       {/* Sidebar Aside */}
       <aside
-        className={`sticky top-0 flex h-screen flex-col border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100
+        className={`sticky top-0 flex h-screen flex-col border-r border-border bg-sidebar text-sidebar-foreground
           transition-all duration-300 ease-in-out z-40 shrink-0
           max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:shadow-2xl
           ${
@@ -303,6 +303,7 @@ const Sidebar = () => {
           }`}
       >
         {/* Logo */}
+        <div className="flex h-16 items-center justify-center border-b border-sidebar-border overflow-hidden">
         <div className="flex h-16 items-center justify-center border-b border-gray-200 dark:border-slate-800 overflow-hidden px-3">
           {collapsed ? (
             logoUrl ? (
@@ -344,8 +345,8 @@ const Sidebar = () => {
                   ${collapsed ? "justify-center" : ""}
                   ${
                     active
-                      ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400"
-                      : "text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100"
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-muted/50 hover:text-sidebar-foreground"
                   }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -368,9 +369,9 @@ const Sidebar = () => {
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center
-            rounded-full border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-500 dark:text-slate-400
-            shadow-sm hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer max-md:hidden"
-          aria-label={collapsed ? "Mở sidebar" : "Thu sidebar"}
+            rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground
+            shadow-sm hover:text-sidebar-accent transition cursor-pointer max-md:hidden"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
             <ChevronRight className="h-3.5 w-3.5" />
@@ -417,6 +418,10 @@ const Sidebar = () => {
         </div>
 
         {/* Profile Card Section at Bottom */}
+        <div className="mt-auto border-t border-sidebar-border p-3 relative" ref={dropdownRef}>
+          {/* Dropdown Menu */}
+          {isDropdownOpen && (
+            <div className={`absolute bottom-full mb-2 bg-card border border-border rounded-lg shadow-lg z-50 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200 text-left
         <div className="p-3 relative" ref={dropdownRef}>
           {/* Dropdown Menu */}
           {isDropdownOpen && (

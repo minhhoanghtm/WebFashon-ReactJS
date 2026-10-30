@@ -115,35 +115,35 @@ export function LoginForm({ className, ...props }) {
   );
 
   return (
-    <div className={cn("flex flex-col gap-6 relative", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 relative min-h-screen", className)} {...props}>
       {/* Back Button */}
       <button
         onClick={() => navigate("/")}
-        className="absolute top-4 left-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        title="Quay lại"
+        className="absolute top-6 left-6 p-2 rounded-lg hover:bg-muted transition-colors z-10"
+        title="Back"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
-          className="w-6 h-6 fill-current"
+          className="w-6 h-6 fill-foreground"
         >
           <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
         </svg>
       </button>
 
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden border-0 shadow-lg m-4 md:m-0 md:rounded-xl">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
+          <form className="p-8 md:p-12" onSubmit={handleSubmit}>
             <FieldGroup>
-              <div className="flex flex-col items-center gap-2 text-center mb-6">
-                <h1 className="text-2xl font-bold">Chào mừng trở lại</h1>
-                <p className="text-balance text-muted-foreground">
-                  Đăng nhập vào tài khoản của bạn
+              <div className="flex flex-col gap-2 mb-8">
+                <h1 className="text-3xl font-bold text-foreground">Welcome back</h1>
+                <p className="text-muted-foreground">
+                  Sign in to your account to continue
                 </p>
               </div>
 
               {errors.general && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <div className="bg-destructive/10 border border-destructive/50 text-destructive px-4 py-3 rounded-lg mb-4">
                   {errors.general}
                 </div>
               )}
@@ -154,57 +154,58 @@ export function LoginForm({ className, ...props }) {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="Nhập email"
+                  placeholder="you@example.com"
                   required
                   value={formData.email}
                   onChange={handleChange}
                 />
                 {errors.email && (
-                  <span className="text-red-500 text-sm">{errors.email}</span>
+                  <span className="text-destructive text-sm">{errors.email}</span>
                 )}
               </Field>
 
               <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="passWord">Mật khẩu</FieldLabel>
+                <div className="flex items-center gap-2 mb-2">
+                  <FieldLabel htmlFor="passWord" className="m-0">Password</FieldLabel>
                   <Link
                     to="/reset-password"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
+                    className="ml-auto text-sm text-accent hover:underline"
                   >
-                    Quên mật khẩu?
+                    Forgot password?
                   </Link>
                 </div>
                 <Input
                   id="passWord"
                   name="passWord"
                   type="password"
-                  placeholder="Nhập mật khẩu"
+                  placeholder="••••••••"
                   required
                   value={formData.passWord}
                   onChange={handleChange}
                 />
                 {errors.passWord && (
-                  <span className="text-red-500 text-sm">
+                  <span className="text-destructive text-sm">
                     {errors.passWord}
                   </span>
                 )}
               </Field>
 
-              <Field>
-                <Button type="submit" className="w-full">
-                  Đăng nhập
+              <Field className="mt-2">
+                <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                  Sign in
                 </Button>
               </Field>
 
-              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                Hoặc tiếp tục với
+              <FieldSeparator>
+                Or continue with
               </FieldSeparator>
 
-              <Field className="grid grid-cols-3 gap-4">
+              <Field className="grid grid-cols-1 gap-3">
                 <Button
                   variant="outline"
                   type="button"
-                  title="Đăng nhập với Google"
+                  title="Sign in with Google"
+                  className="border border-border hover:bg-muted"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -216,53 +217,38 @@ export function LoginForm({ className, ...props }) {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="sr-only">Đăng nhập với Google</span>
+                  <span>Google</span>
                 </Button>
-
-                {/* <Button
-                  variant="outline"
-                  type="button"
-                  title="Đăng nhập với Facebook"
-                >
-                  <FacebookIcon />
-                  <span className="sr-only">Đăng nhập với Facebook</span>
-                </Button>
-
-                <Button variant="outline" type="button" title="Đăng nhập với X">
-                  <XIcon />
-                  <span className="sr-only">Đăng nhập với X</span>
-                </Button> */}
               </Field>
 
-              <FieldDescription className="text-center">
-                Chưa có tài khoản?{" "}
-                <Link to="/register" className="font-semibold hover:underline">
-                  Đăng ký
+              <FieldDescription className="text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <Link to="/register" className="font-semibold text-accent hover:underline">
+                  Sign up
                 </Link>
               </FieldDescription>
             </FieldGroup>
           </form>
 
-          <div className="relative hidden bg-muted md:block">
+          <div className="relative hidden bg-gradient-to-br from-accent/20 to-accent/5 md:flex items-center justify-center">
             <img
               src={loginImage}
-              alt="Hình ảnh đăng nhập"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+              alt="Login"
+              className="absolute inset-0 h-full w-full object-cover opacity-80"
             />
           </div>
         </CardContent>
       </Card>
 
-      <FieldDescription className="px-6 text-center">
-        Bằng cách tiếp tục, bạn đồng ý với{" "}
+      <FieldDescription className="px-6 text-center text-xs">
+        By continuing, you agree to our{" "}
         <Link to="/terms" className="hover:underline">
-          Điều khoản dịch vụ
+          Terms of Service
         </Link>{" "}
-        và{" "}
+        and{" "}
         <Link to="/privacy" className="hover:underline">
-          Chính sách bảo mật
-        </Link>{" "}
-        của chúng tôi.
+          Privacy Policy
+        </Link>
       </FieldDescription>
     </div>
   );
