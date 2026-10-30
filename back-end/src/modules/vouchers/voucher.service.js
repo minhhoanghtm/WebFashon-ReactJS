@@ -7,6 +7,7 @@ import {
   releaseLock,
 } from "../../providers/redisLock.provider.js";
 import getRedisConnection from "../../configs/redis.js";
+import { ALLOW_VOUCHER_ON_SALE } from "../campaigns/campaign.constants.js";
 
 const PUBLIC_CACHE_KEY = "vouchers:public";
 
@@ -602,6 +603,14 @@ class VoucherService {
 
     // 4. Calculate discount amount and check min value based on voucher type
     const currentSubtotal = Number(subtotal) || 0;
+    let baseOrderAmount = currentSubtotal;
+    if (!ALLOW_VOUCHER_ON_SALE && Array.isArray(items) && items.length > 0) {
+      const eligibleItems = items.filter((it) => !it.campaign_id);
+      baseOrderAmount = eligibleItems.reduce(
+        (sum, it) => sum + Number(it.price || it.new_price || 0) * (it.quantity || 1),
+        0
+      );
+    }
     let discountAmount = 0;
     const vType = voucher.voucherType || "order";
 
@@ -612,7 +621,7 @@ class VoucherService {
         const baseAmount = currentSubtotal;
         if (baseAmount < voucher.minOrderValue) {
           throw new AppError(
-            `Mã giảm giá này áp dụng cho đơn hàng tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
+            `Mã giảm giá này áp dụng cho các sản phẩm hợp lệ có tổng giá trị tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
             400,
           );
         }
@@ -651,6 +660,7 @@ class VoucherService {
 
         // Filter items that are applicable
         const applicableItems = items.filter((item) => {
+          if (!ALLOW_VOUCHER_ON_SALE && item.campaign_id) return false;
           const prodId = (
             item.product_id || item.productItem?.product_id
           )?.toString();
@@ -707,7 +717,7 @@ class VoucherService {
       }
     } else if (vType === "shipping") {
       // Shipping discount / free shipping voucher
-      if (currentSubtotal < voucher.minOrderValue) {
+      if (baseOrderAmount < voucher.minOrderValue) {
         throw new AppError(
           `Mã miễn phí vận chuyển áp dụng cho đơn hàng tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
           400,
@@ -735,16 +745,27 @@ class VoucherService {
       }
     } else {
       // Order / general voucher
-      if (currentSubtotal < voucher.minOrderValue) {
+      // Check eligible items for general voucher
+      if (!ALLOW_VOUCHER_ON_SALE && Array.isArray(items) && items.length > 0) {
+        const eligibleItems = items.filter((it) => !it.campaign_id);
+        baseOrderAmount = eligibleItems.reduce(
+          (sum, it) => sum + Number(it.price || it.new_price || 0) * (it.quantity || 1),
+          0
+        );
+        if (baseOrderAmount <= 0) {
+          throw new AppError("Mã giảm giá không áp dụng cho đơn hàng chỉ chứa sản phẩm đang sale", 400);
+        }
+      }
+      if (baseOrderAmount < voucher.minOrderValue) {
         throw new AppError(
-          `Mã giảm giá này áp dụng cho đơn hàng tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
+          `Mã giảm giá này áp dụng cho các sản phẩm hợp lệ có tổng giá trị tối thiểu từ ${voucher.minOrderValue.toLocaleString("vi-VN")}đ`,
           400,
         );
       }
 
       if (voucher.discountType === "percentage") {
         discountAmount = Math.round(
-          (voucher.discountValue / 100) * currentSubtotal,
+          (voucher.discountValue / 100) * baseOrderAmount,
         );
         if (voucher.maxDiscountAmount > 0) {
           discountAmount = Math.min(discountAmount, voucher.maxDiscountAmount);
@@ -752,7 +773,7 @@ class VoucherService {
       } else {
         discountAmount = voucher.discountValue;
       }
-      discountAmount = Math.min(discountAmount, currentSubtotal);
+      discountAmount = Math.min(discountAmount, baseOrderAmount);
     }
 
     return {

@@ -36,7 +36,6 @@ import {
 } from "../../services/location.service";
 import { uploadImageService } from "../../services/upload.service";
 import { useAuthStore } from "../../store/auth.store";
-import { findFallbackProvince, vietnamAddressData } from "../Checkout/VietnamAddressData";
 import "./profile.css";
 import useWebsiteSettings from "@/hooks/useWebsiteSettings";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -234,10 +233,7 @@ const resolveAddressText = async (address) => {
 
   try {
     const apiProvinces = await getProvincesService();
-    const provinceSource =
-      Array.isArray(apiProvinces) && apiProvinces.length > 0
-        ? apiProvinces
-        : vietnamAddressData;
+    const provinceSource = Array.isArray(apiProvinces) ? apiProvinces : [];
     const provinces = provinceSource.map(normalizeProvince);
     const province = findLocationByCodeOrName(
       provinces,
@@ -249,11 +245,9 @@ const resolveAddressText = async (address) => {
       provinceName = province.displayName || province.name;
 
       const provinceDetail = await getDistrictsService(province.code);
-      const districts = (
-        Array.isArray(provinceDetail?.districts)
-          ? provinceDetail.districts
-          : findFallbackProvince(province.code)?.districts || []
-      ).map(normalizeDistrict);
+      const districts = (Array.isArray(provinceDetail) ? provinceDetail : []).map(
+        normalizeDistrict
+      );
       const district = findLocationByCodeOrName(districts, districtValue);
 
       if (district) {
@@ -1241,13 +1235,11 @@ const ProfileAddressSelects = ({
       setLoadingDistrict(false);
     }
 
-    return (findFallbackProvince(nextProvinceCode)?.districts || []).map(
-      normalizeDistrict
-    );
+    return [];
   }, []);
 
   const loadWards = useCallback(
-    async (nextDistrictCode, nextProvinceCode = provinceCode) => {
+    async (nextDistrictCode) => {
       if (!nextDistrictCode) return [];
 
       setLoadingWard(true);
@@ -1269,13 +1261,9 @@ const ProfileAddressSelects = ({
         setLoadingWard(false);
       }
 
-      const fallbackDistrict = findFallbackProvince(nextProvinceCode)?.districts.find(
-        (district) => district.code === String(nextDistrictCode)
-      );
-
-      return (fallbackDistrict?.wards || []).map(normalizeWard);
+      return [];
     },
-    [provinceCode]
+    []
   );
 
   useEffect(() => {
@@ -1283,14 +1271,11 @@ const ProfileAddressSelects = ({
       setLoadingProvince(true);
       try {
         const apiProvinces = await getProvincesService();
-        const provinceSource =
-          Array.isArray(apiProvinces) && apiProvinces.length > 0
-            ? apiProvinces
-            : vietnamAddressData;
+        const provinceSource = Array.isArray(apiProvinces) ? apiProvinces : [];
         setProvinces(provinceSource.map(normalizeProvince));
       } catch (error) {
         console.error("Không thể tải danh sách tỉnh/thành phố:", error);
-        setProvinces(vietnamAddressData.map(normalizeProvince));
+        setProvinces([]);
       } finally {
         setLoadingProvince(false);
       }
@@ -1333,7 +1318,7 @@ const ProfileAddressSelects = ({
       setDistrictCode(district.code);
       onChange("districtCode", district.name);
 
-      const nextWards = await loadWards(district.code, province.code);
+      const nextWards = await loadWards(district.code);
       setWards(nextWards);
 
       const ward = findLocationByCodeOrName(nextWards, wardValue);

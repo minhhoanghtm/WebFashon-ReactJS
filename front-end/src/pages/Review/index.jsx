@@ -123,61 +123,64 @@ const Review = () => {
   };
 
   return (
-    <div className="container mx-auto px-5 py-10">
-      <button 
-        onClick={() => navigate(-1)} 
-        className="mb-6 text-blue-500 hover:underline text-sm"
-      >
-        ← Quay lại
-      </button>
+    <div className="min-h-screen bg-[#F7F7F7] text-[#05251C] py-12 px-4 sm:px-6 select-none">
+      <div className="max-w-3xl mx-auto">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="mb-6 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#05251C] hover:opacity-75 cursor-pointer"
+        >
+          ← Quay lại đơn hàng
+        </button>
 
-      <h1 className="text-3xl font-bold mb-8">Đánh giá sản phẩm</h1>
+        <h1 className="text-3xl sm:text-5xl font-black font-display uppercase tracking-tight text-[#05251C] mb-8 leading-[0.95]">
+          ĐÁNH GIÁ THIẾT KẾ.
+        </h1>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs font-semibold">
+            {error}
+          </div>
+        )}
 
-      {/* Sản phẩm */}
-      {item ? (
-        <div className="border rounded-lg p-6 mb-8 bg-gray-50">
-          <div className="flex items-start gap-6">
-            <img 
-              src={item.variant?.image_url || item.product_image || "https://via.placeholder.com/100"} 
-              alt={item.product_name} 
-              className="w-24 h-24 object-cover rounded border"
-            />
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold mb-2">{item.product_name}</h3>
-              <p className="text-gray-600 mb-3">
-                <span className="mr-4">Số lượng: {item.quantity}</span>
-              </p>
-              <p className="text-sm text-gray-500">
-                <span className="mr-4">Màu: {item.variant?.color || "Không có"}</span>
-                <span>Size: {item.variant?.size || "Không có"}</span>
-              </p>
-              <p className="text-lg font-semibold text-red-500 mt-3">
-                {item.price?.toLocaleString("vi-VN")}đ
-              </p>
+        {/* Sản phẩm */}
+        {item ? (
+          <div className="border border-[#05251C]/10 rounded-3xl p-6 mb-8 bg-white shadow-xs">
+            <div className="flex items-start gap-6">
+              <img 
+                src={item.variant?.image_url || item.product_image || "https://via.placeholder.com/100"} 
+                alt={item.product_name} 
+                className="w-24 h-24 object-cover rounded-2xl border border-[#05251C]/10"
+              />
+              <div className="flex-1">
+                <h3 className="text-xl font-bold font-display text-[#05251C] mb-1">{item.product_name}</h3>
+                <p className="text-xs text-[#6B716E] mb-2">
+                  <span className="mr-4">Số lượng: {item.quantity}</span>
+                </p>
+                <p className="text-xs text-[#6B716E]">
+                  <span className="mr-4">Màu: {item.variant?.color || "Tiêu chuẩn"}</span>
+                  <span>Size: {item.variant?.size || "Tiêu chuẩn"}</span>
+                </p>
+                <p className="text-base font-extrabold text-[#05251C] mt-2 tabular-nums">
+                  {item.price?.toLocaleString("vi-VN")}đ
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="border rounded-lg p-6 mb-8 bg-yellow-50">
-          <p className="text-yellow-700">Không có thông tin sản phẩm. Vui lòng quay lại và thử lại.</p>
-        </div>
-      )}
+        ) : (
+          <div className="border border-[#05251C]/10 rounded-3xl p-6 mb-8 bg-white text-center">
+            <p className="text-xs text-[#6B716E]">Không có thông tin sản phẩm. Vui lòng quay lại danh sách đơn hàng.</p>
+          </div>
+        )}
 
-      {/* Form Đánh giá */}
-      {item && (
-        <form onSubmit={handleSubmitReview} className="border rounded-lg p-6 bg-white">
-          {/* Đánh giá */}
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold mb-4">Đánh giá của bạn</h3>
+        {/* Form Đánh giá */}
+        {item && (
+          <form onSubmit={handleSubmitReview} className="border border-[#05251C]/10 rounded-3xl p-6 sm:p-8 bg-white shadow-xs">
+            {/* Đánh giá */}
+            <div className="mb-6">
+              <h3 className="text-lg font-bold font-display text-[#05251C] uppercase mb-4">Mức độ hài lòng của bạn</h3>
 
-            <div className="flex items-center gap-4 mb-6">
-              <span className="font-medium">Số sao:</span>
+              <div className="flex items-center gap-4 mb-6">
+                <span className="text-xs font-bold text-[#6B716E] uppercase tracking-wider">Đánh giá sao:</span>
               <StarRatingInput value={rating} onChange={setRating} />
             </div>
 
@@ -286,24 +289,25 @@ const Review = () => {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-4 pt-4 border-t border-[#05251C]/10">
             <button 
               type="button"
               onClick={() => navigate(-1)}
-              className="px-6 py-2 border rounded-lg hover:bg-gray-100"
+              className="px-6 py-3 border border-[#05251C]/20 rounded-full text-xs font-bold uppercase tracking-wider text-[#05251C] hover:bg-neutral-50 transition cursor-pointer"
             >
-              Hủy
+              Hủy bỏ
             </button>
             <button 
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
+              className="px-8 py-3 bg-[#05251C] hover:bg-[#F5DD20] hover:text-[#05251C] text-white font-display font-bold text-xs uppercase tracking-wider rounded-full transition shadow-md disabled:opacity-50 cursor-pointer active:scale-95"
             >
-              {isSubmitting ? "Đang gửi..." : "Gửi đánh giá"}
+              {isSubmitting ? "Đang gửi..." : "Gửi đánh giá Atelier"}
             </button>
           </div>
         </form>
       )}
+      </div>
     </div>
   );
 };

@@ -1,116 +1,134 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { getPageBySlugService } from "@/services/page.service";
-import { Loader2, AlertCircle } from "lucide-react";
-import AboutHero from "../About/AboutHero";
+import { Sparkles, Ruler, Check, Info } from "lucide-react";
 
-// Dynamic Section Components
-import HeroSection from "@/components/page-sections/HeroSection";
-import StorySection from "@/components/page-sections/StorySection";
-import GallerySection from "@/components/page-sections/GallerySection";
-import QuoteSection from "@/components/page-sections/QuoteSection";
-import ImageTextSection from "@/components/page-sections/ImageTextSection";
-import ProductsSection from "@/components/page-sections/ProductsSection";
-import BannerSection from "@/components/page-sections/BannerSection";
-import CTASection from "@/components/page-sections/CTASection";
+const sizeCategories = [
+  {
+    id: "blazer",
+    name: "Áo Blazer & Jacket",
+    headers: ["Size", "Vai (cm)", "Ngực (cm)", "Dài áo (cm)", "Dài tay (cm)", "Cân nặng gợi ý (kg)"],
+    rows: [
+      ["S (46)", "44", "102", "72", "61", "55 - 63 kg"],
+      ["M (48)", "46", "106", "74", "62.5", "64 - 72 kg"],
+      ["L (50)", "48", "110", "76", "64", "73 - 80 kg"],
+      ["XL (52)", "50", "114", "78", "65.5", "81 - 90 kg"],
+    ],
+  },
+  {
+    id: "shirt",
+    name: "Áo Sơ mi & Overshirt",
+    headers: ["Size", "Vai (cm)", "Ngực (cm)", "Dài áo (cm)", "Cổ áo (cm)", "Chiều cao gợi ý (cm)"],
+    rows: [
+      ["S", "47", "108", "72", "38", "1m60 - 1m68"],
+      ["M", "49", "112", "74", "39.5", "1m68 - 1m75"],
+      ["L", "51", "116", "76", "41", "1m75 - 1m82"],
+      ["XL", "53", "120", "78", "42.5", "1m80 - 1m88"],
+    ],
+  },
+  {
+    id: "trousers",
+    name: "Quần Trousers & Jeans",
+    headers: ["Size", "Vòng bụng (cm)", "Mông (cm)", "Dài quần (cm)", "Ống quần (cm)", "Cân nặng (kg)"],
+    rows: [
+      ["29", "76", "96", "98", "21", "53 - 60 kg"],
+      ["30", "79", "99", "100", "21.5", "61 - 67 kg"],
+      ["31", "82", "102", "102", "22", "68 - 74 kg"],
+      ["32", "85", "105", "103", "22.5", "75 - 82 kg"],
+    ],
+  },
+];
 
-import "../About/about.css";
+export const Guide = () => {
+  useDocumentTitle("Hướng dẫn chọn size — 404STUDIO");
+  const [activeTab, setActiveTab] = useState("blazer");
 
-const Guide = () => {
-  useDocumentTitle("Hướng dẫn mua hàng");
-  const [contentHtml, setContentHtml] = useState("");
-  const [pageTitle, setPageTitle] = useState("");
-  const [pageExcerpt, setPageExcerpt] = useState("");
-  const [pageSections, setPageSections] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchGuide = async () => {
-      try {
-        setLoading(true);
-        const data = await getPageBySlugService("guide").catch(() => null);
-        
-        const page = data?.page || data;
-        const sections = data?.sections || data?.page?.sections || [];
-
-        if (page) {
-          if (page.title) setPageTitle(page.title);
-          if (page.excerpt) setPageExcerpt(page.excerpt);
-          if (page.content) setContentHtml(page.content);
-        }
-        if (sections && sections.length > 0) {
-          setPageSections(sections);
-        }
-      } catch (err) {
-        console.error("Lỗi khi tải trang Hướng dẫn:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGuide();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="about-loading-container">
-        <Loader2 className="about-loading-spinner animate-spin" />
-        <span>Đang tải thông tin hướng dẫn...</span>
-      </div>
-    );
-  }
-
-  const hasSections = pageSections && pageSections.length > 0;
-  const hasContent = contentHtml && contentHtml.trim() !== "";
+  const currentCategory = sizeCategories.find((c) => c.id === activeTab) || sizeCategories[0];
 
   return (
-    <div className="about-page">
-      <div className="about-page__container">
-        {hasSections ? (
-          <div className="w-full">
-            {[...pageSections]
-              .sort((a, b) => (a.order || 0) - (b.order || 0))
-              .map((section) => {
-                switch (section.type) {
-                  case "hero":
-                    return <HeroSection key={section._id || section.order} data={section.data} />;
-                  case "story":
-                    return <StorySection key={section._id || section.order} data={section.data} />;
-                  case "gallery":
-                    return <GallerySection key={section._id || section.order} data={section.data} />;
-                  case "quote":
-                    return <QuoteSection key={section._id || section.order} data={section.data} />;
-                  case "image_text":
-                    return <ImageTextSection key={section._id || section.order} data={section.data} />;
-                  case "products":
-                    return <ProductsSection key={section._id || section.order} data={section.data} />;
-                  case "banner":
-                    return <BannerSection key={section._id || section.order} data={section.data} />;
-                  case "cta":
-                    return <CTASection key={section._id || section.order} data={section.data} />;
-                  default:
-                    return null;
-                }
-              })}
+    <div className="min-h-screen bg-[#FBF9F5] text-[#05251C] py-12 sm:py-20 select-none">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-black tracking-[0.25em] text-[#05251C] uppercase mb-4">
+            <Sparkles size={12} className="text-[#05251C]" />
+            <span>ACCURATE FIT & SIZING ARCHITECTURE</span>
           </div>
-        ) : hasContent ? (
-          <>
-            <AboutHero title={pageTitle} description={pageExcerpt} />
-            <main className="about-page__content">
-              <section 
-                className="about-page__custom-content ql-editor"
-                dangerouslySetInnerHTML={{ __html: contentHtml }}
-              />
-            </main>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900/20 max-w-4xl mx-auto mt-8">
-            <AlertCircle className="h-10 w-10 text-amber-500 mx-auto" />
-            <h3 className="text-base font-extrabold text-slate-800 dark:text-white mt-2">Trang hướng dẫn chưa cấu hình</h3>
-            <p className="max-w-sm text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed mx-auto">
-              Nội dung của trang hướng dẫn mua hàng hiện chưa được thiết lập trên hệ thống quản trị. Vui lòng truy cập trang Quản lý trang để thiết lập nội dung.
-            </p>
+
+          <h1 className="text-4xl sm:text-6xl font-black text-[#05251C] uppercase font-display leading-[0.92] tracking-tighter">
+            BẢNG CHỌN SIZE.
+          </h1>
+
+          <p className="mt-4 text-xs sm:text-sm text-[#6B716E] max-w-lg mx-auto leading-relaxed">
+            Mọi thiết kế của 404Studio được may đo theo hệ kích thước tiêu chuẩn phom dáng người Việt với tỷ lệ thư giãn tự nhiên.
+          </p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="flex items-center justify-center gap-3 mb-10 overflow-x-auto hide-scrollbar pb-2">
+          {sizeCategories.map((cat) => {
+            const isActive = activeTab === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setActiveTab(cat.id)}
+                className={`px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                  isActive
+                    ? "bg-[#05251C] text-[#F5DD20] shadow-md scale-105"
+                    : "bg-white text-[#6B716E] hover:text-[#05251C] border border-[#05251C]/10"
+                }`}
+              >
+                {cat.name}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Size Table Card */}
+        <div className="bg-white rounded-3xl border border-[#05251C]/10 p-6 sm:p-10 shadow-xs overflow-hidden">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#05251C]/10">
+            <div className="flex items-center gap-2.5">
+              <Ruler size={20} className="text-[#05251C]" />
+              <h2 className="text-xl sm:text-2xl font-black font-display text-[#05251C] uppercase tracking-tight">
+                {currentCategory.name}
+              </h2>
+            </div>
+            <span className="micro-label text-[#6B716E]">ĐƠN VỊ TÍNH: CENTIMETER (CM)</span>
           </div>
-        )}
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-[#05251C]/15 bg-[#FBF9F5]">
+                  {currentCategory.headers.map((h, idx) => (
+                    <th key={idx} className="p-4 font-black uppercase tracking-wider text-[#05251C]">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#05251C]/10">
+                {currentCategory.rows.map((row, rIdx) => (
+                  <tr key={rIdx} className="hover:bg-[#FBF9F5] transition-colors">
+                    {row.map((cell, cIdx) => (
+                      <td key={cIdx} className={`p-4 ${cIdx === 0 ? "font-black text-[#05251C]" : "text-[#6B716E]"}`}>
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Sizing Tips */}
+          <div className="mt-8 p-4 rounded-2xl bg-[#05251C]/5 border border-[#05251C]/10 flex items-start gap-3 text-xs text-[#6B716E] leading-relaxed">
+            <Info size={18} className="text-[#05251C] shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-[#05251C]">Lưu ý phom dáng:</strong> Nếu số đo của bạn nằm giữa hai size, hãy chọn size lớn hơn nếu bạn thích mặc kiểu Regular / Oversize thoải mái, hoặc chọn size nhỏ hơn nếu thích mặc kiểu Tailored ôm dáng gọn gàng.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

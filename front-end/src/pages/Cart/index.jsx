@@ -10,6 +10,7 @@ import {
   addCartItemService,
 } from "@/services/cartItem.service";
 import { validateVoucherService } from "@/services/voucher.service";
+import trackingService from "@/services/tracking.service";
 import { toast } from "react-toastify";
 import { AlertCircle, CheckCircle, Trash2, X } from "lucide-react";
 
@@ -20,72 +21,6 @@ import CouponSection from "../../components/cart/CouponSection";
 import EmptyCart from "../../components/cart/EmptyCart";
 import CartSkeleton from "../../components/cart/CartSkeleton";
 import RecommendedProducts from "../../components/cart/RecommendedProducts";
-
-// const DEMO_CART_ITEMS = [
-//   {
-//     _id: "demo-cart-1",
-//     product_id: "demo-product-1",
-//     name: "Áo thun basic form rộng",
-//     category: "Áo nam",
-//     image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=60",
-//     new_price: 249000,
-//     old_price: 329000,
-//     price: 249000,
-//     quantity: 2,
-//     stock: 12,
-//     variants: [
-//       {
-//         _id: "demo-variant-1",
-//         color: "Trắng",
-//         size: "M",
-//         image_url: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=60",
-//         stock: 12,
-//       },
-//     ],
-//   },
-//   {
-//     _id: "demo-cart-2",
-//     product_id: "demo-product-2",
-//     name: "Quần jeans slim fit",
-//     category: "Quần nam",
-//     image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&auto=format&fit=crop&q=60",
-//     new_price: 419000,
-//     old_price: 549000,
-//     price: 419000,
-//     quantity: 1,
-//     stock: 5,
-//     variants: [
-//       {
-//         _id: "demo-variant-2",
-//         color: "Xanh đậm",
-//         size: "32",
-//         image_url: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&auto=format&fit=crop&q=60",
-//         stock: 5,
-//       },
-//     ],
-//   },
-//   {
-//     _id: "demo-cart-3",
-//     product_id: "demo-product-3",
-//     name: "Giày sneaker trắng",
-//     category: "Giày dép",
-//     image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&auto=format&fit=crop&q=60",
-//     new_price: 690000,
-//     old_price: 850000,
-//     price: 690000,
-//     quantity: 1,
-//     stock: 3,
-//     variants: [
-//       {
-//         _id: "demo-variant-3",
-//         color: "Trắng",
-//         size: "42",
-//         image_url: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&auto=format&fit=crop&q=60",
-//         stock: 3,
-//       },
-//     ],
-//   },
-// ];
 
 // Normalizes backend CartItem schema structures to client-compatible store formats
 const normalizeCartItems = (backendItems) => {
@@ -146,7 +81,6 @@ const Cart = () => {
 
   const [loading, setLoading] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     const role = user?.role || user?.data?.role || "";
@@ -171,7 +105,6 @@ const Cart = () => {
   useEffect(() => {
     const fetchCartData = async () => {
       if (!isLoggedIn) {
-        setIsDemoMode(false);
         setCartItems([]);
         setSelectedItemIds([]);
         return;
@@ -181,7 +114,6 @@ const Cart = () => {
         const cartRes = await getCartService();
         const cartData = cartRes.data;
         if (cartRes.success && cartData && cartData._id) {
-          setIsDemoMode(false);
           const cartId = cartData._id;
           const itemsRes = await getCartItemsService(cartId);
           const normalized = normalizeCartItems(itemsRes.data || []);
@@ -192,13 +124,11 @@ const Cart = () => {
             normalized.filter((i) => (i.stock ?? 1) > 0).map((i) => i._id)
           );
         } else {
-          setIsDemoMode(false);
           setCartItems([]);
           setSelectedItemIds([]);
         }
       } catch (err) {
         console.error("Lỗi khi tải dữ liệu giỏ hàng:", err);
-        setIsDemoMode(false);
         setCartItems([]);
         setSelectedItemIds([]);
       } finally {
@@ -242,7 +172,7 @@ const Cart = () => {
             setCouponError("Mã giảm giá sản phẩm không khả dụng cho giá trị đơn hàng này");
             toast.warn("Mã giảm giá sản phẩm đã bị gỡ bỏ do thay đổi giá trị đơn hàng.");
           }
-        } catch (err) {
+        } catch {
           setAppliedCoupon(null);
         }
       };
@@ -259,7 +189,7 @@ const Cart = () => {
             setAppliedShippingCoupon(null);
             toast.warn("Mã miễn phí vận chuyển đã bị gỡ bỏ do thay đổi giá trị đơn hàng.");
           }
-        } catch (err) {
+        } catch {
           setAppliedShippingCoupon(null);
         }
       };
@@ -294,20 +224,20 @@ const Cart = () => {
       return;
     }
 
-    if (isDemoMode) {
-      setCartItems(
-        items.map((currentItem) =>
-          currentItem._id === itemId ? { ...currentItem, quantity: newQty } : currentItem
-        )
-      );
-      return;
-    }
+    const oldQty = item.quantity;
 
     try {
       const res = await updateCartItemService(itemId, { quantity: newQty });
       if (res.success && res.data) {
         const normalized = normalizeCartItems(res.data);
         setCartItems(normalized);
+
+        // Ghi nhận sự kiện thay đổi số lượng giỏ hàng
+        trackingService.trackCartQuantityChange(
+          { id: item.product_id, _id: item.product_id, price: item.price },
+          oldQty,
+          newQty
+        );
         
         // Notify other elements (like headers)
         window.dispatchEvent(
@@ -333,15 +263,7 @@ const Cart = () => {
   const handleConfirmDelete = async () => {
     if (!itemToDeleteId) return;
 
-    if (isDemoMode) {
-      const updatedItems = items.filter((item) => item._id !== itemToDeleteId);
-      setCartItems(updatedItems);
-      setSelectedItemIds((prev) => prev.filter((id) => id !== itemToDeleteId));
-      toast.success("Đã xóa sản phẩm khỏi giỏ hàng!");
-      setDeleteModalOpen(false);
-      setItemToDeleteId(null);
-      return;
-    }
+    const targetItem = items.find((i) => i._id === itemToDeleteId);
 
     try {
       const res = await deleteCartItemService(itemToDeleteId);
@@ -350,6 +272,14 @@ const Cart = () => {
         setCartItems(normalized);
         setSelectedItemIds((prev) => prev.filter((id) => id !== itemToDeleteId));
         toast.success("Đã xóa sản phẩm khỏi giỏ hàng!");
+
+        // Ghi nhận sự kiện xóa sản phẩm khỏi giỏ hàng
+        if (targetItem) {
+          trackingService.trackRemoveFromCart(
+            { id: targetItem.product_id, _id: targetItem.product_id, price: targetItem.price },
+            targetItem.quantity
+          );
+        }
 
         // Notify headers
         window.dispatchEvent(
@@ -418,6 +348,9 @@ const Cart = () => {
   // Checkout redirect handler
   const handleCheckout = () => {
     if (selectedCount === 0) return;
+
+    // Ghi nhận sự kiện checkout_started
+    trackingService.trackCheckoutStarted(checkedItems, finalTotal);
     
     // Pass checked items and applied vouchers to Checkout state
     navigate("/checkout", {
@@ -431,11 +364,6 @@ const Cart = () => {
 
   // Add Recommended product to Cart
   const handleAddRecommendedToCart = async (product) => {
-    if (isDemoMode) {
-      toast.info("Đây là dữ liệu mẫu, vui lòng đăng nhập để thêm sản phẩm thật.");
-      return;
-    }
-
     try {
       const payload = {
         product_id: product._id || product.id,
@@ -490,48 +418,51 @@ const Cart = () => {
   }
 
   return (
-    <div className="max-w-325 mx-auto px-6 py-12 space-y-8 min-h-screen">
-      {/* Header breadcrumbs */}
-      <div className="pd-breadcrumb text-left">
-        Trang chủ <span>›</span> Giỏ hàng <span>›</span> Chi tiết giỏ hàng
-      </div>
+    <div className="min-h-screen bg-[#FBF9F5] py-8 select-none">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* Header breadcrumbs */}
+        <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#6B716E] border-b border-[#05251C]/10 pb-4">
+          <Link to="/" className="hover:text-[#05251C] transition">404STUDIO</Link>
+          <span>/</span>
+          <span className="text-[#05251C] font-black">YOUR BAG</span>
+        </div>
 
-      <div className="text-left">
-        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-baseline gap-2">
-          <span>Giỏ hàng của bạn</span>
-          <span className="text-sm font-medium text-slate-400">
-            ({items.length} sản phẩm)
-          </span>
-        </h2>
-      </div>
+        <div className="text-left flex items-baseline justify-between">
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-[#05251C] flex items-baseline gap-3 font-display uppercase leading-[0.95]">
+            <span>YOUR BAG.</span>
+            <span className="text-xs font-bold text-[#05251C] bg-[#F5DD20] px-3 py-1 rounded-full tabular-nums">
+              {items.length} món
+            </span>
+          </h1>
+        </div>
 
-      {items.length === 0 ? (
-        <EmptyCart />
-      ) : (
-        <div className="grid lg:grid-cols-12 lg:gap-x-12 items-start mt-8 gap-y-8">
-          {/* Left Column: Selection controls + Cart items list */}
-          <div className="lg:col-span-8 space-y-4">
-            {/* Checked selection header panel */}
-            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800 rounded-xl p-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={
-                    items.filter((i) => (i.stock ?? 1) > 0).length > 0 &&
-                    selectedItemIds.length === items.filter((i) => (i.stock ?? 1) > 0).length
-                  }
-                  onChange={handleToggleSelectAll}
-                  className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                />
-                <span>Chọn tất cả ({items.length} sản phẩm)</span>
-              </label>
+        {items.length === 0 ? (
+          <EmptyCart />
+        ) : (
+          <div className="grid lg:grid-cols-12 lg:gap-x-10 items-start mt-6 gap-y-8">
+            {/* Left Column: Selection controls + Cart items list */}
+            <div className="lg:col-span-8 space-y-4">
+              {/* Checked selection header panel */}
+              <div className="flex items-center justify-between bg-white border border-[#E8E5DF] rounded-2xl p-4 text-xs font-semibold text-neutral-700 shadow-2xs">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={
+                      items.filter((i) => (i.stock ?? 1) > 0).length > 0 &&
+                      selectedItemIds.length === items.filter((i) => (i.stock ?? 1) > 0).length
+                    }
+                    onChange={handleToggleSelectAll}
+                    className="h-4.5 w-4.5 rounded border-neutral-300 accent-[#05251C] cursor-pointer"
+                  />
+                  <span>Chọn tất cả ({items.length} sản phẩm)</span>
+                </label>
 
-              {selectedCount > 0 && (
-                <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                  Đã chọn {selectedCount} sản phẩm để thanh toán
-                </span>
-              )}
-            </div>
+                {selectedCount > 0 && (
+                  <span className="text-xs font-bold text-[#05251C]">
+                    Đã chọn {selectedCount} sản phẩm
+                  </span>
+                )}
+              </div>
 
             {/* List of Cart Items */}
             <div className="space-y-4">
@@ -616,6 +547,7 @@ const Cart = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

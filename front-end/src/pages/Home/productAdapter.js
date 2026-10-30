@@ -49,7 +49,7 @@ const getProductImage = (product) => {
   );
 };
 
-export const normalizeProduct = (product = {}, index = 0, categoryMap = {}, isMock = false) => {
+export const normalizeProduct = (product = {}, index = 0, categoryMap = {}) => {
   const price = Number(
     firstValue(
       product.new_price,
@@ -80,9 +80,6 @@ export const normalizeProduct = (product = {}, index = 0, categoryMap = {}, isMo
     slug: firstValue(
       product.slug,
       product.productSlug,
-      (product.id || product._id)?.startsWith("mock-")
-        ? (product.id || product._id)
-        : "",
       "",
     ),
     name: firstValue(
@@ -112,7 +109,6 @@ export const normalizeProduct = (product = {}, index = 0, categoryMap = {}, isMo
       product.tag,
       oldPrice > price && price > 0 ? `-${Math.round(((oldPrice - price) / oldPrice) * 100)}%` : "Mới",
     ),
-    isMock,
   };
 };
 

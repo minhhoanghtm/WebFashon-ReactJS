@@ -1,15 +1,40 @@
-/* Shared visual contract for storefront, account, and administration views. */
+/* 404Studio Normalized Brand System: Deep Forest Green × Warm Ivory × Charcoal × Controlled Accent Lime */
 :root {
-  --wf-ink: #191817;
-  --wf-paper: #fffcf8;
-  --wf-surface: #ffffff;
-  --wf-muted: #f5f1eb;
-  --wf-line: #e8e1d8;
-  --wf-accent: #8d4f2a;
-  --wf-accent-strong: #713b1c;
-  --wf-success: #1f6b4e;
-  --wf-danger: #b42318;
-  --wf-shadow: 0 18px 48px rgb(40 29 20 / 8%);
+  /* Brand Primitives */
+  --studio-forest-dark: #05251C;
+  --studio-forest: #073D2A;
+  --studio-forest-light: #0E5A3E;
+  
+  --studio-ivory: #FBF9F5;
+  --studio-ivory-surface: #FFFFFF;
+  --studio-ivory-muted: #F2EFE9;
+  
+  --studio-charcoal: #121212;
+  --studio-charcoal-muted: #5A5E5B;
+  
+  --studio-lime: #F5DD20;
+  --studio-lime-hover: #D8C314;
+  
+  --studio-border: rgba(5, 37, 28, 0.08);
+  --studio-border-strong: rgba(5, 37, 28, 0.18);
+  
+  /* Mapped Semantic System Tokens */
+  --wf-ink: var(--studio-charcoal);
+  --wf-heading: var(--studio-forest-dark);
+  --wf-paper: var(--studio-ivory);
+  --wf-surface: var(--studio-ivory-surface);
+  --wf-muted: var(--studio-ivory-muted);
+  --wf-line: var(--studio-border);
+  --wf-line-strong: var(--studio-border-strong);
+  --wf-accent: var(--studio-forest);
+  --wf-accent-strong: var(--studio-forest-dark);
+  --wf-highlight: var(--studio-lime);
+  --wf-success: #1F6B4E;
+  --wf-warning: #D97706;
+  --wf-danger: #DC2626;
+  --wf-info: #2563EB;
+  --wf-shadow: 0 12px 32px -4px rgba(5, 37, 28, 0.05);
+  --wf-shadow-lg: 0 20px 40px -8px rgba(5, 37, 28, 0.08);
 }
 
 .dark {
@@ -50,11 +75,34 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .storefront-shell :is(.bg-white, .bg-gray-50) { border-color: var(--wf-line); }
 .storefront-shell :is(.payment-card, .checkout-address-summary) { border-color: var(--wf-line); }
 .storefront-shell .payment-card:has(input:checked) { border-color: var(--wf-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--wf-accent) 14%, transparent); }
-.admin-shell .ant-table-wrapper .ant-table-container { border-color: var(--wf-line); }
-.admin-shell .ant-pagination .ant-pagination-item-active { border-color: var(--wf-accent); }
-.admin-shell .ant-pagination .ant-pagination-item-active a { color: var(--wf-accent); }
-.admin-shell :is(.bg-blue-600, .bg-indigo-600) { background-color: var(--wf-accent) !important; }
-.admin-shell :is(.hover\:bg-blue-700:hover, .hover\:bg-indigo-700:hover) { background-color: var(--wf-accent-strong) !important; }
+
+/* 404Studio Admin Design System */
+.admin-shell {
+  background-color: var(--admin-canvas, #F8FAFC);
+  color: var(--admin-text-primary, #0F172A);
+}
+.admin-shell .admin-card {
+  background-color: var(--admin-surface, #FFFFFF);
+  border-color: var(--admin-border, #E2E8F0);
+}
+.admin-btn-primary {
+  background-color: #05251C !important;
+  color: #FFFFFF !important;
+}
+.admin-btn-primary:hover {
+  background-color: #073D2A !important;
+}
+.admin-btn-primary:focus-visible {
+  outline: 2px solid #05251C;
+  outline-offset: 2px;
+}
+.dark .admin-btn-primary {
+  background-color: #F5DD20 !important;
+  color: #05251C !important;
+}
+.dark .admin-btn-primary:hover {
+  background-color: #e6cf1d !important;
+}
 
 .dark .profile-page,
 .dark .product-detail,

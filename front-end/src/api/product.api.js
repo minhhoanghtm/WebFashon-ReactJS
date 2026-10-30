@@ -23,6 +23,7 @@ export const productApi = {
     if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice);
     if (params.rating) queryParams.append('rating', params.rating);
     if (params.sort) queryParams.append('sort', params.sort);
+    if (params.semantic !== undefined && params.semantic !== null) queryParams.append('semantic', params.semantic);
 
     return axiosClient.get(`/products/search?${queryParams.toString()}`);
   },

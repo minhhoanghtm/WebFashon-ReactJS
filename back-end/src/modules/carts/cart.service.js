@@ -1,6 +1,8 @@
 import cartRepository from "./cart.repository.js";
 import { Cart, CartItem } from "./cart.model.js";
 import { AppError } from "../../common/exceptions/AppError.js";
+import productRepository from "../products/product.repository.js";
+import pricingService from "../campaigns/pricing.service.js";
 
 class CartService {
   async addCart(cartData) {
@@ -28,15 +30,22 @@ class CartService {
   }
 
   async addCartItem(userId, itemData) {
-    const { product_id, variant_id, quantity = 1, price } = itemData;
-
     if (!userId) {
       throw new AppError("Không tìm thấy thông tin người dùng", 401);
     }
 
-    if (!product_id || price === undefined || price === null) {
+    const { product_id, variant_id, quantity = 1 } = itemData;
+    if (!product_id) {
       throw new AppError("Thiếu dữ liệu sản phẩm để thêm vào giỏ hàng", 400);
     }
+
+    const product = await productRepository.findById(product_id);
+    if (!product) {
+      throw new AppError("Sản phẩm không tồn tại", 404);
+    }
+
+    const priceInfo = await pricingService.resolvePrice(product, variant_id, new Date(), userId);
+    const verifiedPrice = priceInfo?.finalPrice ?? product.new_price ?? 0;
 
     // 1. Get or create cart in 1 query
     const cart = await Cart.findOneAndUpdate(
@@ -57,7 +66,7 @@ class CartService {
       },
       {
         $inc: { quantity: Number(quantity) },
-        $setOnInsert: { price: Number(price) },
+        $set: { price: verifiedPrice },
       },
       { upsert: true }
     );
@@ -66,7 +75,8 @@ class CartService {
   }
 
   async getCartItems(cartId) {
-    return await cartRepository.findItemsWithDetails({ cart_id: cartId });
+    const recalculated = await this._recalculateCart(cartId, true);
+    return recalculated.items;
   }
 
   async updateCartItem(itemId, updateData) {
@@ -108,9 +118,40 @@ class CartService {
     );
 
     // Chỉ populate khi caller thực sự cần (GET cart)
-    const populatedItems = populate
-      ? await cartRepository.findItemsWithDetails({ cart_id: cartId })
-      : null;
+    let populatedItems = null;
+    if (populate) {
+      const rawItems = await cartRepository.findItemsWithDetails({ cart_id: cartId });
+      const bundle = await pricingService.getActiveCampaignsBundle();
+      populatedItems = await Promise.all(
+        rawItems.map(async (rawItem) => {
+          const itemObj = rawItem.toObject ? rawItem.toObject() : { ...rawItem };
+          if (itemObj.product_id) {
+            const priceInfo = await pricingService.resolvePrice(
+              itemObj.product_id,
+              itemObj.variant_id,
+              new Date(),
+              null,
+              bundle
+            );
+            itemObj.current_price = priceInfo.finalPrice;
+            itemObj.original_price = priceInfo.originalPrice;
+            itemObj.price_changed = itemObj.current_price !== itemObj.price;
+            itemObj.campaign = priceInfo.campaignId
+              ? {
+                  id: priceInfo.campaignId,
+                  name: priceInfo.campaignName,
+                  type: priceInfo.type,
+                  remainingQuota: priceInfo.remainingQuota,
+                  discountPercentage: priceInfo.discountPercentage,
+                  isQuotaExhausted: priceInfo.isQuotaExhausted || false,
+                  isSale: priceInfo.isSale,
+                }
+              : null;
+          }
+          return itemObj;
+        })
+      );
+    }
 
     return {
       items: populatedItems,

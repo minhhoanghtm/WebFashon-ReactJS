@@ -1,20 +1,19 @@
 import { Server } from "socket.io";
 import { handleSocketEvents } from "./events.js";
+import { isOriginAllowed } from "../app.js";
 
 let io = null;
 
 export const initSocketServer = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: [
-        process.env.CLIENT_URL,
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-      ].filter(Boolean),
+      origin: (origin, callback) => {
+        if (isOriginAllowed(origin)) {
+          callback(null, true);
+        } else {
+          callback(null, false);
+        }
+      },
       credentials: true,
     },
   });

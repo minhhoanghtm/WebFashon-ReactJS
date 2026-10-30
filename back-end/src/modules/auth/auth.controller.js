@@ -1,11 +1,22 @@
 import authService from "./auth.service.js";
 import { successResponse } from "../../common/responses/index.js";
+import trackingService from "../tracking/tracking.service.js";
 
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
 
 export const signUp = async (req, res, next) => {
   try {
     const user = await authService.signUp(req.body);
+    const anonymousId = req.body.anonymous_id || req.headers["x-anonymous-id"];
+
+    if (anonymousId && (user?._id || user?.id)) {
+      trackingService
+        .mergeAnonymousToUser(anonymousId, user._id || user.id)
+        .catch((err) =>
+          console.error("Lỗi khi gộp anonymous profile vào user (signUp):", err.message)
+        );
+    }
+
     return successResponse(res, user, "Đăng ký thành công!", 201);
   } catch (error) {
     next(error);
@@ -18,6 +29,15 @@ export const signIn = async (req, res, next) => {
     const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     const ua = req.headers["user-agent"];
     const { accessToken, refreshToken, user } = await authService.signIn(email, passWord, ip, ua);
+
+    const anonymousId = req.body.anonymous_id || req.headers["x-anonymous-id"];
+    if (anonymousId && (user?.id || user?._id)) {
+      trackingService
+        .mergeAnonymousToUser(anonymousId, user.id || user._id)
+        .catch((err) =>
+          console.error("Lỗi khi gộp anonymous profile vào user (signIn):", err.message)
+        );
+    }
 
     // Set refresh token in httpOnly cookie
     res.cookie("refreshToken", refreshToken, {
@@ -92,9 +112,8 @@ export const signOutAllDevices = async (req, res, next) => {
 export const sendOTPController = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const otp = await authService.sendOTP(email);
-    console.log(`🔑 [Register OTP] Email: ${email} -> OTP: ${otp}`);
-    return successResponse(res, { otp }, "OTP sent");
+    await authService.sendOTP(email);
+    return successResponse(res, null, "Mã OTP đã được gửi đến email của bạn");
   } catch (error) {
     next(error);
   }
@@ -103,9 +122,8 @@ export const sendOTPController = async (req, res, next) => {
 export const sendResetOTPController = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const otp = await authService.sendResetPasswordOTP(email);
-    console.log(`🔑 [Reset Password OTP] Email: ${email} -> OTP: ${otp}`);
-    return successResponse(res, { otp }, "OTP sent");
+    await authService.sendResetPasswordOTP(email);
+    return successResponse(res, null, "Mã OTP đã được gửi đến email của bạn");
   } catch (error) {
     next(error);
   }
@@ -137,6 +155,15 @@ export const signInWithGoogle = async (req, res, next) => {
     const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     const ua = req.headers["user-agent"];
     const { accessToken, refreshToken, user } = await authService.signInWithGoogle(idToken, ip, ua);
+
+    const anonymousId = req.body.anonymous_id || req.headers["x-anonymous-id"];
+    if (anonymousId && (user?._id || user?.id)) {
+      trackingService
+        .mergeAnonymousToUser(anonymousId, user._id || user.id)
+        .catch((err) =>
+          console.error("Lỗi khi gộp anonymous profile vào user (Google):", err.message)
+        );
+    }
 
     // Set refresh token in httpOnly cookie
     res.cookie("refreshToken", refreshToken, {

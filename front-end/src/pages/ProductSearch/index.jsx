@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "motion/react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getAllCategoriesService } from "@/services/category.service";
 import { searchProductsService } from "@/services/product.service";
+import trackingService from "@/services/tracking.service";
 import { useFavoriteStore } from "@/store/favorite.store";
 import EmptyState from "./EmptyState";
 import ProductFilter from "./ProductFilter";
@@ -43,11 +45,29 @@ const ProductSearch = () => {
   const [searchTerm, setSearchTerm] = useState(
     () => searchParams.get("search") || "",
   );
+  const [isSemantic, setIsSemantic] = useState(true);
   const [sortBy, setSortBy] = useState(() => {
     const initialSort = searchParams.get("sort");
     return validSortOptions.includes(initialSort) ? initialSort : "default";
   });
   const [filters, setFilters] = useState(initialFilters);
+  const [gridDensity, setGridDensity] = useState(() => {
+    try {
+      return localStorage.getItem("404studio_grid_density") || "compact";
+    } catch {
+      return "compact";
+    }
+  });
+
+  const handleDensityChange = (density) => {
+    setGridDensity(density);
+    try {
+      localStorage.setItem("404studio_grid_density", density);
+    } catch {
+      // ignore
+    }
+  };
+
   const favoriteItems = useFavoriteStore((state) => state.items);
   const toggleFavorite = useFavoriteStore((state) => state.toggleProduct);
 
@@ -62,6 +82,7 @@ const ProductSearch = () => {
     queryKey: [
       "products-search",
       searchTerm,
+      isSemantic,
       categoryIds,
       filters.minPrice,
       filters.maxPrice,
@@ -70,6 +91,7 @@ const ProductSearch = () => {
     queryFn: async () => {
       const params = {
         search: searchTerm || undefined,
+        semantic: searchTerm && isSemantic ? "true" : undefined,
         category: categoryIds || undefined,
         minPrice: filters.minPrice !== null && filters.minPrice !== undefined ? filters.minPrice : undefined,
         maxPrice: filters.maxPrice !== null && filters.maxPrice !== undefined ? filters.maxPrice : undefined,
@@ -89,7 +111,7 @@ const ProductSearch = () => {
     [favoriteItems],
   );
 
-  useDocumentTitle("Sản phẩm");
+  useDocumentTitle("Sản phẩm — 404STUDIO");
 
   useEffect(() => {
     let isMounted = true;
@@ -122,6 +144,7 @@ const ProductSearch = () => {
     if (categoryParam && Object.keys(categoryMap).length > 0) {
       const categoryName = categoryMap[categoryParam];
       if (categoryName) {
+        trackingService.trackCategoryView(categoryParam, categoryName);
         setFilters((prev) => ({
           ...prev,
           categories: [categoryName],
@@ -136,6 +159,18 @@ const ProductSearch = () => {
     setCurrentPage(1);
   }, [searchParams]);
 
+  // Ghi nhận tìm kiếm và tìm kiếm ngữ nghĩa khi kết quả tải xong
+  useEffect(() => {
+    const cleanQuery = (searchTerm || "").trim();
+    if (cleanQuery && !isLoading && !error) {
+      const count = normalizedProducts.length;
+      if (isSemantic) {
+        trackingService.trackSemanticSearchUsed(cleanQuery, count);
+      }
+      trackingService.trackSearch(cleanQuery, count);
+    }
+  }, [searchTerm, isSemantic, isLoading, error, normalizedProducts.length]);
+
   const normalizedProducts = useMemo(() => {
     const sourceProducts = Array.isArray(apiProducts)
       ? apiProducts
@@ -144,7 +179,7 @@ const ProductSearch = () => {
         : []);
 
     return sourceProducts.map((product, index) =>
-      normalizeProduct(product, index, categoryMap, false),
+      normalizeProduct(product, index, categoryMap),
     );
   }, [apiProducts, categoryMap]);
 
@@ -174,6 +209,7 @@ const ProductSearch = () => {
 
     const result = normalizedProducts.filter((product) => {
       const matchesKeyword =
+        isSemantic ||
         searchWords.length === 0 ||
         searchWords.every((word) =>
           [product.name, product.category, product.description, product.sku].some(
@@ -271,29 +307,53 @@ const ProductSearch = () => {
   };
 
   return (
-    <div className="product-page min-h-screen bg-[#FCFAF7] py-8">
-      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header / Breadcrumb thanh lịch */}
-        <div className="mb-6 flex flex-col gap-1 border-b border-black/[0.06] pb-4">
-          <div className="flex items-center gap-2 text-xs font-medium text-neutral-400">
-            <a href="/" className="hover:text-neutral-700 transition">Trang chủ</a>
+    <div className="product-page min-h-screen bg-[#FBF9F5] py-8 sm:py-12 select-none">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Editorial Page Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-10 pb-6 border-b border-[#05251C]/10"
+        >
+          {/* Breadcrumb minimal */}
+          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#6B716E] mb-3">
+            <a href="/" className="hover:text-[#05251C] transition-colors">404STUDIO</a>
             <span>/</span>
-            <span className="text-neutral-800 font-semibold">Sản phẩm</span>
+            <span className="text-[#05251C] font-bold">DISCOVERY</span>
             {searchTerm && (
               <>
                 <span>/</span>
-                <span className="text-amber-800 font-semibold truncate max-w-[200px]">
+                <span className="text-[#05251C] font-black truncate max-w-[200px]">
                   "{searchTerm}"
                 </span>
               </>
             )}
           </div>
-          <div className="flex items-baseline justify-between mt-1">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
-              Tất cả sản phẩm
-            </h1>
+
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-[#F5DD20] shadow-sm" />
+                <span className="micro-label text-[#6B716E]">
+                  READY-TO-WEAR & ATELIER CATALOG
+                </span>
+              </div>
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-[#05251C] tracking-tighter uppercase font-display leading-[0.92]">
+                ALL CREATIONS.
+              </h1>
+            </div>
+
+            <div className="flex flex-col md:items-end text-xs text-[#6B716E]">
+              <span className="font-display text-base text-[#05251C] font-black tracking-wider">
+                [ {filteredProducts.length} DESIGNS ]
+              </span>
+              <span className="hidden sm:inline mt-0.5 text-xs text-[#6B716E]">
+                Cấu trúc may đo độc bản kết hợp sự phóng khoáng đương đại
+              </span>
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         <div className="product-layout flex flex-col lg:flex-row gap-8 items-start">
           <ProductFilter
@@ -318,16 +378,22 @@ const ProductSearch = () => {
               priceBounds={priceBounds}
               onRemoveFilter={handleRemoveFilter}
               onClearAll={clearAll}
+              gridDensity={gridDensity}
+              onDensityChange={handleDensityChange}
+              isSemantic={isSemantic}
+              onSemanticChange={setIsSemantic}
             />
 
             {isLoading ? (
-              <EmptyState type="loading" />
+              <EmptyState type="loading" gridDensity={gridDensity} />
             ) : currentProducts.length > 0 ? (
               <>
                 <ProductGrid
                   products={currentProducts}
                   favoriteIds={favoriteIds}
                   onToggleFavorite={toggleFavorite}
+                  gridDensity={gridDensity}
+                  searchTerm={searchTerm}
                 />
                 <ProductPagination
                   currentPage={currentPage}

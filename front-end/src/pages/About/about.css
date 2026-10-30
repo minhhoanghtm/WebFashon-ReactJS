@@ -1,11 +1,11 @@
 .about-page {
-  --about-ink: #161616;
-  --about-muted: #6f6b64;
-  --about-line: #e8e4dc;
-  --about-soft: #f7f5f0;
-  --about-accent: #8f6a42;
-  --about-sage: #345c54;
-  background: #fff;
+  --about-ink: #05251C;
+  --about-muted: #6B716E;
+  --about-line: #e8e5df;
+  --about-soft: #f2efe9;
+  --about-accent: #F5DD20;
+  --about-sage: #073D2A;
+  background: #FBF9F5;
   color: var(--about-ink);
   min-height: 100%;
   padding: 28px 24px 88px;
@@ -14,7 +14,7 @@
 .about-page__container,
 .about-page__content {
   margin: 0 auto;
-  max-width: 1240px;
+  max-width: 1536px;
 }
 
 .about-hero {

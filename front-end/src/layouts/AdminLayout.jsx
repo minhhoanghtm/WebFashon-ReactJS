@@ -1,22 +1,44 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
-import { Moon, Sun } from 'lucide-react';
+import AdminHeader from '../components/admin/ui/AdminHeader';
+import AdminProfileModal from '../components/admin/ui/AdminProfileModal';
+import AdminPasswordModal from '../components/admin/ui/AdminPasswordModal';
+import { useAuthStore } from '@/store/auth.store';
+import { getAdminConversationsService } from '@/services/chat.service';
+import { io } from 'socket.io-client';
+import { ENV } from '@/config/env';
+import { tokenStorage } from '@/utils/token';
 
 const AdminLayout = () => {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('admin-theme') || 'dark';
+    return localStorage.getItem('admin-theme') || 'light';
   });
+
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Modals state
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const mainRef = useRef(null);
   const { pathname } = useLocation();
+  const { user } = useAuthStore();
 
+  // Scroll to top on route change
   useEffect(() => {
     if (mainRef.current) {
       mainRef.current.scrollTo(0, 0);
     }
+    const timer = setTimeout(() => {
+      setMobileOpen(false);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
+  // Sync theme with document element
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -30,44 +52,119 @@ const AdminLayout = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  // Socket for real-time chat alerts
+  const socketUrl = useMemo(() => {
+    return ENV.API_BASE_URL.replace('/api', '');
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchCount = async () => {
+      const isAuthorized = user?.role === 'admin' || user?.role === 'staff';
+      if (!isAuthorized) return;
+      try {
+        const res = await getAdminConversationsService({
+          status: 'waiting_admin',
+          limit: 100,
+          type: 'support',
+        });
+        if (!ignore) {
+          setUnreadCount(res?.total || res?.items?.length || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching unread chat count:', error);
+      }
+    };
+    fetchCount();
+    return () => {
+      ignore = true;
+    };
+  }, [user, pathname]);
+
+  useEffect(() => {
+    const isAuthorized = user?.role === 'admin' || user?.role === 'staff';
+    if (!isAuthorized) return;
+
+    const token = tokenStorage.getToken();
+    if (!token) return;
+
+    const socket = io(socketUrl, {
+      auth: { token },
+      transports: ['websocket'],
+    });
+
+    const refreshUnread = async () => {
+      try {
+        const res = await getAdminConversationsService({
+          status: 'waiting_admin',
+          limit: 100,
+          type: 'support',
+        });
+        setUnreadCount(res?.total || res?.items?.length || 0);
+      } catch (error) {
+        console.error('Error updating unread count:', error);
+      }
+    };
+
+    socket.on('message:new', () => {
+      refreshUnread();
+    });
+
+    return () => {
+      if (socket.connected) {
+        socket.disconnect();
+      } else {
+        socket.once('connect', () => {
+          socket.disconnect();
+        });
+      }
+    };
+  }, [user, socketUrl]);
+
   return (
-    <div className="admin-shell flex min-h-screen bg-[var(--wf-paper)] font-sans text-slate-800 transition-colors duration-300 dark:bg-[#171513] dark:text-slate-100">
-      <Sidebar />
+    <div className="admin-shell flex min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans antialiased transition-colors duration-200">
+      {/* Sidebar Navigation */}
+      <Sidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+        unreadCount={unreadCount}
+      />
 
+      {/* Main Wrapper */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-end border-b border-[var(--wf-line)] bg-[var(--wf-paper)]/90 px-6 backdrop-blur dark:border-[var(--wf-line)] dark:bg-[#171513]/90">
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 shadow-sm transition-colors duration-300 dark:border-slate-800 dark:bg-[#1a1f2e]">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              {theme === 'dark' ? 'Tối' : 'Sáng'}
-            </span>
-            <button
-              onClick={toggleTheme}
-              className={`relative flex h-7 w-14 cursor-pointer items-center rounded-full px-0.5 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400/40 ${
-                theme === 'dark'
-                  ? 'border border-blue-500 bg-blue-600'
-                  : 'border border-slate-300 bg-slate-200'
-              }`}
-              aria-label="Toggle Theme"
-            >
-              <div
-                className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-md transition-transform duration-300 ${
-                  theme === 'dark' ? 'translate-x-7' : 'translate-x-0'
-                }`}
-              >
-                {theme === 'dark' ? (
-                  <Moon className="h-3 w-3 fill-blue-600 text-blue-600" />
-                ) : (
-                  <Sun className="h-3 w-3 fill-amber-500 text-amber-500" />
-                )}
-              </div>
-            </button>
-          </div>
-        </header>
+        {/* Sticky Header */}
+        <AdminHeader
+          onToggleSidebar={() => setCollapsed((prev) => !prev)}
+          onToggleMobileSidebar={() => setMobileOpen((prev) => !prev)}
+          collapsed={collapsed}
+          unreadChatsCount={unreadCount}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onOpenProfileModal={() => setIsProfileModalOpen(true)}
+          onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
+        />
 
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-8">
-          <Outlet />
+        {/* Content Area */}
+        <main
+          ref={mainRef}
+          className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8"
+        >
+          <div className="mx-auto max-w-[1600px] w-full">
+            <Outlet />
+          </div>
         </main>
       </div>
+
+      {/* Profile & Password Modals */}
+      <AdminProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
+      <AdminPasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+      />
     </div>
   );
 };

@@ -215,6 +215,5 @@ export const normalizeRelatedProduct = (product = {}, index = 0) => {
     image: firstValue(product.image, product.imageUrl, product.thumbnail, images[0]),
     category: getCategory(product) || "Thời trang",
     rating: Math.min(Math.max(rating, 0), 5),
-    isMock: Boolean(product.isMock),
   };
 };

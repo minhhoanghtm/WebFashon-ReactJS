@@ -58,6 +58,11 @@ class ReviewService {
       throw new AppError("product_id không hợp lệ", 400);
     }
 
+    const productObjectId = new mongoose.Types.ObjectId(product_id);
+    const userObjectId = mongoose.Types.ObjectId.isValid(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : userId;
+
     const reviewPayload = {
       rating,
       content: {
@@ -68,10 +73,10 @@ class ReviewService {
     };
 
     const review = await reviewRepository.findOneAndUpdate(
-      { product_id, user_id: userId },
+      { product_id: productObjectId, user_id: userObjectId },
       {
         $set: reviewPayload,
-        $setOnInsert: { product_id, user_id: userId },
+        $setOnInsert: { product_id: productObjectId, user_id: userObjectId },
       },
       {
         new: true,
@@ -81,7 +86,7 @@ class ReviewService {
       }
     );
 
-    await this.updateProductRating(product_id);
+    await this.updateProductRating(productObjectId);
     return review;
   }
 

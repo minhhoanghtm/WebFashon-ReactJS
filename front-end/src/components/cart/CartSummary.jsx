@@ -1,57 +1,57 @@
 import React from "react";
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard, Loader2, ShieldCheck } from "lucide-react";
 
 const CartSummary = ({
-  subtotal,
-  discount,
-  shippingFee,
-  total,
+  subtotal = 0,
+  discount = 0,
+  shippingFee = 0,
+  total = 0,
   onCheckout,
-  isCheckingOut,
-  selectedCount,
+  isCheckingOut = false,
+  selectedCount = 0,
 }) => {
   const formatPrice = (val) => {
-    return val.toLocaleString("vi-VN") + "đ";
+    return (val || 0).toLocaleString("vi-VN") + " đ";
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm space-y-6 text-left lg:sticky lg:top-24 transition-all duration-300">
-      <h3 className="text-lg font-bold border-b border-slate-100 dark:border-slate-800 pb-3 text-slate-900 dark:text-white">
+    <div className="bg-white border border-neutral-200/80 rounded-2xl p-6 shadow-xs space-y-5 text-left lg:sticky lg:top-24 transition-all">
+      <h3 className="text-base font-extrabold border-b border-neutral-100 pb-3 text-neutral-900 uppercase tracking-wider text-xs">
         Tóm tắt đơn hàng
       </h3>
 
-      <div className="space-y-4 text-sm font-medium text-slate-600 dark:text-slate-400">
+      <div className="space-y-3.5 text-xs text-neutral-600">
         {/* Subtotal */}
-        <div className="flex justify-between">
-          <span>Tạm tính ({selectedCount} sản phẩm)</span>
-          <span className="text-slate-900 dark:text-slate-100">
+        <div className="flex justify-between items-center">
+          <span className="font-medium">Tạm tính ({selectedCount} món)</span>
+          <span className="text-neutral-900 font-bold tabular-nums">
             {formatPrice(subtotal)}
           </span>
         </div>
 
         {/* Discount */}
         {discount > 0 && (
-          <div className="flex justify-between text-green-600 dark:text-green-400">
-            <span>Giảm giá</span>
-            <span>-{formatPrice(discount)}</span>
+          <div className="flex justify-between items-center text-emerald-700 font-semibold">
+            <span>Giảm giá khuyến mãi</span>
+            <span className="tabular-nums">-{formatPrice(discount)}</span>
           </div>
         )}
 
         {/* Shipping Fee */}
-        <div className="flex justify-between">
-          <span>Phí vận chuyển</span>
-          <span className="text-slate-900 dark:text-slate-100">
+        <div className="flex justify-between items-center">
+          <span className="font-medium">Phí vận chuyển</span>
+          <span className="text-neutral-900 font-bold tabular-nums">
             {shippingFee === 0 ? "Miễn phí" : formatPrice(shippingFee)}
           </span>
         </div>
 
         {/* Total separator line */}
-        <div className="border-t border-slate-100 dark:border-slate-800/80 my-4"></div>
+        <div className="border-t border-neutral-200/80 pt-3.5"></div>
 
         {/* Grand Total */}
-        <div className="flex justify-between text-base font-extrabold text-slate-900 dark:text-white">
-          <span>Tổng cộng</span>
-          <span className="text-xl text-blue-600 dark:text-blue-400 font-semibold">
+        <div className="flex justify-between items-baseline text-neutral-900">
+          <span className="text-xs font-bold uppercase tracking-wider">Tổng thanh toán</span>
+          <span className="text-xl font-extrabold text-neutral-950 tabular-nums">
             {formatPrice(total)}
           </span>
         </div>
@@ -59,27 +59,33 @@ const CartSummary = ({
 
       {/* Place Order Button */}
       <button
+        type="button"
         onClick={onCheckout}
         disabled={selectedCount === 0 || isCheckingOut}
-        className="w-full py-4 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-sm uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+        className="w-full py-4 bg-[#05251C] hover:bg-[#073D2A] text-[#F5DD20] font-bold text-xs uppercase tracking-widest rounded-full shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer active:scale-95"
       >
         {isCheckingOut ? (
           <>
-            <Loader2 className="h-4.5 w-4.5 animate-spin" />
-            <span>Đang xử lý...</span>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Đang xử lý đơn...</span>
           </>
         ) : (
           <>
-            <CreditCard className="h-4.5 w-4.5" />
+            <CreditCard className="h-4 w-4" />
             <span>Tiến hành thanh toán</span>
           </>
         )}
       </button>
-      
-      {selectedCount === 0 && (
-        <p className="text-center text-xs text-red-500 dark:text-red-400 font-medium animate-pulse">
-          Vui lòng chọn ít nhất một sản phẩm để thanh toán
+
+      {selectedCount === 0 ? (
+        <p className="text-center text-[11px] text-[#05251C] bg-[#F5DD20]/20 border border-[#F5DD20]/40 py-2 px-3 rounded-xl font-semibold">
+          Vui lòng chọn ít nhất 1 sản phẩm để thanh toán
         </p>
+      ) : (
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-neutral-400 pt-1">
+          <ShieldCheck size={14} className="text-emerald-600" />
+          <span>Thanh toán an toàn & bảo mật 100%</span>
+        </div>
       )}
     </div>
   );

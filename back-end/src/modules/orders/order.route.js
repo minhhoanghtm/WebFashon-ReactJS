@@ -42,7 +42,7 @@ orderRouter.get("/user/purchasing_performance", getPurchasePerformance);
 
 const orderItemRouter = express.Router();
 
-orderItemRouter.get("/:order_id", getOrderItemsByOrderId);
+orderItemRouter.get("/:order_id", protectedRoute, getOrderItemsByOrderId);
 orderItemRouter.post("/", noAdmin, createOrderItem);
 orderItemRouter.put("/:id", noAdmin, updateOrderItem);
 orderItemRouter.delete("/:id", noAdmin, deleteOrderItem);

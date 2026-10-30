@@ -142,6 +142,19 @@ const orderItemSchema = new mongoose.Schema(
     product_name: String,
     product_image: String,
     product_slug: String,
+    campaign_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Campaign",
+      default: null,
+    },
+    original_price: {
+      type: Number,
+      default: null,
+    },
+    campaign_name: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

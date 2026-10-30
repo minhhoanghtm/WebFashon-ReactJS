@@ -1,3 +1,18 @@
+import jwt from "jsonwebtoken";
+
+const getSocketActor = (socket) => {
+  const token =
+    socket.handshake.auth?.token ||
+    socket.handshake.headers?.authorization?.split(" ")[1];
+  if (!token) return null;
+
+  try {
+    return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+  } catch {
+    return null;
+  }
+};
+
 export const handleSocketEvents = (io, socket) => {
   import("../modules/communication/websocket/communication.socket.js")
     .then(({ registerCommunicationSocket }) => registerCommunicationSocket(io, socket))
@@ -7,6 +22,10 @@ export const handleSocketEvents = (io, socket) => {
 
   // Join user room
   socket.on("join", (userId) => {
+    if (!userId) return;
+    const actor = getSocketActor(socket);
+    if (!actor?.userId) return;
+    if (actor.userId.toString() !== userId.toString() && actor.role !== "admin") return;
     if (userId) {
       socket.join(userId.toString());
       console.log(`👤 User joined room: ${userId}`);
@@ -15,6 +34,8 @@ export const handleSocketEvents = (io, socket) => {
 
   // Join admin room
   socket.on("joinAdmin", () => {
+    const actor = getSocketActor(socket);
+    if (actor?.role !== "admin") return;
     socket.join("admin-room");
     console.log("👨‍💼 Admin joined room: admin-room");
   });

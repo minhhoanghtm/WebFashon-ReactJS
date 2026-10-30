@@ -44,6 +44,7 @@ export const searchProductsApi = (params) => {
   if (params.maxPrice !== null && params.maxPrice !== undefined) queryParams.append("maxPrice", params.maxPrice);
   if (params.rating !== null && params.rating !== undefined) queryParams.append("rating", params.rating);
   if (params.sort) queryParams.append("sort", params.sort);
+  if (params.semantic !== undefined && params.semantic !== null) queryParams.append("semantic", params.semantic);
 
   return axiosClient.get(`/products/search?${queryParams.toString()}`);
 };

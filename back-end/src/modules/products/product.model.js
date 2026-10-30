@@ -44,7 +44,6 @@ const ProductVariant = mongoose.model("product_variants", productVariantSchema);
 
 // Cascade delete variants when a product is removed
 
-
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -103,6 +102,11 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    is_featured: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -112,6 +116,7 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.index({ category_id: 1 });
+productSchema.index({ is_active: 1, category_id: 1 });
 productSchema.index({ weight: 1, category_id: 1 });
 
 productSchema.virtual("variants", {

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { ENV } from '../config/env';
 import { tokenStorage } from '../utils/token';
 import { useAuthStore } from '../store/auth.store';
+import { getAnonymousId } from '../utils/anonymousId';
 
 const cleanUrls = (obj) => {
   if (!obj) return obj;
@@ -82,7 +83,7 @@ axiosClient.interceptors.request.use(
               });
               config.headers.Authorization = `Bearer ${newAccessToken}`;
               return config;
-            } catch (err) {
+            } catch {
               return config; // Fallback to current token, let the request fail and trigger standard 401 logout
             }
           }
@@ -124,6 +125,12 @@ axiosClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${currentToken}`;
       }
     }
+
+    const anonymousId = getAnonymousId();
+    if (anonymousId && config.headers) {
+      config.headers['x-anonymous-id'] = anonymousId;
+    }
+
     return config;
   },
   (error) => {
@@ -212,7 +219,7 @@ axiosClient.interceptors.response.use(
         if (isBlocked || isPermissionChange) {
           try {
             useAuthStore.getState().logout();
-          } catch (storeErr) {
+          } catch {
             localStorage.removeItem("accessToken");
           }
 

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getPageBySlugService } from "@/services/page.service";
-import { Loader2, AlertCircle } from "lucide-react";
-import AboutHero from "../About/AboutHero";
+import { Sparkles, ArrowUpRight, Compass, ShieldCheck } from "lucide-react";
 
-// Dynamic Section Components
 import HeroSection from "@/components/page-sections/HeroSection";
 import StorySection from "@/components/page-sections/StorySection";
 import GallerySection from "@/components/page-sections/GallerySection";
@@ -14,104 +13,107 @@ import ProductsSection from "@/components/page-sections/ProductsSection";
 import BannerSection from "@/components/page-sections/BannerSection";
 import CTASection from "@/components/page-sections/CTASection";
 
-import "../About/about.css";
+import heroImg from "../Home/assets/hero-atelier.jpg";
+import summerImg from "../Home/assets/lookbook-summer.jpg";
+import eveningImg from "../Home/assets/lookbook-evening.jpg";
 
-const Landing = () => {
-  useDocumentTitle("Xu hướng thời trang mới");
+export const Landing = () => {
+  useDocumentTitle("Không gian trải nghiệm — 404STUDIO");
   const [contentHtml, setContentHtml] = useState("");
-  const [pageTitle, setPageTitle] = useState("");
-  const [pageExcerpt, setPageExcerpt] = useState("");
   const [pageSections, setPageSections] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLanding = async () => {
       try {
-        setLoading(true);
         const data = await getPageBySlugService("landing").catch(() => null);
-        
         const page = data?.page || data;
         const sections = data?.sections || data?.page?.sections || [];
-
-        if (page) {
-          if (page.title) setPageTitle(page.title);
-          if (page.excerpt) setPageExcerpt(page.excerpt);
-          if (page.content) setContentHtml(page.content);
-        }
-        if (sections && sections.length > 0) {
-          setPageSections(sections);
-        }
+        if (page?.content) setContentHtml(page.content);
+        if (sections && sections.length > 0) setPageSections(sections);
       } catch (err) {
         console.error("Lỗi khi tải trang Landing:", err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchLanding();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="about-loading-container">
-        <Loader2 className="about-loading-spinner animate-spin" />
-        <span>Đang tải thông tin landing...</span>
-      </div>
-    );
-  }
-
-  const hasSections = pageSections && pageSections.length > 0;
-  const hasContent = contentHtml && contentHtml.trim() !== "";
-
   return (
-    <div className="about-page">
-      <div className="about-page__container">
-        {hasSections ? (
-          <div className="w-full">
-            {[...pageSections]
-              .sort((a, b) => (a.order || 0) - (b.order || 0))
-              .map((section) => {
-                switch (section.type) {
-                  case "hero":
-                    return <HeroSection key={section._id || section.order} data={section.data} />;
-                  case "story":
-                    return <StorySection key={section._id || section.order} data={section.data} />;
-                  case "gallery":
-                    return <GallerySection key={section._id || section.order} data={section.data} />;
-                  case "quote":
-                    return <QuoteSection key={section._id || section.order} data={section.data} />;
-                  case "image_text":
-                    return <ImageTextSection key={section._id || section.order} data={section.data} />;
-                  case "products":
-                    return <ProductsSection key={section._id || section.order} data={section.data} />;
-                  case "banner":
-                    return <BannerSection key={section._id || section.order} data={section.data} />;
-                  case "cta":
-                    return <CTASection key={section._id || section.order} data={section.data} />;
-                  default:
-                    return null;
-                }
-              })}
-          </div>
-        ) : hasContent ? (
-          <>
-            <AboutHero title={pageTitle} description={pageExcerpt} />
-            <main className="about-page__content">
-              <section 
-                className="about-page__custom-content ql-editor"
-                dangerouslySetInnerHTML={{ __html: contentHtml }}
-              />
-            </main>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900/20 max-w-4xl mx-auto mt-8">
-            <AlertCircle className="h-10 w-10 text-amber-500 mx-auto" />
-            <h3 className="text-base font-extrabold text-slate-800 dark:text-white mt-2">Trang landing chưa cấu hình</h3>
-            <p className="max-w-sm text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed mx-auto">
-              Nội dung của trang landing hiện chưa được thiết lập trên hệ thống quản trị. Vui lòng truy cập trang Quản lý trang để thiết lập nội dung.
+    <div className="min-h-screen bg-[#F7F7F7] text-[#05251C] select-none">
+      {/* Dynamic CMS Sections if populated */}
+      {pageSections && pageSections.length > 0 ? (
+        <div className="w-full">
+          {[...pageSections]
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .map((section) => {
+              switch (section.type) {
+                case "hero": return <HeroSection key={section._id || section.order} data={section.data} />;
+                case "story": return <StorySection key={section._id || section.order} data={section.data} />;
+                case "gallery": return <GallerySection key={section._id || section.order} data={section.data} />;
+                case "quote": return <QuoteSection key={section._id || section.order} data={section.data} />;
+                case "image_text": return <ImageTextSection key={section._id || section.order} data={section.data} />;
+                case "products": return <ProductsSection key={section._id || section.order} data={section.data} />;
+                case "banner": return <BannerSection key={section._id || section.order} data={section.data} />;
+                case "cta": return <CTASection key={section._id || section.order} data={section.data} />;
+                default: return null;
+              }
+            })}
+        </div>
+      ) : (
+        /* Immersive Fashion Brand Landing */
+        <div className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto mb-16">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C] text-[#F5DD20] text-[10px] font-black tracking-[0.25em] uppercase mb-4 shadow-sm">
+              <Sparkles size={12} />
+              <span>DIGITAL SHOWCASE · ATELIER 2026</span>
+            </div>
+
+            <h1 className="text-4xl sm:text-7xl font-black text-[#05251C] uppercase font-display leading-[0.9] tracking-tighter">
+              WHERE STRUCTURE<br />
+              MEETS FLUIDITY.
+            </h1>
+
+            <p className="mt-6 text-sm sm:text-base text-[#6B716E] max-w-xl mx-auto leading-relaxed font-medium">
+              Khám phá không gian trải nghiệm thời trang may đo đương đại. Nơi từng đường viền và cấu trúc vải hòa quyện thành bản sắc của bạn.
             </p>
           </div>
-        )}
-      </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <div className="rounded-3xl overflow-hidden shadow-lg bg-[#EDE6DD] aspect-4/5 relative group">
+              <img src={heroImg} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-8 text-white">
+                <span className="text-[10px] font-bold text-[#F5DD20] uppercase tracking-widest">CHAPTER 01</span>
+                <h3 className="font-display font-black text-xl uppercase mt-1">TAILORED CUTS</h3>
+              </div>
+            </div>
+
+            <div className="rounded-3xl overflow-hidden shadow-lg bg-[#EDE6DD] aspect-4/5 relative group md:-translate-y-6">
+              <img src={summerImg} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-8 text-white">
+                <span className="text-[10px] font-bold text-[#F5DD20] uppercase tracking-widest">CHAPTER 02</span>
+                <h3 className="font-display font-black text-xl uppercase mt-1">ORGANIC LINEN</h3>
+              </div>
+            </div>
+
+            <div className="rounded-3xl overflow-hidden shadow-lg bg-[#EDE6DD] aspect-4/5 relative group">
+              <img src={eveningImg} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-8 text-white">
+                <span className="text-[10px] font-bold text-[#F5DD20] uppercase tracking-widest">CHAPTER 03</span>
+                <h3 className="font-display font-black text-xl uppercase mt-1">MIDNIGHT SHADES</h3>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Link
+              to="/products"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[#05251C] text-[#F7F7F7] font-display text-xs font-bold uppercase tracking-wider hover:bg-[#F5DD20] hover:text-[#05251C] transition-all duration-300 shadow-xl active:scale-95"
+            >
+              <span>Trải nghiệm toàn bộ bộ sưu tập</span>
+              <ArrowUpRight size={15} />
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

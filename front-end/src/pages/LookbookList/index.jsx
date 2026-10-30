@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getLookbooksService } from '../../services/page.service';
 import { getActiveBannersService } from '../../services/banner.service';
 import LookbookHero from './components/LookbookHero';
+import LookbookMagazineHero from './components/LookbookMagazineHero';
 import LookbookGrid from './components/LookbookGrid';
 import EditorialCard from './components/EditorialCard';
 import LookbookSkeleton from './components/LookbookSkeleton';
@@ -134,8 +135,11 @@ const LookbookList = () => {
   const heroSubtitle = lookbookBanner?.subtitle;
 
   return (
-    <main className="min-h-screen bg-white text-neutral-900 pb-24 font-sans rounded-none">
-      {/* 1. Fullscreen Editorial Hero */}
+    <main className="min-h-screen bg-[#FBF9F5] text-[#05251C] pb-24 font-sans select-none">
+      {/* 1. 2D Editorial Magazine Hero */}
+      <LookbookMagazineHero />
+
+      {/* 1.5. Fullscreen Editorial Hero if custom banner exists */}
       {!isLoadingBanner && lookbookBanner && heroImage && (
         <LookbookHero 
           image={heroImage} 
@@ -145,7 +149,7 @@ const LookbookList = () => {
       )}
 
       {/* Main Content Areas */}
-      <div className="max-w-7xl mx-auto rounded-none pt-16">
+      <div id="lookbook-collage" className="max-w-[1536px] mx-auto pt-16 px-4 sm:px-6 lg:px-8">
         {isLoadingList ? (
           <div className="px-6 md:px-12 py-12">
             <LookbookSkeleton count={4} />

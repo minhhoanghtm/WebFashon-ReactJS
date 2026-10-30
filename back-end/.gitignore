@@ -1,4 +1,7 @@
 .env
+.env.staging
+.env.*.local
+!.env.*.example
 
 # k6 raw output files (chỉ commit summary.md)
 load-tests/results/*.txt

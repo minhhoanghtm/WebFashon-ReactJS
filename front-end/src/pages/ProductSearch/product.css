@@ -1,10 +1,12 @@
-/* Trang Danh mục & Tìm kiếm Sản phẩm - Hệ hình Contemporary Fashion */
+/* 404STUDIO — PRODUCT DISCOVERY EDITORIAL STYLING */
 
 .product-page {
   font-family: var(--font-sans, "Geist", system-ui, sans-serif);
+  background-color: #FBF9F5;
+  color: #171717;
 }
 
-/* Tinh chỉnh thanh cuộn thanh mảnh */
+/* Thin editorial scrollbars */
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;
 }
@@ -14,66 +16,133 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(23, 23, 23, 0.15);
   border-radius: 999px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(23, 23, 23, 0.35);
 }
 
-/* Tinh chỉnh thanh trượt Range Input */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  background: #E5E7EB;
+/* Dual Range Slider styling */
+.range-slider-container {
+  position: relative;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.range-slider-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #E8E5DF;
   border-radius: 999px;
-  outline: none;
 }
 
-input[type="range"]::-webkit-slider-thumb {
+.range-slider-highlight {
+  position: absolute;
+  height: 3px;
+  background-color: #05251C;
+  border-radius: 999px;
+}
+
+.range-slider-input {
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #18181B;
-  cursor: pointer;
-  border: 2px solid #FFFFFF;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: transform 0.15s ease;
+  background: transparent;
+  outline: none;
+  height: 24px;
+  margin: 0;
 }
 
-input[type="range"]::-webkit-slider-thumb:hover {
+.range-slider-input::-webkit-slider-thumb {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #05251C;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.range-slider-input::-webkit-slider-thumb:hover {
   transform: scale(1.15);
+  background: #073D2A;
 }
 
-input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+.range-slider-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #18181B;
-  cursor: pointer;
+  background: #05251C;
   border: 2px solid #FFFFFF;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: transform 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
-/* Animation mượt mà cho Drawer Mobile */
-@keyframes slideInRight {
-  from {
+.range-slider-input::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  background: #073D2A;
+}
+
+/* Shimmer Skeleton Animation */
+@keyframes editorialShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
     transform: translateX(100%);
   }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: #EAE7E0;
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 100%
+  );
+  animation: editorialShimmer 1.6s infinite ease-in-out;
+}
+
+/* Animations for Mobile Drawer */
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+  }
   to {
-    transform: translateX(0);
+    transform: translateY(0);
   }
 }
 
-.slide-in-from-right {
-  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.slide-in-up {
+  animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   .product-page *,
   .product-page *::before,
@@ -82,4 +151,3 @@ input[type="range"]::-moz-range-thumb {
     animation-duration: 0.01ms !important;
   }
 }
-

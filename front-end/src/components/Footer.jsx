@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { MdEmail, MdPhone, MdLocationOn } from "react-icons/md";
 import { FaFacebook, FaInstagram, FaTiktok } from "react-icons/fa";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 import { toast } from "react-toastify";
 import { useWebsiteSettings } from "../hooks/useWebsiteSettings";
-import "./footer.css";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
@@ -14,133 +14,230 @@ const Footer = () => {
   const socialLinks = settings?.socialLinks || {};
   const footerData = settings?.footer || {};
 
-  const siteName = general.siteName || "404 STUDIO";
-  const siteDescription = general.siteDescription || "Thương hiệu thời trang cao cấp mang phong cách hiện đại, tối giản và tinh tế. Nâng tầm phong cách cá nhân của bạn mỗi ngày.";
-  const facebookUrl = socialLinks.facebook || "https://facebook.com";
-  const instagramUrl = socialLinks.instagram || "https://instagram.com";
-  const tiktokUrl = socialLinks.tiktok || "https://tiktok.com";
+  const siteName = general.siteName || "404STUDIO";
   const address = general.address || "123 Đường Đồng Khởi, Quận 1, TP. Hồ Chí Minh";
   const hotline = general.hotline || "0901 234 567";
-  const contactEmail = general.email || "contact@404studio.vn";
-  const copyrightText = footerData.copyrightText || `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`;
+  const contactEmail = general.email || "atelier@404studio.vn";
+  const copyrightText = footerData.copyrightText || `© ${new Date().getFullYear()} ${siteName} ATELIER. ALL RIGHTS RESERVED.`;
 
   const handleSubscribe = (e) => {
     e.preventDefault();
     if (!email) {
-      toast.error("Vui lòng nhập email.");
+      toast.error("Vui lòng nhập địa chỉ email.");
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error("Email không hợp lệ.");
+      toast.error("Địa chỉ email không hợp lệ.");
       return;
     }
-    toast.success("Đăng ký nhận tin tức thành công!");
+    toast.success("Chào mừng bạn gia nhập cộng đồng 404Studio Atelier! ✦");
     setEmail("");
   };
 
   return (
-    <footer className="main-footer">
-      <div className="footer-container">
-        <div className="footer-grid">
-          {/* Cột 1: Brand Info */}
-          <div className="footer-section footer-brand">
-            <Link to="/" className="footer-logo">
-              {siteName}
-            </Link>
-            <p className="footer-brand-desc">
-              {siteDescription}
-            </p>
-            <div className="footer-socials">
-              {facebookUrl && (
-                <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Facebook">
-                  <FaFacebook />
-                </a>
-              )}
-              {instagramUrl && (
-                <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Instagram">
-                  <FaInstagram />
-                </a>
-              )}
-              {tiktokUrl && (
-                <a href={tiktokUrl} target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="TikTok">
-                  <FaTiktok />
-                </a>
-              )}
+    <footer className="relative bg-[#062D22] text-[#F7F6F1] pt-20 pb-12 overflow-hidden border-t border-[#041E17] selection:bg-[#F5DD20] selection:text-[#062D22]">
+      {/* Decorative architectural background glow */}
+      <div className="pointer-events-none absolute -top-40 right-10 w-96 h-96 rounded-full bg-[#041E17]/80 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 left-0 w-80 h-80 rounded-full bg-[#F5DD20]/5 blur-3xl" />
+
+      <div className="relative mx-auto max-w-[1536px] w-full px-4 sm:px-6 lg:px-8">
+        {/* Top Editorial Row: Manifesto & Newsletter */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-16 border-b border-white/10">
+          <div className="lg:col-span-7 space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold tracking-[0.2em] text-[#F5DD20] uppercase">
+              <Sparkles size={12} />
+              <span>Digital Fashion Atelier 2026</span>
             </div>
-          </div>
-
-          {/* Cột 2: Quick Links */}
-          <div className="footer-section">
-            <h3 className="footer-title">Khám phá</h3>
-            <ul className="footer-links">
-              <li className="footer-link-item">
-                <Link to="/">Sản phẩm</Link>
-              </li>
-              <li className="footer-link-item">
-                <Link to="/vouchers">Khuyến mãi</Link>
-              </li>
-              <li className="footer-link-item">
-                <Link to="/about">Giới thiệu</Link>
-              </li>
-              <li className="footer-link-item">
-                <Link to="/policy">Chính sách</Link>
-              </li>
-              <li className="footer-link-item">
-                <Link to="/guide">Hướng dẫn mua hàng</Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Cột 3: Contact Info */}
-          <div className="footer-section">
-            <h3 className="footer-title">Liên hệ</h3>
-            <ul className="footer-contact-list">
-              <li className="footer-contact-item">
-                <MdLocationOn />
-                <span>{address}</span>
-              </li>
-              <li className="footer-contact-item">
-                <MdPhone />
-                <span>{hotline}</span>
-              </li>
-              <li className="footer-contact-item">
-                <MdEmail />
-                <span>{contactEmail}</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Cột 4: Newsletter */}
-          <div className="footer-section footer-newsletter">
-            <h3 className="footer-title">Bản tin</h3>
-            <p className="footer-newsletter-desc">
-              Đăng ký nhận tin tức để nhận các thông tin ưu đãi mới nhất và bộ sưu tập thời trang sắp ra mắt.
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tighter text-[#F7F6F1] font-display leading-[0.98]">
+              DESIGNED TO MOVE WITH YOU.<br />
+              <span className="text-[#F5DD20]">WEAR YOUR STORY.</span>
+            </h2>
+            <p className="text-sm text-[#D1D9CF] max-w-lg leading-relaxed pt-2">
+              Chúng tôi kiến tạo thời trang như một ngôn ngữ thể hiện cá tính độc bản. May đo cấu trúc đương đại giao hòa cùng tinh thần streetwear phá cách.
             </p>
-            <form onSubmit={handleSubscribe} className="footer-newsletter-form">
-              <input
-                type="email"
-                placeholder="Email của bạn"
-                className="footer-newsletter-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                aria-label="Email nhận bản tin"
-              />
-              <button type="submit" className="footer-newsletter-btn">
-                Đăng ký
-              </button>
-            </form>
+          </div>
+
+          <div className="lg:col-span-5 flex flex-col justify-end">
+            <div className="bg-[#041E17]/80 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md">
+              <h3 className="text-xs font-bold uppercase tracking-[0.25em] text-[#F5DD20] mb-2">
+                Brand Community & Newsletter
+              </h3>
+              <p className="text-xs text-[#D1D9CF] mb-5">
+                Đăng ký để nhận sớm nhất thông báo về sàn diễn lookbook và các đợt phát hành giới hạn.
+              </p>
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Nhập email của bạn..."
+                  className="flex-1 bg-[#062D22] border border-white/15 rounded-xl px-4 py-3 text-xs text-[#F7F6F1] placeholder:text-[#D1D9CF]/40 outline-none focus:border-[#F5DD20] transition-colors"
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-xl bg-[#F5DD20] text-[#062D22] font-bold text-xs uppercase tracking-wider hover:bg-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                >
+                  <span>Gia nhập</span>
+                  <ArrowUpRight size={14} />
+                </button>
+              </form>
+            </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="footer-bottom">
-          <div className="footer-copy">
-            {copyrightText}
+        {/* Center Grid: Navigation Columns */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-14 border-b border-white/10">
+          <div>
+            <h4 className="text-[11px] font-bold tracking-[0.25em] uppercase text-[#F5DD20] mb-5">
+              Khám phá
+            </h4>
+            <ul className="space-y-3 text-xs text-[#D1D9CF]">
+              <li>
+                <Link to="/products" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Tất cả sản phẩm</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/lookbooks" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Lookbook & Triển lãm</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/vouchers" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Voucher ưu đãi</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/favorites" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Danh sách yêu thích</span>
+                </Link>
+              </li>
+            </ul>
           </div>
-          {/* <div className="footer-bottom-links">
-            <Link to="/terms">Điều khoản sử dụng</Link>
-            <Link to="/privacy">Chính sách bảo mật</Link>
-          </div> */}
+
+          <div>
+            <h4 className="text-[11px] font-bold tracking-[0.25em] uppercase text-[#F5DD20] mb-5">
+              Thương hiệu
+            </h4>
+            <ul className="space-y-3 text-xs text-[#D1D9CF]">
+              <li>
+                <Link to="/about" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Câu chuyện Atelier</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/blog" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Tạp chí thời trang</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/guide" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Bảng size & Định hình phom</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/landing" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Không gian trải nghiệm</span>
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[11px] font-bold tracking-[0.25em] uppercase text-[#F5DD20] mb-5">
+              Hỗ trợ khách hàng
+            </h4>
+            <ul className="space-y-3 text-xs text-[#D1D9CF]">
+              <li>
+                <Link to="/policy" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Chính sách đổi trả 7 ngày</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/policy" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Vận chuyển & Giao nhận</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/faq" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Câu hỏi thường gặp</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/orders" className="hover:text-white transition-colors flex items-center gap-1 group">
+                  <span className="group-hover:translate-x-1 transition-transform">Tra cứu đơn hàng</span>
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[11px] font-bold tracking-[0.25em] uppercase text-[#F5DD20] mb-5">
+              Liên hệ Atelier
+            </h4>
+            <div className="space-y-3 text-xs text-[#D1D9CF]">
+              <p className="flex items-start gap-2">
+                <MdLocationOn size={16} className="text-[#F5DD20] shrink-0 mt-0.5" />
+                <span>{address}</span>
+              </p>
+              <p className="flex items-center gap-2">
+                <MdPhone size={16} className="text-[#F5DD20] shrink-0" />
+                <span>{hotline}</span>
+              </p>
+              <p className="flex items-center gap-2">
+                <MdEmail size={16} className="text-[#F5DD20] shrink-0" />
+                <span>{contactEmail}</span>
+              </p>
+              <div className="flex items-center gap-3 pt-3">
+                <a
+                  href={socialLinks.facebook || "https://facebook.com"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-[#073D2A] flex items-center justify-center text-[#F1D8CA] hover:bg-[#F5DD20] hover:text-[#05251C] transition-colors"
+                  aria-label="Facebook"
+                >
+                  <FaFacebook size={14} />
+                </a>
+                <a
+                  href={socialLinks.instagram || "https://instagram.com"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-[#073D2A] flex items-center justify-center text-[#F1D8CA] hover:bg-[#F5DD20] hover:text-[#05251C] transition-colors"
+                  aria-label="Instagram"
+                >
+                  <FaInstagram size={14} />
+                </a>
+                <a
+                  href={socialLinks.tiktok || "https://tiktok.com"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-[#073D2A] flex items-center justify-center text-[#F1D8CA] hover:bg-[#F5DD20] hover:text-[#05251C] transition-colors"
+                  aria-label="TikTok"
+                >
+                  <FaTiktok size={14} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* GIANT BRAND TYPOGRAPHY: NEARLY FULLSCREEN */}
+        <div className="pt-12 pb-8 overflow-hidden select-none text-center">
+          <span className="block font-display text-[15vw] leading-[0.78] font-black tracking-tighter text-[#F1D8CA]/10 hover:text-[#F5DD20]/25 transition-colors duration-700 cursor-default">
+            {siteName}
+          </span>
+        </div>
+
+        {/* Bottom Bar: Copyright & Micro Links */}
+        <div className="pt-6 border-t border-[#F1D8CA]/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#D1D9CF]/60 tracking-wider">
+          <div>{copyrightText}</div>
+          <div className="flex items-center gap-6">
+            <Link to="/policy" className="hover:text-white transition-colors">Bảo mật</Link>
+            <span>·</span>
+            <Link to="/policy" className="hover:text-white transition-colors">Điều khoản</Link>
+            <span>·</span>
+            <Link to="/about" className="hover:text-white transition-colors">Về chúng tôi</Link>
+          </div>
         </div>
       </div>
     </footer>

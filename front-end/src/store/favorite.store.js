@@ -1,3 +1,4 @@
+import trackingService from "../services/tracking.service";
 import { create } from "zustand";
 import {
   clearFavoritesService,
@@ -78,6 +79,16 @@ export const useFavoriteStore = create((set, get) => ({
     const optimisticItems = exists
       ? previousItems.filter((item) => String(item.id) !== favoriteProduct.id)
       : [favoriteProduct, ...previousItems];
+
+    if (!exists) {
+      trackingService.trackEvent({
+        event_type: "favorite",
+        product_id: favoriteProduct.id || favoriteProduct._id,
+        meta: {
+          price: favoriteProduct.price || 0,
+        },
+      });
+    }
 
     set({ items: optimisticItems });
 

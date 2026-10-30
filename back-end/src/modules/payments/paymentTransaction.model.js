@@ -17,7 +17,6 @@ const paymentTransactionSchema = new mongoose.Schema(
     transaction_id: {
       type: String,
       default: null,
-      index: true,
     },
     amount: {
       type: Number,
@@ -36,6 +35,15 @@ const paymentTransactionSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+  }
+);
+
+// Compound Unique index: { provider: 1, transaction_id: 1 } for non-null strings
+paymentTransactionSchema.index(
+  { provider: 1, transaction_id: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { transaction_id: { $type: "string" } },
   }
 );
 

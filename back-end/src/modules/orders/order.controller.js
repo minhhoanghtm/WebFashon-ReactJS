@@ -1,5 +1,6 @@
 import orderFacade from "./order.facade.js";
 import { successResponse } from "../../common/responses/index.js";
+import { AppError } from "../../common/exceptions/AppError.js";
 
 export const createOrder = async (req, res, next) => {
   try {
@@ -31,6 +32,15 @@ export const getOrdersByUser = async (req, res, next) => {
 export const updateOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const existing = await orderFacade.getOrderDetail(id);
+    if (!existing) {
+      return next(new AppError("Đơn hàng không tồn tại", 404));
+    }
+    if (userRole !== "admin" && existing.user_id?.toString() !== userId?.toString()) {
+      return next(new AppError("Bạn không có quyền chỉnh sửa đơn hàng này", 403));
+    }
     await orderFacade.updateOrder(id, req.body);
     return successResponse(res, null, "Cập nhật đơn hàng thành công");
   } catch (error) {
@@ -41,6 +51,15 @@ export const updateOrder = async (req, res, next) => {
 export const deleteOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const existing = await orderFacade.getOrderDetail(id);
+    if (!existing) {
+      return next(new AppError("Đơn hàng không tồn tại", 404));
+    }
+    if (userRole !== "admin" && existing.user_id?.toString() !== userId?.toString()) {
+      return next(new AppError("Bạn không có quyền xóa đơn hàng này", 403));
+    }
     await orderFacade.deleteOrder(id);
     return successResponse(res, null, "Xóa đơn hàng thành công");
   } catch (error) {
@@ -78,16 +97,11 @@ export const paymentOrder = async (req, res, next) => {
 
 export const paymentCallback = async (req, res, next) => {
   try {
-    const { orderId, status, transactionId } = req.query;
-    const order = await orderFacade.paymentCallback(
-      orderId,
-      status,
-      transactionId,
-    );
-
-    return res.redirect(
-      `${process.env.CLIENT_URL}/orders?paymentStatus=${order.payment_status}`,
-    );
+    const { orderId } = req.query;
+    // BẢO MẬT: Chặn bypass trạng thái thanh toán từ query parameters không xác thực
+    const order = orderId ? await orderFacade.getOrderDetail(orderId).catch(() => null) : null;
+    const paymentStatus = order?.payment_status || "pending";
+    return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/orders?paymentStatus=${paymentStatus}`);
   } catch (error) {
     next(error);
   }

@@ -2,7 +2,7 @@
   --footer-bg: #141416;
   --footer-ink: #f4f4f5;
   --footer-muted: #a1a1aa;
-  --footer-accent: #c67c2f; /* warm amber gold */
+  --footer-accent: #F5DD20; /* 404Studio brand accent */
   --footer-line: rgb(255 255 255 / 8%);
   --footer-font-header: inherit;
   
@@ -15,7 +15,7 @@
 
 .footer-container {
   margin: 0 auto;
-  max-width: 1200px;
+  max-width: 1536px;
   padding: 0 24px;
 }
 

@@ -1,12 +1,18 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 dotenv.config();
 
 export const connectDB = async () => {
   try {
     console.log("Attempting to connect to MongoDB...");
     const connectionString = process.env.MONGO_CONNECTIONSTRING || "mongodb://127.0.0.1:27017/webfashion_test";
-  const conn = await mongoose.connect(connectionString, {
+    const conn = await mongoose.connect(connectionString, {
       serverSelectionTimeoutMS: 5000,
       connectTimeoutMS: 10000,
     });

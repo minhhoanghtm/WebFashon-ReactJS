@@ -26,66 +26,38 @@
   max-height: 450px;
 }
 
-@keyframes saleFlash {
-  0% {
-    background: #ef4444;
-  }
-  50% {
-    background: #f97316;
-  }
-  100% {
-    background: #ef4444;
-  }
-}
-
+/* 404Studio Atelier Badges - Replaced harsh flashing with calm, luxury accents */
 .sale-badge {
-  background: #8d4f2a;
-  box-shadow: 0 5px 14px rgb(92 49 27 / 18%);
-  display: inline-block;
+  background: #05251C;
+  color: #F5DD20;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 14px rgba(5, 37, 28, 0.22);
 }
 
-/* xoay nhẹ + nhịp glow */
-@keyframes rotateGlow {
-  0% {
-    transform: rotate(-3deg) scale(1);
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+@keyframes subtleBreathing {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
   }
   50% {
-    transform: rotate(3deg) scale(1.05);
-    box-shadow: 0 0 18px rgba(249, 115, 22, 0.8);
-  }
-  100% {
-    transform: rotate(-3deg) scale(1);
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    opacity: 0.88;
+    transform: scale(0.985);
   }
 }
 
-.shake {
-  animation: shake 0.4s ease;
-}
-
-@keyframes shake {
-  0% {
-    transform: rotate(0);
-  }
-  25% {
-    transform: rotate(10deg);
-  }
-  50% {
-    transform: rotate(-10deg);
-  }
-  75% {
-    transform: rotate(10deg);
-  }
-  100% {
-    transform: rotate(0);
-  }
+.atelier-pulse {
+  animation: subtleBreathing 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: "Geist Variable", "Inter", "Segoe UI", system-ui, sans-serif;
-  --font-serif: var(--font-sans);
+  --font-display: "Syne", "Outfit", "Plus Jakarta Sans", sans-serif;
+  --font-heading: "Outfit", "Plus Jakarta Sans", "Geist Variable", sans-serif;
+  --font-editorial: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", "Outfit", "Geist Variable", system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -140,38 +112,53 @@
 }
 
 :root {
-  --background: oklch(0.987 0.008 80);
-  --foreground: oklch(0.19 0.012 65);
-  --card: oklch(1 0.003 80);
-  --card-foreground: oklch(0.19 0.012 65);
-  --popover: oklch(1 0.003 80);
-  --popover-foreground: oklch(0.19 0.012 65);
-  --primary: oklch(0.43 0.09 48);
-  --primary-foreground: oklch(0.99 0.004 80);
-  --secondary: oklch(0.955 0.013 80);
-  --secondary-foreground: oklch(0.25 0.018 65);
-  --muted: oklch(0.955 0.013 80);
-  --muted-foreground: oklch(0.52 0.025 65);
-  --accent: oklch(0.94 0.025 65);
-  --accent-foreground: oklch(0.25 0.018 65);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.016 75);
-  --input: oklch(0.9 0.016 75);
-  --ring: oklch(0.58 0.09 48);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* 404Studio Core Brand Tokens */
+  --studio-forest-dark: #05251C;
+  --studio-forest: #073D2A;
+  --studio-forest-light: #0E5A3E;
+  --studio-ivory: #FBF9F5;
+  --studio-ivory-surface: #FFFFFF;
+  --studio-ivory-muted: #F2EFE9;
+  --studio-charcoal: #121212;
+  --studio-charcoal-muted: #5A5E5B;
+  --studio-lime: #F5DD20;
+  --studio-lime-hover: #D8C314;
+  --studio-border: rgba(5, 37, 28, 0.08);
+  --studio-border-strong: rgba(5, 37, 28, 0.18);
+
+  /* Theme System Variables */
+  --background: #FBF9F5;
+  --foreground: #121212;
+  --card: #FFFFFF;
+  --card-foreground: #121212;
+  --popover: #FFFFFF;
+  --popover-foreground: #121212;
+  --primary: #073D2A;
+  --primary-foreground: #FBF9F5;
+  --secondary: #F2EFE9;
+  --secondary-foreground: #05251C;
+  --muted: #F2EFE9;
+  --muted-foreground: #5A5E5B;
+  --accent: #F5DD20;
+  --accent-foreground: #05251C;
+  --destructive: #DC2626;
+  --border: rgba(5, 37, 28, 0.08);
+  --input: rgba(5, 37, 28, 0.16);
+  --ring: #073D2A;
+  --chart-1: #073D2A;
+  --chart-2: #0E5A3E;
+  --chart-3: #10B981;
+  --chart-4: #F5DD20;
+  --chart-5: #121212;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #F8FAFC;
+  --sidebar-foreground: #0F172A;
+  --sidebar-primary: #073D2A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F1F5F9;
+  --sidebar-accent-foreground: #0F172A;
+  --sidebar-border: #E2E8F0;
+  --sidebar-ring: #073D2A;
 
   --indigo-50: oklch(0.975 0 0);
   --indigo-100: oklch(0.95 0 0);
@@ -286,4 +273,127 @@
     font-weight: 300;
     color: inherit;
   }
+}
+
+/* ==========================================================================
+   IMMERSIVE FASHION REDESIGN DESIGN SYSTEM - 3 COLOR ENVIRONMENTS
+   ========================================================================== */
+
+:root {
+  /* 404Studio Standardized Identity Colors */
+  --color-deep-forest: #062D22;
+  --color-dark-forest: #041E17;
+  --color-warm-ivory: #F7F6F1;
+  --color-pure-white: #FFFFFF;
+  --color-charcoal: #171B19;
+  --color-neutral-gray: #747974;
+  --color-accent-lime: #DCE84A;
+
+  /* Environment 1: Light Editorial (Default Storefront) */
+  --light-bg: #F7F7F7;
+  --light-surface: #FFFFFF;
+  --light-ink: #062D22;
+  --light-secondary: #747974;
+  --light-accent: #DCE84A;
+
+  /* Environment 2: Dark Forest Editorial (About & Storytelling) */
+  --forest-bg: #062D22;
+  --forest-text: #F7F6F1;
+  --forest-secondary: #D1D9CF;
+  --forest-accent: #DCE84A;
+
+  /* Environment 3: Creative Yellow / Lime (Editorial Badges) */
+  --yellow-bg: #DCE84A;
+  --yellow-ink: #062D22;
+  --yellow-surface: #FFFFFF;
+
+  /* Clamp Typography Tokens */
+  --hero-display: clamp(52px, 8.5vw, 160px);
+  --section-heading: clamp(36px, 5.5vw, 96px);
+  --product-title: clamp(28px, 3.5vw, 64px);
+}
+
+.theme-light-editorial {
+  background-color: var(--light-bg);
+  color: var(--light-ink);
+}
+
+.theme-dark-forest {
+  background-color: var(--forest-bg);
+  color: var(--forest-text);
+}
+
+.theme-creative-yellow {
+  background-color: var(--yellow-bg);
+  color: var(--yellow-ink);
+}
+
+/* Typography Classes */
+.font-display {
+  font-family: "Syne", "Outfit", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+}
+
+.text-hero-display {
+  font-size: var(--hero-display);
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  font-family: "Syne", "Outfit", sans-serif;
+  font-weight: 800;
+}
+
+.text-section-heading {
+  font-size: var(--section-heading);
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  font-family: "Syne", "Outfit", sans-serif;
+  font-weight: 800;
+}
+
+.text-product-title {
+  font-size: var(--product-title);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-family: "Syne", "Outfit", sans-serif;
+  font-weight: 700;
+}
+
+.micro-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Draggable Gallery & Custom Cursor Support */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Announcement Bar Marquee 60fps Animation */
+@keyframes announcementMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.announcement-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: announcementMarquee 45s linear infinite;
+  will-change: transform;
+}
+
+.announcement-marquee-track:hover,
+.announcement-marquee-track:focus-within {
+  animation-play-state: paused;
 }

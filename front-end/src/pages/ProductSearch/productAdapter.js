@@ -1,5 +1,19 @@
 import fallbackProductImage from "../Home/assets/product-linen-shirt.jpg";
 
+export const sanitizeImageUrl = (url) => {
+  if (!url || typeof url !== "string") return fallbackProductImage;
+  if (url.includes("550fb60fe8ff")) {
+    return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80";
+  }
+  if (url.includes("dosi-in.com")) {
+    return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80";
+  }
+  if (url.includes("hoangphucphoto.com")) {
+    return "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80";
+  }
+  return url;
+};
+
 const firstValue = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
 
@@ -45,7 +59,7 @@ const getImage = (product) => {
     ? product.variants.find((variant) => variant?.image_url)?.image_url
     : "";
 
-  return firstValue(
+  const chosen = firstValue(
     displayImage,
     variantImage,
     product.image,
@@ -56,6 +70,8 @@ const getImage = (product) => {
     product.avatar,
     fallbackProductImage,
   );
+
+  return sanitizeImageUrl(chosen);
 };
 
 const getVariantValues = (product, key) => {
@@ -88,7 +104,6 @@ export const normalizeProduct = (
   product = {},
   index = 0,
   categoryMap = {},
-  isMock = false,
 ) => {
   const price = Number(
     firstValue(
@@ -109,6 +124,11 @@ export const normalizeProduct = (
     firstValue(product.createdAt, product.created_at, product.ngayTao, 0),
   ).getTime();
 
+  const mainImage = getImage(product);
+  const rawDisplayList = Array.isArray(product.displayProduct) && product.displayProduct.length > 0
+    ? product.displayProduct.map(sanitizeImageUrl)
+    : [mainImage];
+
   return {
     id: String(
       firstValue(
@@ -123,9 +143,6 @@ export const normalizeProduct = (
     slug: firstValue(
       product.slug,
       product.productSlug,
-      (product.id || product._id)?.startsWith("mock-")
-        ? (product.id || product._id)
-        : "",
       "",
     ),
     sku: firstValue(product.sku, product.code, product.maSP, product.maSanPham, ""),
@@ -139,7 +156,9 @@ export const normalizeProduct = (
     ),
     price: Number.isFinite(price) ? price : 0,
     oldPrice: Number.isFinite(oldPrice) ? oldPrice : 0,
-    image: getImage(product),
+    image: mainImage,
+    displayProduct: rawDisplayList,
+    variants: Array.isArray(product.variants) ? product.variants : [],
     category: getCategory(product, categoryMap),
     description: firstValue(
       product.description,
@@ -160,7 +179,6 @@ export const normalizeProduct = (
     sold: Number(firstValue(product.sold, product.daBan, 0)) || 0,
     createdAtTime: Number.isFinite(createdAtTime) ? createdAtTime : 0,
     sourceIndex: index,
-    isMock,
   };
 };
 

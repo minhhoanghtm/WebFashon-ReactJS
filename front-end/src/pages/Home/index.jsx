@@ -1,12 +1,18 @@
+import RecommendedSection from "./RecommendedSection";
 import { useMemo, useState, useEffect } from "react";
 import { useOutletContext, useNavigate, useLocation } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
 import HeroBanner from "./HeroBanner";
+import InteractiveTypographySection from "./InteractiveTypographySection";
+import DraggableCollectionsGallery from "./DraggableCollectionsGallery";
+import BrandIntroductionEditorial from "./BrandIntroductionEditorial";
+import FlashSaleSection from "./FlashSaleSection";
 import LookbookSection from "./LookbookSection";
 import TrendingProducts from "./TrendingProducts";
 import PromotionBannerSection from "./PromotionBannerSection";
 import CategoryShowcase from "./CategoryShowcase";
 import VoucherSection from "./VoucherSection";
+import SectionErrorBoundary from "@/components/common/SectionErrorBoundary";
 import { normalizeProduct, normalizeSearchText } from "./productAdapter";
 import { useFavoriteStore } from "@/store/favorite.store";
 import { getAllCategoriesService } from "@/services/category.service";
@@ -44,15 +50,20 @@ const Home = () => {
   );
 
   const fetchCategories = async () => {
+    let timeoutId;
     try {
       setCategoriesLoading(true);
       setCategoriesError(false);
-      const data = await getAllCategoriesService();
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("Categories timeout")), 8000);
+      });
+      const data = await Promise.race([getAllCategoriesService(), timeoutPromise]);
       setCategories(data || []);
     } catch (err) {
       console.error("Lỗi khi nạp danh mục trang chủ:", err);
       setCategoriesError(true);
     } finally {
+      clearTimeout(timeoutId);
       setCategoriesLoading(false);
     }
   };
@@ -69,7 +80,7 @@ const Home = () => {
     const hasApiProducts = Array.isArray(apiProducts) && apiProducts.length > 0;
     if (hasApiProducts) {
       return apiProducts.map((product, index) =>
-        normalizeProduct(product, index, categoryMap, false),
+        normalizeProduct(product, index, categoryMap),
       );
     }
     return [];
@@ -98,15 +109,20 @@ const Home = () => {
   }, [normalizedProducts, homeSearchTerm, selectedCategoryId]);
 
   const fetchVouchers = async () => {
+    let timeoutId;
     try {
       setVouchersLoading(true);
-      const res = await voucherApi.getPublicVouchers();
-      if (res.success) {
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("Vouchers timeout")), 8000);
+      });
+      const res = await Promise.race([voucherApi.getPublicVouchers(), timeoutPromise]);
+      if (res?.success && Array.isArray(res?.data)) {
         setVouchers(res.data.slice(0, 3));
       }
     } catch (err) {
       console.error("Lỗi khi tải voucher trang chủ:", err);
     } finally {
+      clearTimeout(timeoutId);
       setVouchersLoading(false);
     }
   };
@@ -153,51 +169,122 @@ const Home = () => {
   };
 
   return (
-    <div className="home-page">
-      <div className="home-page__container">
-        {/* 1. Hero Banner */}
-        <HeroBanner />
+    <div className="home-page relative overflow-hidden">
+      {/* Cinematic Ambient Background Blobs */}
+      <div className="ambient-blob-terracotta top-[18%] -left-32" aria-hidden="true" />
+      <div className="ambient-blob-stone top-[45%] -right-40" aria-hidden="true" />
+      <div className="ambient-blob-terracotta top-[72%] -left-20" aria-hidden="true" />
 
-        {/* 2. Product Categories */}
-        <CategoryShowcase
-          categories={categories}
-          loading={categoriesLoading}
-          error={categoriesError}
-          onRetry={fetchCategories}
-          selectedCategoryId={selectedCategoryId}
-          onSelectCategory={setSelectedCategoryId}
-        />
+      {/* Subtle Film Grain Noise Overlay */}
+      <div className="editorial-grain-overlay absolute inset-0 z-0 pointer-events-none" aria-hidden="true" />
 
-        {/* 3. Featured Products */}
-        <TrendingProducts
-          products={filteredProducts}
-          limit={8}
-          isLoading={isLoading}
-          hasError={Boolean(error)}
-          isUsingFallback={false}
-          favoriteIds={favoriteIds}
-          onToggleFavorite={toggleFavorite}
-          title={
-            selectedCategoryId === "all"
-              ? "Sản phẩm nổi bật"
-              : categoryMap[selectedCategoryId] || "Sản phẩm nổi bật"
-          }
-        />
+      <div className="home-page__container relative z-10">
+        {/* 1. Fashion Editorial Hero 2D */}
+        <SectionErrorBoundary name="Hero Banner">
+          <HeroBanner />
+        </SectionErrorBoundary>
 
-        {/* 4. Voucher / Flash Sale Banner */}
-        <PromotionBannerSection />
+        {/* 2. Interactive Typography Section */}
+        <SectionErrorBoundary name="Interactive Typography">
+          <InteractiveTypographySection />
+        </SectionErrorBoundary>
 
-        {/* 5. Voucher Hot Hôm Nay */}
-        <VoucherSection
-          vouchers={vouchers}
-          claimedIds={claimedIds}
-          loading={vouchersLoading}
-          onClaim={handleClaim}
-          homeSearchTerm={homeSearchTerm}
-        />
+        {/* 3. Featured Collections: Horizontal Draggable Gallery */}
+        <SectionErrorBoundary name="Bộ sưu tập nổi bật">
+          <DraggableCollectionsGallery />
+        </SectionErrorBoundary>
 
-        {/* 6. Lookbook / Style Suggestion */}
-        <LookbookSection />
+        {/* 4. Brand Introduction: Editorial Asymmetrical Layout */}
+        <SectionErrorBoundary name="Giới thiệu thương hiệu">
+          <BrandIntroductionEditorial />
+        </SectionErrorBoundary>
+
+        {/* 5. Flash Sale Giờ Vàng */}
+        <SectionErrorBoundary name="Flash Sale">
+          <FlashSaleSection
+            favoriteIds={favoriteIds}
+            onToggleFavorite={toggleFavorite}
+          />
+        </SectionErrorBoundary>
+
+        {/* 7. Product Categories */}
+        <SectionErrorBoundary name="Danh mục sản phẩm">
+          <CategoryShowcase
+            categories={categories}
+            loading={categoriesLoading}
+            error={categoriesError}
+            onRetry={fetchCategories}
+            selectedCategoryId={selectedCategoryId}
+            onSelectCategory={setSelectedCategoryId}
+          />
+        </SectionErrorBoundary>
+
+        {/* 8. Featured Products / New Arrivals */}
+        <SectionErrorBoundary name="Sản phẩm nổi bật">
+          <TrendingProducts
+            products={filteredProducts}
+            limit={8}
+            isLoading={isLoading}
+            hasError={Boolean(error)}
+            isUsingFallback={false}
+            favoriteIds={favoriteIds}
+            onToggleFavorite={toggleFavorite}
+            title={
+              selectedCategoryId === "all"
+                ? "Sản phẩm nổi bật"
+                : categoryMap[selectedCategoryId] || "Sản phẩm nổi bật"
+            }
+          />
+        </SectionErrorBoundary>
+
+        {/* 9. Đề xuất Cá nhân hóa: Dành cho bạn */}
+        <SectionErrorBoundary name="Gợi ý dành cho bạn">
+          <RecommendedSection
+            categoryMap={categoryMap}
+            favoriteIds={favoriteIds}
+            onToggleFavorite={toggleFavorite}
+          />
+        </SectionErrorBoundary>
+
+        {/* 10. Voucher / Promotion Banner */}
+        <SectionErrorBoundary name="Banner khuyến mãi">
+          <PromotionBannerSection />
+        </SectionErrorBoundary>
+
+        {/* 11. Voucher Hot Hôm Nay */}
+        <SectionErrorBoundary name="Voucher ưu đãi">
+          <VoucherSection
+            vouchers={vouchers}
+            claimedIds={claimedIds}
+            loading={vouchersLoading}
+            onClaim={handleClaim}
+            homeSearchTerm={homeSearchTerm}
+          />
+        </SectionErrorBoundary>
+
+        {/* 12. Lookbook / Style Stories */}
+        <SectionErrorBoundary name="Lookbook">
+          <LookbookSection />
+        </SectionErrorBoundary>
+
+        {/* 13. Editorial Marquee Ribbon */}
+        <div className="mt-20 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden py-6 border-y border-[#062D22]/15 bg-[#062D22] text-[#F7F6F1] select-none">
+          <div className="editorial-marquee-track flex items-center gap-12 text-xs sm:text-sm font-extrabold uppercase tracking-[0.28em]">
+            <span>404STUDIO · DIGITAL FASHION ATELIER</span>
+            <span className="text-[#F5DD20]">✦</span>
+            <span>CRAFTED FOR THE UNCONVENTIONAL</span>
+            <span className="text-[#F5DD20]">✦</span>
+            <span>BEYOND THE ORDINARY</span>
+            <span className="text-[#F5DD20]">✦</span>
+            <span>CONTEMPORARY VIETNAMESE TAILORING</span>
+            <span className="text-[#F5DD20]">✦</span>
+            <span>EST. 2026 · HANOI / SAIGON</span>
+            <span className="text-[#F5DD20]">✦</span>
+            <span>404STUDIO · DIGITAL FASHION ATELIER</span>
+            <span className="text-[#F5DD20]">✦</span>
+            <span>CRAFTED FOR THE UNCONVENTIONAL</span>
+          </div>
+        </div>
       </div>
     </div>
   );

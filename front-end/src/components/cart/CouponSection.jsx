@@ -19,9 +19,9 @@ const CouponSection = ({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm space-y-4 text-left transition-all duration-300">
-      <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-        <Ticket className="h-4.5 w-4.5 text-blue-500" />
+    <div className="bg-white border border-[#E8E5DF] rounded-2xl p-5 shadow-2xs space-y-4 text-left transition-all duration-300">
+      <div className="flex items-center gap-2 text-sm font-bold text-[#05251C]">
+        <Ticket className="h-4.5 w-4.5 text-[#05251C]" />
         <span>Mã giảm giá (Voucher)</span>
       </div>
 
@@ -82,13 +82,13 @@ const CouponSection = ({
               placeholder="Nhập mã giảm giá..."
               value={couponCode}
               onChange={(e) => setCouponCode(e.target.value)}
-              className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200 placeholder-slate-400 uppercase font-mono tracking-wider"
+              className="flex-1 min-w-0 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#05251C] text-neutral-900 placeholder-neutral-400 uppercase font-mono tracking-wider"
               disabled={isValidating}
             />
             <button
               type="submit"
               disabled={!couponCode.trim() || isValidating}
-              className="bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition disabled:opacity-50 flex items-center justify-center shrink-0 cursor-pointer"
+              className="bg-[#05251C] hover:bg-[#073D2A] text-[#F5DD20] font-bold text-xs px-5 py-2.5 rounded-xl transition duration-200 disabled:opacity-40 flex items-center justify-center shrink-0 cursor-pointer active:scale-95"
             >
               {isValidating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

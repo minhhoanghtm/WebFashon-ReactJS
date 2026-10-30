@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import trackingService from "@/services/tracking.service";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -70,6 +71,24 @@ const ProductDetail = () => {
   }, [product, setContext]);
 
   useDocumentTitle(product?.name || "Chi tiết sản phẩm");
+
+  const lastTrackedProductIdRef = useRef(null);
+
+  useEffect(() => {
+    const pId = String(rawProduct?._id || product?.id || "");
+    if (pId && lastTrackedProductIdRef.current !== pId) {
+      lastTrackedProductIdRef.current = pId;
+      trackingService.trackEvent({
+        event_type: "view_product",
+        product_id: pId,
+        category_id: rawProduct?.category_id || product?.category_id,
+        meta: {
+          price: product?.price || rawProduct?.new_price || 0,
+          source: "product_detail",
+        },
+      });
+    }
+  }, [rawProduct?._id, product?.id, rawProduct?.category_id, product?.category_id, product?.price, rawProduct?.new_price]);
 
   useEffect(() => {
     if (product) {
@@ -202,51 +221,112 @@ const ProductDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="product-detail-state" role="status">
-        <LoaderCircle className="product-detail-state__loader" aria-hidden="true" />
-        <span>Đang tải sản phẩm...</span>
+      <div className="min-h-screen bg-[#FBF9F5] flex flex-col items-center justify-center p-8 text-neutral-500" role="status">
+        <LoaderCircle className="animate-spin text-[#05251C] mb-3" size={36} aria-hidden="true" />
+        <span className="text-sm font-semibold text-[#05251C]">Đang tải chi tiết thiết kế...</span>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="product-detail-state">
-        <AlertCircle size={34} aria-hidden="true" />
-        <h1>{error || "Sản phẩm không tồn tại"}</h1>
-        <p>Sản phẩm bạn đang tìm có thể đã bị ẩn hoặc đường dẫn không đúng.</p>
-        <Link to="/products">Quay lại trang sản phẩm</Link>
+      <div className="min-h-screen bg-[#FBF9F5] flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-[#05251C]/5 text-[#05251C] flex items-center justify-center mb-4 border border-[#05251C]/15 shadow-2xs">
+          <AlertCircle size={32} aria-hidden="true" />
+        </div>
+        <h1 className="text-xl sm:text-2xl font-black text-[#05251C] font-display uppercase mb-2">
+          {error || "Sản phẩm không tồn tại"}
+        </h1>
+        <p className="text-sm text-[#6B716E] max-w-md mb-6 leading-relaxed">
+          Sản phẩm bạn đang tìm kiếm có thể đã hết hàng, đổi tên hoặc đã được cập nhật đường dẫn mới.
+        </p>
+        <Link
+          to="/products"
+          className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#05251C] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#073D2A] hover:text-[#F5DD20] transition duration-200 shadow-sm"
+        >
+          Khám phá sản phẩm khác
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="product-detail">
-      <div className="product-detail__container">
-        <nav className="product-detail__breadcrumb" aria-label="Điều hướng">
-          <Link to="/">Trang chủ</Link>
+    <div className="product-detail min-h-screen bg-[#FBF9F5] py-6 sm:py-8 lg:py-4 select-none">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumb thanh lịch */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-neutral-400 mb-6 lg:mb-3 border-b border-black/[0.05] pb-4 lg:pb-2" aria-label="Điều hướng">
+          <Link to="/" className="hover:text-neutral-700 transition">Trang chủ</Link>
           <span>/</span>
-          <Link to="/products">Sản phẩm</Link>
+          <Link to="/products" className="hover:text-neutral-700 transition">Sản phẩm</Link>
           <span>/</span>
-          <strong>{product.name}</strong>
+          {product.category && (
+            <>
+              <Link to={`/products?category=${encodeURIComponent(product.category)}`} className="hover:text-neutral-700 transition">
+                {product.category}
+              </Link>
+              <span>/</span>
+            </>
+          )}
+          <span className="text-neutral-800 font-semibold truncate max-w-[240px]">
+            {product.name}
+          </span>
         </nav>
 
-        <section className="product-detail__main" aria-label="Chi tiết sản phẩm">
-          <ProductGallery
-            key={product.slug || product.id}
-            images={product.images}
-            productName={product.name}
-          />
-          <ProductInfo product={product} variants={variants} />
+        {/* Khối chính 2 cột: Gallery bên trái (52%), Information bên phải (48%) */}
+        <section className="flex flex-col lg:flex-row gap-8 lg:gap-10 xl:gap-12 items-start" aria-label="Chi tiết sản phẩm">
+          {/* Cột Trái: Studio Gallery */}
+          <div className="w-full lg:w-[52%] xl:w-[50%] flex-shrink-0">
+            <ProductGallery
+              key={product.slug || product.id}
+              images={product.images}
+              productName={product.name}
+            />
+          </div>
+
+          {/* Cột Phải: Information & Actions */}
+          <div className="w-full lg:w-[48%] xl:w-[50%] lg:sticky lg:top-24">
+            <ProductInfo product={product} variants={variants} />
+          </div>
         </section>
 
+        {/* Thông tin mô tả & thông số Tabs */}
         <ProductTabs product={product} variants={variants} />
+
+        {/* Đánh giá từ khách hàng */}
         <ProductReview
           reviews={normalizedReviews}
           productId={product.id}
           averageRating={product.rating}
         />
+
+        {/* Sản phẩm liên quan */}
         <RelatedProducts products={normalizedRelatedProducts} />
+      </div>
+
+      {/* Sticky Buy Bar on Mobile (chỉ hiển thị trên mobile) */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-neutral-200 p-3 sm:hidden flex items-center justify-between gap-3 shadow-2xl">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <img
+            src={product.images?.[0] || ""}
+            alt=""
+            className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-neutral-200"
+          />
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-bold text-neutral-900 truncate">{product.name}</span>
+            <strong className="text-xs font-extrabold text-neutral-950 tabular-nums">
+              {product.price > 0 ? `${product.price.toLocaleString("vi-VN")} đ` : "Liên hệ"}
+            </strong>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            window.scrollTo({ top: 380, behavior: "smooth" });
+          }}
+          className="px-5 py-2.5 rounded-full bg-[#05251C] text-white font-bold text-xs uppercase tracking-wider flex-shrink-0 shadow-md active:scale-95 hover:bg-[#073D2A] hover:text-[#F5DD20] transition duration-200 cursor-pointer"
+        >
+          Chọn mua
+        </button>
       </div>
     </div>
   );

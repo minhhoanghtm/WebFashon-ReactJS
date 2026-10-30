@@ -176,10 +176,10 @@
 /* ── Verify button ───────────────────────────────────── */
 .otp-verify-btn {
   align-items: center;
-  background: #171717;
-  border: 1px solid #171717;
-  border-radius: 10px;
-  color: #fff;
+  background: #05251C;
+  border: 1px solid #05251C;
+  border-radius: 999px;
+  color: #F5DD20;
   cursor: pointer;
   display: flex;
   font-size: 0.96rem;
@@ -197,8 +197,8 @@
 }
 
 .otp-verify-btn:hover:not(:disabled) {
-  background: #2a2926;
-  border-color: #2a2926;
+  background: #073D2A;
+  border-color: #073D2A;
   transform: translateY(-1px);
 }
 

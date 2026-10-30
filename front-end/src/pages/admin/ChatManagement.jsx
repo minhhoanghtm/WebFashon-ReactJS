@@ -73,9 +73,8 @@ const getRoleLabel = (role) => {
 
 const ChatManagement = () => {
    const { settings } = useWebsiteSettings();
-    const general = settings?.general || {};
-    const siteName = general.siteName || "";
-    useDocumentTitle("Quản lý chat");
+   const siteName = settings?.general?.siteName || "";
+   useDocumentTitle(siteName ? `Quản lý chat — ${siteName}` : "Quản lý chat");
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);

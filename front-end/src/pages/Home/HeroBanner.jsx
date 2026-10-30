@@ -1,13 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { getActiveBannersService, trackBannerClickService } from "../../services/banner.service";
+import { motionEase } from "../../config/motionTokens";
+import usePrefersReducedMotion from "../../hooks/usePrefersReducedMotion";
+import MagneticCTA from "../../components/motion/MagneticCTA";
+import heroAtelierImage from "./assets/hero-atelier.jpg";
+
+const MotionSection = motion.section;
+const MotionDiv = motion.div;
+const MotionSpan = motion.span;
+const MotionH1 = motion.h1;
+const MotionP = motion.p;
+const MotionButton = motion.button;
 
 const HeroBanner = () => {
   const navigate = useNavigate();
   const [activeBanners, setActiveBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const heroRef = useRef(null);
+  const prefersReduced = usePrefersReducedMotion();
+
+  // Scroll parallax for hero exit
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+
+  const heroImageY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  const heroContentY = useTransform(scrollYProgress, [0, 1], ["0px", "-26px"]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8, 1], [1, 0.95, 0.86]);
 
   useEffect(() => {
     let isMounted = true;
@@ -15,7 +39,7 @@ const HeroBanner = () => {
       try {
         const banners = await getActiveBannersService();
         if (isMounted) {
-          const heroBanners = banners.filter(b => b.position === "home_hero");
+          const heroBanners = banners.filter((b) => b.position === "home_hero");
           setActiveBanners(heroBanners);
         }
       } catch (error) {
@@ -32,40 +56,37 @@ const HeroBanner = () => {
     };
   }, []);
 
-  // A neutral fallback keeps the page useful without claiming a non-existent campaign.
   const defaultFallbackBanner = {
     id: "default-hero-atelier",
     title: "Khám phá phong cách của bạn",
     subtitle: "Dễ dàng tìm những sản phẩm phù hợp trong danh mục thời trang của chúng tôi.",
-    eyebrow: "404 STUDIO",
-    buttonText: "Xem sản phẩm",
-    imageUrl: "",
-    mobileImageUrl: "",
+    eyebrow: "404 STUDIO · ATELIER 2026",
+    buttonText: "Khám phá bộ sưu tập",
+    imageUrl: heroAtelierImage,
+    mobileImageUrl: heroAtelierImage,
     targetType: "category",
     targetId: "",
     linkUrl: "/products",
     isApi: false,
   };
 
-  // Build list of slides: map API active banners or use curated fallback
-  const bannerList = activeBanners.length > 0
-    ? activeBanners.map((b) => ({
-        id: b._id || b.id,
-        // TEMPORARY FIX: Correct typo "Wellcome" to "Welcome" from database strings until fixed in MongoDB.
-        title: b.title ? b.title.replace(/Wellcome/gi, "Welcome") : "",
-        subtitle: b.subtitle ? b.subtitle.replace(/Wellcome/gi, "Welcome") : "",
-        eyebrow: "Thiết kế nổi bật",
-        buttonText: b.buttonText || "Khám phá ngay",
-        imageUrl: b.imageUrl,
-        mobileImageUrl: b.mobileImageUrl,
-        targetType: b.targetType,
-        targetId: b.targetId,
-        linkUrl: b.linkUrl,
-        isApi: true,
-      }))
-    : [defaultFallbackBanner];
+  const bannerList =
+    activeBanners.length > 0
+      ? activeBanners.map((b) => ({
+          id: b._id || b.id,
+          title: b.title ? b.title.replace(/Wellcome/gi, "Welcome") : "",
+          subtitle: b.subtitle ? b.subtitle.replace(/Wellcome/gi, "Welcome") : "",
+          eyebrow: "Thiết kế nổi bật",
+          buttonText: b.buttonText || "Khám phá ngay",
+          imageUrl: b.imageUrl,
+          mobileImageUrl: b.mobileImageUrl,
+          targetType: b.targetType,
+          targetId: b.targetId,
+          linkUrl: b.linkUrl,
+          isApi: true,
+        }))
+      : [defaultFallbackBanner];
 
-  // Auto-play timer
   useEffect(() => {
     if (bannerList.length <= 1) return;
     const timer = setInterval(() => {
@@ -99,7 +120,6 @@ const HeroBanner = () => {
     }
 
     if (banner.id) {
-      // Increment clickCount in the background
       await trackBannerClickService(banner.id);
     }
 
@@ -121,71 +141,151 @@ const HeroBanner = () => {
     }
   };
 
+  const currentBanner = bannerList[currentIndex] || bannerList[0];
+
   return (
-    <section className="home-hero group min-h-[510px] relative w-full overflow-hidden rounded-[22px] bg-[#272522]">
-      {bannerList.map((banner, index) => {
-        const isActive = index === currentIndex;
-        return (
-          <div
-            key={banner.id + "-" + index}
-            onClick={() => handleBannerClick(banner)}
-            className={`absolute inset-0 w-full h-full cursor-pointer transition-all duration-1000 ease-in-out flex items-center
-              ${isActive ? "opacity-100 z-10 scale-100" : "opacity-0 z-0 scale-105 pointer-events-none"}`}
+    <MotionSection
+      ref={heroRef}
+      style={prefersReduced ? {} : { opacity: heroOpacity }}
+      className="home-hero group min-h-[510px] relative w-full overflow-hidden rounded-[22px] bg-[#272522] will-change-transform shadow-lg"
+    >
+      {/* Editorial Frame Expansion Stage */}
+      <AnimatePresence mode="wait">
+        <MotionDiv
+          key={currentBanner.id + "-" + currentIndex}
+          initial={
+            prefersReduced
+              ? { opacity: 0 }
+              : { clipPath: "inset(4% 6% 4% 6% round 24px)", opacity: 0, scale: 1.05 }
+          }
+          animate={
+            prefersReduced
+              ? { opacity: 1 }
+              : { clipPath: "inset(0% 0% 0% 0% round 22px)", opacity: 1, scale: 1 }
+          }
+          exit={
+            prefersReduced
+              ? { opacity: 0 }
+              : { opacity: 0, scale: 1.02 }
+          }
+          transition={{ duration: prefersReduced ? 0.2 : 0.95, ease: motionEase.editorialReveal }}
+          onClick={() => handleBannerClick(currentBanner)}
+          className="absolute inset-0 w-full h-full cursor-pointer flex items-center overflow-hidden"
+        >
+          <MotionDiv
+            style={prefersReduced ? {} : { y: heroImageY }}
+            className="absolute inset-0 w-full h-full select-none"
           >
-            {/* Slide Background Image */}
-            <picture className="absolute inset-0 w-full h-full select-none">
-              {banner.mobileImageUrl && (
-                <source media="(max-width: 768px)" srcSet={encodeURI(banner.mobileImageUrl)} />
+            <picture className="w-full h-full">
+              {currentBanner.mobileImageUrl && (
+                <source media="(max-width: 768px)" srcSet={encodeURI(currentBanner.mobileImageUrl)} />
               )}
               <img
-                src={banner.imageUrl ? encodeURI(banner.imageUrl) : ""}
-                alt={banner.title}
+                src={currentBanner.imageUrl ? encodeURI(currentBanner.imageUrl) : ""}
+                alt={currentBanner.title}
                 className="w-full h-full object-cover pointer-events-none"
               />
             </picture>
+          </MotionDiv>
 
-            {/* Premium Dark Overlay */}
-            <div className="home-hero__overlay" />
+          {/* Premium Dark Overlay */}
+          <div className="home-hero__overlay" />
 
-            {/* Slide Text Content */}
-            <div className="home-hero__content select-none">
-              <span className="home-hero__eyebrow">{banner.eyebrow}</span>
-              <h1 id="home-hero-title" className="drop-shadow-sm">{banner.title}</h1>
-              {banner.subtitle && <p>{banner.subtitle}</p>}
-              <button
+          {/* Animated Slide Text Content */}
+          <MotionDiv
+            style={prefersReduced ? {} : { y: heroContentY }}
+            className="home-hero__content select-none relative z-10"
+          >
+            {/* Eyebrow */}
+            <MotionSpan
+              initial={{ opacity: 0, y: 14, letterSpacing: "0.15em" }}
+              animate={{ opacity: 1, y: 0, letterSpacing: "0.22em" }}
+              transition={{ duration: 0.6, delay: 0.15, ease: motionEase.editorialReveal }}
+              className="home-hero__eyebrow text-[#F5DD20] font-bold uppercase tracking-[0.22em]"
+            >
+              {currentBanner.eyebrow}
+            </MotionSpan>
+
+            {/* Title with Mask Reveal */}
+            <div className="overflow-hidden">
+              <MotionH1
+                id="home-hero-title"
+                initial={{ opacity: 0, y: "100%" }}
+                animate={{ opacity: 1, y: "0%" }}
+                transition={{ duration: 0.7, delay: 0.24, ease: motionEase.editorialReveal }}
+                className="drop-shadow-sm font-heading"
+              >
+                {currentBanner.title}
+              </MotionH1>
+            </div>
+
+            {/* Subtitle */}
+            {currentBanner.subtitle && (
+              <MotionP
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.38, ease: motionEase.cinematic }}
+              >
+                {currentBanner.subtitle}
+              </MotionP>
+            )}
+
+            {/* Tactile Magnetic CTA Button */}
+            <MagneticCTA strength={0.25} radius={100} className="pt-2">
+              <MotionButton
                 type="button"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.48, ease: motionEase.cinematic }}
+                whileHover={{ scale: 1.04, y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleBannerClick(banner);
+                  handleBannerClick(currentBanner);
                 }}
+                className="group/btn cursor-pointer shadow-md"
               >
-                {banner.buttonText}
-                <ArrowDown size={17} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-        );
-      })}
+                <span>{currentBanner.buttonText}</span>
+                <ArrowDown
+                  size={17}
+                  aria-hidden="true"
+                  className="transition-transform group-hover/btn:translate-y-0.5"
+                />
+              </MotionButton>
+            </MagneticCTA>
+          </MotionDiv>
+        </MotionDiv>
+      </AnimatePresence>
 
-      {/* Slide Navigation Buttons */}
+      {/* Slide Navigation Buttons with Tactile Magnetic Feel */}
       {bannerList.length > 1 && (
         <>
-          <button
-            onClick={handlePrev}
-            className="absolute left-5 top-1/2 -translate-y-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-black/30 hover:bg-white hover:text-black text-white transition-all duration-300 opacity-0 group-hover:opacity-100 border-none shadow-sm cursor-pointer"
-            style={{ margin: 0, padding: 0 }}
-            aria-label="Slide trước"
-          >
-            <ChevronLeft size={22} />
-          </button>
-          <button
-            onClick={handleNext}
-            className="absolute right-5 top-1/2 -translate-y-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-black/30 hover:bg-white hover:text-black text-white transition-all duration-300 opacity-0 group-hover:opacity-100 border-none shadow-sm cursor-pointer"
-            style={{ margin: 0, padding: 0 }}
-            aria-label="Slide tiếp theo"
-          >
-            <ChevronRight size={22} />
-          </button>
+          <div className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+            <MagneticCTA strength={0.3} radius={70}>
+              <button
+                type="button"
+                onClick={handlePrev}
+                className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-black/50 hover:bg-[#F5DD20] hover:text-[#05251C] text-white transition-all duration-300 border border-white/20 shadow-md cursor-pointer"
+                style={{ margin: 0, padding: 0 }}
+                aria-label="Slide trước"
+              >
+                <ChevronLeft size={22} />
+              </button>
+            </MagneticCTA>
+          </div>
+          <div className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+            <MagneticCTA strength={0.3} radius={70}>
+              <button
+                type="button"
+                onClick={handleNext}
+                className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-black/50 hover:bg-[#F5DD20] hover:text-[#05251C] text-white transition-all duration-300 border border-white/20 shadow-md cursor-pointer"
+                style={{ margin: 0, padding: 0 }}
+                aria-label="Slide tiếp theo"
+              >
+                <ChevronRight size={22} />
+              </button>
+            </MagneticCTA>
+          </div>
         </>
       )}
 
@@ -207,7 +307,7 @@ const HeroBanner = () => {
           ))}
         </div>
       )}
-    </section>
+    </MotionSection>
   );
 };
 

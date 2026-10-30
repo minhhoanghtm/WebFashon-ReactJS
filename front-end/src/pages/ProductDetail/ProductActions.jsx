@@ -1,9 +1,11 @@
+import trackingService from "@/services/tracking.service";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ShoppingBag, Zap } from "lucide-react";
+import { ShoppingBag, Zap, Check, LoaderCircle } from "lucide-react";
 import { addCartItemService } from "@/services/cartItem.service";
 import { useAuthStore } from "@/store/auth.store";
+import { getColorHex } from "../ProductSearch/productAdapter";
 
 const uniqueValues = (values) => [...new Set(values.filter(Boolean))];
 
@@ -126,6 +128,7 @@ const ProductActions = ({ product, variants = [] }) => {
   const handleColorClick = (color) => {
     if (isColorDisabled(color)) return;
     setSelectedColor(color);
+    trackingService.trackVariantSelect(product, { color, size: selectedSize });
 
     // size đang chọn phải reset nếu không còn hợp lệ
     if (selectedSize && safeVariants.length > 0) {
@@ -145,6 +148,7 @@ const ProductActions = ({ product, variants = [] }) => {
   const handleSizeClick = (size) => {
     if (isSizeDisabled(size)) return;
     setSelectedSize(size);
+    trackingService.trackVariantSelect(product, { color: selectedColor, size });
   };
 
   const buildCartPayload = () => ({
@@ -180,6 +184,16 @@ const ProductActions = ({ product, variants = [] }) => {
     try {
       setIsAdding(true);
       const result = await addCartItemService(buildCartPayload());
+
+      trackingService.trackEvent({
+        event_type: "add_to_cart",
+        product_id: product?.id || product?._id,
+        category_id: product?.category_id,
+        meta: {
+          price: product?.price || product?.new_price || 0,
+          quantity,
+        },
+      });
 
       window.dispatchEvent(
         new CustomEvent("cartUpdated", {
@@ -243,94 +257,163 @@ const ProductActions = ({ product, variants = [] }) => {
   };
 
   return (
-    <div className="product-actions">
+    <div className="product-actions flex flex-col gap-6 lg:gap-3 pt-2 lg:pt-1">
+      {/* 1. Nhóm chọn Màu sắc (Color Swatches) */}
       {colorOptions.length > 0 && (
-        <fieldset className="product-actions__group">
-          <legend>Màu sắc</legend>
-          <div className="product-actions__choices">
-            {colorOptions.map((color) => (
-              <button
-                type="button"
-                key={color}
-                disabled={isColorDisabled(color)}
-                className={`product-option product-color ${
-                  selectedColor === color ? "is-active product-option-active" : ""
-                } ${isColorDisabled(color) ? "product-option-disabled" : ""}`}
-                onClick={() => handleColorClick(color)}
-              >
-                {color}
-              </button>
-            ))}
+        <fieldset className="product-actions__group flex flex-col gap-2.5 lg:gap-1.5">
+          <legend className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center justify-between w-full">
+            <span>Màu sắc</span>
+            {selectedColor && (
+              <span className="text-xs font-semibold text-[#05251C] capitalize">
+                : {selectedColor}
+              </span>
+            )}
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {colorOptions.map((color) => {
+              const isDisabled = isColorDisabled(color);
+              const isSelected = selectedColor === color;
+              const hex = getColorHex(color);
+              const isLightColor = ["#ffffff", "#f5ebe1", "#e5d9c5", "#e2e8f0"].includes(
+                hex.toLowerCase(),
+              );
+
+              return (
+                <button
+                  type="button"
+                  key={color}
+                  disabled={isDisabled}
+                  onClick={() => handleColorClick(color)}
+                  className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all cursor-pointer ${
+                    isDisabled
+                      ? "opacity-35 cursor-not-allowed border-dashed border-neutral-300 bg-neutral-50 text-neutral-400 line-through"
+                      : isSelected
+                      ? "border-neutral-900 bg-neutral-900 text-white shadow-xs"
+                      : "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-400 hover:bg-neutral-50"
+                  }`}
+                >
+                  <span
+                    className={`w-3.5 h-3.5 rounded-full flex-shrink-0 border ${
+                      isLightColor ? "border-neutral-300" : "border-black/10"
+                    }`}
+                    style={{ backgroundColor: hex }}
+                  />
+                  <span className="capitalize">{color}</span>
+                  {isSelected && <Check size={12} className="text-white ml-0.5" />}
+                </button>
+              );
+            })}
           </div>
         </fieldset>
       )}
 
+      {/* 2. Nhóm chọn Kích thước (Size Box Pills) */}
       {sizeOptions.length > 0 && (
-        <fieldset className="product-actions__group">
-          <legend>Kích thước</legend>
-          <div className="product-actions__choices">
-            {sizeOptions.map((size) => (
-              <button
-                type="button"
-                key={size}
-                disabled={isSizeDisabled(size)}
-                className={`product-option product-size ${
-                  selectedSize === size ? "is-active product-option-active" : ""
-                } ${isSizeDisabled(size) ? "product-option-disabled" : ""}`}
-                onClick={() => handleSizeClick(size)}
-              >
-                {size}
-              </button>
-            ))}
+        <fieldset className="product-actions__group flex flex-col gap-2.5 lg:gap-1.5">
+          <legend className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center justify-between w-full">
+            <span>Kích thước</span>
+            {selectedSize && (
+              <span className="text-xs font-semibold text-[#05251C]">
+                : {selectedSize}
+              </span>
+            )}
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {sizeOptions.map((size) => {
+              const isDisabled = isSizeDisabled(size);
+              const isSelected = selectedSize === size;
+
+              return (
+                <button
+                  type="button"
+                  key={size}
+                  disabled={isDisabled}
+                  onClick={() => handleSizeClick(size)}
+                  className={`min-w-[44px] h-10 lg:h-9 px-3 flex items-center justify-center rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    isDisabled
+                      ? "opacity-35 cursor-not-allowed border-dashed border-neutral-300 bg-neutral-50 text-neutral-400 line-through"
+                      : isSelected
+                      ? "border-[#05251C] bg-[#05251C] text-[#F5DD20] shadow-xs"
+                      : "border-neutral-200 bg-white text-neutral-800 hover:border-[#05251C] hover:bg-neutral-50"
+                  }`}
+                >
+                  {size}
+                </button>
+              );
+            })}
           </div>
         </fieldset>
       )}
 
-      <div className="product-actions__quantity product-quantity">
-        <span>Số lượng</span>
-        <div>
+      {/* 3. Điều khiển Số lượng */}
+      <div className="flex items-center gap-4 pt-1">
+        <span className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
+          Số lượng
+        </span>
+        <div className="flex items-center border border-neutral-200 rounded-xl bg-white p-1 shadow-2xs">
           <button
             type="button"
             onClick={() => setQuantity((current) => Math.max(1, current - 1))}
             disabled={quantity <= 1 || isAllOutOfStock}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-600 hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed transition font-bold text-base cursor-pointer"
             aria-label="Giảm số lượng"
           >
             -
           </button>
-          <strong>{isAllOutOfStock ? 0 : quantity}</strong>
+          <strong className="w-10 text-center font-bold text-sm text-neutral-900 tabular-nums">
+            {isAllOutOfStock ? 0 : quantity}
+          </strong>
           <button
             type="button"
             onClick={() =>
               setQuantity((current) => Math.min(stockLimit || 99, current + 1))
             }
             disabled={quantity >= (stockLimit || 99) || isAllOutOfStock}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-600 hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed transition font-bold text-base cursor-pointer"
             aria-label="Tăng số lượng"
           >
             +
           </button>
         </div>
+        {stockLimit !== null && stockLimit < 10 && stockLimit > 0 && (
+          <span className="text-[11px] font-bold text-[#05251C] bg-[#F5DD20]/25 border border-[#F5DD20]/60 px-2 py-0.5 rounded-md">
+            Chỉ còn {stockLimit} sản phẩm
+          </span>
+        )}
       </div>
 
-      {warningText && <p className="product-actions__warning">{warningText}</p>}
+      {warningText && (
+        <p className="text-xs font-semibold text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">
+          {warningText}
+        </p>
+      )}
 
-      <div className="product-actions__buttons">
+      {/* 4. Nút Hành động Mua hàng */}
+      <div className="flex flex-col sm:flex-row gap-3 lg:gap-2 pt-2 lg:pt-1">
         <button
           type="button"
-          className="product-actions__cart"
           onClick={handleAddToCart}
           disabled={isAdding || !canAdd || isAdmin}
+          className="flex-1 h-12 lg:h-10 rounded-xl border-2 border-[#05251C] bg-white text-[#05251C] hover:bg-[#05251C] hover:text-[#F5DD20] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition duration-200 shadow-2xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
         >
-          <ShoppingBag size={18} aria-hidden="true" />
-          {isAdmin ? "Không dành cho Admin" : (isAdding ? "Đang xử lý..." : "Thêm vào giỏ hàng")}
+          {isAdding ? (
+            <LoaderCircle size={16} className="animate-spin" />
+          ) : (
+            <ShoppingBag size={16} />
+          )}
+          <span>
+            {isAdmin ? "Không dành cho Admin" : (isAdding ? "Đang xử lý..." : "Thêm vào giỏ hàng")}
+          </span>
         </button>
+
         <button
           type="button"
-          className="product-actions__buy"
           onClick={handleBuyNow}
           disabled={isAdding || !canAdd || isAdmin}
+          className="flex-1 h-12 lg:h-10 rounded-xl bg-[#05251C] text-[#F5DD20] hover:bg-[#073D2A] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition duration-200 shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95"
         >
-          <Zap size={18} aria-hidden="true" />
-          {isAdmin ? "Không dành cho Admin" : "Mua ngay"}
+          <Zap size={16} />
+          <span>{isAdmin ? "Không dành cho Admin" : "Mua ngay"}</span>
         </button>
       </div>
     </div>

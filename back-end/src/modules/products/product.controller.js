@@ -4,6 +4,7 @@ import { createProductSchema, updateProductSchema, searchProductSchema, createVa
 import { successResponse } from "../../common/responses/index.js";
 import logger from "../../common/logger.js";
 import { getRedisConnection } from "../../configs/redis.js";
+import { invalidatePopularRecommendationsCache } from "../recommendations/recommendation.service.js";
 
 // Helper to invalidate product cache keys
 const clearProductCache = async () => {
@@ -16,6 +17,7 @@ const clearProductCache = async () => {
       }
     }
     logger.info("Cleared product cache keys in Redis");
+    await invalidatePopularRecommendationsCache();
   } catch (err) {
     logger.error("Failed to clear product cache: %s", err);
   }

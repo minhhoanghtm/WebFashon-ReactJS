@@ -29,7 +29,7 @@ function parseOrThrow(schema, data, contextLabel = "") {
   }
   // Validation succeeded – return parsed data
   return result.data;
-  }
+}
 
 // ---------------------------------------------------------------------------
 // Zod schemas
@@ -41,7 +41,7 @@ const createConversationDtoSchema = z.object({
   status:          z.enum(["open", "waiting_admin", "waiting_customer", "closed"], { message: "status must be one of: open, waiting_admin, waiting_customer, closed" }).default("open"),
   assignedAdminId: z.any().optional(),
   source:          z.enum(["manual", "ai_handoff"], { message: "source must be one of: manual, ai_handoff" }).default("manual"),
-  metadata:        z.record(z.any()).optional().default({}),
+  metadata:        z.record(z.string(), z.any()).optional().default({}),
 });
 
 const createMessageDtoSchema = z.object({
@@ -50,7 +50,7 @@ const createMessageDtoSchema = z.object({
   senderId:       z.any().optional(),
   messageType:    z.enum(["text", "image", "file", "product_card", "order_card", "system"], { message: "messageType must be one of: text, image, file, product_card, order_card, system" }).default("text"),
   content:        z.string({ required_error: "content is required" }).max(10000, "content must be at most 10000 characters"),
-  metadata:       z.record(z.any()).optional().default({}),
+  metadata:       z.record(z.string(), z.any()).optional().default({}),
 });
 
 const textMessageDtoSchema = z.object({
@@ -60,8 +60,10 @@ const textMessageDtoSchema = z.object({
   message:          z.string().max(10000).optional(),
   currentProductId: z.any().optional(),
   messageType:      z.enum(["text", "image", "file", "product_card", "order_card", "system"]).optional(),
-  metadata:         z.record(z.any()).optional().default({}),
+  metadata:         z.record(z.string(), z.any()).optional().default({}),
   history:          z.array(z.any()).optional(),
+  confirmAction:    z.any().optional(),
+  cancelAction:     z.any().optional(),
 })
   // Require at least one of the two fields
   .refine((data) => !!data.content || !!data.message, {

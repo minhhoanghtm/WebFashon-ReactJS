@@ -2,6 +2,10 @@ import Page from "./page.model.js";
 import pageSectionService from "../pageSections/pageSection.service.js";
 import { AppError } from "../../common/exceptions/AppError.js";
 import getRedisConnection from "../../configs/redis.js";
+import {
+  triggerPageVectorSync,
+  triggerPageVectorRemove,
+} from "../ai/queues/vectorSync.queue.js";
 
 const memoryCache = {
   data: null,
@@ -287,6 +291,10 @@ class PageService {
       }
     }
 
+    if (page?._id) {
+      triggerPageVectorSync(page._id).catch(() => {});
+    }
+
     return page;
   }
 
@@ -372,6 +380,10 @@ class PageService {
       memoryCache.data = null;
     }
 
+    if (updated?._id) {
+      triggerPageVectorSync(updated._id).catch(() => {});
+    }
+
     return updated;
   }
 
@@ -420,6 +432,8 @@ class PageService {
       memoryCache.data = null;
     }
 
+    triggerPageVectorRemove(id).catch(() => {});
+
     return deleted;
   }
 
@@ -448,6 +462,10 @@ class PageService {
       await redis.del("lookbook:featured");
     } else {
       memoryCache.data = null;
+    }
+
+    if (page?._id) {
+      triggerPageVectorSync(page._id).catch(() => {});
     }
 
     return page;

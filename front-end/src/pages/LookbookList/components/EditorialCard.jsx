@@ -46,39 +46,41 @@ const EditorialCard = ({ title, excerpt, image, href, publishedAt, priority = fa
     <Link
       ref={domRef}
       to={href}
-      className={`group flex flex-col bg-[#0d0f12] border border-neutral-900/60 overflow-hidden shadow-none rounded-[12px] hover:scale-[1.01] transition-all duration-300 mb-8 decoration-none
+      className={`group flex flex-col bg-[#05251C] border border-white/10 hover:border-[#F5DD20]/40 overflow-hidden shadow-md rounded-[16px] hover:scale-[1.015] transition-all duration-300 mb-8 decoration-none
         ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
     >
       {/* Thumbnail */}
-      <div className="aspect-[16/9.5] w-full overflow-hidden bg-neutral-950 rounded-t-[12px] flex items-center justify-center">
+      <div className="aspect-[16/10] w-full overflow-hidden bg-neutral-900 rounded-t-[16px] flex items-center justify-center relative">
         <img
           src={displayImage}
           alt={title}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
-          className="max-w-full max-h-full object-contain group-hover:scale-[1.025] transition-transform duration-750 rounded-t-[12px]"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out rounded-t-[16px]"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
       </div>
 
       {/* Info */}
       <div className="p-6 flex-1 flex flex-col text-left">
         {publishedAt && (
-          <span className="text-neutral-500 text-[9px] font-semibold uppercase tracking-[0.15em] mb-2 block">
+          <span className="text-[#F5DD20] text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-2 block">
             {formatDate(publishedAt)}
           </span>
         )}
         <h3 
-          className="text-white text-base font-semibold leading-snug group-hover:text-neutral-300 transition mb-2 uppercase tracking-wide"
+          className="text-white text-lg font-bold leading-snug group-hover:text-[#F5DD20] transition mb-2 uppercase tracking-tight font-heading"
         >
           {title ? title.normalize("NFC") : ""}
         </h3>
         {excerpt && (
-          <p className="text-neutral-400 text-xs font-light leading-relaxed mb-4 line-clamp-2">
+          <p className="text-neutral-300 text-xs font-normal leading-relaxed mb-4 line-clamp-2">
             {excerpt.normalize("NFC")}
           </p>
         )}
-        <div className="mt-auto pt-2 text-[9px] font-bold uppercase tracking-widest text-neutral-400 group-hover:text-white transition">
-          XEM BỘ SƯU TẬP →
+        <div className="mt-auto pt-2 text-[10px] font-bold uppercase tracking-widest text-[#F5DD20] group-hover:text-white transition flex items-center gap-1.5">
+          <span>XEM BỘ SƯU TẬP</span>
+          <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
         </div>
       </div>
     </Link>

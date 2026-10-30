@@ -1,12 +1,12 @@
 .register-page {
-  --register-ink: #171717;
-  --register-muted: #696660;
-  --register-line: #e4e0d8;
-  --register-soft: #f4f3ef;
-  --register-sage: #365f56;
+  --register-ink: #05251C;
+  --register-muted: #6B716E;
+  --register-line: #e8e5df;
+  --register-soft: #f2efe9;
+  --register-sage: #05251C;
+  --register-accent: #F5DD20;
   align-items: center;
-  background:
-    linear-gradient(135deg, #f6f6f3 0%, #ffffff 46%, #eef2f0 100%);
+  background: #F7F7F7;
   color: var(--register-ink);
   display: flex;
   font-family: inherit;
@@ -329,16 +329,16 @@
 
 .register-button {
   align-items: center;
-  background: #171717;
-  border: 1px solid #171717;
-  border-radius: 10px;
-  color: #fff;
+  background: #05251C;
+  border: 1px solid #05251C;
+  border-radius: 999px;
+  color: #F5DD20;
   cursor: pointer;
   display: flex;
   font-size: 0.96rem;
   font-weight: 800;
   gap: 10px;
-  height: 40px;
+  height: 44px;
   justify-content: center;
   padding: 0 18px;
   transition:
@@ -349,8 +349,8 @@
 }
 
 .register-button:hover:not(:disabled) {
-  background: #2a2926;
-  border-color: #2a2926;
+  background: #073D2A;
+  border-color: #073D2A;
   transform: translateY(-1px);
 }
 

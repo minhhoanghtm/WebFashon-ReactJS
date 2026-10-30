@@ -1,11 +1,11 @@
 import productRepository from "../product.repository.js";
 import { createSlug } from "../../../common/utils/slug.js";
 import { toNoAccent } from "../../../common/utils/removeAccents.js";
-
 import { withTransaction } from "../../../common/transaction.helper.js";
+import { triggerProductVectorSync } from "../../ai/queues/vectorSync.queue.js";
 
 export const addProduct = async (productData) => {
-  return await withTransaction(async (session) => {
+  const createdProduct = await withTransaction(async (session) => {
     const { name, variants = [], ...productBody } = productData;
     const slug = createSlug(name);
     const name_no_accents = toNoAccent(name);
@@ -15,13 +15,16 @@ export const addProduct = async (productData) => {
       finalStock = variants.reduce((sum, v) => sum + Number(v.stock || 0), 0);
     }
 
-    const product = await productRepository.create({
-      ...productBody,
-      slug,
-      name,
-      name_no_accents,
-      stock: finalStock,
-    }, { session });
+    const product = await productRepository.create(
+      {
+        ...productBody,
+        slug,
+        name,
+        name_no_accents,
+        stock: finalStock,
+      },
+      { session }
+    );
 
     if (Array.isArray(variants) && variants.length > 0) {
       const variantDocs = variants
@@ -41,5 +44,10 @@ export const addProduct = async (productData) => {
 
     return product;
   });
-};
 
+  if (createdProduct?._id) {
+    triggerProductVectorSync(createdProduct._id).catch(() => {});
+  }
+
+  return createdProduct;
+};

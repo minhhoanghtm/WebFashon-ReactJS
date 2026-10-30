@@ -25,6 +25,7 @@ import {
 } from "../services/chat.service";
 import { toast } from "react-toastify";
 import { useChatContextStore } from "@/store/chatContext.store";
+import trackingService from "@/services/tracking.service";
 import Markdown from "./Markdown";
 import useWebsiteSettings from "@/hooks/useWebsiteSettings";
 
@@ -114,6 +115,12 @@ const CustomerChatWidget = () => {
       console.error("Lỗi khi lưu trạng thái chưa đọc:", error);
     }
   }, [hasUnread, unreadKey]);
+
+  useEffect(() => {
+    if (isOpen) {
+      trackingService.trackAIChatOpened();
+    }
+  }, [isOpen]);
 
   const [loading, setLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -523,7 +530,11 @@ const CustomerChatWidget = () => {
     }
   };
 
-  const sendMessageDirectly = async (text, customMetadata = null) => {
+  const sendMessageDirectly = async (
+    text,
+    customMetadata = null,
+    extraPayload = {},
+  ) => {
     if (!text.trim()) return;
 
     setLoading(true);
@@ -553,6 +564,7 @@ const CustomerChatWidget = () => {
           history: !isAuthenticated ? messages.ai : undefined,
           currentProductId: context?.productid || undefined,
           metadata: metaToSend,
+          ...extraPayload,
         });
 
         // Set or update active AI conversation
@@ -568,6 +580,21 @@ const CustomerChatWidget = () => {
           updateAiMetadata(res.metadata);
         }
 
+        // Sync cart badge in Header if add_to_cart was executed
+        if (res?.actionResult?.status === "EXECUTED") {
+          const totalQty = res.actionResult?.cartSummary?.total_items;
+          if (totalQty !== undefined) {
+            window.dispatchEvent(
+              new CustomEvent("cartUpdated", {
+                detail: { totalQuantity: totalQty },
+              }),
+            );
+          }
+          toast.success(
+            res.actionResult.message || "Đã thêm vào giỏ hàng thành công!",
+          );
+        }
+
         // Check if handoff was triggered
         if (res?.handoff) {
           toast.success(
@@ -576,12 +603,43 @@ const CustomerChatWidget = () => {
           setChatMode("support");
           await fetchConversations();
         } else if (res?.aiMessage) {
+          const enrichedAiMessage = {
+            ...res.aiMessage,
+            metadata: {
+              ...(res.aiMessage.metadata || {}),
+              sources: res.sources || res.aiMessage.metadata?.sources || [],
+              pendingAction:
+                res.pendingAction ??
+                res.aiMessage.metadata?.pendingAction ??
+                null,
+              actionResult:
+                res.actionResult ??
+                res.aiMessage.metadata?.actionResult ??
+                null,
+            },
+          };
+          // Track ai_product_recommended if AI response contains inline products
+          if (enrichedAiMessage?.content) {
+            const { items } = parseInlineProducts(enrichedAiMessage.content);
+            if (Array.isArray(items) && items.length > 0) {
+              items.forEach((item, idx) => {
+                trackingService.trackAIProductRecommended(
+                  { id: item.id, _id: item.id, name: item.name },
+                  { position: idx + 1, price: item.price }
+                );
+              });
+            }
+          }
           // If no handoff, append the actual messages returned
           setMessages((prev) => {
             const filtered = prev.ai.filter((m) => m._id !== tempUserMsg._id);
             return {
               ...prev,
-              ai: [...filtered, res.userMessage || tempUserMsg, res.aiMessage],
+              ai: [
+                ...filtered,
+                res.userMessage || tempUserMsg,
+                enrichedAiMessage,
+              ],
             };
           });
         }
@@ -856,61 +914,189 @@ const CustomerChatWidget = () => {
                       const { cleanedContent, items } = parseInlineProducts(
                         m.content,
                       );
+                      const msgSources = Array.isArray(m.metadata?.sources)
+                        ? m.metadata.sources.slice(0, 3)
+                        : [];
+                      const msgPendingAction = m.metadata?.pendingAction;
+                      const msgActionResult = m.metadata?.actionResult;
 
-                      if (items.length > 0) {
-                        return (
-                          <div className="space-y-3">
-                            {cleanedContent && (
-                              <Markdown>{cleanedContent}</Markdown>
-                            )}
-                            <div className="grid grid-cols-1 gap-2.5 mt-2">
-                              {items.map((item, idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3 shadow-xs hover:border-indigo-500 transition-colors duration-200"
-                                >
-                                  {item.image && (
-                                    <img
-                                      src={item.image}
-                                      alt={item.name}
-                                      className="w-16 h-16 object-cover rounded-lg shrink-0 border border-slate-200 dark:border-slate-700"
-                                    />
-                                  )}
-                                  <div className="flex-1 flex flex-col justify-between min-w-0">
-                                    <div>
-                                      <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-[11px] line-clamp-2 leading-snug text-left">
-                                        {item.name}
-                                      </h4>
-                                      <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold mt-1 text-left">
-                                        {item.price}
-                                      </p>
-                                    </div>
-                                    <button
-                                      onClick={() => {
-                                        const targetMeta = item.id
-                                          ? {
-                                              ...aiMetadata,
-                                              lastProductId: item.id,
+                      return (
+                        <div className="space-y-2.5">
+                          {items.length > 0 ? (
+                            <div className="space-y-3">
+                              {cleanedContent && (
+                                <Markdown>{cleanedContent}</Markdown>
+                              )}
+                              <div className="grid grid-cols-1 gap-2.5 mt-2">
+                                {items.map((item, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3 shadow-xs hover:border-indigo-500 transition-colors duration-200"
+                                  >
+                                    {item.image && (
+                                      <img
+                                        src={item.image}
+                                        alt={item.name}
+                                        className="w-16 h-16 object-cover rounded-lg shrink-0 border border-slate-200 dark:border-slate-700"
+                                      />
+                                    )}
+                                    <div className="flex-1 flex flex-col justify-between min-w-0">
+                                      <div>
+                                        <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-[11px] line-clamp-2 leading-snug text-left">
+                                          {item.name}
+                                        </h4>
+                                        <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold mt-1 text-left">
+                                          {item.price}
+                                        </p>
+                                      </div>
+                                      <button
+                                        onClick={() => {
+                                          trackingService.trackAIChatInteraction(
+                                            "ai_recommendation_clicked",
+                                            {
+                                              productId: item.id,
+                                              productName: item.name,
+                                              position: idx + 1,
                                             }
-                                          : aiMetadata;
-                                        sendMessageDirectly(
-                                          "chi tiết",
-                                          targetMeta,
-                                        );
-                                      }}
-                                      className="mt-2 py-1 px-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white font-medium text-[9px] rounded-md transition-colors self-start duration-150 cursor-pointer"
-                                    >
-                                      Xem chi tiết
-                                    </button>
+                                          );
+                                          const targetMeta = item.id
+                                            ? {
+                                                ...aiMetadata,
+                                                lastProductId: item.id,
+                                              }
+                                            : aiMetadata;
+                                          sendMessageDirectly(
+                                            "chi tiết",
+                                            targetMeta,
+                                          );
+                                        }}
+                                        className="mt-2 py-1 px-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white font-medium text-[9px] rounded-md transition-colors self-start duration-150 cursor-pointer"
+                                      >
+                                        Xem chi tiết
+                                      </button>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      }
+                          ) : (
+                            <Markdown>{m.content}</Markdown>
+                          )}
 
-                      return <Markdown>{m.content}</Markdown>;
+                          {/* Confirmation Gate Card for Business Actions (e.g. add_to_cart) */}
+                          {msgPendingAction?.actionType === "add_to_cart" &&
+                            Array.isArray(msgPendingAction.items) &&
+                            msgPendingAction.items.length > 0 && (
+                              <div className="mt-2 rounded-xl border border-indigo-200 bg-indigo-50/70 dark:border-indigo-900 dark:bg-indigo-950/40 p-2.5 text-left space-y-2">
+                                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                                  <span>Xác nhận thêm giỏ hàng</span>
+                                  <span>
+                                    {msgPendingAction.totalEstimatedPriceFormatted}
+                                  </span>
+                                </div>
+                                <div className="space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
+                                  {msgPendingAction.items.map((it, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex justify-between gap-2 border-b border-indigo-100 dark:border-indigo-900/50 pb-1 last:border-none"
+                                    >
+                                      <span className="truncate font-medium">
+                                        {it.name} ({it.color}/{it.size}) x
+                                        {it.quantity}
+                                      </span>
+                                      <span className="shrink-0 font-bold text-indigo-600">
+                                        {(
+                                          it.unit_price * it.quantity
+                                        ).toLocaleString("vi-VN")}
+                                        đ
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="flex gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    disabled={loading}
+                                    onClick={() => {
+                                      trackingService.trackAIChatInteraction(
+                                        "ai_cart_action_confirmed",
+                                        {
+                                          actionId: msgPendingAction?.actionId,
+                                          items: msgPendingAction?.items,
+                                        }
+                                      );
+                                      sendMessageDirectly(
+                                        "Xác nhận thêm vào giỏ hàng",
+                                        aiMetadata,
+                                        { confirmAction: msgPendingAction },
+                                      );
+                                    }}
+                                    className="flex-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] py-1.5 px-2.5 transition cursor-pointer disabled:opacity-50"
+                                  >
+                                    ✓ Xác nhận thêm
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={loading}
+                                    onClick={() =>
+                                      sendMessageDirectly("Hủy", aiMetadata, {
+                                        cancelAction: true,
+                                      })
+                                    }
+                                    className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-600 dark:text-slate-300 font-semibold text-[10px] py-1.5 px-2.5 transition cursor-pointer disabled:opacity-50"
+                                  >
+                                    Hủy
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                          {/* Action Execution Status Badge */}
+                          {msgActionResult?.status === "EXECUTED" && (
+                            <div className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                              <UserCheck size={11} />
+                              <span>Đã cập nhật giỏ hàng thành công</span>
+                            </div>
+                          )}
+
+                          {/* RAG Source Citations */}
+                          {msgSources.length > 0 && (
+                            <div className="pt-1.5 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center gap-1 text-[10px] text-slate-400">
+                              <Sparkles size={10} className="text-indigo-500 shrink-0" />
+                              <span className="font-semibold">Nguồn:</span>
+                              {msgSources.map((src, sIdx) =>
+                                src.url ? (
+                                  <a
+                                    key={sIdx}
+                                    href={src.url}
+                                    onClick={() => {
+                                      trackingService.trackAIChatInteraction(
+                                        "ai_recommendation_clicked",
+                                        {
+                                          sourceId: src.sourceId,
+                                          title: src.title,
+                                          url: src.url,
+                                        }
+                                      );
+                                    }}
+                                    className="inline-flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700/60 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded hover:underline truncate max-w-[140px]"
+                                  >
+                                    <span>{src.title}</span>
+                                    <ExternalLink size={9} />
+                                  </a>
+                                ) : (
+                                  <span
+                                    key={sIdx}
+                                    className="bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded truncate max-w-[140px]"
+                                  >
+                                    {src.title}
+                                  </span>
+                                ),
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
                     };
 
                     if (isSystem) {
@@ -957,6 +1143,20 @@ const CustomerChatWidget = () => {
                       </div>
                     );
                   })}
+
+                  {/* AI thinking / searching indicator */}
+                  {loading && chatMode === "ai" && (
+                    <div className="flex gap-2 text-left animate-pulse">
+                      <span className="h-7 w-7 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                        <Bot size={14} />
+                      </span>
+                      <div className="max-w-[80%]">
+                        <div className="rounded-2xl rounded-tl-none bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-850 text-xs px-3.5 py-2.5 shadow-sm text-slate-500 italic">
+                          Trợ lý AI đang truy xuất dữ liệu & phân tích...
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Typing indicator */}
                   {isTyping && (

@@ -1,3 +1,5 @@
+import trackingService from "@/services/tracking.service";
+import trackingApi from "@/api/trackingApi";
 import { useState, useEffect, useRef } from "react";
 import logo from "../assets/logo.png";
 import { FaSearch, FaShoppingBag } from "react-icons/fa";
@@ -17,6 +19,30 @@ const Header = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggest, setShowSuggest] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [searchHistory, setSearchHistory] = useState([]);
+
+  const loadSearchHistory = async () => {
+    if (!isLoggedIn) return;
+    try {
+      const res = await trackingApi.getSearchHistory();
+      if (res && res.data) {
+        setSearchHistory(res.data);
+      }
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  const handleClearHistory = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await trackingApi.clearSearchHistory();
+      setSearchHistory([]);
+    } catch (err) {
+      // ignore
+    }
+  };
   const navigate = useNavigate();
   const wrapperRef = useRef();
   //kiểm tra đăng nhập
@@ -43,9 +69,9 @@ const Header = () => {
     const delay = setTimeout(async () => {
       if (!keyword.trim()) {
         setSuggestions([]);
-        setShowSuggest(false);
         return;
       }
+      trackingService.trackSearchDebounced(keyword, 800);
       try {
         const res = await suggestProductsService(keyword);
         const results = Array.isArray(res) ? res : res?.data ?? [];
@@ -72,6 +98,7 @@ const Header = () => {
     if (!keyword.trim()) {
       return;
     }
+    trackingService.trackSearchImmediate(keyword);
     setShowSuggest(false);
     navigate(`/products?search=${encodeURIComponent(keyword)}&page=1`);
   };
@@ -228,26 +255,62 @@ const Header = () => {
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
+              onFocus={() => {
+                setShowSuggest(true);
+                loadSearchHistory();
+              }}
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
               className="border rounded-l-lg text-white placeholder:text-gray-400  focus:outline-none focus:ring-2 focus:ring-blue-500 px-2"
             />
-            {/* // Hiển thị gợi ý tìm kiếm */}
-            {showSuggest && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 w-full bg-white text-black shadow-md rounded-md z-50">
-                {suggestions.map((item) => (
-                  <Link
-                    key={item._id}
-                    to={`/products?search=${encodeURIComponent(item.name)}&page=1`}
-                    className="block px-4 py-2 hover:bg-gray-200"
-                    onClick={() => {
-                      setKeyword("");
-                      setShowSuggest(false);
-                    }}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+            {/* // Hiển thị gợi ý tìm kiếm & Lịch sử tìm kiếm */}
+            {showSuggest && (
+              <div className="absolute top-full left-0 w-full bg-white text-black shadow-lg rounded-md z-50 border border-gray-200 overflow-hidden">
+                {keyword.trim() && suggestions.length > 0 ? (
+                  suggestions.map((item) => (
+                    <Link
+                      key={item._id}
+                      to={`/products?search=${encodeURIComponent(item.name)}&page=1`}
+                      className="block px-4 py-2 hover:bg-gray-100 text-sm"
+                      onClick={() => {
+                        trackingService.trackSearchImmediate(item.name);
+                        setKeyword("");
+                        setShowSuggest(false);
+                      }}
+                    >
+                      {item.name}
+                    </Link>
+                  ))
+                ) : !keyword.trim() && isLoggedIn && searchHistory.length > 0 ? (
+                  <div className="p-2">
+                    <div className="flex justify-between items-center px-2 py-1 border-b border-gray-100 text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                      <span>Lịch sử tìm kiếm</span>
+                      <button
+                        type="button"
+                        onClick={handleClearHistory}
+                        className="text-red-500 hover:text-red-700 text-xs cursor-pointer font-normal normal-case"
+                      >
+                        Xóa tất cả
+                      </button>
+                    </div>
+                    <div className="mt-1 max-h-48 overflow-y-auto">
+                      {searchHistory.map((term, idx) => (
+                        <div
+                          key={idx}
+                          className="px-2 py-1.5 hover:bg-gray-100 rounded text-sm cursor-pointer text-gray-700 truncate"
+                          onClick={() => {
+                            setKeyword(term);
+                            setShowSuggest(false);
+                            trackingService.trackSearchImmediate(term);
+                            navigate(`/products?search=${encodeURIComponent(term)}&page=1`);
+                          }}
+                        >
+                          {term}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
             <button type="submit" className="border rounded-r-lg px-4">

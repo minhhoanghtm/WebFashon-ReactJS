@@ -5,14 +5,15 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --forceExit",
     "dev": "nodemon src/server.js",
     "start": "node  src/server.js",
     "seed:pages": "node seed/pages.js",
+    "seed:demo": "node seed/seed-demo-catalog.js",
+    "ai:sync": "node src/scripts/sync-vectors.js",
     "k6:all": "powershell -ExecutionPolicy Bypass -File load-tests/run-all.ps1",
     "k6:run": "powershell -ExecutionPolicy Bypass -Command \"$n=$env:TEST; k6 run load-tests/$n.js; $t=Get-Date -Format 'yyyy-MM-dd_HH-mm'; Copy-Item load-tests/results/TEMPLATE.md load-tests/results/${n}_${t}.md; Write-Host 'Report: load-tests/results/${n}_${t}.md'\"",
     "wait": "wait-on http://localhost:5000/api/health"
-    
   },
   "keywords": [],
   "author": "",
@@ -47,6 +48,7 @@
   "devDependencies": {
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
+    "playwright": "^1.64.1",
     "supertest": "^7.2.2",
     "wait-on": "^9.0.10"
   }

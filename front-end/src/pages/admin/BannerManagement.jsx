@@ -1,31 +1,41 @@
-import React, { useState } from "react";
-import { useBanners } from "../../hooks/useBanners";
-import { uploadImageService } from "../../services/upload.service";
+import React, { useState } from 'react';
+import { useBanners } from '../../hooks/useBanners';
+import { uploadImageService } from '../../services/upload.service';
 import {
-  Images,
+  Image as ImageIcon,
   Search,
   Plus,
-  Edit,
+  Edit2,
   Trash2,
-  X,
-  Eye,
-  EyeOff,
-  Loader2,
-  ExternalLink,
-  ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
+  Power,
+  RefreshCw,
   Upload,
-} from "lucide-react";
-import { toast } from "react-toastify";
-import useWebsiteSettings from "@/hooks/useWebsiteSettings";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+  Calendar,
+  ExternalLink,
+} from 'lucide-react';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import {
+  AdminPageHeader,
+  AdminCard,
+  AdminBadge,
+  AdminModal,
+  AdminPagination,
+  AdminEmptyState,
+  TableSkeleton,
+} from '@/components/admin/ui';
+
+const positionLabels = {
+  home_hero: 'Trang chủ (Hero)',
+  home_secondary: 'Trang chủ (Phụ)',
+  category_header: 'Đầu trang Danh mục',
+  lookbook_header: 'Đầu trang Lookbook',
+  footer_banner: 'Banner Chân trang',
+};
 
 const BannerManagement = () => {
-   const { settings } = useWebsiteSettings();
-    const general = settings?.general || {};
-    const siteName = general.siteName || "";
-    useDocumentTitle("Quản lý banner");
+  useDocumentTitle('Quản lý banner — 404Studio Admin');
   const {
     banners,
     loading,
@@ -40,21 +50,21 @@ const BannerManagement = () => {
 
   // Modal states
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const [modalMode, setModalMode] = useState("add"); // "add" or "edit"
+  const [modalMode, setModalMode] = useState('add');
   const [currentId, setCurrentId] = useState(null);
 
   // Form states
-  const [formTitle, setFormTitle] = useState("");
-  const [formSubtitle, setFormSubtitle] = useState("");
-  const [formImageUrl, setFormImageUrl] = useState("");
-  const [formMobileImageUrl, setFormMobileImageUrl] = useState("");
-  const [formLinkUrl, setFormLinkUrl] = useState("");
-  const [formButtonText, setFormButtonText] = useState("");
-  const [formPosition, setFormPosition] = useState("home_hero");
-  const [formTargetType, setFormTargetType] = useState("external");
-  const [formTargetId, setFormTargetId] = useState("");
-  const [formStartDate, setFormStartDate] = useState("");
-  const [formEndDate, setFormEndDate] = useState("");
+  const [formTitle, setFormTitle] = useState('');
+  const [formSubtitle, setFormSubtitle] = useState('');
+  const [formImageUrl, setFormImageUrl] = useState('');
+  const [formMobileImageUrl, setFormMobileImageUrl] = useState('');
+  const [formLinkUrl, setFormLinkUrl] = useState('');
+  const [formButtonText, setFormButtonText] = useState('');
+  const [formPosition, setFormPosition] = useState('home_hero');
+  const [formTargetType, setFormTargetType] = useState('external');
+  const [formTargetId, setFormTargetId] = useState('');
+  const [formStartDate, setFormStartDate] = useState('');
+  const [formEndDate, setFormEndDate] = useState('');
   const [formSortOrder, setFormSortOrder] = useState(0);
   const [formIsActive, setFormIsActive] = useState(true);
 
@@ -63,33 +73,19 @@ const BannerManagement = () => {
   const [uploadingMobile, setUploadingMobile] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Helper formats
-  const formatDateTime = (dateStr) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const handleOpenAdd = () => {
-    setModalMode("add");
+    setModalMode('add');
     setCurrentId(null);
-    setFormTitle("");
-    setFormSubtitle("");
-    setFormImageUrl("");
-    setFormMobileImageUrl("");
-    setFormLinkUrl("");
-    setFormButtonText("");
-    setFormPosition("home_hero");
-    setFormTargetType("external");
-    setFormTargetId("");
+    setFormTitle('');
+    setFormSubtitle('');
+    setFormImageUrl('');
+    setFormMobileImageUrl('');
+    setFormLinkUrl('');
+    setFormButtonText('');
+    setFormPosition('home_hero');
+    setFormTargetType('external');
+    setFormTargetId('');
 
-    // Default dates: now to +30 days
     const now = new Date();
     const future = new Date();
     future.setDate(now.getDate() + 30);
@@ -102,26 +98,28 @@ const BannerManagement = () => {
   };
 
   const handleOpenEdit = (banner) => {
-    setModalMode("edit");
+    setModalMode('edit');
     setCurrentId(banner._id || banner.id);
-    setFormTitle(banner.title);
-    setFormSubtitle(banner.subtitle || "");
-    setFormImageUrl(banner.imageUrl);
-    setFormMobileImageUrl(banner.mobileImageUrl || "");
-    setFormLinkUrl(banner.linkUrl || "");
-    setFormButtonText(banner.buttonText || "");
-    setFormPosition(banner.position);
-    setFormTargetType(banner.targetType || "external");
-    setFormTargetId(banner.targetId || "");
+    setFormTitle(banner.title || '');
+    setFormSubtitle(banner.subtitle || '');
+    setFormImageUrl(banner.imageUrl || '');
+    setFormMobileImageUrl(banner.mobileImageUrl || '');
+    setFormLinkUrl(banner.linkUrl || '');
+    setFormButtonText(banner.buttonText || '');
+    setFormPosition(banner.position || 'home_hero');
+    setFormTargetType(banner.targetType || 'external');
+    setFormTargetId(banner.targetId || '');
+
     const formatForInput = (dateVal) => {
-      if (!dateVal) return "";
+      if (!dateVal) return '';
       const d = new Date(dateVal);
-      return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 16);
+      return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 16);
     };
+
     setFormStartDate(formatForInput(banner.startDate));
     setFormEndDate(formatForInput(banner.endDate));
     setFormSortOrder(banner.sortOrder || 0);
-    setFormIsActive(banner.isActive);
+    setFormIsActive(Boolean(banner.isActive));
     setIsOpenModal(true);
   };
 
@@ -130,7 +128,7 @@ const BannerManagement = () => {
     if (!file) return;
 
     try {
-      if (type === "desktop") {
+      if (type === 'desktop') {
         setUploadingDesktop(true);
         const url = await uploadImageService(file);
         setFormImageUrl(url);
@@ -139,9 +137,9 @@ const BannerManagement = () => {
         const url = await uploadImageService(file);
         setFormMobileImageUrl(url);
       }
-      toast.success("Tải ảnh banner lên thành công! 🖼️");
-    } catch (err) {
-      toast.error("Tải ảnh lên thất bại. Vui lòng thử lại!");
+      toast.success('Tải ảnh banner thành công!');
+    } catch {
+      toast.error('Tải ảnh lên thất bại. Vui lòng thử lại!');
     } finally {
       setUploadingDesktop(false);
       setUploadingMobile(false);
@@ -152,42 +150,25 @@ const BannerManagement = () => {
     e.preventDefault();
 
     if (!formTitle.trim()) {
-      toast.error("Tiêu đề banner là bắt buộc");
+      toast.error('Tiêu đề banner là bắt buộc!');
       return;
     }
     if (!formImageUrl.trim()) {
-      toast.error("Vui lòng tải lên ảnh Desktop Banner");
+      toast.error('Vui lòng tải lên ảnh Desktop Banner!');
       return;
     }
     if (!formStartDate || !formEndDate) {
-      toast.error("Vui lòng chọn thời gian bắt đầu và kết thúc");
+      toast.error('Vui lòng chọn thời gian bắt đầu và kết thúc!');
       return;
     }
     if (new Date(formStartDate) >= new Date(formEndDate)) {
-      toast.error("Ngày kết thúc phải lớn hơn ngày bắt đầu");
+      toast.error('Ngày kết thúc phải lớn hơn ngày bắt đầu!');
       return;
     }
-
-    if (formTargetType === "product" && !formTargetId.trim()) {
-      toast.error("Mã sản phẩm liên kết (targetId) là bắt buộc");
-      return;
-    }
-    if (formTargetType === "category" && !formTargetId.trim()) {
-      toast.error("Mã danh mục liên kết (targetId) là bắt buộc");
-      return;
-    }
-    if (formTargetType === "lookbook" && !formTargetId.trim()) {
-      toast.error("Mã / Slug Lookbook liên kết (targetId) là bắt buộc");
-      return;
-    }
-    // if (formTargetType === "external" && !formLinkUrl.trim()) {
-    //   toast.error("Đường dẫn liên kết ngoài (linkUrl) là bắt buộc");
-    //   return;
-    // }
 
     const payload = {
-      title: formTitle,
-      subtitle: formSubtitle,
+      title: formTitle.trim(),
+      subtitle: formSubtitle.trim(),
       imageUrl: formImageUrl,
       mobileImageUrl: formMobileImageUrl,
       linkUrl: formLinkUrl,
@@ -197,13 +178,13 @@ const BannerManagement = () => {
       targetId: formTargetId,
       startDate: new Date(formStartDate).toISOString(),
       endDate: new Date(formEndDate).toISOString(),
-      sortOrder: Number(formSortOrder),
+      sortOrder: Number(formSortOrder) || 0,
       isActive: formIsActive,
     };
 
     setSubmitting(true);
     let success = false;
-    if (modalMode === "add") {
+    if (modalMode === 'add') {
       success = await createBanner(payload);
     } else {
       success = await updateBanner(currentId, payload);
@@ -215,619 +196,390 @@ const BannerManagement = () => {
     }
   };
 
-  // Positions selection list
-  const bannerPositions = [
-    { value: "home_hero", label: "Hero Banner Trang chủ" },
-    { value: "home_lookbook", label: "Lookbook Banner" },
-    { value: "home_promotion", label: "Khuyến mãi Banner" },
-  ];
+  const handleDelete = async (banner) => {
+    const result = await Swal.fire({
+      title: 'Xóa banner này?',
+      text: `Banner "${banner.title}" sẽ không còn hiển thị trên website.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#DC2626',
+      cancelButtonColor: '#64748B',
+      confirmButtonText: 'Đồng ý xóa',
+      cancelButtonText: 'Hủy',
+    });
+
+    if (result.isConfirmed) {
+      await deleteBanner(banner._id || banner.id);
+    }
+  };
 
   return (
-    <div className="space-y-6 text-left relative">
+    <div className="space-y-6 text-left">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-xs">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">
-            Quản lý Banner
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Lập lịch trình và thiết kế băng rôn, trình chiếu quảng cáo toàn
-            trang
-          </p>
-        </div>
-        <button
-          onClick={handleOpenAdd}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          Thêm Banner mới
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Quản lý Banner quảng bá"
+        description="Quản lý các slide hình ảnh Hero trên trang chủ, banner bộ sưu tập và banner sự kiện"
+        breadcrumbs={[{ label: 'Banner' }]}
+        actions={
+          <button
+            onClick={handleOpenAdd}
+            className="flex items-center gap-2 bg-[#05251C] hover:bg-[#073D2A] dark:bg-[#F5DD20] dark:text-[#05251C] dark:hover:bg-[#e6cf1d] text-white font-semibold text-xs px-4 h-10 rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Thêm Banner mới</span>
+          </button>
+        }
+      />
 
-      {/* Filters bar */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex flex-wrap gap-4 items-center">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            value={filters.keyword}
-            onChange={(e) =>
-              setFilters((prev) => ({
-                ...prev,
-                keyword: e.target.value,
-                page: 1,
-              }))
-            }
-            placeholder="Tìm kiếm theo tiêu đề..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-gray-950"
-          />
-        </div>
-
-        {/* Position Filter */}
-        <select
-          value={filters.position}
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              position: e.target.value,
-              page: 1,
-            }))
-          }
-          className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 bg-white focus:outline-hidden focus:border-indigo-500 cursor-pointer"
-        >
-          <option value="">Tất cả vị trí</option>
-          {bannerPositions.map((pos) => (
-            <option key={pos.value} value={pos.value}>
-              {pos.label}
-            </option>
-          ))}
-        </select>
-
-        {/* Status Filter */}
-        <select
-          value={filters.status}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, status: e.target.value, page: 1 }))
-          }
-          className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 bg-white focus:outline-hidden focus:border-indigo-500 cursor-pointer"
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="true">Đang kích hoạt</option>
-          <option value="false">Tạm ẩn</option>
-        </select>
-      </div>
-
-      {/* Main Grid/Table list */}
-      {loading ? (
-        // Skeleton loading state
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-white p-5 rounded-2xl border border-gray-100 animate-pulse flex items-center justify-between gap-6"
-            >
-              <div className="flex items-center gap-4 flex-1">
-                <div className="w-32 h-20 bg-gray-150 rounded-xl"></div>
-                <div className="space-y-2 flex-1">
-                  <div className="h-4 bg-gray-155 rounded w-1/3"></div>
-                  <div className="h-3 bg-gray-150 rounded w-1/4"></div>
-                </div>
-              </div>
-              <div className="h-8 bg-gray-150 rounded w-20"></div>
+      {/* Main Table Card */}
+      <AdminCard noPadding>
+        {/* Filters Bar */}
+        <div className="p-4 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm tiêu đề banner..."
+                value={filters.search || ''}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))
+                }
+                className="w-full h-9 pl-9 pr-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30"
+              />
             </div>
-          ))}
-        </div>
-      ) : banners.length === 0 ? (
-        // Empty state
-        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 p-8 shadow-xs">
-          <Images className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-gray-800">
-            Không tìm thấy banner
-          </h3>
-          <p className="text-sm text-gray-400 mt-1">
-            Vui lòng thay đổi bộ lọc hoặc thêm một banner mới.
-          </p>
-        </div>
-      ) : (
-        // Banners List
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Bản xem trước</th>
-                  <th className="px-6 py-4">Thông tin Banner</th>
-                  <th className="px-6 py-4">Vị trí & Thứ tự</th>
-                  <th className="px-6 py-4">Thời gian chạy</th>
-                  <th className="px-6 py-4">Hiệu suất (Clicks)</th>
-                  <th className="px-6 py-4 text-center">Kích hoạt</th>
-                  <th className="px-6 py-4 text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
-                {banners.map((banner) => {
-                  const isActivePosition =
-                    bannerPositions.find((p) => p.value === banner.position)
-                      ?.label || banner.position;
-                  const now = new Date();
-                  const isDateActive =
-                    new Date(banner.startDate) <= now &&
-                    new Date(banner.endDate) >= now;
 
-                  return (
+            <select
+              value={filters.position || ''}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, position: e.target.value, page: 1 }))
+              }
+              className="h-9 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30 cursor-pointer"
+            >
+              <option value="">Tất cả vị trí</option>
+              <option value="home_hero">Trang chủ (Hero)</option>
+              <option value="home_secondary">Trang chủ (Phụ)</option>
+              <option value="category_header">Đầu trang Danh mục</option>
+              <option value="footer_banner">Chân trang</option>
+            </select>
+          </div>
+
+          <span className="text-xs text-slate-500 font-medium shrink-0">
+            Tổng cộng: <strong className="text-slate-900 dark:text-white">{banners.length}</strong> banner
+          </span>
+        </div>
+
+        {/* Content Body */}
+        {loading ? (
+          <div className="p-6">
+            <TableSkeleton rows={4} cols={5} />
+          </div>
+        ) : banners.length === 0 ? (
+          <AdminEmptyState
+            icon={ImageIcon}
+            title="Chưa có banner nào"
+            description="Tạo banner quảng cáo đầu tiên để thu hút khách hàng trên trang chủ."
+            action={
+              <button
+                onClick={handleOpenAdd}
+                className="bg-[#05251C] hover:bg-[#073D2A] dark:bg-[#F5DD20] dark:text-[#05251C] dark:hover:bg-[#e6cf1d] text-white text-xs font-semibold px-4 py-2 rounded-xl transition cursor-pointer"
+              >
+                Tạo banner ngay
+              </button>
+            }
+          />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left text-xs">
+                <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-3.5 w-32">Hình ảnh</th>
+                    <th className="px-6 py-3.5">Tiêu đề & Nút bấm</th>
+                    <th className="px-6 py-3.5">Vị trí hiển thị</th>
+                    <th className="px-6 py-3.5 text-center">Thứ tự</th>
+                    <th className="px-6 py-3.5 text-center">Trạng thái</th>
+                    <th className="px-6 py-3.5 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 font-medium">
+                  {banners.map((b) => (
                     <tr
-                      key={banner._id || banner.id}
-                      className="hover:bg-slate-50/50 transition duration-150"
+                      key={b._id || b.id}
+                      className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
                     >
                       {/* Image Preview */}
-                      <td className="px-6 py-4">
-                        <div className="relative w-28 h-16 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 shrink-0 shadow-xs">
-                          <img
-                            src={banner.imageUrl}
-                            alt={banner.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+                      <td className="px-6 py-3.5">
+                        <img
+                          src={b.imageUrl}
+                          alt={b.title}
+                          className="h-14 w-28 object-cover rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs"
+                        />
                       </td>
 
-                      {/* Information */}
-                      <td className="px-6 py-4 max-w-[200px]">
-                        <div className="font-bold text-gray-900 truncate">
-                          {banner.title}
+                      {/* Title */}
+                      <td className="px-6 py-3.5 max-w-xs">
+                        <div className="font-bold text-slate-900 dark:text-white text-sm truncate">
+                          {b.title}
                         </div>
-                        <div className="text-xs text-gray-400 truncate mt-0.5">
-                          {banner.subtitle || "Không có phụ đề"}
-                        </div>
-                        <div className="text-[10px] bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded w-fit uppercase mt-1">
-                          {banner.targetType}
-                        </div>
-                      </td>
-
-                      {/* Position & Order */}
-                      <td className="px-6 py-4">
-                        <div className="text-xs font-semibold text-gray-600">
-                          {isActivePosition}
-                        </div>
-                        <div className="text-[11px] text-gray-400 mt-0.5">
-                          Thứ tự: {banner.sortOrder || 0}
-                        </div>
-                      </td>
-
-                      {/* Timeframe */}
-                      <td className="px-6 py-4 text-xs space-y-1">
-                        <div>
-                          <span className="text-gray-400 font-semibold">
-                            Từ:
-                          </span>{" "}
-                          {formatDateTime(banner.startDate)}
-                        </div>
-                        <div>
-                          <span className="text-gray-400 font-semibold">
-                            Đến:
-                          </span>{" "}
-                          {formatDateTime(banner.endDate)}
-                        </div>
-                        {!isDateActive && (
-                          <div className="text-[9px] text-rose-500 font-bold bg-rose-50 px-1 rounded w-fit">
-                            Ngoài khoảng thời gian
+                        {b.subtitle && (
+                          <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                            {b.subtitle}
                           </div>
+                        )}
+                        {b.buttonText && (
+                          <span className="inline-block mt-1 text-[10px] font-semibold text-[#05251C] dark:text-[#F5DD20] bg-[#05251C]/10 dark:bg-[#F5DD20]/15 px-1.5 py-0.5 rounded">
+                            Nút: {b.buttonText}
+                          </span>
                         )}
                       </td>
 
-                      {/* Clicks */}
-                      <td className="px-6 py-4 font-mono font-bold text-gray-800">
-                        {banner.clickCount || 0}
+                      {/* Position */}
+                      <td className="px-6 py-3.5">
+                        <AdminBadge variant="neutral" size="sm">
+                          {positionLabels[b.position] || b.position}
+                        </AdminBadge>
                       </td>
 
-                      {/* Toggle Quick Status */}
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() =>
-                            toggleBannerStatus(banner._id || banner.id)
-                          }
-                          className="relative inline-flex items-center cursor-pointer justify-center align-middle"
-                        >
-                          <span className="sr-only">Toggle</span>
-                          <div
-                            className={`w-11 h-6 bg-gray-200 rounded-full transition-colors duration-200 relative
-                            ${
-                              banner.isActive ? "bg-indigo-600" : "bg-gray-250"
-                            }`}
-                          >
-                            <div
-                              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform duration-200
-                              ${
-                                banner.isActive
-                                  ? "translate-x-5"
-                                  : "translate-x-0"
-                              }`}
-                            />
-                          </div>
-                        </button>
+                      {/* Sort Order */}
+                      <td className="px-6 py-3.5 text-center font-bold font-mono">
+                        {b.sortOrder || 0}
+                      </td>
+
+                      {/* Active Status */}
+                      <td className="px-6 py-3.5 text-center">
+                        {b.isActive ? (
+                          <AdminBadge variant="success" dot size="sm">
+                            Đang hiển thị
+                          </AdminBadge>
+                        ) : (
+                          <AdminBadge variant="neutral" dot size="sm">
+                            Tạm ẩn
+                          </AdminBadge>
+                        )}
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-6 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => handleOpenEdit(banner)}
-                            className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-gray-900 cursor-pointer"
-                            title="Chỉnh sửa"
+                            onClick={() => toggleBannerStatus(b._id || b.id)}
+                            aria-label="Chuyển trạng thái"
+                            className={`flex h-8 w-8 items-center justify-center rounded-lg transition cursor-pointer ${
+                              b.isActive
+                                ? 'text-emerald-600 hover:bg-emerald-50'
+                                : 'text-slate-400 hover:bg-slate-100'
+                            }`}
+                            title={b.isActive ? 'Ẩn banner' : 'Kích hoạt banner'}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Power className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() =>
-                              deleteBanner(
-                                banner._id || banner.id,
-                                banner.title,
-                              )
-                            }
-                            className="p-1.5 border border-red-100 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-750 cursor-pointer"
-                            title="Xóa"
+                            onClick={() => handleOpenEdit(b)}
+                            aria-label={`Sửa ${b.title}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                            title="Chỉnh sửa banner"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(b)}
+                            aria-label={`Xóa ${b.title}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 transition cursor-pointer"
+                            title="Xóa banner"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {pagination && pagination.totalPages > 1 && (
+              <AdminPagination
+                page={pagination.page || 1}
+                limit={pagination.limit || 10}
+                total={pagination.total || banners.length}
+                totalPages={pagination.totalPages || 1}
+                onPageChange={(newPage) =>
+                  setFilters((prev) => ({ ...prev, page: newPage }))
+                }
+              />
+            )}
+          </>
+        )}
+      </AdminCard>
+
+      {/* Add / Edit Banner Modal */}
+      <AdminModal
+        isOpen={isOpenModal}
+        onClose={() => setIsOpenModal(false)}
+        title={modalMode === 'add' ? 'Thêm Banner mới' : 'Chỉnh sửa Banner'}
+        description="Tải lên ảnh kích thước chuẩn cho màn hình máy tính và thiết bị di động"
+        size="lg"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setIsOpenModal(false)}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              form="banner-form"
+              disabled={submitting || uploadingDesktop || uploadingMobile}
+              className="px-5 py-2 text-xs font-semibold text-white bg-[#05251C] hover:bg-[#073D2A] dark:bg-[#F5DD20] dark:text-[#05251C] dark:hover:bg-[#e6cf1d] disabled:opacity-50 rounded-xl shadow-xs transition cursor-pointer"
+            >
+              {submitting
+                ? 'Đang lưu...'
+                : modalMode === 'add'
+                ? 'Tạo Banner'
+                : 'Lưu thay đổi'}
+            </button>
+          </>
+        }
+      >
+        <form id="banner-form" onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Tiêu đề Banner <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="VD: Bộ sưu tập mùa hè 2026"
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+                className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Tiêu đề phụ (Subtitle)
+              </label>
+              <input
+                type="text"
+                placeholder="VD: Phong cách tối giản sang trọng"
+                value={formSubtitle}
+                onChange={(e) => setFormSubtitle(e.target.value)}
+                className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30 text-slate-800 dark:text-slate-100"
+              />
+            </div>
           </div>
 
-          {/* Pagination Footer */}
-          {pagination.totalPages > 1 && (
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-xs text-gray-500 font-semibold">
-                Hiển thị trang {pagination.page} trên tổng{" "}
-                {pagination.totalPages}
+          {/* Image Uploaders */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-3.5 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-2">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+                Ảnh Desktop (1920x800) <span className="text-red-500">*</span>
               </span>
-              <div className="flex gap-2">
-                <button
-                  disabled={pagination.page <= 1}
-                  onClick={() =>
-                    setFilters((prev) => ({ ...prev, page: prev.page - 1 }))
-                  }
-                  className="p-1.5 border border-gray-200 bg-white rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  disabled={pagination.page >= pagination.totalPages}
-                  onClick={() =>
-                    setFilters((prev) => ({ ...prev, page: prev.page + 1 }))
-                  }
-                  className="p-1.5 border border-gray-200 bg-white rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Modal Add/Edit Banner */}
-      {isOpenModal && (
-        <div className="fixed inset-0 bg-black/55 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative text-left">
-            {/* Modal Header */}
-            <div className="flex justify-between items-center border-b border-gray-100 pb-3.5 mb-5">
-              <h2 className="text-lg font-black text-gray-900">
-                {modalMode === "add"
-                  ? "Thêm Banner Quảng cáo mới"
-                  : "Chỉnh sửa Banner"}
-              </h2>
-              <button
-                onClick={() => setIsOpenModal(false)}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Modal Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Title & Subtitle */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">
-                    Tiêu đề Banner *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
-                    placeholder="Tiêu đề chính"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">
-                    Phụ đề (Subtitle)
-                  </label>
-                  <input
-                    type="text"
-                    value={formSubtitle}
-                    onChange={(e) => setFormSubtitle(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
-                    placeholder="Mô tả phụ ngắn"
-                  />
-                </div>
-              </div>
-
-              {/* Upload section with Desktop and Mobile image preview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                {/* Desktop Image */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase block">
-                    Ảnh Desktop Banner *
-                  </label>
-                  <div className="relative aspect-[16/9] w-full rounded-xl bg-gray-50 border border-gray-150 flex items-center justify-center overflow-hidden">
-                    {formImageUrl ? (
-                      <>
-                        <img
-                          src={formImageUrl}
-                          alt="Desktop Preview"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFormImageUrl("")}
-                          className="absolute top-2 right-2 bg-red-550 hover:bg-red-650 text-white rounded-full p-1 shadow-sm cursor-pointer"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center p-4 text-center cursor-pointer w-full h-full">
-                        {uploadingDesktop ? (
-                          <Loader2 className="h-7 w-7 animate-spin text-gray-400" />
-                        ) : (
-                          <>
-                            <Upload className="h-7 w-7 text-gray-300 mb-1" />
-                            <span className="text-xs text-gray-500 font-semibold">
-                              Tải ảnh Desktop
-                            </span>
-                            <span className="text-[10px] text-gray-400 mt-0.5">
-                              Tỷ lệ rộng (16:9 / 21:9)
-                            </span>
-                          </>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(e, "desktop")}
-                          className="hidden"
-                          disabled={uploadingDesktop}
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-
-                {/* Mobile Image */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase block">
-                    Ảnh Mobile Banner
-                  </label>
-                  <div className="relative aspect-[16/9] md:aspect-square md:max-h-[145px] w-full rounded-xl bg-gray-50 border border-gray-150 flex items-center justify-center overflow-hidden">
-                    {formMobileImageUrl ? (
-                      <>
-                        <img
-                          src={formMobileImageUrl}
-                          alt="Mobile Preview"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFormMobileImageUrl("")}
-                          className="absolute top-2 right-2 bg-red-550 hover:bg-red-650 text-white rounded-full p-1 shadow-sm cursor-pointer"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center p-4 text-center cursor-pointer w-full h-full">
-                        {uploadingMobile ? (
-                          <Loader2 className="h-7 w-7 animate-spin text-gray-400" />
-                        ) : (
-                          <>
-                            <Upload className="h-7 w-7 text-gray-300 mb-1" />
-                            <span className="text-xs text-gray-500 font-semibold">
-                              Tải ảnh Mobile
-                            </span>
-                            <span className="text-[10px] text-gray-400 mt-0.5">
-                              Tỷ lệ đứng hoặc vuông (1:1 / 4:5)
-                            </span>
-                          </>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(e, "mobile")}
-                          className="hidden"
-                          disabled={uploadingMobile}
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Position, ButtonText, SortOrder */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">
-                    Vị trí hiển thị *
-                  </label>
-                  <select
-                    value={formPosition}
-                    onChange={(e) => setFormPosition(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl bg-white text-sm font-medium text-slate-900 focus:outline-hidden focus:border-indigo-500 cursor-pointer"
-                  >
-                    {bannerPositions.map((pos) => (
-                      <option key={pos.value} value={pos.value}>
-                        {pos.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">
-                    Chữ nút (Button text)
-                  </label>
-                  <input
-                    type="text"
-                    value={formButtonText}
-                    onChange={(e) => setFormButtonText(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
-                    placeholder="Ví dụ: Mua ngay, Xem thêm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">
-                    Thứ tự hiển thị (sortOrder)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formSortOrder}
-                    onChange={(e) => setFormSortOrder(Number(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
-                  />
-                </div>
-              </div>
-
-              {/* Target Type, LinkUrl / TargetId */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-gray-50">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">
-                    Kiểu liên kết *
-                  </label>
-                  <select
-                    value={formTargetType}
-                    onChange={(e) => setFormTargetType(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl bg-white text-sm font-medium text-slate-900 focus:outline-hidden focus:border-indigo-500 cursor-pointer"
-                  >
-                    <option value="external">Liên kết ngoài (URL)</option>
-                    <option value="product">Sản phẩm cụ thể</option>
-                    <option value="category">Danh mục sản phẩm</option>
-                    <option value="lookbook">Bộ sưu tập (Lookbook)</option>
-                  </select>
-                </div>
-
-                {formTargetType === "external" ? (
-                  <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Đường dẫn liên kết ngoài (linkUrl)
-                    </label>
-                    <input
-                      type="text"
-                      // required
-                      value={formLinkUrl}
-                      onChange={(e) => setFormLinkUrl(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
-                      placeholder="https://..."
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">
-                      Mã định danh liên kết (targetId) *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formTargetId}
-                      onChange={(e) => setFormTargetId(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
-                      placeholder={
-                        formTargetType === "product"
-                          ? "Nhập ID sản phẩm"
-                          : formTargetType === "category"
-                          ? "Nhập ID danh mục"
-                          : "Nhập Slug hoặc ID của Lookbook"
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Start Date & End Date */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">
-                    Thời gian chạy *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={formStartDate}
-                    onChange={(e) => setFormStartDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase">
-                    Thời gian kết thúc *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={formEndDate}
-                    onChange={(e) => setFormEndDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-hidden focus:border-indigo-500 text-sm font-medium text-slate-900"
-                  />
-                </div>
-              </div>
-
-              {/* Toggle active state */}
-              <div className="flex items-center gap-3 pt-2">
-                <input
-                  type="checkbox"
-                  id="formIsActive"
-                  checked={formIsActive}
-                  onChange={(e) => setFormIsActive(e.target.checked)}
-                  className="h-4.5 w-4.5 text-indigo-650 border-gray-300 rounded focus:ring-indigo-500"
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e, 'desktop')}
+                className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white cursor-pointer"
+              />
+              {uploadingDesktop && (
+                <p className="text-[11px] text-amber-600">Đang tải ảnh lên...</p>
+              )}
+              {formImageUrl && (
+                <img
+                  src={formImageUrl}
+                  alt="Desktop preview"
+                  className="h-20 w-full object-cover rounded-lg border border-slate-200"
                 />
-                <label
-                  htmlFor="formIsActive"
-                  className="text-sm font-bold text-gray-700 cursor-pointer selection:bg-transparent"
-                >
-                  Kích hoạt hiển thị ngay lập tức
-                </label>
-              </div>
+              )}
+            </div>
 
-              {/* Submit Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setIsOpenModal(false)}
-                  className="px-5 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-xl transition cursor-pointer"
-                >
-                  Hủy bỏ
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-                >
-                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <span>
-                    {modalMode === "add" ? "Thêm mới" : "Lưu thay đổi"}
-                  </span>
-                </button>
-              </div>
-            </form>
+            <div className="p-3.5 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-2">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+                Ảnh Mobile (750x1000)
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e, 'mobile')}
+                className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white cursor-pointer"
+              />
+              {uploadingMobile && (
+                <p className="text-[11px] text-amber-600">Đang tải ảnh lên...</p>
+              )}
+              {formMobileImageUrl && (
+                <img
+                  src={formMobileImageUrl}
+                  alt="Mobile preview"
+                  className="h-20 w-16 object-cover rounded-lg border border-slate-200"
+                />
+              )}
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Vị trí hiển thị <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formPosition}
+                onChange={(e) => setFormPosition(e.target.value)}
+                className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30 text-slate-800 dark:text-slate-100 cursor-pointer"
+              >
+                <option value="home_hero">Trang chủ (Hero Slider)</option>
+                <option value="home_secondary">Trang chủ (Khối phụ)</option>
+                <option value="category_header">Đầu trang Danh mục</option>
+                <option value="footer_banner">Chân trang</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Thứ tự sắp xếp (Sort Order)
+              </label>
+              <input
+                type="number"
+                value={formSortOrder}
+                onChange={(e) => setFormSortOrder(e.target.value)}
+                className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Chữ trên nút (CTA Text)
+              </label>
+              <input
+                type="text"
+                placeholder="VD: Khám phá ngay"
+                value={formButtonText}
+                onChange={(e) => setFormButtonText(e.target.value)}
+                className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Đường dẫn liên kết (Link URL)
+              </label>
+              <input
+                type="text"
+                placeholder="/products?collection=summer"
+                value={formLinkUrl}
+                onChange={(e) => setFormLinkUrl(e.target.value)}
+                className="w-full h-10 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30 text-slate-800 dark:text-slate-100 font-mono"
+              />
+            </div>
+          </div>
+        </form>
+      </AdminModal>
     </div>
   );
 };

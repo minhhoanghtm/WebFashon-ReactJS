@@ -1,17 +1,21 @@
 .home-page {
-  --home-ink: #151515;
-  --home-muted: #6f6d68;
-  --home-line: #e8e5df;
-  --home-soft: #f5f3ef;
-  background: #FCFAF7;
+  --home-ink: #05251C;
+  --home-muted: #5A5E5B;
+  --home-line: rgba(5, 37, 28, 0.08);
+  --home-soft: #F2EFE9;
+  --home-accent: #073D2A;
+  background: var(--wf-paper, #FBF9F5);
   color: var(--home-ink);
   min-height: 100%;
-  padding: 24px 20px 88px;
+  overflow-x: clip;
+  position: relative;
+  padding: 24px clamp(16px, 2.5vw, 40px) 88px;
 }
 
 .home-page__container {
   margin: 0 auto;
-  max-width: 1240px;
+  max-width: 1536px;
+  width: 100%;
 }
 
 .home-hero {
@@ -19,9 +23,9 @@
   background-color: #272522;
   background-position: center;
   background-size: cover;
-  border-radius: 22px;
+  border-radius: 24px;
   display: flex;
-  min-height: 510px;
+  min-height: 560px;
   overflow: hidden;
   position: relative;
 }
@@ -36,8 +40,8 @@
 
 .home-hero__content {
   color: #fff;
-  max-width: 610px;
-  padding: 70px clamp(28px, 7vw, 90px);
+  max-width: 680px;
+  padding: 80px clamp(28px, 6vw, 96px);
   position: relative;
   z-index: 1;
 }
@@ -116,20 +120,21 @@
 }
 
 .home-section-header > span {
-  color: #9a7650;
+  color: var(--home-accent, #05251C);
   display: block;
   font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.16em;
+  font-weight: 800;
+  letter-spacing: 0.22em;
   margin-bottom: 9px;
   text-transform: uppercase;
 }
 
 .home-section-header h2 {
   font-size: clamp(30px, 4vw, 44px);
-  font-weight: 650;
-  letter-spacing: 0;
-  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  font-family: var(--font-heading, inherit);
 }
 
 .home-section-header p {
@@ -540,5 +545,107 @@
 }
 .bg-slate-250\/70 {
   background-color: rgb(226, 232, 240, 0.7);
+}
+
+/* ========================================================================= */
+/* 404STUDIO CINEMATIC FASHION SYSTEM — AMBIENT & EDITORIAL BACKGROUNDS     */
+/* ========================================================================= */
+
+@keyframes ambientBlob1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(45px, -35px) scale(1.08);
+  }
+}
+
+@keyframes ambientBlob2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-40px, 30px) scale(0.94);
+  }
+}
+
+@keyframes marqueeSlide {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ambient-blob-terracotta {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(184, 92, 50, 0.08) 0%, rgba(184, 92, 50, 0) 70%);
+  filter: blur(75px);
+  pointer-events: none;
+  animation: ambientBlob1 24s ease-in-out infinite;
+  z-index: 0;
+}
+
+.ambient-blob-stone {
+  position: absolute;
+  width: 580px;
+  height: 580px;
+  background: radial-gradient(circle, rgba(220, 215, 205, 0.45) 0%, rgba(248, 247, 244, 0) 70%);
+  filter: blur(85px);
+  pointer-events: none;
+  animation: ambientBlob2 28s ease-in-out infinite;
+  z-index: 0;
+}
+
+.editorial-grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.editorial-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeSlide 38s linear infinite;
+}
+
+.editorial-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.cinematic-lookbook-stage {
+  position: relative;
+  background: radial-gradient(ellipse at top, #1c1a18 0%, #121110 100%);
+  color: #f4f4f5;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.35);
+}
+
+.editorial-section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #05251C;
+}
+
+.editorial-hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.09), transparent);
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-blob-terracotta,
+  .ambient-blob-stone,
+  .editorial-marquee-track {
+    animation: none !important;
+  }
 }
 

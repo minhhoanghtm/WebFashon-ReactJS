@@ -5,7 +5,6 @@ import {
   getProvincesService,
   getWardsService,
 } from "@/services/location.service";
-import { findFallbackProvince, vietnamAddressData } from "@/pages/Checkout/VietnamAddressData";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -139,10 +138,10 @@ const HeadquartersAddressPicker = ({ value = "", onChange }) => {
     } finally {
       setLoadingDistrict(false);
     }
-    return (findFallbackProvince(provCode)?.districts || []).map(normDistrict);
+    return [];
   }, []);
 
-  const loadWards = useCallback(async (distCode, provCode = provinceCode) => {
+  const loadWards = useCallback(async (distCode) => {
     if (!distCode) return [];
     setLoadingWard(true);
     try {
@@ -155,10 +154,8 @@ const HeadquartersAddressPicker = ({ value = "", onChange }) => {
     } finally {
       setLoadingWard(false);
     }
-    const fbProv = findFallbackProvince(provCode);
-    const fbDist = fbProv?.districts.find((d) => d.code === String(distCode));
-    return (fbDist?.wards || []).map(normWard);
-  }, [provinceCode]);
+    return [];
+  }, []);
 
   // ── Load provinces once ────────────────────────────────────────────────────
   useEffect(() => {
@@ -167,9 +164,9 @@ const HeadquartersAddressPicker = ({ value = "", onChange }) => {
       try {
         const api = await getProvincesService();
         const mapped = Array.isArray(api) ? api.map(normProvince) : [];
-        setProvinces(mapped.length > 0 ? mapped : vietnamAddressData.map(normProvince));
+        setProvinces(mapped);
       } catch {
-        setProvinces(vietnamAddressData.map(normProvince));
+        setProvinces([]);
       } finally {
         setLoadingProvince(false);
       }
@@ -193,7 +190,7 @@ const HeadquartersAddressPicker = ({ value = "", onChange }) => {
       const dist = findByName(dists, parsed.districtName);
       if (!dist) { setLegacyAddress(value); return; }
 
-      const ws = await loadWards(dist.code, prov.code);
+      const ws = await loadWards(dist.code);
       const ward = findByName(ws, parsed.wardName);
       if (!ward) { setLegacyAddress(value); return; }
 

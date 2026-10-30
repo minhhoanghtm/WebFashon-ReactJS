@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import MainLayout from '../layouts/MainLayout';
@@ -28,20 +28,32 @@ import FAQ from '../pages/FAQ';
 import Guide from '../pages/Guide';
 import Landing from '../pages/Landing';
 import Blog from '../pages/Blog';
-import CatalogManagement from '@/pages/admin/CatalogManagement';
-import ProductManagement from '@/pages/admin/ProductManagement';
-import OrderManagement from '@/pages/admin/OrderManagement';
-import UserManagement from '@/pages/admin/UserManagement';
-import CouponManagement from '@/pages/admin/CouponManagement';
-import Dashboard from '@/pages/admin/Dashboard';
-import AdminChatManagement from '@/pages/admin/AdminChatManagement';
-import WebsiteSettingsManagement from '@/pages/admin/WebsiteSettingsManagement';
-import BannerManagement from '@/pages/admin/BannerManagement';
 import LookbookList from '../pages/LookbookList';
 import LookbookDetail from '../pages/LookbookDetail';
-import PageManagement from '@/pages/admin/PageManagement';
-import LookbookManagement from '@/pages/admin/LookbookManagement';
+import CampaignDetail from '../pages/CampaignDetail';
 import ProtectedRoute from '@/components/ProtectedRoute';
+
+// Admin tooling is only needed behind a protected route. Loading it on the
+// storefront was also pulling ECharts into the initial JavaScript graph.
+const CatalogManagement = lazy(() => import('@/pages/admin/CatalogManagement'));
+const ProductManagement = lazy(() => import('@/pages/admin/ProductManagement'));
+const OrderManagement = lazy(() => import('@/pages/admin/OrderManagement'));
+const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
+const CouponManagement = lazy(() => import('@/pages/admin/CouponManagement'));
+const Dashboard = lazy(() => import('@/pages/admin/Dashboard'));
+const AdminChatManagement = lazy(() => import('@/pages/admin/AdminChatManagement'));
+const WebsiteSettingsManagement = lazy(() => import('@/pages/admin/WebsiteSettingsManagement'));
+const BannerManagement = lazy(() => import('@/pages/admin/BannerManagement'));
+const PageManagement = lazy(() => import('@/pages/admin/PageManagement'));
+const LookbookManagement = lazy(() => import('@/pages/admin/LookbookManagement'));
+const CampaignManagement = lazy(() => import('@/pages/admin/CampaignManagement'));
+const ABTestingManagement = lazy(() => import('@/pages/admin/ABTestingManagement'));
+
+const AdminRoute = ({ Component }) => (
+  <Suspense fallback={null}>
+    <Component />
+  </Suspense>
+);
 
 const router = createBrowserRouter([
   {
@@ -62,6 +74,7 @@ const router = createBrowserRouter([
       { path: 'payment-result', element: <PaymentResult /> },
       { path: 'profile', element: <Profile /> },
       { path: 'vouchers', element: <VoucherHunting /> },
+      { path: 'campaigns/:slug', element: <CampaignDetail /> },
       { path: 'my-coupons', element: <MyCoupons /> },
       { path: 'favorites', element: <Favorites /> },
       {
@@ -74,11 +87,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'user/dashboard',
-        element: (
-          <div className="p-6 bg-white rounded-xl border border-gray-200">
-            User dashboard is being rebuilt.
-          </div>
-        ),
+        element: <Profile />,
       },
       { path: 'orders', element: <Order /> },
       { path: 'reviews/create', element: <Review /> },
@@ -99,17 +108,19 @@ const router = createBrowserRouter([
     path: '/admin',
     element: <ProtectedRoute allowedRoles={['admin']} element={<AdminLayout />} />,
     children: [
-      { index: true, element: <Dashboard /> },
-      { path: 'categories', element: <CatalogManagement /> },
-      { path: 'products', element: <ProductManagement /> },
-      { path: 'orders', element: <OrderManagement /> },
-      { path: 'chats', element: <AdminChatManagement /> },
-      { path: 'customers', element: <UserManagement /> },
-      { path: 'coupons', element: <CouponManagement /> },
-      { path: 'banners', element: <BannerManagement /> },
-      { path: 'lookbooks', element: <LookbookManagement /> },
-      { path: 'pages', element: <PageManagement /> },
-      { path: 'settings', element: <WebsiteSettingsManagement /> },
+      { index: true, element: <AdminRoute Component={Dashboard} /> },
+      { path: 'categories', element: <AdminRoute Component={CatalogManagement} /> },
+      { path: 'products', element: <AdminRoute Component={ProductManagement} /> },
+      { path: 'orders', element: <AdminRoute Component={OrderManagement} /> },
+      { path: 'chats', element: <AdminRoute Component={AdminChatManagement} /> },
+      { path: 'customers', element: <AdminRoute Component={UserManagement} /> },
+      { path: 'coupons', element: <AdminRoute Component={CouponManagement} /> },
+      { path: 'campaigns', element: <AdminRoute Component={CampaignManagement} /> },
+      { path: 'banners', element: <AdminRoute Component={BannerManagement} /> },
+      { path: 'lookbooks', element: <AdminRoute Component={LookbookManagement} /> },
+      { path: 'ab-testing', element: <AdminRoute Component={ABTestingManagement} /> },
+      { path: 'pages', element: <AdminRoute Component={PageManagement} /> },
+      { path: 'settings', element: <AdminRoute Component={WebsiteSettingsManagement} /> },
     ],
   },
 ]);

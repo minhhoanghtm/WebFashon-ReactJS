@@ -3,6 +3,7 @@ import { AppError } from "../../../common/exceptions/AppError.js";
 import { createSlug } from "../../../common/utils/slug.js";
 import { toNoAccent } from "../../../common/utils/removeAccents.js";
 import mongoose from "mongoose";
+import { triggerProductVectorSync } from "../../ai/queues/vectorSync.queue.js";
 
 export const updateProduct = async (id, productData) => {
   const { variants, ...productBody } = productData;
@@ -46,6 +47,8 @@ export const updateProduct = async (id, productData) => {
       await productRepository.insertManyVariants(variantDocs);
     }
   }
+
+  triggerProductVectorSync(id).catch(() => {});
 
   return updatedProduct;
 };

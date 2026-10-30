@@ -11,6 +11,7 @@ import uploadRouter from "../modules/uploads/upload.route.js";
 import voucherRouter from "../modules/vouchers/voucher.route.js";
 import websiteSettingsRouter from "../modules/websiteSettings/websiteSettings.route.js";
 import bannerRouter from "../modules/banners/banner.route.js";
+import { campaignRouter, adminCampaignRouter } from "../modules/campaigns/campaign.route.js";
 import favoriteRouter from "../modules/favorites/favorite.route.js";
 import { pageRouter, adminPageRouter, lookbookRouter } from "../modules/pages/page.route.js";
 import { pageSectionRouter, adminPageSectionRouter } from "../modules/pageSections/pageSection.routes.js";
@@ -21,6 +22,11 @@ import {
 import { protectedRoute, adminOnly, noAdmin } from "../middlewares/auth.middleware.js";
 import { authGlobalLimiter } from "../middlewares/rateLimiter.middleware.js";
 import shippingRouter from "../modules/shipping/shipping.routes.js";
+import trackingRouter from "../modules/tracking/tracking.route.js";
+import searchHistoryRouter from "../modules/tracking/searchHistory.route.js";
+import recommendationRouter from "../modules/recommendations/recommendation.route.js";
+import experimentRouter from "../modules/recommendations/experiments/experiment.route.js";
+import aiRouter from "../modules/ai/ai.route.js";
 import mongoose from "mongoose";
 import { getRedisConnection } from "../configs/redis.js";
 
@@ -61,11 +67,21 @@ rootRouter.use("/reviews", reviewRouter);
 rootRouter.use("/upload", uploadRouter);
 rootRouter.use("/settings", websiteSettingsRouter);
 rootRouter.use("/banners", bannerRouter);
+rootRouter.use("/campaigns", campaignRouter);
 rootRouter.use("/pages", pageRouter);
 rootRouter.use("/lookbooks", lookbookRouter);
 rootRouter.use("/page-sections", pageSectionRouter);
 rootRouter.use("/admin/pages", protectedRoute, adminOnly, adminPageRouter);
 rootRouter.use("/admin/page-sections", protectedRoute, adminOnly, adminPageSectionRouter);
+rootRouter.use("/admin/campaigns", protectedRoute, adminOnly, adminCampaignRouter);
+
+// Tracking, Recommendations & Vector AI routes
+rootRouter.use("/events", trackingRouter);
+rootRouter.use("/tracking", trackingRouter); // Backward-compatible alias
+rootRouter.use("/search", searchHistoryRouter);
+rootRouter.use("/recommendations", recommendationRouter);
+rootRouter.use("/experiments", experimentRouter);
+rootRouter.use("/ai", aiRouter);
 
 // Private routes
 rootRouter.use("/user", protectedRoute, userRouter);
@@ -81,9 +97,7 @@ rootRouter.use("/vouchers", voucherRouter);
 rootRouter.use("/admin", adminCommunicationRouter);
 rootRouter.use("/chat", customerCommunicationRouter);
 
-
-//Shipping domain routes
+// Shipping domain routes
 rootRouter.use("/shipping", shippingRouter);
-
 
 export default rootRouter;

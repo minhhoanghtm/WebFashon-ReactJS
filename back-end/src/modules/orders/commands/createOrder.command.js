@@ -7,12 +7,16 @@ import mongoose from "mongoose";
 import voucherService from "../../vouchers/voucher.service.js";
 import { Cart, CartItem } from "../../carts/cart.model.js";
 import dotenv from "dotenv";
+import pricingService from "../../campaigns/pricing.service.js";
+import CampaignProduct from "../../campaigns/campaignProduct.model.js";
+import CampaignPurchase from "../../campaigns/campaignPurchase.model.js";
 dotenv.config();
 
 export const createOrder = async (userId, orderData) => {
   const session = await mongoose.startSession();
   try {
     let createdOrder;
+    let orderItems = [];
     await session.withTransaction(async () => {
       const items = orderData.items || [];
       const paymentMethod =
@@ -41,12 +45,22 @@ export const createOrder = async (userId, orderData) => {
       }
 
       let subtotal = 0;
-      const orderItems = [];
+      orderItems = [];
+      const activeCampaignsBundle = await pricingService.getActiveCampaignsBundle(new Date());
 
-      if (Array.isArray(items) && items.length > 0) {
+
+
+
+
+  if (Array.isArray(items) && items.length > 0) {
         for (const item of items) {
+          if (!item.product_id || !mongoose.Types.ObjectId.isValid(item.product_id)) {
+            throw new AppError(`product_id không hợp lệ: ${item.product_id}`, 400);
+          }
+          const productObjectId = new mongoose.Types.ObjectId(item.product_id);
+
           const product = await productRepository.findOne({
-            _id: item.product_id,
+            _id: productObjectId,
           });
           if (!product) {
             throw new AppError(
@@ -55,12 +69,84 @@ export const createOrder = async (userId, orderData) => {
             );
           }
 
-          const priceToUse = product.new_price || product.price || 0;
+          const variantId = item.variant_id || item.product_variant_id || null;
+          const priceInfo = await pricingService.resolvePrice(
+            product,
+            variantId,
+            new Date(),
+            userId,
+            activeCampaignsBundle
+          );
+
+          if (item.price !== undefined && item.price !== null && Math.abs(Number(item.price) - priceInfo.finalPrice) > 0.01) {
+            throw new AppError(
+              `Giá sản phẩm "${product.name}" đã thay đổi từ ${Number(item.price).toLocaleString("vi-VN")}đ thành ${priceInfo.finalPrice.toLocaleString("vi-VN")}đ do chương trình khuyến mãi thay đổi. Vui lòng cập nhật giỏ hàng.`,
+              409
+            );
+          }
+
+          if (priceInfo.isQuotaExhausted) {
+            throw new AppError(
+              `Sản phẩm "${product.name}" trong Flash Sale đã hết suất ưu đãi. Vui lòng cập nhật lại giỏ hàng.`,
+              409
+            );
+          }
+
+          if (priceInfo.type === "flash_sale" && priceInfo.cpConfig) {
+            const qty = Number(item.quantity);
+            if (priceInfo.cpConfig.per_user_limit && userId) {
+              const userPurchases = await CampaignPurchase.aggregate([
+                {
+                  $match: {
+                    campaign_id: priceInfo.campaignId,
+                    product_id: productObjectId,
+                    user_id: new mongoose.Types.ObjectId(userId),
+                  },
+                },
+                {
+                  $group: {
+                    _id: null,
+                    totalBought: { $sum: "$quantity" },
+                  },
+                },
+              ]).session(session);
+
+              const alreadyBought = userPurchases[0]?.totalBought || 0;
+              if (alreadyBought + qty > priceInfo.cpConfig.per_user_limit) {
+                throw new AppError(
+                  `Bạn chỉ được mua tối đa ${priceInfo.cpConfig.per_user_limit} sản phẩm "${product.name}" với giá ưu đãi trong đợt khuyến mãi này.`,
+                  400
+                );
+              }
+            }
+
+            const cpDeducted = await CampaignProduct.findOneAndUpdate(
+              {
+                _id: priceInfo.cpConfig._id,
+                $expr: {
+                  $lte: [{ $add: ["$sold", qty] }, "$quota"],
+                },
+              },
+              {
+                $inc: { sold: qty },
+              },
+              { session, new: true }
+            );
+
+            if (!cpDeducted) {
+              throw new AppError(
+                `Sản phẩm "${product.name}" trong Flash Sale vừa hết suất khuyến mãi`,
+                409
+              );
+            }
+          }
+
+          const priceToUse = priceInfo.finalPrice;
           const totalCalculated = priceToUse * item.quantity;
           subtotal += totalCalculated;
 
           orderItems.push({
-            product_id: item.product_id,
+            product_id: productObjectId,
             product_name: product.name,
             product_slug: product.slug,
             product_image:
@@ -68,7 +154,10 @@ export const createOrder = async (userId, orderData) => {
               (product.displayProduct && product.displayProduct[0]),
             quantity: item.quantity,
             price: priceToUse,
-            variant_id: item.variant_id || item.product_variant_id || null,
+            variant_id: variantId,
+            campaign_id: priceInfo.campaignId || null,
+            campaign_name: priceInfo.campaignName || null,
+            original_price: priceInfo.originalPrice,
           });
         }
       } else {
@@ -129,6 +218,24 @@ export const createOrder = async (userId, orderData) => {
       );
 
       createdOrder = orderArray[0];
+
+      // Ghi nhận lượt mua chiến dịch để kiểm soát per_user_limit
+      for (const orderItem of orderItems) {
+        if (orderItem.campaign_id && userId) {
+          await CampaignPurchase.create(
+            [
+              {
+                campaign_id: orderItem.campaign_id,
+                product_id: orderItem.product_id,
+                user_id: userId,
+                order_id: createdOrder._id,
+                quantity: orderItem.quantity,
+              },
+            ],
+            { session }
+          );
+        }
+      }
 
       for (const vId of voucherIds) {
         await voucherService.linkVoucherUsageToOrder(
@@ -193,6 +300,40 @@ export const createOrder = async (userId, orderData) => {
             err.message,
           ),
         );
+
+      // Ghi nhận sự kiện order_placed sau khi commit transaction (có quy kết A/B Testing)
+      if (Array.isArray(orderItems) && orderItems.length > 0) {
+        Promise.all([
+          import("../../../queues/tracking.queue.js"),
+          import("../../recommendations/experiments/experiment.service.js"),
+        ])
+          .then(([{ addTrackingJob }, { default: expService }]) => {
+            expService.resolveOrderAttribution(createdOrder.user_id, orderItems).then((attribution) => {
+              orderItems.forEach((item) => {
+                addTrackingJob({
+                  event_id: new mongoose.Types.ObjectId().toString(),
+                  user_id: createdOrder.user_id ? createdOrder.user_id.toString() : null,
+                  anonymous_id: null,
+                  event_type: "order_placed",
+                  product_id: item.product_id ? item.product_id.toString() : null,
+                  category_id: null,
+                  query: null,
+                  meta: {
+                    price: item.price || 0,
+                    quantity: item.quantity || 1,
+                    order_id: createdOrder._id.toString(),
+                    payment_method: createdOrder.payment_method,
+                    experiment_id: attribution?.experiment_id || null,
+                    variant: attribution?.variant || null,
+                    rec_attributed: attribution?.is_direct_rec_assisted || false,
+                  },
+                  timestamp: new Date().toISOString(),
+                }).catch(() => {});
+              });
+            }).catch(() => {});
+          })
+          .catch((err) => console.warn("[Tracking] Lỗi import trackingQueue/expService:", err.message));
+      }
     }
 
     return createdOrder;
@@ -242,10 +383,17 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
   let subtotal = 0;
   const orderItems = [];
 
+  const activeCampaignsBundle = await pricingService.getActiveCampaignsBundle(new Date());
+
   if (Array.isArray(items) && items.length > 0) {
     for (const item of items) {
+      if (!item.product_id || !mongoose.Types.ObjectId.isValid(item.product_id)) {
+        throw new AppError(`product_id không hợp lệ: ${item.product_id}`, 400);
+      }
+      const productObjectId = new mongoose.Types.ObjectId(item.product_id);
+
       const product = await productRepository.findOne({
-        _id: item.product_id,
+        _id: productObjectId,
       });
       if (!product) {
         throw new AppError(
@@ -254,12 +402,84 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
         );
       }
 
-      const priceToUse = product.new_price || product.price || 0;
+      const variantId = item.variant_id || item.product_variant_id || null;
+      const priceInfo = await pricingService.resolvePrice(
+        product,
+        variantId,
+        new Date(),
+        userId,
+        activeCampaignsBundle
+      );
+
+      if (item.price !== undefined && item.price !== null && Math.abs(Number(item.price) - priceInfo.finalPrice) > 0.01) {
+        throw new AppError(
+          `Giá sản phẩm "${product.name}" đã thay đổi từ ${Number(item.price).toLocaleString("vi-VN")}đ thành ${priceInfo.finalPrice.toLocaleString("vi-VN")}đ do chương trình khuyến mãi thay đổi. Vui lòng cập nhật giỏ hàng.`,
+          409
+        );
+      }
+
+      if (priceInfo.isQuotaExhausted) {
+        throw new AppError(
+          `Sản phẩm "${product.name}" trong Flash Sale đã hết suất ưu đãi. Vui lòng cập nhật lại giỏ hàng.`,
+          409
+        );
+      }
+
+      if (priceInfo.type === "flash_sale" && priceInfo.cpConfig) {
+        const qty = Number(item.quantity);
+        if (priceInfo.cpConfig.per_user_limit && userId) {
+          const userPurchases = await CampaignPurchase.aggregate([
+            {
+              $match: {
+                campaign_id: priceInfo.campaignId,
+                product_id: productObjectId,
+                user_id: new mongoose.Types.ObjectId(userId),
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalBought: { $sum: "$quantity" },
+              },
+            },
+          ]);
+
+          const alreadyBought = userPurchases[0]?.totalBought || 0;
+          if (alreadyBought + qty > priceInfo.cpConfig.per_user_limit) {
+            throw new AppError(
+              `Bạn chỉ được mua tối đa ${priceInfo.cpConfig.per_user_limit} sản phẩm "${product.name}" với giá ưu đãi trong đợt khuyến mãi này.`,
+              400
+            );
+          }
+        }
+
+        const cpDeducted = await CampaignProduct.findOneAndUpdate(
+          {
+            _id: priceInfo.cpConfig._id,
+            $expr: {
+              $lte: [{ $add: ["$sold", qty] }, "$quota"],
+            },
+          },
+          {
+            $inc: { sold: qty },
+          },
+          { new: true }
+        );
+
+        if (!cpDeducted) {
+          throw new AppError(
+            `Sản phẩm "${product.name}" trong Flash Sale vừa hết suất khuyến mãi`,
+            409
+          );
+        }
+      }
+
+      const priceToUse = priceInfo.finalPrice;
       const totalCalculated = priceToUse * item.quantity;
       subtotal += totalCalculated;
 
       orderItems.push({
-        product_id: item.product_id,
+        product_id: productObjectId,
         product_name: product.name,
         product_slug: product.slug,
         product_image:
@@ -267,7 +487,10 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
           (product.displayProduct && product.displayProduct[0]),
         quantity: item.quantity,
         price: priceToUse,
-        variant_id: item.variant_id || item.product_variant_id || null,
+        variant_id: variantId,
+        campaign_id: priceInfo.campaignId || null,
+        campaign_name: priceInfo.campaignName || null,
+        original_price: priceInfo.originalPrice,
       });
     }
   } else {
@@ -320,6 +543,19 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
     stock_deducted: true,
   });
 
+  // Ghi nhận lượt mua chiến dịch để kiểm soát per_user_limit
+  for (const orderItem of orderItems) {
+    if (orderItem.campaign_id && userId) {
+      await CampaignPurchase.create({
+        campaign_id: orderItem.campaign_id,
+        product_id: orderItem.product_id,
+        user_id: userId,
+        order_id: order._id,
+        quantity: orderItem.quantity,
+      });
+    }
+  }
+
   for (const vUsage of voucherIds) {
     await voucherService.createVoucherUsage(
       userId,
@@ -367,6 +603,40 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
     .catch((err) =>
       console.error("Failed to emit order socket notification:", err.message),
     );
+
+  // Ghi nhận sự kiện order_placed (có quy kết A/B Testing)
+  if (Array.isArray(orderItems) && orderItems.length > 0) {
+    Promise.all([
+      import("../../../queues/tracking.queue.js"),
+      import("../../recommendations/experiments/experiment.service.js"),
+    ])
+      .then(([{ addTrackingJob }, { default: expService }]) => {
+        expService.resolveOrderAttribution(order.user_id, orderItems).then((attribution) => {
+          orderItems.forEach((item) => {
+            addTrackingJob({
+              event_id: new mongoose.Types.ObjectId().toString(),
+              user_id: order.user_id ? order.user_id.toString() : null,
+              anonymous_id: null,
+              event_type: "order_placed",
+              product_id: item.product_id ? item.product_id.toString() : null,
+              category_id: null,
+              query: null,
+              meta: {
+                price: item.price || 0,
+                quantity: item.quantity || 1,
+                order_id: order._id.toString(),
+                payment_method: order.payment_method,
+                experiment_id: attribution?.experiment_id || null,
+                variant: attribution?.variant || null,
+                rec_attributed: attribution?.is_direct_rec_assisted || false,
+              },
+              timestamp: new Date().toISOString(),
+            }).catch(() => {});
+          });
+        }).catch(() => {});
+      })
+      .catch((err) => console.warn("[Tracking] Lỗi import trackingQueue/expService:", err.message));
+  }
 
   return order;
 };

@@ -13,7 +13,6 @@ import {
   getProvincesService,
   getWardsService,
 } from "../../services/location.service";
-import { findFallbackProvince, vietnamAddressData } from "./VietnamAddressData";
 
 const REQUIRED_MESSAGES = {
   province: "Vui lòng chọn tỉnh/thành phố.",
@@ -173,12 +172,10 @@ const ShippingAddress = forwardRef(({ value = "", onChange, onLocationSelect }, 
       setLoadingDistrict(false);
     }
 
-    return (findFallbackProvince(nextProvinceCode)?.districts || []).map(
-      normalizeDistrict
-    );
+    return [];
   }, []);
 
-  const loadWards = useCallback(async (nextDistrictCode, nextProvinceCode = provinceCode) => {
+  const loadWards = useCallback(async (nextDistrictCode) => {
     if (!nextDistrictCode) {
       return [];
     }
@@ -204,12 +201,8 @@ const ShippingAddress = forwardRef(({ value = "", onChange, onLocationSelect }, 
       setLoadingWard(false);
     }
 
-    const fallbackDistrict = findFallbackProvince(nextProvinceCode)?.districts.find(
-      (district) => district.code === String(nextDistrictCode)
-    );
-
-    return (fallbackDistrict?.wards || []).map(normalizeWard);
-  }, [provinceCode]);
+    return [];
+  }, []);
 
   const markEdited = () => {
     setHasUserEdited(true);
@@ -272,14 +265,10 @@ const ShippingAddress = forwardRef(({ value = "", onChange, onLocationSelect }, 
           ? apiProvinces.map(normalizeProvince)
           : [];
 
-        setProvinces(
-          nextProvinces.length > 0
-            ? nextProvinces
-            : vietnamAddressData.map(normalizeProvince)
-        );
+        setProvinces(nextProvinces);
       } catch (error) {
         console.error("Không thể tải danh sách tỉnh/thành phố:", error);
-        setProvinces(vietnamAddressData.map(normalizeProvince));
+        setProvinces([]);
       } finally {
         setLoadingProvince(false);
       }
@@ -348,7 +337,7 @@ const ShippingAddress = forwardRef(({ value = "", onChange, onLocationSelect }, 
         return;
       }
 
-      const nextWards = await loadWards(matchedDistrict.code, matchedProvince.code);
+      const nextWards = await loadWards(matchedDistrict.code);
       const matchedWard = findByName(nextWards, parsedAddress.wardName);
 
       if (!matchedWard) {

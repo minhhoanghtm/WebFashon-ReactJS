@@ -267,30 +267,32 @@ const UserAccountManagement = ({ isDashboard = false }) => {
   }
 
   return (
-    <div className={isDashboard ? "relative w-full" : "w-full min-h-screen bg-gray-50/30 pb-20 relative"}>
+    <div className={isDashboard ? "relative w-full" : "w-full min-h-screen bg-[#FBF9F5] pb-20 relative select-none"}>
       {/* Rebuying overlay blocker */}
       {isRebuying && (
-        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px] flex items-center justify-center">
-          <div className="bg-white px-6 py-4 rounded-xl shadow-lg border border-gray-100 flex items-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-black" />
-            <span className="text-sm font-medium text-gray-700">Đang thêm sản phẩm vào giỏ hàng...</span>
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center">
+          <div className="bg-white px-6 py-4 rounded-2xl shadow-2xl border border-[#05251C]/15 flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-[#05251C]" />
+            <span className="text-xs font-bold text-[#05251C] uppercase tracking-wider">Đang cập nhật lại vào giỏ hàng...</span>
           </div>
         </div>
       )}
 
       {/* Header and Breadcrumbs */}
       {!isDashboard && (
-        <div className="bg-white border-b border-gray-100 py-6">
-          <div className="max-w-6xl mx-auto px-4">
-            <nav className="flex items-center gap-2 text-xs text-gray-400 mb-3">
-              <Link to="/" className="hover:text-black transition-colors">Trang chủ</Link>
+        <div className="border-b border-[#05251C]/10 bg-white/70 backdrop-blur-md py-8">
+          <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
+            <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#6B716E] mb-2">
+              <Link to="/" className="hover:text-[#05251C] transition-colors">404STUDIO</Link>
               <span>/</span>
-              <span className="text-gray-500">Tài khoản</span>
+              <span className="text-[#6B716E]">TÀI KHOẢN</span>
               <span>/</span>
-              <span className="text-gray-900 font-medium">Lịch sử mua hàng</span>
+              <span className="text-[#05251C] font-black">LỊCH SỬ ĐƠN HÀNG</span>
             </nav>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Lịch sử mua hàng</h1>
-            <p className="text-sm text-gray-500 mt-1">Theo dõi và quản lý toàn bộ đơn hàng của bạn.</p>
+            <h1 className="text-3xl sm:text-5xl font-display font-black text-[#05251C] tracking-tight uppercase leading-[0.95]">
+              ĐƠN HÀNG CỦA BẠN.
+            </h1>
+            <p className="text-xs sm:text-sm text-[#6B716E] mt-2 font-medium">Theo dõi hành trình hoàn thiện, may đo và giao nhận sản phẩm của bạn.</p>
           </div>
         </div>
       )}
@@ -299,25 +301,25 @@ const UserAccountManagement = ({ isDashboard = false }) => {
       <OrderFilterTabs activeTab={selectedOrderStatus} onTabChange={setSelectedOrderStatus} />
 
       {/* Main Content Area */}
-      <div className={isDashboard ? "w-full mt-4" : "max-w-6xl mx-auto px-4 mt-6"}>
+      <div className={isDashboard ? "w-full mt-4" : "max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 mt-6"}>
         {/* Search Bar */}
         <div className="relative mb-6">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+            <Search className="h-4 w-4 text-stone-400" />
           </div>
           <input
             type="text"
-            placeholder="Tìm kiếm đơn hàng theo Mã đơn hàng hoặc Tên sản phẩm..."
+            placeholder="Tìm kiếm theo mã đơn hàng hoặc tên sản phẩm..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-black text-sm shadow-sm transition-all"
+            className="block w-full pl-10 pr-10 py-3 border border-stone-200 dark:border-stone-800 rounded-xl bg-white dark:bg-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 text-sm shadow-[0_2px_8px_-2px_rgba(28,25,23,0.03)] transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-black transition-colors"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-stone-400 hover:text-stone-900 transition-colors"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>

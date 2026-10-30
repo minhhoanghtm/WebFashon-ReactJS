@@ -29,18 +29,22 @@ class PaymentController {
 
       if (isValid && orderId) {
         const order = await Order.findById(orderId);
-        if (order && order.payment_status !== "paid") {
+        if (order && order.payment_status !== "paid" && order.status !== "cancelled") {
           if (Math.abs(order.total_price - amount) <= 1) {
-            const existingTxn = await PaymentTransaction.findOne({ order_id: orderId, transaction_id: txnNo });
-            if (!existingTxn) {
-              await PaymentTransaction.create({
-                order_id: orderId,
-                provider: "vnpay",
-                transaction_id: txnNo,
-                amount: amount,
-                status: isSuccess ? "success" : "failed",
-                raw_response: req.query,
-              });
+            try {
+              const existingTxn = await PaymentTransaction.findOne({ order_id: orderId, transaction_id: txnNo });
+              if (!existingTxn) {
+                await PaymentTransaction.create({
+                  order_id: orderId,
+                  provider: "vnpay",
+                  transaction_id: txnNo,
+                  amount: amount,
+                  status: isSuccess ? "success" : "failed",
+                  raw_response: req.query,
+                });
+              }
+            } catch (err) {
+              if (err.code !== 11000) throw err;
             }
 
             if (isSuccess) {
@@ -91,24 +95,131 @@ class PaymentController {
         return res.status(200).json({ RspCode: "02", Message: "Order already confirmed" });
       }
 
-      // 5. Log PaymentTransaction first
-      await PaymentTransaction.create({
-        order_id: orderId,
-        provider: "vnpay",
-        transaction_id: txnNo,
-        amount: amount,
-        status: isSuccess ? "success" : "failed",
-        raw_response: req.query,
-      });
-
-      // 6. Update Order status
-      if (isSuccess) {
-        await orderFacade.paymentCallback(orderId, "success", txnNo);
-      } else {
-        await orderFacade.paymentCallback(orderId, "failed", null);
+      // 5. Handling cancelled/expired orders: Do NOT overwrite status to confirmed
+      if (order.status === "cancelled") {
+        console.warn(
+          `[Payment IPN Warning] Đơn hàng ${orderId} đã bị hủy/hết hạn nhưng VNPay báo thanh toán ${isSuccess ? "thành công" : "thất bại"} (Txn: ${txnNo}). Giữ nguyên trạng thái đã hủy.`
+        );
+        if (isSuccess) {
+          try {
+            await PaymentTransaction.create({
+              order_id: orderId,
+              provider: "vnpay",
+              transaction_id: txnNo,
+              amount: amount,
+              status: "success",
+              raw_response: req.query,
+            });
+          } catch (err) {
+            if (err.code !== 11000) {
+              console.error("Lỗi khi ghi nhận PaymentTransaction cho đơn đã hủy:", err);
+            }
+          }
+        }
+        return res.status(200).json({ RspCode: "00", Message: "Confirm success" });
       }
 
-      return res.status(200).json({ RspCode: "00", Message: "Confirm success" });
+      // 6. Atomic update: only one request gets updatedOrder !== null
+      if (isSuccess) {
+        const updatedOrder = await Order.findOneAndUpdate(
+          {
+            _id: orderId,
+            payment_status: { $ne: "paid" },
+            status: { $ne: "cancelled" },
+          },
+          {
+            $set: {
+              payment_status: "paid",
+              status: "confirmed",
+              transaction_id: txnNo,
+              paid_at: new Date(),
+            },
+          },
+          { new: true }
+        );
+
+        if (!updatedOrder) {
+          // Concurrent request already marked as paid or order got cancelled
+          return res.status(200).json({ RspCode: "02", Message: "Order already confirmed" });
+        }
+
+        // 7. Winning request logs PaymentTransaction
+        try {
+          await PaymentTransaction.create({
+            order_id: orderId,
+            provider: "vnpay",
+            transaction_id: txnNo,
+            amount: amount,
+            status: "success",
+            raw_response: req.query,
+          });
+        } catch (err) {
+          if (err.code !== 11000) {
+            throw err;
+          }
+        }
+
+        // 8. Trigger real-time notifications
+        import("../../../sockets/events.js")
+          .then(({ emitOrderNotification }) => {
+            emitOrderNotification(updatedOrder);
+          })
+          .catch((err) =>
+            console.error("Failed to emit order socket notification:", err.message),
+          );
+
+        // 9. Ghi nhận sự kiện purchase ở server cho đơn VNPay thành công (idempotent)
+        try {
+          const { default: trackingService } = await import("../tracking/tracking.service.js");
+          await trackingService.trackPurchaseCompleted(updatedOrder);
+        } catch (trackEx) {
+          console.warn("[Tracking] Lỗi xử lý purchase tracking VNPay:", trackEx.message);
+        }
+
+        return res.status(200).json({ RspCode: "00", Message: "Confirm success" });
+      } else {
+        const updatedOrder = await Order.findOneAndUpdate(
+          {
+            _id: orderId,
+            payment_status: { $ne: "paid" },
+          },
+          {
+            $set: {
+              payment_status: "failed",
+            },
+          },
+          { new: true }
+        );
+
+        if (!updatedOrder) {
+          return res.status(200).json({ RspCode: "02", Message: "Order already confirmed" });
+        }
+
+        try {
+          await PaymentTransaction.create({
+            order_id: orderId,
+            provider: "vnpay",
+            transaction_id: txnNo,
+            amount: amount,
+            status: "failed",
+            raw_response: req.query,
+          });
+        } catch (err) {
+          if (err.code !== 11000) {
+            throw err;
+          }
+        }
+
+        import("../../../sockets/events.js")
+          .then(({ emitOrderNotification }) => {
+            emitOrderNotification(updatedOrder);
+          })
+          .catch((err) =>
+            console.error("Failed to emit order socket notification:", err.message),
+          );
+
+        return res.status(200).json({ RspCode: "00", Message: "Confirm success" });
+      }
     } catch (error) {
       console.error("VNPay IPN Error:", error);
       return res.status(200).json({ RspCode: "99", Message: "Unknown error" });
@@ -138,18 +249,22 @@ class PaymentController {
 
       if (isValid && orderId) {
         const order = await Order.findById(orderId);
-        if (order && order.payment_status !== "paid") {
+        if (order && order.payment_status !== "paid" && order.status !== "cancelled") {
           if (Math.abs(order.total_price - amount) <= 1) {
-            const existingTxn = await PaymentTransaction.findOne({ order_id: orderId, transaction_id: transId });
-            if (!existingTxn) {
-              await PaymentTransaction.create({
-                order_id: orderId,
-                provider: "momo",
-                transaction_id: transId,
-                amount: amount,
-                status: isSuccess ? "success" : "failed",
-                raw_response: req.query,
-              });
+            try {
+              const existingTxn = await PaymentTransaction.findOne({ order_id: orderId, transaction_id: transId });
+              if (!existingTxn) {
+                await PaymentTransaction.create({
+                  order_id: orderId,
+                  provider: "momo",
+                  transaction_id: transId,
+                  amount: amount,
+                  status: isSuccess ? "success" : "failed",
+                  raw_response: req.query,
+                });
+              }
+            } catch (err) {
+              if (err.code !== 11000) throw err;
             }
 
             if (isSuccess) {
@@ -168,12 +283,12 @@ class PaymentController {
     }
   }
 
-/**
- * MoMo IPN Compliance
- * Always return HTTP 200.
- * Business status is represented by resultCode.
- * Prevents MoMo retry storm.
- */
+  /**
+   * MoMo IPN Compliance
+   * Always return HTTP 200.
+   * Business status is represented by resultCode.
+   * Prevents MoMo retry storm.
+   */
   async momoIpn(req, res, next) {
     try {
       const isValid = paymentService.verifyMomoReturn(req.body);
@@ -220,28 +335,148 @@ class PaymentController {
         });
       }
 
-      // 5. Log PaymentTransaction first
-      await PaymentTransaction.create({
-        order_id: orderid,
-        provider: "momo",
-        transaction_id: transId,
-        amount: amount,
-        status: isSuccess ? "success" : "failed",
-        raw_response: req.body,
-      });
-
-      // 6. Update Order status
-      if (isSuccess) {
-        await orderFacade.paymentCallback(orderid, "success", transId);
-      } else {
-        await orderFacade.paymentCallback(orderid, "failed", null);
+      // 5. Handling cancelled/expired orders: Do NOT overwrite status to confirmed
+      if (order.status === "cancelled") {
+        console.warn(
+          `[Payment IPN Warning] Đơn hàng ${orderid} đã bị hủy/hết hạn nhưng MoMo báo thanh toán ${isSuccess ? "thành công" : "thất bại"} (Txn: ${transId}). Giữ nguyên trạng thái đã hủy.`
+        );
+        if (isSuccess) {
+          try {
+            await PaymentTransaction.create({
+              order_id: orderid,
+              provider: "momo",
+              transaction_id: transId,
+              amount: amount,
+              status: "success",
+              raw_response: req.body,
+            });
+          } catch (err) {
+            if (err.code !== 11000) {
+              console.error("Lỗi khi ghi nhận PaymentTransaction cho đơn đã hủy:", err);
+            }
+          }
+        }
+        return res.status(200).json({
+          success: true,
+          resultCode: 0,
+          message: "Success",
+        });
       }
 
-      return res.status(200).json({
-        success: true,
-        resultCode: 0,
-        message: "Success",
-      });
+      // 6. Atomic update: only one request gets updatedOrder !== null
+      if (isSuccess) {
+        const updatedOrder = await Order.findOneAndUpdate(
+          {
+            _id: orderid,
+            payment_status: { $ne: "paid" },
+            status: { $ne: "cancelled" },
+          },
+          {
+            $set: {
+              payment_status: "paid",
+              status: "confirmed",
+              transaction_id: transId,
+              paid_at: new Date(),
+            },
+          },
+          { new: true }
+        );
+
+        if (!updatedOrder) {
+          return res.status(200).json({
+            success: true,
+            resultCode: 0,
+            message: "Order already processed",
+          });
+        }
+
+        try {
+          await PaymentTransaction.create({
+            order_id: orderid,
+            provider: "momo",
+            transaction_id: transId,
+            amount: amount,
+            status: "success",
+            raw_response: req.body,
+          });
+        } catch (err) {
+          if (err.code !== 11000) {
+            throw err;
+          }
+        }
+
+        import("../../../sockets/events.js")
+          .then(({ emitOrderNotification }) => {
+            emitOrderNotification(updatedOrder);
+          })
+          .catch((err) =>
+            console.error("Failed to emit order socket notification:", err.message),
+          );
+
+        // Ghi nhận sự kiện purchase ở server cho đơn MoMo thành công (idempotent)
+        try {
+          const { default: trackingService } = await import("../tracking/tracking.service.js");
+          await trackingService.trackPurchaseCompleted(updatedOrder);
+        } catch (trackEx) {
+          console.warn("[Tracking] Lỗi xử lý purchase tracking MoMo:", trackEx.message);
+        }
+
+        return res.status(200).json({
+          success: true,
+          resultCode: 0,
+          message: "Success",
+        });
+      } else {
+        const updatedOrder = await Order.findOneAndUpdate(
+          {
+            _id: orderid,
+            payment_status: { $ne: "paid" },
+          },
+          {
+            $set: {
+              payment_status: "failed",
+            },
+          },
+          { new: true }
+        );
+
+        if (!updatedOrder) {
+          return res.status(200).json({
+            success: true,
+            resultCode: 0,
+            message: "Order already processed",
+          });
+        }
+
+        try {
+          await PaymentTransaction.create({
+            order_id: orderid,
+            provider: "momo",
+            transaction_id: transId,
+            amount: amount,
+            status: "failed",
+            raw_response: req.body,
+          });
+        } catch (err) {
+          if (err.code !== 11000) {
+            throw err;
+          }
+        }
+
+        import("../../../sockets/events.js")
+          .then(({ emitOrderNotification }) => {
+            emitOrderNotification(updatedOrder);
+          })
+          .catch((err) =>
+            console.error("Failed to emit order socket notification:", err.message),
+          );
+
+        return res.status(200).json({
+          success: true,
+          resultCode: 0,
+          message: "Success",
+        });
+      }
     } catch (error) {
       console.error("MoMo IPN Error:", error);
       return res.status(200).json({

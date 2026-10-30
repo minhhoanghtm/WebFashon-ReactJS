@@ -220,7 +220,7 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
           {(isDelivered || isCancelled) && (
             <button
               onClick={() => onRebuy(order)}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-black hover:bg-gray-900 text-white font-medium text-sm rounded-lg border border-transparent transition-colors duration-200 shadow-sm hover:shadow-md flex-1 sm:flex-none"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#05251C] hover:bg-[#073D2A] text-[#F5DD20] font-bold text-xs uppercase tracking-wider rounded-xl border border-transparent transition-all duration-200 shadow-sm cursor-pointer active:scale-95 flex-1 sm:flex-none"
             >
               <RotateCcw className="w-4 h-4" />
               Mua lại toàn bộ

@@ -53,7 +53,7 @@ const LookbookDetail = () => {
   useEffect(() => {
     if (data?.page) {
       const page = data.page;
-      document.title = (page.seoTitle || page.title) + " - WebFashion";
+      document.title = (page.seoTitle || page.title) + " - 404STUDIO";
 
       // Meta Description
       let metaDesc = document.querySelector('meta[name="description"]');
@@ -75,28 +75,28 @@ const LookbookDetail = () => {
     }
 
     return () => {
-      document.title = "WebFashion - Thời trang cao cấp";
+      document.title = "404STUDIO — Thời trang cao cấp";
     };
   }, [data]);
 
   if (loading) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-neutral-50">
-        <Loader2 className="h-10 w-10 animate-spin text-neutral-900" />
-        <span className="ml-3 text-sm font-semibold text-neutral-600">Đang tải bộ sưu tập...</span>
+      <div className="flex h-screen flex-col items-center justify-center bg-[#FBF9F5]">
+        <Loader2 className="h-10 w-10 animate-spin text-[#05251C]" />
+        <span className="ml-3 text-sm font-semibold text-[#05251C]">Đang tải bộ sưu tập...</span>
       </div>
     );
   }
 
   if (error || !data?.page) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center text-center p-8 bg-neutral-50">
-        <div className="max-w-md bg-white p-8 rounded-none border border-neutral-200">
-          <h2 className="text-red-500 font-bold text-lg mb-2">Đã xảy ra lỗi</h2>
+      <div className="flex min-h-screen flex-col items-center justify-center text-center p-8 bg-[#FBF9F5]">
+        <div className="max-w-md bg-white p-8 rounded-2xl border border-[#E8E5DF] shadow-xs">
+          <h2 className="text-red-600 font-bold text-lg mb-2">Đã xảy ra lỗi</h2>
           <p className="text-neutral-500 text-xs mb-6">{error || "Bộ sưu tập này không khả dụng hoặc đã bị gỡ bỏ."}</p>
           <button
             onClick={() => navigate("/lookbooks")}
-            className="flex items-center justify-center gap-2 w-full px-5 py-3 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-none transition cursor-pointer"
+            className="flex items-center justify-center gap-2 w-full px-5 py-3 bg-[#05251C] hover:bg-[#073D2A] text-[#F5DD20] text-xs font-bold uppercase tracking-wider rounded-full transition cursor-pointer active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" />
             Quay lại Lookbooks
@@ -119,7 +119,7 @@ const LookbookDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900 text-left rounded-none">
+    <div className="min-h-screen bg-[#FBF9F5] text-[#05251C] text-left select-none">
       
       {/* 1. Dynamic Component Builder Renders */}
       <div className="w-full">
@@ -150,31 +150,31 @@ const LookbookDetail = () => {
             })
         ) : (
           /* Fallback Typographic layout if no blocks exist */
-          <div className="max-w-4xl mx-auto px-6 py-32 text-center rounded-none select-none">
+          <div className="max-w-4xl mx-auto px-6 py-32 text-center select-none">
             <h2 
-              className="text-neutral-900 text-3xl md:text-5xl font-semibold tracking-wide uppercase mb-6"
+              className="text-[#05251C] text-3xl md:text-5xl font-black font-display tracking-tight uppercase mb-6"
             >
               {page.title ? page.title.normalize("NFC") : ""}
             </h2>
             {page.excerpt && (
-              <p className="text-neutral-500 text-xs md:text-sm max-w-xl mx-auto font-light leading-relaxed tracking-wider uppercase font-sans">
+              <p className="text-[#6B716E] text-xs md:text-sm max-w-xl mx-auto font-medium leading-relaxed tracking-wider uppercase font-sans">
                 {page.excerpt.normalize("NFC")}
               </p>
             )}
-            <div className="w-16 h-[1px] bg-neutral-200 mx-auto mt-8" />
+            <div className="w-16 h-[2px] bg-[#F5DD20] mx-auto mt-8" />
           </div>
         )}
       </div>
 
       {/* 2. Dark Editorial Related Lookbooks & Footer navigation */}
-      <div className="bg-[#050505] text-white py-24 border-t border-neutral-950 rounded-none">
+      <div className="bg-[#05251C] text-[#FBF9F5] py-24 border-t border-[#05251C]/10">
         
         {relatedLookbooks.length > 0 && (
           <div className="max-w-5xl mx-auto px-6 md:px-12 rounded-none mb-16">
             <div className="flex flex-col items-center justify-center text-center gap-2 mb-16 rounded-none select-none">
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-500">Discover More</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#F5DD20]">Discover More</span>
               <h2 
-                className="text-2xl md:text-3xl font-semibold text-white tracking-wide uppercase"
+                className="text-2xl md:text-3xl font-display font-black text-[#F1D8CA] tracking-wide uppercase"
               >
                 Khám phá thêm bộ sưu tập
               </h2>
@@ -188,7 +188,7 @@ const LookbookDetail = () => {
                   <Link 
                     key={lb._id} 
                     to={`/lookbooks/${lb.slug}`}
-                    className="group flex flex-col bg-[#0d0f12] border border-neutral-900/60 overflow-hidden shadow-none rounded-[12px] hover:scale-[1.01] transition-all duration-300"
+                    className="group flex flex-col bg-[#05251C] border border-[#F1D8CA]/15 overflow-hidden shadow-none rounded-2xl hover:border-[#F5DD20] transition-all duration-300"
                   >
                     {coverImage && (
                       <div className="aspect-[16/9.5] w-full overflow-hidden bg-neutral-950 rounded-t-[12px]">

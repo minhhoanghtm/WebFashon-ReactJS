@@ -10,6 +10,7 @@ const DISABLE_RATE_LIMIT_FOR_TESTS = process.env.DISABLE_RATE_LIMIT_FOR_TESTS ==
  * - verify-otp:      10 request / 15 phút mỗi IP → chống brute-force OTP.
  * - resetPassword:    5 request / 15 phút mỗi IP → chống brute-force.
  * - global auth:     100 request / 15 phút mỗi IP → chống DDoS toàn bộ /auth.
+ * - events tracking: 120 request / 1 phút mỗi IP → chống spam tracking.
  */
 
 const createLimiter = (windowMs, max, message) => {
@@ -73,3 +74,23 @@ export const authGlobalLimiter = createLimiter(
   100,
   "Quá nhiều yêu cầu từ IP này. Vui lòng thử lại sau.",
 );
+
+/** /events — 120 req / 1 min (chống spam tracking theo IP và anonymous_id/userId) */
+export const eventTrackingLimiter = DISABLE_RATE_LIMIT_FOR_TESTS
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs: 60 * 1000,
+      max: 120,
+      keyGenerator: (req) => {
+        const anonId = req.headers["x-anonymous-id"] || req.body?.anonymous_id;
+        const userOrAnon = req.user?.userId || anonId || "guest";
+        return `${req.ip}:${userOrAnon}`;
+      },
+      validate: false,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: {
+        status: 429,
+        message: "Quá nhiều sự kiện ghi nhận. Vui lòng thử lại sau 1 phút.",
+      },
+    });

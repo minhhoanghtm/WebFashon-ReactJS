@@ -18,4 +18,24 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"), // 👈 thêm alias
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/antd')) return 'vendor-antd';
+          if (id.includes('node_modules/echarts')) return 'vendor-echarts';
+          if (id.includes('node_modules/motion')) return 'vendor-motion';
+          if (id.includes('node_modules/gsap')) return 'vendor-gsap';
+          if (
+            id.includes('node_modules/react') ||
+            id.includes('node_modules/react-dom') ||
+            id.includes('node_modules/react-router-dom')
+          ) {
+            return 'vendor-react';
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1200,
+  },
 });

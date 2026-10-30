@@ -1,38 +1,55 @@
-import { LoaderCircle, PackageSearch, RotateCcw } from "lucide-react";
+import React from "react";
+import { PackageSearch, RotateCcw } from "lucide-react";
 
-const EmptyState = ({ type, onClear }) => {
+const EmptyState = ({ type, onClear, gridDensity = "compact" }) => {
   if (type === "loading") {
+    const skeletonClass =
+      gridDensity === "spacious"
+        ? "grid grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8 w-full"
+        : "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 w-full";
+
     return (
-      <div className="flex flex-col items-center justify-center min-h-[360px] bg-white rounded-2xl border border-neutral-200/80 p-8 text-neutral-500 shadow-xs" role="status">
-        <LoaderCircle
-          className="animate-spin text-amber-800 mb-3"
-          size={32}
-          aria-hidden="true"
-        />
-        <span className="text-sm font-semibold text-neutral-700">Đang tải sản phẩm thời trang...</span>
+      <div className={skeletonClass} role="status" aria-label="Đang tải danh sách thiết kế">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div
+            key={index}
+            className="flex flex-col bg-white border border-[#E8E5DF] rounded-2xl overflow-hidden p-3"
+          >
+            {/* Image Placeholder with Shimmer */}
+            <div className="w-full aspect-[3/4] rounded-xl skeleton-shimmer mb-3" />
+
+            {/* Typography Placeholders */}
+            <div className="w-1/3 h-3 rounded skeleton-shimmer mb-2" />
+            <div className="w-3/4 h-4 rounded skeleton-shimmer mb-2" />
+            <div className="w-1/2 h-4 rounded skeleton-shimmer mt-auto" />
+          </div>
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[380px] bg-white rounded-2xl border border-neutral-200/80 p-8 sm:p-12 text-center shadow-xs">
-      <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-800 mb-4 border border-amber-100">
-        <PackageSearch size={32} aria-hidden="true" />
+    <div className="flex flex-col items-center justify-center min-h-[420px] bg-white rounded-2xl border border-[#E8E5DF] p-8 sm:p-14 text-center shadow-xs">
+      <div className="w-16 h-16 rounded-2xl bg-[#05251C]/5 border border-[#05251C]/15 flex items-center justify-center text-[#05251C] mb-5 shadow-2xs">
+        <PackageSearch size={28} aria-hidden="true" />
       </div>
-      <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-1.5">
+      <span className="text-[11px] font-mono tracking-widest text-[#6B716E] uppercase mb-1">
+        NO PIECES FOUND
+      </span>
+      <h2 className="text-xl sm:text-2xl font-black text-[#05251C] tracking-tight mb-2 font-display uppercase">
         Không tìm thấy sản phẩm phù hợp
       </h2>
-      <p className="text-sm text-neutral-500 max-w-md mb-6 leading-relaxed">
-        Rất tiếc, không có sản phẩm nào khớp với bộ lọc hoặc từ khóa hiện tại. Hãy thử từ khóa khác hoặc xóa bớt tiêu chí lọc.
+      <p className="text-sm text-[#6B716E] max-w-md mb-6 leading-relaxed">
+        Không có thiết kế nào khớp với các tiêu chí lọc hoặc từ khóa hiện tại. Hãy thử tìm kiếm bằng từ khóa khác hoặc làm mới bộ lọc.
       </p>
       {onClear && (
         <button
           type="button"
           onClick={onClear}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-900 text-white font-bold text-xs hover:bg-neutral-800 shadow-xs transition cursor-pointer"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#05251C] text-white font-bold text-xs tracking-wider uppercase hover:bg-[#073D2A] hover:text-[#F5DD20] transition duration-200 cursor-pointer shadow-sm active:scale-95"
         >
-          <RotateCcw size={14} />
-          <span>Xóa tất cả bộ lọc</span>
+          <RotateCcw size={13} />
+          <span>XÓA BỘ LỌC ĐỂ XEM TẤT CẢ</span>
         </button>
       )}
     </div>
