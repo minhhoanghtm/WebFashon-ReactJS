@@ -15,8 +15,12 @@ import "./home.css";
 import { toast } from "react-toastify";
 import voucherApi from "../../api/voucher.api";
 import { useAuthStore } from "../../store/auth.store";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+
 
 const Home = () => {
+  
+  useDocumentTitle("Trang chủ");
   const { products: apiProducts, isLoading, error } = useProducts();
   const { homeSearchTerm = "" } = useOutletContext() || {};
   const favoriteItems = useFavoriteStore((state) => state.items);
@@ -62,10 +66,13 @@ const Home = () => {
   }, [categories]);
 
   const normalizedProducts = useMemo(() => {
-    const sourceProducts = Array.isArray(apiProducts) ? apiProducts : [];
-    return sourceProducts.map((product, index) =>
-      normalizeProduct(product, index, categoryMap, false),
-    );
+    const hasApiProducts = Array.isArray(apiProducts) && apiProducts.length > 0;
+    if (hasApiProducts) {
+      return apiProducts.map((product, index) =>
+        normalizeProduct(product, index, categoryMap, false),
+      );
+    }
+    return [];
   }, [apiProducts, categoryMap]);
 
   const filteredProducts = useMemo(() => {
@@ -167,9 +174,7 @@ const Home = () => {
           limit={8}
           isLoading={isLoading}
           hasError={Boolean(error)}
-          isUsingFallback={
-            !isLoading && (!Array.isArray(apiProducts) || apiProducts.length === 0)
-          }
+          isUsingFallback={false}
           favoriteIds={favoriteIds}
           onToggleFavorite={toggleFavorite}
           title={

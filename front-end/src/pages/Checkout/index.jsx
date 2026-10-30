@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCartStore } from "../../store/cart.store";
 import { useAuthStore } from "../../store/auth.store";
@@ -62,6 +62,43 @@ const Checkout = () => {
   const { items, setCartItems } = useCartStore();
   const { user } = useAuthStore();
   const checkoutItems = location.state?.checkoutItems || items;
+
+  const normalizedCheckoutItems = useMemo(() => {
+    return (checkoutItems || []).map((item) => {
+      const name =
+        item.name || item.product_name || item.product_id?.name || "Sản phẩm";
+      const image =
+        item.image || item.product_image || item.product_id?.image || "";
+
+      let color = item.color || item.variant_id?.color;
+      let size = item.size || item.variant_id?.size;
+
+      if (!color && !size && item.variant) {
+        const parts = item.variant.split(" - ");
+        if (parts.length === 2) {
+          color = parts[0];
+          size = parts[1];
+        } else {
+          color = item.variant;
+        }
+      }
+
+      if (!color && item.variants?.[0]) {
+        color = item.variants[0].color;
+      }
+      if (!size && item.variants?.[0]) {
+        size = item.variants[0].size;
+      }
+
+      return {
+        ...item,
+        name,
+        image,
+        color,
+        size,
+      };
+    });
+  }, [checkoutItems]);
   const shippingAddressRef = useRef(null);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -69,10 +106,22 @@ const Checkout = () => {
     getInitialShippingAddress(location.state),
   );
   const [isEditingAddress, setIsEditingAddress] = useState(true);
-  const [backupInfo, setBackupInfo] = useState({ fullName: "", phone: "", address: "" });
+  const [backupInfo, setBackupInfo] = useState({
+    fullName: "",
+    phone: "",
+    address: "",
+  });
   const [hasInitializedFromUser, setHasInitializedFromUser] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const role = user?.role || user?.data?.role || "";
+    if (role === "admin") {
+      toast.error("Quản trị viên không thể thực hiện thanh toán mua hàng!");
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const [shippingFee, setShippingFee] = useState(30000); //mặc định 30k, sẽ được cập nhật nếu có voucher vận chuyển hoặc đơn hàng đủ điều kiện freeship
   const [loadingFee, setLoadingFee] = useState(false);
@@ -107,7 +156,12 @@ const Checkout = () => {
   };
   // Theo dõi sự thay đổi của Địa chỉ để tự động tính lại phí vận chuyển
   useEffect(() => {
-    console.log("Selected Location changed - District ID:", selectedDistrictId, "Ward Code:", selectedWardCode);
+    console.log(
+      "Selected Location changed - District ID:",
+      selectedDistrictId,
+      "Ward Code:",
+      selectedWardCode,
+    );
     if (selectedDistrictId && selectedWardCode) {
       fetchShippingFee(selectedDistrictId, selectedWardCode);
     }
@@ -121,10 +175,12 @@ const Checkout = () => {
     if (user && !hasInitializedFromUser) {
       const primaryAddress = getPrimaryAddress(user);
       if (primaryAddress) {
-        const initialName = primaryAddress.fullName || user.fullName || user.name || "";
-        const initialPhone = primaryAddress.phone || user.phone || user.phoneNumber || "";
+        const initialName =
+          primaryAddress.fullName || user.fullName || user.name || "";
+        const initialPhone =
+          primaryAddress.phone || user.phone || user.phoneNumber || "";
         const formatted = formatAddress(primaryAddress);
-        
+
         setFullName(initialName);
         setPhone(initialPhone);
         setAddress(formatted);
@@ -132,7 +188,7 @@ const Checkout = () => {
         setBackupInfo({
           fullName: initialName,
           phone: initialPhone,
-          address: formatted
+          address: formatted,
         });
       } else {
         setFullName(user.fullName || user.name || "");
@@ -152,7 +208,7 @@ const Checkout = () => {
   );
 
   const calculateSubtotal = () => {
-    return checkoutItems.reduce(
+    return normalizedCheckoutItems.reduce(
       (sum, item) =>
         sum + Number(item.new_price || item.price || 0) * (item.quantity || 1),
       0,
@@ -182,7 +238,7 @@ const Checkout = () => {
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    if (checkoutItems.length === 0) return;
+    if (normalizedCheckoutItems.length === 0) return;
 
     if (isEditingAddress) {
       if (!shippingAddressRef.current?.validate()) return;
@@ -208,7 +264,7 @@ const Checkout = () => {
         phone,
         shippingAddress: address,
         paymentMethod: paymentMethod,
-        items: checkoutItems.map((item) => ({
+        items: normalizedCheckoutItems.map((item) => ({
           product_id: item.product_id,
           product_variant_id:
             item.variants?.[0]?._id || item.variant_id || null,
@@ -224,7 +280,7 @@ const Checkout = () => {
       if (res.success) {
         const remainingCartItems = items.filter(
           (item) =>
-            !checkoutItems.some(
+            !normalizedCheckoutItems.some(
               (checkoutItem) => checkoutItem._id === item._id,
             ),
         );
@@ -239,7 +295,9 @@ const Checkout = () => {
               window.location.href = payRes.paymentUrl;
               return;
             } else {
-              toast.error("Đơn hàng đã tạo nhưng không thể khởi tạo liên kết thanh toán MoMo.");
+              toast.error(
+                "Đơn hàng đã tạo nhưng không thể khởi tạo liên kết thanh toán MoMo.",
+              );
               navigate("/orders");
             }
           } catch (payErr) {
@@ -254,7 +312,9 @@ const Checkout = () => {
               window.location.href = payRes.paymentUrl;
               return;
             } else {
-              toast.error("Đơn hàng đã tạo nhưng không thể khởi tạo liên kết thanh toán VNPay.");
+              toast.error(
+                "Đơn hàng đã tạo nhưng không thể khởi tạo liên kết thanh toán VNPay.",
+              );
               navigate("/orders");
             }
           } catch (payErr) {
@@ -414,7 +474,8 @@ const Checkout = () => {
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
                   {/* Cancel Button */}
-                  {(backupInfo.address || (user && getPrimaryAddress(user))) && (
+                  {(backupInfo.address ||
+                    (user && getPrimaryAddress(user))) && (
                     <button
                       type="button"
                       onClick={() => {
@@ -431,13 +492,18 @@ const Checkout = () => {
                   {/* Confirm Button */}
                   <button
                     type="button"
-                    disabled={!fullName.trim() || !phone.trim() || !address.trim()}
+                    disabled={
+                      !fullName.trim() || !phone.trim() || !address.trim()
+                    }
                     onClick={() => {
                       if (!fullName.trim() || !phone.trim()) {
                         alert("Vui lòng điền đầy đủ Họ tên và Số điện thoại!");
                         return;
                       }
-                      if (shippingAddressRef.current && !shippingAddressRef.current.validate()) {
+                      if (
+                        shippingAddressRef.current &&
+                        !shippingAddressRef.current.validate()
+                      ) {
                         return;
                       }
                       setIsEditingAddress(false);
@@ -534,7 +600,14 @@ const Checkout = () => {
 
             <button
               type="submit"
-              disabled={loading || checkoutItems.length === 0 || isEditingAddress || !fullName.trim() || !phone.trim() || !address.trim()}
+              disabled={
+                loading ||
+                normalizedCheckoutItems.length === 0 ||
+                isEditingAddress ||
+                !fullName.trim() ||
+                !phone.trim() ||
+                !address.trim()
+              }
               className="mt-6 w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.01] active:scale-[0.99] cursor-pointer shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/20"
             >
               {loading
@@ -552,16 +625,16 @@ const Checkout = () => {
               Đơn hàng của bạn
             </h3>
             <ul className="mt-6 divide-y divide-gray-100 dark:divide-slate-800/80">
-              {checkoutItems.map((item) => {
-                const color = item.variants?.[0]?.color;
-                const size = item.variants?.[0]?.size;
+              {normalizedCheckoutItems.map((item) => {
+                const color = item.color;
+                const size = item.size;
                 return (
                   <li key={item._id} className="flex py-4 gap-4 items-center">
                     {item.image && (
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="h-16 w-16 rounded-xl object-cover border border-gray-100 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-950"
+                        className="h-16 w-16 rounded-xl object-contain border border-gray-100 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-950"
                       />
                     )}
                     <div className="flex-1 min-w-0">
@@ -578,6 +651,11 @@ const Checkout = () => {
                           </span>
                         )}
                       </div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-slate-300">
+                        Giá:{" "}
+                        {item.new_price?.toLocaleString("vi-VN") ||
+                          item.price?.toLocaleString("vi-VN")}đ
+                      </span>
                     </div>
                     <span className="font-bold text-sm text-gray-950 dark:text-white shrink-0">
                       {(
@@ -605,7 +683,7 @@ const Checkout = () => {
           <div className="border-t border-b border-gray-200 dark:border-slate-850 py-4 space-y-4">
             <CheckoutVoucherSelector
               subtotal={calculateSubtotal()}
-              items={checkoutItems}
+              items={normalizedCheckoutItems}
               shippingFee={
                 calculateSubtotal() >= 1000000 || calculateSubtotal() === 0
                   ? 0
@@ -619,7 +697,7 @@ const Checkout = () => {
             />
             <CheckoutVoucherSelector
               subtotal={calculateSubtotal()}
-              items={checkoutItems}
+              items={normalizedCheckoutItems}
               shippingFee={
                 calculateSubtotal() >= 1000000 || calculateSubtotal() === 0
                   ? 0
@@ -671,7 +749,11 @@ const Checkout = () => {
             <div className="flex justify-between text-sm text-gray-500 dark:text-slate-400">
               <span>Phí vận chuyển:</span>
               <span className="text-gray-950 dark:text-white font-medium">
-                {loadingFee ? "Đang tính..." : calculateShippingFee() === 0 ? "Miễn phí" : `${calculateShippingFee().toLocaleString("vi-VN")}đ`}
+                {loadingFee
+                  ? "Đang tính..."
+                  : calculateShippingFee() === 0
+                  ? "Miễn phí"
+                  : `${calculateShippingFee().toLocaleString("vi-VN")}đ`}
               </span>
             </div>
             <div className="border-t border-gray-150 dark:border-slate-800/80 pt-4 flex justify-between text-base font-bold text-gray-900 dark:text-white">

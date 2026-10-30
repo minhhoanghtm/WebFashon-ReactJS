@@ -23,7 +23,7 @@ const Header = () => {
   const { isAuthenticated: isLoggedIn, logout, user } = useAuthStore();
   const role = user?.role || user?.data?.role || "";
   // console.log("Header isLoggedIn:", isLoggedIn);
-  console.log("Header user:", role);
+  // console.log("Header user:", role);
 
   //Hieu ung khi them vao gio hang
   const { cartRef, flyToCart } = useCartAnimation();
@@ -176,10 +176,10 @@ const Header = () => {
       try {
         const res = await getCartService();
         if (res.success) {
-          console.log("Cart response:", res.data);
+          // console.log("Cart response:", res.data);
           // Calculate total quantity of products
           const totalQty = res.data?.[0]?.total_items || 0;
-          console.log("Total cart quantity:", totalQty);
+          // console.log("Total cart quantity:", totalQty);
           setCartItemCount(totalQty);
         }
       } catch (error) {
@@ -193,9 +193,9 @@ const Header = () => {
   useEffect(() => {
     const handleCartUpdate = async (e) => {
       const { totalQuantity } = e.detail || {};
-      console.log("cartUpdated event received, totalQuantity:", totalQuantity);
+      // console.log("cartUpdated event received, totalQuantity:", totalQuantity);
       if (totalQuantity !== undefined) {
-        console.log("Setting cartItemCount to:", totalQuantity);
+        // console.log("Setting cartItemCount to:", totalQuantity);
         setCartItemCount(totalQuantity);
       }
     };

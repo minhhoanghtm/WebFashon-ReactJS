@@ -17,7 +17,7 @@ const EmptyOrders = () => {
         Hãy khám phá những sản phẩm mới nhất của chúng tôi để bắt đầu mua sắm ngay hôm nay.
       </p>
       <button
-        onClick={() => navigate("/products")}
+        onClick={() => navigate("/")}
         className="px-8 py-3 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-colors duration-200 shadow-sm hover:shadow-md"
       >
         Tiếp tục mua sắm

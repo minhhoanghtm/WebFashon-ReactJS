@@ -12,6 +12,7 @@ const ProductReview = ({ reviews = [], productId, averageRating }) => {
   const [matchingOrder, setMatchingOrder] = useState(null);
   const [matchingOrderItem, setMatchingOrderItem] = useState(null);
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [activeMedia, setActiveMedia] = useState(null);
 
   const totalReviews = reviews.length;
   const displayAverage =
@@ -165,6 +166,35 @@ const ProductReview = ({ reviews = [], productId, averageRating }) => {
                 </div>
               </div>
               <p>{review.content}</p>
+              {((review.images && review.images.length > 0) || (review.videos && review.videos.length > 0)) && (
+                <div className="product-review-card__media">
+                  {review.images && review.images.map((img, idx) => (
+                    <img
+                      key={`img-${idx}`}
+                      src={img}
+                      alt={`Đánh giá bằng hình ảnh ${idx + 1}`}
+                      className="product-review-card__image"
+                      onClick={() => setActiveMedia({ url: img, type: "image" })}
+                      title="Click để xem ảnh phóng to"
+                    />
+                  ))}
+                  {review.videos && review.videos.map((vid, idx) => (
+                    <div
+                      key={`vid-${idx}`}
+                      className="product-review-card__video-wrapper"
+                      onClick={() => setActiveMedia({ url: vid, type: "video" })}
+                      title="Click để xem video"
+                    >
+                      <video src={vid} className="product-review-card__video-preview" muted playsInline />
+                      <div className="product-review-card__video-overlay">
+                        <svg className="play-icon" viewBox="0 0 24 24" width="24" height="24">
+                          <polygon points="6 4 20 12 6 20 6 4" fill="white" />
+                        </svg>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </article>
           ))
         ) : (
@@ -182,6 +212,31 @@ const ProductReview = ({ reviews = [], productId, averageRating }) => {
         >
           {showAll ? "Thu gọn đánh giá" : "Xem thêm đánh giá"}
         </button>
+      )}
+
+      {activeMedia && (
+        <div
+          className="product-review-lightbox"
+          onClick={() => setActiveMedia(null)}
+          role="dialog"
+          aria-label="Xem phương tiện đánh giá"
+        >
+          <div className="product-review-lightbox__content" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="product-review-lightbox__close"
+              onClick={() => setActiveMedia(null)}
+              aria-label="Đóng"
+            >
+              &times;
+            </button>
+            {activeMedia.type === "image" ? (
+              <img src={activeMedia.url} alt="Đánh giá bằng hình ảnh" />
+            ) : (
+              <video src={activeMedia.url} controls autoPlay />
+            )}
+          </div>
+        </div>
       )}
     </section>
   );

@@ -12,11 +12,14 @@ const validate = (schema) => (req, res, next) => {
   };
   const result = schema.safeParse(data);
   if (!result.success) {
-    const error = new Error('Validation failed');
+    const error = new Error('Dữ liệu không hợp lệ (Validation failed)');
     error.statusCode = 400;
     error.isOperational = true;
-    // Attach detailed messages for debugging (optional)
-    error.details = result.error.errors.map((e) => e.message);
+    const issues = result.error.issues ?? result.error.errors ?? [];
+    error.details = issues.map((e) => {
+      const pathStr = e.path && e.path.length > 0 ? e.path.join(".") + ": " : "";
+      return `${pathStr}${e.message}`;
+    });
     return next(error);
   }
   // Replace request data with parsed (and possibly coerced) values

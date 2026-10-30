@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import Product from '../models/Product.js';
+import Product from '../modules/products/product.model.js';
+import { toNoAccent } from '../common/utils/removeAccents.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

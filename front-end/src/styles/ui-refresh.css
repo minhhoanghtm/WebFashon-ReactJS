@@ -1,0 +1,76 @@
+/* Shared visual contract for storefront, account, and administration views. */
+:root {
+  --wf-ink: #191817;
+  --wf-paper: #fffcf8;
+  --wf-surface: #ffffff;
+  --wf-muted: #f5f1eb;
+  --wf-line: #e8e1d8;
+  --wf-accent: #8d4f2a;
+  --wf-accent-strong: #713b1c;
+  --wf-success: #1f6b4e;
+  --wf-danger: #b42318;
+  --wf-shadow: 0 18px 48px rgb(40 29 20 / 8%);
+}
+
+.dark {
+  --wf-ink: #f6f1ea;
+  --wf-paper: #181615;
+  --wf-surface: #211e1b;
+  --wf-muted: #2b2723;
+  --wf-line: #403933;
+  --wf-accent: #e2a06c;
+  --wf-accent-strong: #f1bd91;
+  --wf-shadow: 0 18px 48px rgb(0 0 0 / 28%);
+}
+
+body { background: var(--wf-paper); }
+
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--wf-accent) 42%, transparent);
+  outline-offset: 2px;
+}
+
+/* Keep main views readable even when individual legacy pages use different palettes. */
+.min-h-screen { min-width: 0; }
+.ant-btn-primary { background: var(--wf-accent) !important; border-color: var(--wf-accent) !important; }
+.ant-btn-primary:hover { background: var(--wf-accent-strong) !important; border-color: var(--wf-accent-strong) !important; }
+.ant-table-wrapper .ant-table { border-radius: 14px; overflow: hidden; }
+.ant-table-wrapper .ant-table-thead > tr > th { background: var(--wf-muted); color: var(--wf-ink); font-weight: 650; }
+.ant-card { border-color: var(--wf-line); box-shadow: none; }
+.ant-modal-content { border-radius: 18px !important; overflow: hidden; }
+
+.storefront-shell main { min-width: 0; }
+.storefront-shell .product-card__media { background: var(--wf-muted); }
+.storefront-shell .product-card__badge { color: var(--wf-ink); }
+.storefront-shell .product-card__favorite { color: var(--wf-ink); }
+.storefront-shell .product-card__favorite.is-active { color: var(--wf-danger); }
+
+/* Shared status and input behavior across cart, checkout, account, and admin. */
+.storefront-shell :is(.bg-white, .bg-gray-50) { border-color: var(--wf-line); }
+.storefront-shell :is(.payment-card, .checkout-address-summary) { border-color: var(--wf-line); }
+.storefront-shell .payment-card:has(input:checked) { border-color: var(--wf-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--wf-accent) 14%, transparent); }
+.admin-shell .ant-table-wrapper .ant-table-container { border-color: var(--wf-line); }
+.admin-shell .ant-pagination .ant-pagination-item-active { border-color: var(--wf-accent); }
+.admin-shell .ant-pagination .ant-pagination-item-active a { color: var(--wf-accent); }
+.admin-shell :is(.bg-blue-600, .bg-indigo-600) { background-color: var(--wf-accent) !important; }
+.admin-shell :is(.hover\:bg-blue-700:hover, .hover\:bg-indigo-700:hover) { background-color: var(--wf-accent-strong) !important; }
+
+.dark .profile-page,
+.dark .product-detail,
+.dark .product-page { background: var(--wf-paper); }
+.dark :is(.profile-sidebar, .profile-card, .profile-hero, .product-info) { background: var(--wf-surface); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+
+/* Forms and checkout share calm, consistent controls. */
+input:not([type='checkbox']):not([type='radio']), select, textarea {
+  border-radius: 10px;
+}
+
+@media (max-width: 640px) {
+  .ant-modal { max-width: calc(100vw - 24px); margin: 0 auto; }
+  .ant-table-wrapper { overflow-x: auto; }
+}

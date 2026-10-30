@@ -14,11 +14,11 @@ const ImageTextSection = ({ data }) => {
         {/* Image Column */}
         {image && (
           <div className="w-full lg:w-1/2 overflow-hidden bg-neutral-50 rounded-none">
-            <div className="aspect-[4/3] lg:aspect-[16/11] w-full overflow-hidden relative rounded-none">
+            <div className="aspect-[4/3] lg:aspect-[16/11] w-full overflow-hidden relative rounded-none flex items-center justify-center">
               <img
                 src={image}
                 alt={title || "Section photography"}
-                className="w-full h-full object-cover object-center rounded-none"
+                className="max-w-full max-h-full object-contain rounded-none"
                 loading="lazy"
               />
             </div>

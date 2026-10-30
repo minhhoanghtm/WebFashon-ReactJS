@@ -35,7 +35,7 @@ class VNPAYProvider {
       vnp_OrderInfo: `Thanh toán đơn hàng ${order._id}`,
       vnp_OrderType: process.env.VNPAY_ORDERTYPE,
       vnp_ReturnUrl: process.env.VNP_RETURNURL,
-      vnp_TxnRef: order._id.toString(),
+      vnp_TxnRef: `${order._id.toString()}_${createDate}`,
     };
 
     vnp_Params = this.sortObject(vnp_Params);

@@ -3,6 +3,10 @@
   --footer-ink: #ffffff;
   --footer-muted: #999999;
   --footer-accent: #06b6d4;
+  --footer-bg: #141416;
+  --footer-ink: #f4f4f5;
+  --footer-muted: #a1a1aa;
+  --footer-accent: #c67c2f; /* warm amber gold */
   --footer-line: rgb(255 255 255 / 8%);
   --footer-font-header: inherit;
   
@@ -250,5 +254,13 @@
   
   .footer-bottom-links {
     justify-content: center;
+  }
+
+  .footer-newsletter-form {
+    flex-direction: column;
+  }
+
+  .footer-newsletter-btn {
+    width: 100%;
   }
 }

@@ -5,7 +5,7 @@ import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
 import rootRouter from "./routes/index.js";
 import errorHandler from "./middlewares/error.middleware.js";
-import logger from "./utils/logger.js";
+import logger from "./common/logger.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -29,7 +29,12 @@ app.use(
   })
 );
 app.options("*", cors());
-app.use(helmet()); // secure HTTP headers
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+); // secure HTTP headers
 app.use(mongoSanitize()); // prevent NoSQL injection
 
 // Payload parsing

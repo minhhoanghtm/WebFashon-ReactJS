@@ -69,7 +69,8 @@ const userIdParamSchema = z.object({
 function parseOrError(schema, data) {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const messages = result.error.errors.map((e) => {
+    const issues = result.error.issues || result.error.errors || [];
+    const messages = issues.map((e) => {
       const field = e.path.length > 0 ? e.path.join(".") + ": " : "";
       return `${field}${e.message}`;
     });

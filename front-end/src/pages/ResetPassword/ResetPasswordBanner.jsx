@@ -1,7 +1,11 @@
 import React from "react";
 import resetImage from "@/pages/Home/assets/lookbook-summer.jpg";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
 
 const ResetPasswordBanner = () => {
+  const {settings} = useWebsiteSettings();
+  const general = settings?.general || {};
+  const siteName = general.siteName || "";
   return (
     <div className="reset-banner">
       <img
@@ -11,7 +15,7 @@ const ResetPasswordBanner = () => {
         loading="eager"
       />
       <div className="reset-banner__overlay">
-        <span className="reset-banner__badge">Khôi phục tài khoản</span>
+        <span className="reset-banner__badge">{siteName}</span>
         <h2 className="reset-banner__title">Tìm lại mật khẩu</h2>
         <p className="reset-banner__desc">
           Đừng lo lắng, hãy thực hiện các bước khôi phục mật khẩu để tiếp tục trải nghiệm dịch vụ và các sản phẩm thời trang mới nhất.

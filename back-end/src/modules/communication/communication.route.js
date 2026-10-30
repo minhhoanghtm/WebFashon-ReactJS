@@ -1,5 +1,5 @@
 import express from "express";
-import { adminOnly, protectedRoute, optionalProtectedRoute } from "../../middlewares/auth.middleware.js";
+import { adminOnly, protectedRoute, optionalProtectedRoute, noAdmin } from "../../middlewares/auth.middleware.js";
 import {
   assignConversation,
   closeConversation,
@@ -30,8 +30,8 @@ adminCommunicationRouter.get("/messages/:conversationId", getAdminMessages);
 adminCommunicationRouter.post("/support/send", sendAdminSupportMessage);
 
 export const customerCommunicationRouter = express.Router();
-customerCommunicationRouter.post("/ai/send", optionalProtectedRoute, sendAiMessage);
-customerCommunicationRouter.use(protectedRoute);
+customerCommunicationRouter.post("/ai/send", optionalProtectedRoute, noAdmin, sendAiMessage);
+customerCommunicationRouter.use(protectedRoute, noAdmin);
 customerCommunicationRouter.post("/support/send", sendCustomerSupportMessage);
 customerCommunicationRouter.get("/conversations", getCustomerConversations);
 customerCommunicationRouter.get("/messages/:conversationId", getCustomerMessages);

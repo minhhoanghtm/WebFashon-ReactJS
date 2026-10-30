@@ -144,8 +144,11 @@ export const getKPIs = async () => {
   const revenueStats = await orderRepository.aggregate([
     {
       $match: {
-        payment_status: "paid",
         status: "delivered",
+        $or: [
+          { payment_method: "cod" },
+          { payment_status: "paid" }
+        ]
       },
     },
     {
@@ -159,8 +162,11 @@ export const getKPIs = async () => {
   const totalRevenue = revenueStats?.[0]?.totalRevenue || 0;
 
   const totalOrders = await orderRepository.countDocuments({
-    payment_status: "paid",
     status: "delivered",
+    $or: [
+      { payment_method: "cod" },
+      { payment_status: "paid" }
+    ]
   });
 
   const totalCustomers = await orderRepository.distinct("user_id");

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
-import heroImage from "./assets/hero-atelier.jpg";
 import { getActiveBannersService, trackBannerClickService } from "../../services/banner.service";
 
 const HeroBanner = () => {
@@ -33,21 +32,38 @@ const HeroBanner = () => {
     };
   }, []);
 
-  // Build list of slides: map API active banners
-  const bannerList = activeBanners.map(b => ({
-    id: b._id || b.id,
-    // TEMPORARY FIX: Correct typo "Wellcome" to "Welcome" from database strings until fixed in MongoDB.
-    title: b.title ? b.title.replace(/Wellcome/gi, "Welcome") : "",
-    subtitle: b.subtitle ? b.subtitle.replace(/Wellcome/gi, "Welcome") : "",
-    eyebrow: "Thiết kế nổi bật",
-    buttonText: b.buttonText || "Khám phá ngay",
-    imageUrl: b.imageUrl,
-    mobileImageUrl: b.mobileImageUrl,
-    targetType: b.targetType,
-    targetId: b.targetId,
-    linkUrl: b.linkUrl,
-    isApi: true
-  }));
+  // A neutral fallback keeps the page useful without claiming a non-existent campaign.
+  const defaultFallbackBanner = {
+    id: "default-hero-atelier",
+    title: "Khám phá phong cách của bạn",
+    subtitle: "Dễ dàng tìm những sản phẩm phù hợp trong danh mục thời trang của chúng tôi.",
+    eyebrow: "404 STUDIO",
+    buttonText: "Xem sản phẩm",
+    imageUrl: "",
+    mobileImageUrl: "",
+    targetType: "category",
+    targetId: "",
+    linkUrl: "/products",
+    isApi: false,
+  };
+
+  // Build list of slides: map API active banners or use curated fallback
+  const bannerList = activeBanners.length > 0
+    ? activeBanners.map((b) => ({
+        id: b._id || b.id,
+        // TEMPORARY FIX: Correct typo "Wellcome" to "Welcome" from database strings until fixed in MongoDB.
+        title: b.title ? b.title.replace(/Wellcome/gi, "Welcome") : "",
+        subtitle: b.subtitle ? b.subtitle.replace(/Wellcome/gi, "Welcome") : "",
+        eyebrow: "Thiết kế nổi bật",
+        buttonText: b.buttonText || "Khám phá ngay",
+        imageUrl: b.imageUrl,
+        mobileImageUrl: b.mobileImageUrl,
+        targetType: b.targetType,
+        targetId: b.targetId,
+        linkUrl: b.linkUrl,
+        isApi: true,
+      }))
+    : [defaultFallbackBanner];
 
   // Auto-play timer
   useEffect(() => {
@@ -66,10 +82,6 @@ const HeroBanner = () => {
     );
   }
 
-  if (bannerList.length === 0) {
-    return null;
-  }
-
   const handlePrev = (e) => {
     e.stopPropagation();
     setCurrentIndex((prev) => (prev === 0 ? bannerList.length - 1 : prev - 1));
@@ -81,7 +93,12 @@ const HeroBanner = () => {
   };
 
   const handleBannerClick = async (banner) => {
-    if (banner.isApi && banner.id) {
+    if (!banner.isApi) {
+      navigate("/products");
+      return;
+    }
+
+    if (banner.id) {
       // Increment clickCount in the background
       await trackBannerClickService(banner.id);
     }

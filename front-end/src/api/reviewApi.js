@@ -1,17 +1,17 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 export const getReviewsByProductIdApi = (productId) => {
-    return api.get(`/reviews/${productId}`);
-}
+  return axiosClient.get(`/reviews/${productId}`);
+};
 
 export const createReviewApi = (data) => {
-    return api.post("/reviews", data);
-}
+  return axiosClient.post("/reviews", data);
+};
 
 export const updateReviewApi = (reviewId, data) => {
-    return api.put(`/reviews/${reviewId}`, data);
-}
+  return axiosClient.put(`/reviews/${reviewId}`, data);
+};
 
 export const deleteReviewApi = (reviewId) => {
-    return api.delete(`/reviews/${reviewId}`);
-}
+  return axiosClient.delete(`/reviews/${reviewId}`);
+};

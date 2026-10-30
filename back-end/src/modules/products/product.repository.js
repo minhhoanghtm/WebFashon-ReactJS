@@ -13,6 +13,14 @@ class ProductRepository {
       .lean();
   }
 
+  // Find random products with optional session and index hint
+  async findRandomProducts(filter = {}, limit = 20) {
+    return await Product.aggregate([
+      { $match: filter },
+      { $sample: { size: limit } },
+    ])
+  }
+
   // Paginated find with optional session and index hint
   async findPaginated(query = {}, sort = { createdAt: -1 }, skip = 0, limit = 10, options = {}) {
     const { session, hint } = options;

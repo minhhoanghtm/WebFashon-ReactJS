@@ -21,11 +21,11 @@ const GallerySection = ({ data }) => {
         {images.map((item, idx) => (
           <figure key={idx} className="group flex flex-col bg-transparent m-0 overflow-hidden rounded-none">
             {item.imageUrl && (
-              <div className="w-full overflow-hidden bg-neutral-50 relative rounded-none aspect-[3/4]">
+              <div className="w-full overflow-hidden bg-neutral-50 relative rounded-none aspect-[3/4] flex items-center justify-center">
                 <img
                   src={item.imageUrl}
                   alt={item.caption || `Gallery image ${idx}`}
-                  className="w-full h-full object-cover object-center group-hover:scale-[1.015] transition-transform duration-[1200ms] ease-out rounded-none"
+                  className="max-w-full max-h-full object-contain group-hover:scale-[1.015] transition-transform duration-[1200ms] ease-out rounded-none"
                   loading="lazy"
                 />
               </div>

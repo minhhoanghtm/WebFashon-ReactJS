@@ -157,6 +157,8 @@ const ShippingAddress = forwardRef(({ value = "", onChange, onLocationSelect }, 
       const data = await getDistrictsService(nextProvinceCode);
       const districtsArray = Array.isArray(data)
         ? data
+        : Array.isArray(data?.data)
+        ? data.data
         : Array.isArray(data?.districts)
         ? data.districts
         : [];
@@ -186,6 +188,8 @@ const ShippingAddress = forwardRef(({ value = "", onChange, onLocationSelect }, 
       const data = await getWardsService(nextDistrictCode);
       const wardsArray = Array.isArray(data)
         ? data
+        : Array.isArray(data?.data)
+        ? data.data
         : Array.isArray(data?.wards)
         ? data.wards
         : [];

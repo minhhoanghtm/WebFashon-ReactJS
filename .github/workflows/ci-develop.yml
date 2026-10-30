@@ -1,41 +1,51 @@
-name: CI - Develop
+name: CI/CD - Develop
 
 on:
   push:
-    branches: [develop]
+    branches:
+      - develop
   pull_request:
-    branches: [develop]
+    branches:
+      - develop
 
 jobs:
-  lint-and-test-backend:
-    name: 🔍 Backend CI
+  deploy:
     runs-on: ubuntu-latest
 
     services:
       mongo:
-        image: mongo:7
+        image: mongo:6
         ports:
           - 27017:27017
         options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
       redis:
-        image: redis:7-alpine
+        image: redis:7
         ports:
           - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://localhost:27017/webfashion_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: test-secret
+
+    defaults:
+      run:
+        working-directory: back-end
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -45,7 +55,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: ./back-end
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Create .env for test
         working-directory: ./back-end
@@ -53,19 +63,20 @@ jobs:
           cat > .env << EOF
           NODE_ENV=test
           PORT=5000
-          MONGODB_URI=mongodb://localhost:27017/webfashion_test
-          REDIS_URL=redis://localhost:6379
+          MONGO_CONNECTIONSTRING=mongodb://127.0.0.1:27017/webfashion_test
+          MONGODB_URI=mongodb://127.0.0.1:27017/webfashion_test
+          REDIS_URL=redis://127.0.0.1:6379
           JWT_SECRET=test_secret_key_ci
           JWT_REFRESH_SECRET=test_refresh_secret_ci
           EOF
 
-      - name: Run tests
+      - name: Run Backend Tests
         working-directory: ./back-end
-        run: node test-api.js
-
-      - name: Run scenario tests
-        working-directory: ./back-end
-        run: node test-scenarios.js
+        run: |
+          npm start > server.log 2>&1 &
+          npx wait-on http://localhost:5000/api/health --timeout 60000 || (cat server.log && exit 1)
+          npm test
+          node test-api.js
 
   build-frontend:
     name: 🏗️ Frontend Build Check
@@ -81,18 +92,37 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: front-end/package-lock.json
-
-      - name: Install frontend dependencies
+      - name: Show versions
+        run: |
+          node -v
+          npm -v
+      - name: Install dependencies
         working-directory: ./front-end
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps --no-audit --no-fund
 
-      - name: Build Vite
+      - name: Run lint
         working-directory: ./front-end
-        run: npm run build
+        run: npm run lint --if-present
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Run tests
+        working-directory: ./front-end
+        run: npm test --if-present
+
+      - name: Build project
+        working-directory: ./front-end
+        run: npm run build --if-present
+
+      - name: Build Docker image
+        run: docker compose build
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.2
         with:
-          name: frontend-dist-develop
-          path: front-end/dist
-          retention-days: 3
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd /root/WebFashon
+            git pull origin develop
+            docker compose up -d --build

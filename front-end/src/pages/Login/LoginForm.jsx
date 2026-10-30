@@ -6,6 +6,7 @@ import { loginService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
 import { userApi } from "@/api/user.api";
 import { toast } from "react-toastify";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const FacebookIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -28,6 +29,8 @@ const XIcon = () => (
 const LoginForm = () => {
   const navigate = useNavigate();
   const { login, setUser } = useAuthStore();
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "404Studio";
   const [formData, setFormData] = useState({
     email: "",
     passWord: "",
@@ -36,6 +39,19 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    const blockedMsg = sessionStorage.getItem("blockedMessage");
+    if (blockedMsg) {
+      toast.error(blockedMsg);
+      sessionStorage.removeItem("blockedMessage");
+    }
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setFormData((prev) => ({ ...prev, email: savedEmail }));
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -82,6 +98,11 @@ const LoginForm = () => {
       const token = response.data?.accessToken;
       if (token) {
         login(token);
+        if (rememberMe) {
+          localStorage.setItem("rememberedEmail", formData.email);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+        }
         let userRole = "";
         try {
           const userRes = await userApi.getMe();
@@ -131,7 +152,7 @@ const LoginForm = () => {
         </button>
 
         <header className="login-header">
-          <span className="login-header__eyebrow">404Studio</span>
+          <span className="login-header__eyebrow">{siteName}</span>
           <h1 className="login-header__title">Đăng nhập</h1>
           <p className="login-header__desc">
             Vui lòng nhập thông tin tài khoản của bạn.
@@ -227,18 +248,9 @@ const LoginForm = () => {
 
         <div className="login-divider">Hoặc tiếp tục với</div>
 
-        <div className="login-social-grid grid-cols-3 gap-4">
-          
-          {/* <button className="login-social-btn" type="button" title="Đăng nhập với Facebook">
-            <FacebookIcon />
-            <span>Facebook</span> */}
-          {/* </button>
-          <button className="login-social-btn" type="button" title="Đăng nhập với X">
-            <XIcon />
-            <span>X</span>
-          </button> */}
+        <div className="flex justify-center mb-2">
+          <GoogleLoginButton />
         </div>
-        <GoogleLoginButton />
 
 
         <p className="login-footer-desc">

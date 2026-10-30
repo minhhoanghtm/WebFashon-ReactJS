@@ -9,6 +9,7 @@ import {
   verifyOTP,
   refreshAccessToken,
   signOutAllDevices,
+  signInWithGoogle,
 } from "./auth.controller.js";
 import { protectedRoute, optionalProtectedRoute } from "../../middlewares/auth.middleware.js";
 import {
@@ -37,5 +38,6 @@ router.post("/sendOTP", sendOtpLimiter, validateSendOTP, sendOTPController);
 router.post("/sendResetOTP", sendOtpLimiter, validateSendOTP, sendResetOTPController);
 router.post("/verify-otp", verifyOtpLimiter, validateVerifyOTP, verifyOTP);
 router.post("/resetPassword", resetPasswordLimiter, validateResetPassword, resetPassword);
+router.post("/google", signInWithGoogle);
 
 export default router;

@@ -38,7 +38,7 @@ const CartItem = ({
         <img
           src={item.image || item.productImage || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=60"}
           alt={item.name}
-          className={`h-full w-full object-cover object-center transition-all ${isOutOfStock ? "grayscale opacity-50" : ""}`}
+          className={`h-full w-full object-contain object-center transition-all ${isOutOfStock ? "grayscale opacity-50" : ""}`}
           onError={(e) => {
             if (item.productImage && e.target.src !== item.productImage) {
               e.target.src = item.productImage;

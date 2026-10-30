@@ -1,21 +1,21 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 export const getAllCategoriesApi = () => {
-    return api.get("/categories");
-}
+  return axiosClient.get("/categories");
+};
 
 export const createCategoryApi = (category) => {
-    return api.post("/categories", category);
-}
+  return axiosClient.post("/categories", category);
+};
 
 export const getCategoryApi = (id) => {
-    return api.get(`/categories/${id}`);
-}
+  return axiosClient.get(`/categories/${id}`);
+};
 
 export const updateCategoryApi = (id, category) => {
-    return api.put(`/categories/${id}`, category);
-}
+  return axiosClient.put(`/categories/${id}`, category);
+};
 
 export const deleteCategoryApi = (id) => {
-    return api.delete(`/categories/${id}`);
-}
+  return axiosClient.delete(`/categories/${id}`);
+};

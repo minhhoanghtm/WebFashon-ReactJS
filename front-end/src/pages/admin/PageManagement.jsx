@@ -31,8 +31,14 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const PageManagement = () => {
+  const { settings } = useWebsiteSettings();
+  const general = settings?.general || {};
+  const siteName = general.siteName || "";
+  useDocumentTitle("Quản lý trang CMS");
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -528,7 +534,7 @@ const PageManagement = () => {
         </div>
         <button
           onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-200 text-black text-sm font-bold rounded-xl shadow-md hover:scale-102 active:scale-98 transition cursor-pointer shrink-0"
+          className="w-full sm:w-auto flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           Thêm trang mới
@@ -700,7 +706,11 @@ const PageManagement = () => {
                       <td className="px-6 py-4 text-right space-x-2">
                         {p.status === "published" && (
                           <a
-                            href={p.type === "lookbook" ? `/lookbooks/${p.slug}` : `/${p.slug}`}
+                            href={
+                              p.type === "lookbook"
+                                ? `/lookbooks/${p.slug}`
+                                : `/${p.slug}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
@@ -1900,7 +1910,7 @@ const PageManagement = () => {
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-200 text-black text-xs font-black uppercase tracking-wider rounded-xl transition shadow-md cursor-pointer hover:scale-102 active:scale-98"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

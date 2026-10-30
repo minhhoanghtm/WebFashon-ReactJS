@@ -31,11 +31,11 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800 transition-colors duration-300 dark:bg-[#0b0f19] dark:text-slate-100">
+    <div className="admin-shell flex min-h-screen bg-[var(--wf-paper)] font-sans text-slate-800 transition-colors duration-300 dark:bg-[#171513] dark:text-slate-100">
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-end border-b border-slate-200/70 bg-slate-50/90 px-6 backdrop-blur dark:border-slate-800/80 dark:bg-[#0b0f19]/90">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-end border-b border-[var(--wf-line)] bg-[var(--wf-paper)]/90 px-6 backdrop-blur dark:border-[var(--wf-line)] dark:bg-[#171513]/90">
           <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 shadow-sm transition-colors duration-300 dark:border-slate-800 dark:bg-[#1a1f2e]">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
               {theme === 'dark' ? 'Tối' : 'Sáng'}

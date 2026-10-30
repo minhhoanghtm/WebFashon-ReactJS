@@ -1,250 +1,125 @@
-# 👗 Web Fashion - Nền Tảng Bán Quần Áo
+# 👗 WebFashion - Premium Fashion E-Commerce Platform
 
-## 📌 Giới Thiệu
+WebFashion là một nền tảng thương mại điện tử mua sắm thời trang cao cấp, được xây dựng theo kiến trúc phân tách rõ ràng giữa **Client (React + Vite)** và **API Server (Node.js + Express + MongoDB + Redis)**. 
 
-**Web Fashion** là một ứng dụng e-commerce hiện đại được xây dựng bằng **React + Vite** cho phía frontend và **Node.js + Express + MongoDB** cho phía backend. Ứng dụng cung cấp trải nghiệm mua sắm quần áo trực tuyến hoàn chỉnh với các tính năng quản lý sản phẩm, giỏ hàng, đơn hàng và xác thực người dùng.
+Dự án sở hữu thiết kế giao diện theo phong cách tối giản đơn sắc (Monochromatic) sang trọng, hỗ trợ chuyển đổi giao diện Sáng/Tối linh hoạt và tích hợp các tính năng vận hành doanh nghiệp hoàn chỉnh.
 
-## ✨ Tính Năng Chính
+---
 
-- 👤 **Xác thực người dùng**: Đăng ký, đăng nhập an toàn với JWT
-- 🛍️ **Quản lý sản phẩm**: Xem danh sách, chi tiết sản phẩm, lọc theo danh mục
-- 🛒 **Giỏ hàng**: Thêm, sửa, xóa sản phẩm khỏi giỏ
-- 📦 **Quản lý đơn hàng**: Tạo, xem, theo dõi đơn hàng
-- ⭐ **Đánh giá sản phẩm**: Khách hàng có thể đánh giá sản phẩm
-- 👨‍💼 **Bảng điều khiển quản trị**: Quản lý sản phẩm, danh mục, đơn hàng
-- 🔔 **Thông báo**: Nhận thông báo về đơn hàng
+## 🚀 Tính Năng Nổi Bật
+
+### 👤 Xác thực & Quản lý phiên (JWT + Redis Session)
+- **Cơ chế bảo mật kép:** Sử dụng Access Token (định dạng JWT có JTI ngẫu nhiên) lưu ở LocalStorage và Refresh Token lưu trong Cookie bảo mật (`httpOnly`, `secure`, `sameSite: none`).
+- **Gia hạn phiên chủ động (Proactive sliding session renewal):** Client tự động giải mã và kiểm tra thời hạn sống của Access Token trước mỗi yêu cầu API. Nếu thời gian còn lại dưới **5 phút**, Client sẽ chủ động gửi yêu cầu làm mới để gia hạn phiên làm việc thêm 30 phút mà không làm gián đoạn hay gây lỗi 401 cho người dùng.
+- **progressive throttling:** Khóa đăng nhập tạm thời dựa trên số lần thử thất bại liên tiếp (lưu vết bằng Redis atomic counters).
+- **Đăng xuất đa thiết bị (Sign out all devices):** Thu hồi toàn bộ token liên quan đến UserId được lưu trữ trong Redis whitelist.
+
+### 🛍️ Quản lý danh mục & Sản phẩm nâng cao
+- **Quản lý đa hình ảnh:** Cho phép quản trị viên thêm nhiều liên kết ảnh cho một sản phẩm. Hình ảnh đầu tiên sẽ được chọn làm ảnh đại diện hiển thị đại diện chính.
+- **Huy hiệu chiết khấu trực quan:** Tự động tính toán và hiển thị phần trăm giảm giá chính xác (ví dụ: `-$15%`) thay vì các huy hiệu tĩnh, tăng tính hấp dẫn khi mua sắm.
+- **Chống crop ảnh thông minh:** Catalog sản phẩm sử dụng tỉ lệ co giãn ảnh chuẩn `object-contain` kết hợp với màu nền bổ trợ, bảo toàn tỷ lệ ảnh gốc của người mẫu mà không bị cắt xén góc.
+
+### ⚙️ Hệ thống Cấu hình Website Động (Admin Settings)
+- **Đồng bộ Favicon & Tiêu đề:** Favicon và Tiêu đề website được cập nhật động từ cơ sở dữ liệu qua Zustand store. Trình duyệt tự động thay đổi favicon và title tab tương ứng theo cấu hình mới của Admin trong Database.
+- **Chọn địa chỉ 3 cấp độ:** Sử dụng bộ dữ liệu phân cấp hành chính (Tỉnh/Thành phố $\rightarrow$ Quận/Huyện $\rightarrow$ Phường/Xã) tải qua API, đi kèm với hộp xem trước địa chỉ trụ sở chi tiết.
+- **Tích hợp mã nhúng Scripts:** Cho phép admin chèn trực tiếp các mã theo dõi phân tích hoặc chatbot như *Google Tag Manager*, *Google Analytics ID (G-ID)*, *Facebook Pixel* và *Live Chat Script*.
+
+### 💬 Chat Hỗ Trợ Trực Tuyến & Đơn Hàng
+- **Websockets Live Chat:** Khách hàng có thể kết nối chat trực tiếp với đội ngũ Admin trực tuyến thông qua kênh truyền Websocket thời gian thực.
+- **Quy trình xử lý đơn hàng chi tiết:** Theo dõi và cập nhật trạng thái đơn hàng qua các bước: *Chờ xác nhận* $\rightarrow$ *Đang xử lý* $\rightarrow$ *Đang giao* $\rightarrow$ *Đã giao* / *Đã hủy*.
+
+---
 
 ## 🛠️ Công Nghệ Sử Dụng
 
-### Frontend
-- **React 18** - Thư viện UI
-- **Vite** - Build tool hiệu suất cao
-- **Tailwind CSS** - CSS framework
-- **Ant Design** - UI component library
-- **React Icons** - Icon library
-- **Axios** - HTTP client
+### Phân Hệ Front-end (Client)
+- **Vite 8** + **React 18** (Runtime tối ưu hiệu năng)
+- **Tailwind CSS v4** (Hệ thống thiết kế tiện ích thế hệ mới)
+- **Zustand** (Quản lý trạng thái gọn nhẹ, chia nhỏ Store cho Auth và WebsiteSettings)
+- **React Query (@tanstack/react-query)** (Caching và đồng bộ hóa dữ liệu API)
+- **Ant Design** (Thư viện UI phụ trợ cho bảng biểu và biểu đồ)
+- **React Toastify** (Hiển thị thông báo, đã cấu hình cố định ở góc phải trên cùng `top-right`)
 
-### Backend
-- **Node.js** - Runtime JavaScript
-- **Express** - Web framework
-- **MongoDB** - NoSQL database
-- **Mongoose** - MongoDB object modeling
-- **JWT** - Authentication token
-- **Bcrypt** - Password hashing
-- **Dotenv** - Environment variables
+### Phân Hệ Back-end (API Server)
+- **Node.js** + **Express**
+- **MongoDB** + **Mongoose** (NoSQL Database lưu trữ dữ liệu sản phẩm, đơn hàng, người dùng và cài đặt)
+- **Redis** (Cơ chế whitelist/blacklist Token, lưu trữ phiên đăng nhập và khóa tài khoản tạm thời)
+- **Zod** (Khung xác thực dữ liệu đầu vào mạnh mẽ, hỗ trợ `.passthrough()` lưu trữ cấu hình linh động)
 
-## 📋 Yêu Cầu Hệ Thống
+---
 
-- Node.js >= 16.0.0
-- npm >= 8.0.0
-- MongoDB >= 4.4
-- Git
+## 📁 Cấu Trúc Thư Mục Dự Án
 
-## ⚙️ Hướng Dẫn Cài Đặt
+```text
+REACT-WebFashion/
+├── back-end/                     # API Server & Services
+│   ├── src/
+│   │   ├── configs/              # Cấu hình Mongoose, Redis
+│   │   ├── middlewares/          # Xác thực JWT, phân quyền Admin, xử lý lỗi
+│   │   ├── modules/              # Các phân hệ logic (Auth, Users, Products, Carts, Orders...)
+│   │   │   ├── auth/             # Quản lý token, kiểm tra whitelist Redis
+│   │   │   └── websiteSettings/  # Lưu trữ cấu hình SEO, Address, Integration Scripts
+│   │   └── app.js                # Khởi tạo Express app
+│   └── docker-compose.yml        # Docker hỗ trợ chạy Redis nhanh
+│
+└── front-end/                    # Single Page Application
+    ├── src/
+    │   ├── api/                  # Khởi tạo axiosClient với cơ chế tự động gia hạn phiên
+    │   ├── components/
+    │   │   ├── admin/            # Bộ chọn địa chỉ 3 cấp (HeadquartersAddressPicker)
+    │   │   └── layout/           # Sidebar cuộn mượt (overflow-y-auto)
+    │   ├── store/                # Zustand Store (auth.store, websiteSettings.store)
+    │   ├── pages/
+    │   │   └── admin/            # Dashboard và Cài đặt Website (WebsiteSettingsManagement)
+    │   ├── index.css             # Cấu hình Theme đơn sắc và Custom Dark Mode
+    │   └── App.jsx               # Khởi chạy session & định tuyến ứng dụng
+    └── vite.config.js            # Cấu hình build Vite
+```
 
-### 1️⃣ Clone Repository
+---
+
+## ⚙️ Hướng Dẫn Cài Đặt & Khởi Chạy
+
+### 1. Khởi động các dịch vụ bổ trợ (Redis & MongoDB)
+Nếu bạn sử dụng Docker, có thể chạy nhanh Redis bằng Docker Compose có sẵn trong dự án:
 ```bash
-git clone <repository-url>
-cd REACT-404Studio
+docker-compose up -d redis
 ```
+Đồng thời đảm bảo rằng bạn đã khởi động cơ sở dữ liệu MongoDB cục bộ hoặc có kết nối MongoDB Atlas.
 
-### 2️⃣ Cài Đặt Backend
-
-```bash
-cd back-end
-
-# Cài đặt các dependencies
-npm install
-
-# Các package sẽ cài đặt bao gồm:
-# - express: Web framework
-# - mongoose: MongoDB ORM
-# - jsonwebtoken: JWT authentication
-# - bcrypt: Password encryption
-# - dotenv: Environment variables
-# - slugify: URL slug generation
-# - nodemon: Development auto-reload
-```
-
-#### Cấu hình Backend
-
-Tạo file `.env` trong thư mục `back-end`:
-```
+### 2. Cài đặt & Khởi chạy Backend
+Di chuyển vào thư mục `back-end`, tạo file cấu hình `.env` dựa theo mẫu:
+```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/web-fashion
-JWT_SECRET=your_jwt_secret_key_here
-NODE_ENV=development
+REDIS_URL=redis://localhost:6379
+ACCESS_TOKEN_SECRET=your_jwt_access_secret_key
+REFRESH_TOKEN_SECRET=your_jwt_refresh_secret_key
 ```
-
-### 3️⃣ Cài Đặt Frontend
-
-```bash
-cd front-end
-
-# Cài đặt các dependencies
-npm install
-
-# Các package sẽ cài đặt bao gồm:
-# - react & react-dom: React libraries
-# - vite: Build tool
-# - tailwindcss: Styling framework
-# - antd: UI components
-# - react-icons: Icon set
-# - axios: HTTP requests
-```
-
-#### Cấu hình Frontend
-
-Nếu cần, tạo file `.env.local` trong thư mục `front-end`:
-```
-VITE_API_URL=http://localhost:5000/api
-```
-
-## 🚀 Chạy Ứng Dụng
-
-### Chạy Backend
-
+Sau đó tiến hành cài đặt dependencies và khởi chạy chế độ phát triển:
 ```bash
 cd back-end
-npm start
-# hoặc để development với auto-reload:
+npm install
 npm run dev
 ```
 
-Backend sẽ chạy tại: `http://localhost:5000`
-
-### Chạy Frontend
-
+### 3. Cài đặt & Khởi chạy Frontend
+Di chuyển vào thư mục `front-end`, tạo file cấu hình `.env` kết nối API:
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+Tiến hành cài đặt và khởi chạy:
 ```bash
 cd front-end
+npm install
 npm run dev
 ```
+Mở trình duyệt truy cập ứng dụng tại địa chỉ: `http://localhost:5173`.
 
-Frontend sẽ chạy tại: `http://localhost:5173`
+---
 
-### Chạy Cả Hai Cùng Lúc (Tùy Chọn)
-
-Mở hai terminal riêng biệt:
-- Terminal 1: `cd back-end && npm start`
-- Terminal 2: `cd front-end && npm run dev`
-
-## 📁 Cấu Trúc Dự Án
-
-```
-REACT-404Studio/
-├── back-end/                 # Backend API
-│   ├── src/
-│   │   ├── server.js         # Entry point
-│   │   ├── config/           # Configuration files
-│   │   ├── controllers/      # Route handlers
-│   │   ├── middleware/       # Express middleware
-│   │   ├── models/           # MongoDB schemas
-│   │   ├── routes/           # API routes
-│   │   └── utils/            # Helper functions
-│   ├── package.json
-│   └── .env                  # Environment variables
-│
-└── front-end/                # Frontend React app
-    ├── src/
-    │   ├── App.jsx           # Root component
-    │   ├── main.jsx          # Entry point
-    │   ├── components/       # Reusable components
-    │   ├── pages/            # Page components
-    │   ├── layout/           # Layout components
-    │   ├── hooks/            # Custom hooks
-    │   ├── api/              # API calls
-    │   ├── assets/           # Images, fonts
-    │   ├── services/         # Service layer
-    │   ├── utils/            # Helper functions
-    │   └── styles/           # Global styles
-    ├── public/               # Static assets
-    ├── index.html
-    ├── package.json
-    ├── vite.config.js        # Vite configuration
-    └── .env.local            # Environment variables
-```
-
-## 🔌 API Endpoints (Ví dụ)
-
-### Authentication
-- `POST /api/auth/register` - Đăng ký
-- `POST /api/auth/login` - Đăng nhập
-
-### Products
-- `GET /api/products` - Lấy danh sách sản phẩm
-- `GET /api/products/:id` - Lấy chi tiết sản phẩm
-- `POST /api/products` - Tạo sản phẩm (Admin)
-
-### Cart
-- `GET /api/cart` - Lấy giỏ hàng
-- `POST /api/cart` - Thêm vào giỏ hàng
-- `PUT /api/cart/:id` - Cập nhật giỏ hàng
-- `DELETE /api/cart/:id` - Xóa khỏi giỏ hàng
-
-### Orders
-- `GET /api/orders` - Lấy danh sách đơn hàng
-- `POST /api/orders` - Tạo đơn hàng mới
-- `GET /api/orders/:id` - Lấy chi tiết đơn hàng
-
-## 🐛 Troubleshooting
-
-### Lỗi kết nối MongoDB
-```
-Kiểm tra:
-- MongoDB service có chạy không
-- Connection string trong .env có đúng không
-- Database name có chính xác không
-```
-
-### Lỗi CORS
-```
-- Kiểm tra backend có enable CORS không
-- Frontend URL có trong whitelist không
-```
-
-### Port đã bị sử dụng
-```bash
-# Thay đổi port trong .env hoặc config file
-PORT=5001  # hoặc port khác
-```
-
-### Dependencies conflict
-```bash
-# Xóa node_modules và cài lại
-rm -rf node_modules package-lock.json
-npm install
-```
-
-## 📝 Các Lệnh Hữu Ích
-
-### Backend Commands
-```bash
-npm start       # Chạy production
-npm run dev     # Chạy development với nodemon
-npm run build   # Build production
-```
-
-### Frontend Commands
-```bash
-npm run dev     # Development server
-npm run build   # Build production
-npm run preview # Preview production build
-npm run lint    # Kiểm tra linting
-```
-
-## 👥 Đóng Góp
-
-Để đóng góp vào dự án:
-1. Fork repository
-2. Tạo branch tính năng (`git checkout -b feature/AmazingFeature`)
-3. Commit thay đổi (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-Dự án này được cấp phép dưới giấy phép MIT.
-
-## 📞 Liên Hệ
-
-Nếu bạn có câu hỏi hoặc gợi ý, vui lòng liên hệ qua email hoặc tạo Issue trên GitHub.
+## 📝 Xác Minh & Kiểm Thử
+Dự án được trang bị sẵn các mã kịch bản kiểm thử nhanh để xác minh tính ổn định của API và dữ liệu:
+- **Kiểm thử logic xác thực đầu vào:** `node back-end/src/scratch/test_validators.js`
+- **Kiểm thử lưu dữ liệu cài đặt trực tiếp:** `node back-end/src/scratch/test_live_save.js`
+- **Biên dịch Frontend:** Chạy lệnh `npm run build` bên trong thư mục `front-end` để đảm bảo dự án luôn sẵn sàng đóng gói cho môi trường Production mà không phát sinh lỗi kiểu hoặc cú pháp.

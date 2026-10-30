@@ -36,18 +36,32 @@ export const protectedRoute = async (req, res, next) => {
   }
 
   try {
-    req.user = await verifyAccessToken(token);
+    const decoded = await verifyAccessToken(token);
+    
+    // Query User once with status and role
+    const user = await User.findById(decoded.userId).select("status role");
+    if (!user || user.status === "blocked") {
+      return res.status(403).json({
+        success: false,
+        message: "Tài khoản của bạn đã bị khóa hoặc không tồn tại!",
+      });
+    }
+
+    req.user = {
+      ...decoded,
+      role: user.role,
+    };
     return next();
   } catch (error) {
     if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
         message: "Access token het han hoac khong dung!",
       });
     }
 
     if (error.name === "RevokedAccessTokenError") {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
         message: "Access token da bi thu hoi hoac khong hop le!",
       });
@@ -70,7 +84,16 @@ export const optionalProtectedRoute = async (req, _res, next) => {
   }
 
   try {
-    req.user = await verifyAccessToken(token);
+    const decoded = await verifyAccessToken(token);
+    const user = await User.findById(decoded.userId).select("status role");
+    if (user && user.status !== "blocked") {
+      req.user = {
+        ...decoded,
+        role: user.role,
+      };
+    } else {
+      req.user = null;
+    }
   } catch (error) {
     req.user = null;
   }
@@ -80,37 +103,70 @@ export const optionalProtectedRoute = async (req, _res, next) => {
 
 export const adminOnly = async (req, res, next) => {
   try {
-    const userId = req.user?.userId;
+    const user = req.user;
 
-    if (!userId) {
+    if (!user || !user.userId) {
       return res.status(401).json({
         success: false,
         message: "Khong tim thay access token hop le",
       });
     }
 
-    const user = await User.findById(userId).select("role");
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "Nguoi dung khong ton tai!",
-      });
+    let role = user.role;
+    if (!role) {
+      const dbUser = await User.findById(user.userId).select("role");
+      if (!dbUser) {
+        return res.status(404).json({
+          success: false,
+          message: "Nguoi dung khong ton tai!",
+        });
+      }
+      role = dbUser.role;
+      req.user.role = role;
     }
 
-    if (user.role !== "admin") {
+    if (role !== "admin") {
       return res.status(403).json({
         success: false,
         message: "Ban khong co quyen truy cap",
       });
     }
 
-    req.user.role = user.role;
     return next();
   } catch (error) {
     console.error("Loi khi kiem tra quyen admin:", error);
     return res.status(500).json({
       success: false,
       message: "Loi he thong",
+    });
+  }
+};
+
+export const noAdmin = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    if (user?.userId) {
+      let role = user.role;
+      if (!role) {
+        const dbUser = await User.findById(user.userId).select("role");
+        role = dbUser?.role;
+      }
+
+      if (role === "admin") {
+        return res.status(403).json({
+          success: false,
+          message: "Quản trị viên không được phép thực hiện chức năng này",
+        });
+      }
+    }
+
+    return next();
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra quyền admin trong noAdmin:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi hệ thống",
     });
   }
 };

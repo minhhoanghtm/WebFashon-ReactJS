@@ -16,7 +16,7 @@ const websiteSettingsSchema = new mongoose.Schema(
       faviconUrl: { type: String, default: "" },
       hotline: { type: String, default: "0900000000" },
       email: { type: String, default: "contact@404Studio.com" },
-      address: { type: String, default: "Hà Nội, Việt Nam" },
+      address: { type: String, default: "Thành phố Hồ Chí Minh, Việt Nam" },
       workingHours: { type: String, default: "8:00 - 22:00" },
     },
     seo: {

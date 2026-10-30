@@ -40,7 +40,7 @@ export const validate = (schema, target = "body") => {
 
     if (!result.success) {
       const messages = mapZodIssues(result.error);
-      return next(new AppError(messages.join("; "), 400));
+      return next(new AppError(messages.join("; "), 400, messages));
     }
 
     // Gán lại parsed/coerced data để downstream handlers dùng

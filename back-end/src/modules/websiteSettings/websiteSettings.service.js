@@ -15,7 +15,7 @@ class WebsiteSettingsService {
           faviconUrl: "",
           hotline: "0900000000",
           email: "contact@404Studio.com",
-          address: "Hà Nội, Việt Nam",
+          address: "Thành phố Hồ Chí Minh, Việt Nam",
           workingHours: "8:00 - 22:00",
         },
         system: {
@@ -30,10 +30,19 @@ class WebsiteSettingsService {
   }
 
   async updateSettings(adminId, updateData) {
+    const sanitizedData = { ...updateData };
+    delete sanitizedData._id;
+    delete sanitizedData.id;
+    delete sanitizedData.createdAt;
+    delete sanitizedData.updatedAt;
+    delete sanitizedData.__v;
+    delete sanitizedData.singletonKey;
+    delete sanitizedData.createdBy;
+
     let settings = await websiteSettingsRepository.findOne({ singletonKey: "default" });
     if (!settings) {
       settings = await websiteSettingsRepository.create({
-        ...updateData,
+        ...sanitizedData,
         singletonKey: "default",
         createdBy: adminId,
         updatedBy: adminId,
@@ -41,7 +50,7 @@ class WebsiteSettingsService {
     } else {
       settings = await websiteSettingsRepository.findOneAndUpdate(
         { singletonKey: "default" },
-        { ...updateData, updatedBy: adminId },
+        { ...sanitizedData, updatedBy: adminId },
         { new: true }
       );
     }

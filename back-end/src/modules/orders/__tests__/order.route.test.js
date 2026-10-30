@@ -46,6 +46,18 @@ jest.unstable_mockModule("../../../middlewares/auth.middleware.js", () => ({
 
     return next();
   },
+  noAdmin: (req, res, next) => {
+    if (!authState.authenticated) {
+      return res.status(401).json({ success: false, message: "Khong tim thay access token" });
+    }
+
+    req.user = { userId: "user-1", role: authState.role };
+    if (authState.role === "admin") {
+      return res.status(403).json({ success: false, message: "Quan tri vien khong duoc phep" });
+    }
+
+    return next();
+  },
 }));
 
 const { orderRouter } = await import("../order.route.js");

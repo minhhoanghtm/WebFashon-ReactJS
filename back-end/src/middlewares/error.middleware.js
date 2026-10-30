@@ -17,6 +17,7 @@ export const errorHandler = (err, req, res, next) => {
     const messages = Object.values(err.errors).map((el) => el.message);
     err.statusCode = 400;
     err.message = `Dữ liệu không hợp lệ: ${messages.join(". ")}`;
+    err.details = messages;
     err.isOperational = true;
   }
 
@@ -42,21 +43,29 @@ export const errorHandler = (err, req, res, next) => {
 
   // Development response
   if (process.env.NODE_ENV === "development") {
-    return res.status(err.statusCode).json({
+    const response = {
       success: false,
       status: err.status,
       message: err.message,
       stack: err.stack,
       error: err,
-    });
+    };
+    if (err.details) {
+      response.details = err.details;
+    }
+    return res.status(err.statusCode).json(response);
   }
 
   // Operational error
   if (err.isOperational) {
-    return res.status(err.statusCode).json({
+    const response = {
       success: false,
       message: err.message,
-    });
+    };
+    if (err.details) {
+      response.details = err.details;
+    }
+    return res.status(err.statusCode).json(response);
   }
 
   // General server error

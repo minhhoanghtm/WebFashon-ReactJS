@@ -1,13 +1,13 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 export const authMeApi = () => {
-    return api.get("/user/me");
-}
+  return axiosClient.get("/user/me");
+};
 
 export const updatePasswordApi = (data) => {
-    return api.put("/user/updatePassword", data);
-}
+  return axiosClient.put("/user/updatePassword", data);
+};
 
 export const updateProfileApi = (data) => {
-    return api.put("/user/updateProfile", data);
-}
+  return axiosClient.put("/user/updateProfile", data);
+};

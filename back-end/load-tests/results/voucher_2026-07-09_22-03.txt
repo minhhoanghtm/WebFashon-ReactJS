@@ -1,0 +1,20 @@
+﻿Test    : voucher
+Run at  : 2026-07-09_22-03
+Result  : ALL THRESHOLDS PASSED
+--------------------------------------------------
+
+THRESHOLDS
+  [PASS]  voucherSuccessRate  'rate>0.98'
+  [PASS]  http_req_failed  'rate<0.01'
+  [PASS]  http_req_duration{endpoint:voucher_validate}  'p(95)<800'
+
+METRICS
+  http_req_duration  avg=0ms  p95=0ms  max=0ms
+  http_req_failed    0%
+  http_reqs          total=0  rate=0/s
+  vus_max            
+  checks             0% passed
+
+ENDPOINTS
+  http_req_duration{endpoint:voucher_validate}
+    avg=0ms  p95=0ms

@@ -1,53 +1,53 @@
-import api from "./api";
+import axiosClient from "./axiosClient";
 
 export const getOrdersByUserApi = () => {
-  return api.get("/order");
+  return axiosClient.get("/order");
 };
 
 export const createOrderApi = (data) => {
-  return api.post("/order", data);
+  return axiosClient.post("/order", data);
 };
 
 export const updateOrderApi = (id, data) => {
-  return api.put(`/order/${id}`, data);
+  return axiosClient.put(`/order/${id}`, data);
 };
 
 export const deleteOrderApi = (id) => {
-  return api.delete(`/order/${id}`);
+  return axiosClient.delete(`/order/${id}`);
 };
 
 export const paymentOrderApi = (data) => {
-  return api.post("/order/payment", data);
+  return axiosClient.post("/order/payment", data);
 };
 
 export const DashboardApi = () => {
-  return api.get("/order/admin/kpi");
+  return axiosClient.get("/order/admin/kpi");
 };
 
 export const getRevenueOverviewApi = (type) => {
-  return api.get("/order/admin/revenue", {
-    params: { type }
+  return axiosClient.get("/order/admin/revenue", {
+    params: { type },
   });
 };
 
 export const getOrderStatsApi = (userId) => {
-  return api.get("/order/admin/stats", {
-    params: userId ? { userId } : {}
+  return axiosClient.get("/order/admin/stats", {
+    params: userId ? { userId } : {},
   });
 };
 
 export const dashboardUserApi = () => {
-  return api.get("/order/user/revenue");
+  return axiosClient.get("/order/user/revenue");
 };
 
 export const getPurchasePerformanceApi = () => {
-  return api.get("/order/user/purchasing_performance");
+  return axiosClient.get("/order/user/purchasing_performance");
 };
 
 export const getAdminOrdersApi = (params) => {
-  return api.get("/order/admin/orders", { params });
+  return axiosClient.get("/order/admin/orders", { params });
 };
 
 export const updateOrderStatusApi = (id, status) => {
-  return api.patch(`/order/admin/orders/${id}/status`, { status });
+  return axiosClient.patch(`/order/admin/orders/${id}/status`, { status });
 };

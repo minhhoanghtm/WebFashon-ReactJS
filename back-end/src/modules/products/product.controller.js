@@ -5,17 +5,32 @@ import { successResponse } from "../../common/responses/index.js";
 import logger from "../../common/logger.js";
 import { getRedisConnection } from "../../configs/redis.js";
 
+// Helper to invalidate product cache keys
+const clearProductCache = async () => {
+  try {
+    const redis = getRedisConnection();
+    const stream = redis.scanStream({ match: "products:*" });
+    for await (const keys of stream) {
+      if (keys.length) {
+        await redis.del(...keys);
+      }
+    }
+    logger.info("Cleared product cache keys in Redis");
+  } catch (err) {
+    logger.error("Failed to clear product cache: %s", err);
+  }
+};
+
 // Product controllers
 export const addProduct = async (req, res, next) => {
   try {
     const product = await productFacade.addProduct(req.body);
+    await clearProductCache();
     return successResponse(res, product, "Tạo sản phẩm thành công", 201);
   } catch (error) {
     next(error);
   }
 };
-
-
 
 export const getProductBySlug = async (req, res, next) => {
   try {
@@ -31,6 +46,7 @@ export const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
     const product = await productFacade.updateProduct(id, req.body);
+    await clearProductCache();
     return successResponse(res, product, "Cập nhật sản phẩm thành công");
   } catch (error) {
     next(error);
@@ -41,6 +57,7 @@ export const deleteProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = await productFacade.deleteProduct(id);
+    await clearProductCache();
     return successResponse(res, data, "Xóa sản phẩm thành công");
   } catch (error) {
     next(error);
@@ -100,6 +117,7 @@ export const getSlugByProductId = async (req, res, next) => {
 export const createProductVariant = async (req, res, next) => {
   try {
     const variant = await productFacade.createVariant(req.body);
+    await clearProductCache();
     return successResponse(res, variant, "Thêm biến thể thành công", 201);
   } catch (error) {
     next(error);
@@ -110,6 +128,7 @@ export const updateProductVariant = async (req, res, next) => {
   try {
     const { id } = req.params;
     const variant = await productFacade.updateVariant(id, req.body);
+    await clearProductCache();
     return successResponse(res, variant, "Cập nhật biến thể thành công");
   } catch (error) {
     next(error);
@@ -120,6 +139,7 @@ export const deleteProductVariant = async (req, res, next) => {
   try {
     const { id } = req.params;
     const variant = await productFacade.deleteVariant(id);
+    await clearProductCache();
     return successResponse(res, variant, "Xóa biến thể sản phẩm thành công");
   } catch (error) {
     next(error);
@@ -149,8 +169,9 @@ export const getProductVariantById = async (req, res, next) => {
 export const getProducts = async (req, res, next) => {
   const redis = getRedisConnection();
   const CACHE_TTL = 600; // seconds
-  const { sort = "createdAt", order = "desc" } = req.query;
-  const CACHE_KEY = `products:all:sort:${sort}:order:${order}`;
+  const { limit } = req.query;
+  const numericLimit = limit ? parseInt(limit, 10) : undefined;
+  const CACHE_KEY = `products:all:limit:${numericLimit || "default"}`;
   try {
     const cached = await redis.get(CACHE_KEY);
     if (cached) {
@@ -159,7 +180,7 @@ export const getProducts = async (req, res, next) => {
       return successResponse(res, products, 'From cache');
     }
     logger.info('Cache miss for %s – querying DB', CACHE_KEY);
-    const products = await productFacade.getAllProducts(sort, order);
+    const products = await productFacade.getAllProducts(numericLimit);
     await redis.set(CACHE_KEY, JSON.stringify(products), 'EX', CACHE_TTL);
     logger.info('Cache set for %s with TTL %ds', CACHE_KEY, CACHE_TTL);
     return successResponse(res, products);

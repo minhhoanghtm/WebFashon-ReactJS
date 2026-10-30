@@ -2,6 +2,7 @@ import userRepository from "./user.repository.js";
 import { AppError } from "../../common/exceptions/AppError.js";
 import { normalizeEmail } from "../../common/utils/normalizeEmail.js";
 import bcrypt from "bcrypt";
+import { Order } from "../orders/order.model.js";
 
 const normalizeAddress = (address = {}) => ({
   fullName: address.fullName || "",
@@ -31,7 +32,40 @@ class UserService {
   }
 
   async getAllUsers() {
-    return await userRepository.findAllWithoutPassword();
+    const users = await userRepository.findAllWithoutPassword();
+    
+    try {
+      const orderStats = await Order.aggregate([
+        { $match: { status: "delivered" } },
+        {
+          $group: {
+            _id: "$user_id",
+            orderCount: { $sum: 1 },
+            totalSpend: { $sum: "$total_price" }
+          }
+        }
+      ]);
+
+      const statsMap = new Map(
+        orderStats.map((stat) => [stat._id.toString(), stat])
+      );
+
+      return users.map((user) => {
+        const stats = statsMap.get(user._id.toString()) || { orderCount: 0, totalSpend: 0 };
+        return {
+          ...user,
+          orderCount: stats.orderCount,
+          totalSpend: stats.totalSpend,
+        };
+      });
+    } catch (err) {
+      console.error("Lỗi khi tổng hợp thống kê đơn hàng của người dùng:", err);
+      return users.map((user) => ({
+        ...user,
+        orderCount: 0,
+        totalSpend: 0,
+      }));
+    }
   }
 
   async createUser(userData) {
@@ -89,11 +123,18 @@ class UserService {
       throw new AppError("Không tìm thấy tài khoản", 404);
     }
 
+    const previousRole = user.role;
+    const previousStatus = user.status;
+
     if (user.role === "user") {
-      // For standard customers, only allow locking/unlocking (updating status)
+      // For standard customers, only allow locking/unlocking (updating status) and changing role
       if (status !== undefined) {
         user.status = status;
-      } else {
+      }
+      if (role !== undefined) {
+        user.role = role;
+      }
+      if (status === undefined && role === undefined) {
         throw new AppError("Không được phép chỉnh sửa thông tin khách hàng", 403);
       }
     } else {
@@ -126,6 +167,20 @@ class UserService {
     }
 
     await user.save();
+
+    // Invalidate user sessions if role changed or status was blocked
+    const roleChanged = role && role !== previousRole;
+    const statusBlocked = user.status === "blocked" && previousStatus !== "blocked";
+
+    if (roleChanged || statusBlocked) {
+      try {
+        const { default: authService } = await import("../auth/auth.service.js");
+        await authService.signOutAll(id);
+      } catch (err) {
+        console.error("Lỗi khi đăng xuất người dùng sau khi thay đổi quyền/khóa:", err);
+      }
+    }
+
     return await userRepository.findByIdWithoutPassword(id);
   }
 

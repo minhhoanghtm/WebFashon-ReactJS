@@ -15,8 +15,14 @@ import {
 import ReactECharts from "echarts-for-react";
 import { toast } from "react-toastify";
 import voucherApi from "../../api/voucher.api";
-import { DashboardService, getRevenueOverviewService, getAdminOrdersService } from "@/services/order.service";
+import {
+  DashboardService,
+  getRevenueOverviewService,
+  getAdminOrdersService,
+} from "@/services/order.service";
 import { getAllProductService } from "@/services/product.service";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
 
 const formatCurrency = (val) => {
   return new Intl.NumberFormat("vi-VN", {
@@ -56,6 +62,10 @@ const getStatusBadge = (status) => {
 };
 
 const Dashboard = () => {
+  const { settings } = useWebsiteSettings();
+  const general = settings?.general || {};
+  const siteName = general.siteName || "";
+  useDocumentTitle("Bảng điều khiển");
   const [activeView, setActiveView] = useState("sales"); // "sales" | "vouchers"
   const [range, setRange] = useState("last7days");
 
@@ -81,7 +91,7 @@ const Dashboard = () => {
     try {
       setLoadingSales(true);
       setSalesError(null);
-      
+
       const typeMap = {
         last7days: "week",
         last30days: "month",
@@ -89,20 +99,23 @@ const Dashboard = () => {
       };
       const type = typeMap[range] || "week";
 
-      const [kpiData, revenueData, ordersData, productsList] = await Promise.all([
-        DashboardService(),
-        getRevenueOverviewService(type),
-        getAdminOrdersService({ limit: 5 }),
-        getAllProductService(),
-      ]);
+      const [kpiData, revenueData, ordersData, productsList] =
+        await Promise.all([
+          DashboardService(),
+          getRevenueOverviewService(type),
+          getAdminOrdersService({ limit: 5 }),
+          getAllProductService(),
+        ]);
 
-      setKpis(kpiData || {
-        totalRevenue: 0,
-        totalOrders: 0,
-        totalCustomers: 0,
-        totalSoldProducts: 0,
-        avgOrderValue: 0,
-      });
+      setKpis(
+        kpiData || {
+          totalRevenue: 0,
+          totalOrders: 0,
+          totalCustomers: 0,
+          totalSoldProducts: 0,
+          avgOrderValue: 0,
+        },
+      );
       setRevenueOverview(revenueData || []);
       setRecentOrdersList(ordersData?.items || []);
       setTotalProducts(productsList?.length || 0);
@@ -230,7 +243,7 @@ const Dashboard = () => {
       },
     },
     legend: {
-      data: ["Lượt Nhận (Claim)", "Lượt Sử Dụng (Usage)"],
+      data: ["Lượt Nhận", "Lượt Sử Dụng"],
       bottom: 0,
       textStyle: {
         color: "#64748b",
@@ -277,7 +290,7 @@ const Dashboard = () => {
     ],
     series: [
       {
-        name: "Lượt Nhận (Claim)",
+        name: "Lượt Nhận",
         type: "line",
         smooth: true,
         areaStyle: {
@@ -286,7 +299,7 @@ const Dashboard = () => {
         data: voucherStats?.charts?.claims || [],
       },
       {
-        name: "Lượt Sử Dụng (Usage)",
+        name: "Lượt Sử Dụng",
         type: "line",
         smooth: true,
         areaStyle: {
@@ -302,7 +315,9 @@ const Dashboard = () => {
       {/* View Toggle tabs */}
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Thống kê chung</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Thống kê chung
+          </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
             Số liệu thống kê kinh doanh và chiến dịch Voucher
           </p>
@@ -336,13 +351,19 @@ const Dashboard = () => {
         loadingSales ? (
           <div className="flex flex-col items-center justify-center py-32">
             <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-2" />
-            <p className="text-sm text-slate-500">Đang tổng hợp số liệu doanh thu...</p>
+            <p className="text-sm text-slate-500">
+              Đang tổng hợp số liệu doanh thu...
+            </p>
           </div>
         ) : salesError ? (
           <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 space-y-4">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
-            <h3 className="text-lg font-bold text-red-800 dark:text-red-400">Lỗi nạp dữ liệu</h3>
-            <p className="text-red-600 dark:text-red-300 text-sm">{salesError}</p>
+            <h3 className="text-lg font-bold text-red-800 dark:text-red-400">
+              Lỗi nạp dữ liệu
+            </h3>
+            <p className="text-red-600 dark:text-red-300 text-sm">
+              {salesError}
+            </p>
             <button
               onClick={fetchSalesData}
               className="bg-red-600 hover:bg-red-500 text-white font-semibold text-sm px-6 py-2 rounded-xl transition cursor-pointer"
@@ -392,7 +413,7 @@ const Dashboard = () => {
               <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm flex items-center justify-between transition hover:shadow-md">
                 <div className="space-y-2">
                   <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Tổng sản phẩm
+                    Tổng sản phẩm tồn kho
                   </span>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-bold tracking-tight">
@@ -430,9 +451,11 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <h3 className="text-lg font-bold">Biểu đồ doanh thu</h3>
-                    <p className="text-xs text-slate-400">Doanh thu bán hàng tích lũy thực tế</p>
+                    <p className="text-xs text-slate-400">
+                      Doanh thu bán hàng tích lũy thực tế
+                    </p>
                   </div>
-                  
+
                   <select
                     value={range}
                     onChange={(e) => setRange(e.target.value)}
@@ -450,7 +473,10 @@ const Dashboard = () => {
                       Không có dữ liệu trong khoảng thời gian này.
                     </div>
                   ) : (
-                    <ReactECharts option={salesChartOptions} style={{ height: "300px" }} />
+                    <ReactECharts
+                      option={salesChartOptions}
+                      style={{ height: "300px" }}
+                    />
                   )}
                 </div>
               </div>
@@ -459,14 +485,18 @@ const Dashboard = () => {
               <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm space-y-6 flex flex-col justify-between">
                 <div className="space-y-1">
                   <h3 className="text-lg font-bold">Thống kê nhanh</h3>
-                  <p className="text-xs text-slate-400">Đo lường các chỉ số chính yếu</p>
+                  <p className="text-xs text-slate-400">
+                    Đo lường các chỉ số chính yếu
+                  </p>
                 </div>
 
                 <div className="space-y-5 flex-1 flex flex-col justify-center font-sans">
                   {/* Average Order Value */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm font-semibold">
-                      <span className="text-slate-600 dark:text-slate-400">Giá trị đơn hàng TB</span>
+                      <span className="text-slate-600 dark:text-slate-400">
+                        Giá trị đơn hàng TB
+                      </span>
                       <span>{formatCurrency(kpis.avgOrderValue)}</span>
                     </div>
                     <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -477,7 +507,9 @@ const Dashboard = () => {
                   {/* Total Sold Products */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm font-semibold">
-                      <span className="text-slate-600 dark:text-slate-400">Tổng sản phẩm đã bán</span>
+                      <span className="text-slate-600 dark:text-slate-400">
+                        Tổng sản phẩm đã bán
+                      </span>
                       <span>{kpis.totalSoldProducts} sản phẩm</span>
                     </div>
                     <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -488,7 +520,9 @@ const Dashboard = () => {
                   {/* Customers Count */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm font-semibold">
-                      <span className="text-slate-600 dark:text-slate-400">Tổng khách hàng</span>
+                      <span className="text-slate-600 dark:text-slate-400">
+                        Tổng khách hàng
+                      </span>
                       <span>{kpis.totalCustomers}</span>
                     </div>
                     <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -508,7 +542,9 @@ const Dashboard = () => {
             <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold">Đơn hàng gần đây</h3>
-                <span className="text-xs text-slate-400">Hiển thị các giao dịch mới nhất</span>
+                <span className="text-xs text-slate-400">
+                  Hiển thị các giao dịch mới nhất
+                </span>
               </div>
 
               {/* Table wrapper */}
@@ -534,7 +570,8 @@ const Dashboard = () => {
                             {order._id}
                           </td>
                           <td className="px-6 py-4 text-slate-700 dark:text-slate-200">
-                            {order.shipping_address?.full_name || "Khách vãng lai"}
+                            {order.shipping_address?.full_name ||
+                              "Khách vãng lai"}
                           </td>
                           <td className="px-6 py-4 text-slate-900 dark:text-slate-100">
                             {formatCurrency(order.total_price || 0)}
@@ -543,13 +580,18 @@ const Dashboard = () => {
                             {getStatusBadge(order.status)}
                           </td>
                           <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">
-                            {new Date(order.createdAt).toLocaleDateString("vi-VN")}
+                            {new Date(order.createdAt).toLocaleDateString(
+                              "vi-VN",
+                            )}
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="px-6 py-8 text-center text-slate-400">
+                        <td
+                          colSpan="5"
+                          className="px-6 py-8 text-center text-slate-400"
+                        >
                           Chưa ghi nhận đơn hàng nào.
                         </td>
                       </tr>
@@ -566,12 +608,16 @@ const Dashboard = () => {
           {voucherLoading ? (
             <div className="flex flex-col items-center justify-center py-32">
               <Loader2 className="h-10 w-10 animate-spin text-indigo-650 mb-2" />
-              <p className="text-sm text-slate-450">Đang phân tích số liệu khuyến mãi...</p>
+              <p className="text-sm text-slate-450">
+                Đang phân tích số liệu khuyến mãi...
+              </p>
             </div>
           ) : !voucherStats ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-850 rounded-2xl border">
               <AlertCircle className="h-10 w-10 text-slate-300 mb-2" />
-              <p className="text-sm font-semibold text-slate-500">Chưa có dữ liệu thống kê Voucher</p>
+              <p className="text-sm font-semibold text-slate-500">
+                Chưa có dữ liệu thống kê Voucher
+              </p>
             </div>
           ) : (
             <>
@@ -596,7 +642,7 @@ const Dashboard = () => {
                 <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm flex items-center justify-between transition hover:shadow-md">
                   <div className="space-y-2">
                     <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                      Đang chạy (Active)
+                      Còn hiệu lực
                     </span>
                     <div className="text-2xl font-bold tracking-tight text-emerald-600">
                       {voucherStats.stats.activeVouchers}
@@ -643,11 +689,18 @@ const Dashboard = () => {
                 {/* Claims and Usages Chart */}
                 <div className="lg:col-span-2 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm space-y-4">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-bold">Tổng quan chiến dịch khuyến mãi</h3>
-                    <p className="text-xs text-slate-400">Lượt săn (claim) và lượt dùng (usage) trong 7 ngày qua</p>
+                    <h3 className="text-lg font-bold">
+                      Tổng quan chiến dịch khuyến mãi
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Lượt săn (claim) và lượt dùng (usage) trong 7 ngày qua
+                    </p>
                   </div>
                   <div className="pt-4">
-                    <ReactECharts option={voucherChartOptions} style={{ height: "300px" }} />
+                    <ReactECharts
+                      option={voucherChartOptions}
+                      style={{ height: "300px" }}
+                    />
                   </div>
                 </div>
 
@@ -655,18 +708,24 @@ const Dashboard = () => {
                 <div className="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-6">
                   <div className="space-y-1">
                     <h3 className="text-lg font-bold">Top Voucher được dùng</h3>
-                    <p className="text-xs text-slate-400">Top 5 voucher có lượt sử dụng cao nhất</p>
+                    <p className="text-xs text-slate-400">
+                      Top 5 voucher có lượt sử dụng cao nhất
+                    </p>
                   </div>
 
                   {voucherStats.topVouchers.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-center">
                       <Ticket className="h-8 w-8 text-slate-300 mb-1" />
-                      <p className="text-xs text-slate-400">Chưa ghi nhận lượt dùng nào</p>
+                      <p className="text-xs text-slate-400">
+                        Chưa ghi nhận lượt dùng nào
+                      </p>
                     </div>
                   ) : (
                     <div className="flex-1 space-y-4">
                       {voucherStats.topVouchers.map((v, idx) => {
-                        const usageRatio = Math.round((v.usedQuantity / v.totalQuantity) * 100);
+                        const usageRatio = Math.round(
+                          (v.usedQuantity / v.totalQuantity) * 100,
+                        );
                         return (
                           <div key={v.code} className="space-y-1">
                             <div className="flex justify-between items-center text-xs font-semibold">
@@ -674,10 +733,13 @@ const Dashboard = () => {
                                 <span className="h-5 w-5 rounded bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 flex items-center justify-center text-[10px] font-mono font-bold">
                                   {idx + 1}
                                 </span>
-                                <span className="font-mono text-slate-800 dark:text-slate-100">{v.code}</span>
+                                <span className="font-mono text-slate-800 dark:text-slate-100">
+                                  {v.code}
+                                </span>
                               </div>
                               <span className="text-slate-500">
-                                {v.usedQuantity} / {v.totalQuantity} ({usageRatio}%)
+                                {v.usedQuantity} / {v.totalQuantity} (
+                                {usageRatio}%)
                               </span>
                             </div>
                             <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">

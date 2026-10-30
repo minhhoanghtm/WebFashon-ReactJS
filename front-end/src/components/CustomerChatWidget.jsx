@@ -26,6 +26,7 @@ import {
 import { toast } from "react-toastify";
 import { useChatContextStore } from "@/store/chatContext.store";
 import Markdown from "./Markdown";
+import useWebsiteSettings from "@/hooks/useWebsiteSettings";
 
 const parseInlineProducts = (content) => {
   if (typeof content !== "string") return { cleanedContent: "", items: [] };
@@ -33,7 +34,8 @@ const parseInlineProducts = (content) => {
   const items = [];
   let cleanedContent = content;
 
-  const regex = /(?:[*+-]|\d+\.)\s+\*\*(.*?)\*\*[\s*]*[*+-]?\s*(?:Giá|Gia|Price):\s*([^*+-|\d.]+)(?:[\s*]*[*+-]?\s*(?:Link ảnh|Link anh|Image|Link):\s*(https?:\/\/\S+))?(?:\s*[*+-]?\s*(?:ID sản phẩm|ID san pham|ID):\s*`?([a-f0-9]+)`?)?/gi;
+  const regex =
+    /(?:[*+-]|\d+\.)\s+\*\*(.*?)\*\*[\s*]*[*+-]?\s*(?:Giá|Gia|Price):\s*([^*+-|\d.]+)(?:[\s*]*[*+-]?\s*(?:Link ảnh|Link anh|Image|Link):\s*(https?:\/\/\S+))?(?:\s*[*+-]?\s*(?:ID sản phẩm|ID san pham|ID):\s*`?([a-f0-9]+)`?)?/gi;
 
   let match;
   while ((match = regex.exec(content)) !== null) {
@@ -66,9 +68,14 @@ const CustomerChatWidget = () => {
   const AI_CHAT_STORAGE_KEY = `customer_ai_chat_history_${userKey}`;
   const AI_CHAT_METADATA_KEY = `customer_ai_chat_metadata_${userKey}`;
 
+  const { settings } = useWebsiteSettings();
+  const general = settings?.general || {};
+  const siteName = general?.siteName || "404Studio";
   const [messages, setMessages] = useState(() => {
     try {
-      const savedMessages = localStorage.getItem(`customer_ai_chat_history_${userKey}`);
+      const savedMessages = localStorage.getItem(
+        `customer_ai_chat_history_${userKey}`,
+      );
       return {
         ai: savedMessages ? JSON.parse(savedMessages) || [] : [],
         support: [],
@@ -80,8 +87,12 @@ const CustomerChatWidget = () => {
 
   const [aiMetadata, setAiMetadata] = useState(() => {
     try {
-      const savedMetadata = localStorage.getItem(`customer_ai_chat_metadata_${userKey}`);
-      return savedMetadata ? JSON.parse(savedMetadata) || { lastIntent: null, lastProductId: null } : { lastIntent: null, lastProductId: null };
+      const savedMetadata = localStorage.getItem(
+        `customer_ai_chat_metadata_${userKey}`,
+      );
+      return savedMetadata
+        ? JSON.parse(savedMetadata) || { lastIntent: null, lastProductId: null }
+        : { lastIntent: null, lastProductId: null };
     } catch {
       return { lastIntent: null, lastProductId: null };
     }
@@ -225,7 +236,10 @@ const CustomerChatWidget = () => {
     socket.on("connect", () => {
       console.log("Socket connected");
       if (selectedConversationIdRef.current) {
-        console.log("Joining room on connect:", selectedConversationIdRef.current);
+        console.log(
+          "Joining room on connect:",
+          selectedConversationIdRef.current,
+        );
         socket.emit("conversation:join", selectedConversationIdRef.current);
       }
     });
@@ -269,7 +283,13 @@ const CustomerChatWidget = () => {
     });
 
     return () => {
-      socket.disconnect();
+      if (socket.connected) {
+        socket.disconnect();
+      } else {
+        socket.once("connect", () => {
+          socket.disconnect();
+        });
+      }
       socketRef.current = null;
     };
   }, [isAuthenticated, socketUrl]);
@@ -295,6 +315,24 @@ const CustomerChatWidget = () => {
     console.log("Chat context updated:", context);
   }, [isOpen, context]);
 
+  const sendProductCardToSupport = async (prodContext, conversationId) => {
+    if (!prodContext || !isAuthenticated) return null;
+    try {
+      const res = await sendCustomerSupportMessageService({
+        content: `Khách hàng đang quan tâm đến sản phẩm: ${prodContext.productName}`,
+        conversationId: conversationId || undefined,
+        metadata: {
+          type: "product",
+          product: prodContext,
+        },
+      });
+      return res;
+    } catch (err) {
+      console.error("Lỗi khi gửi sản phẩm:", err);
+      return null;
+    }
+  };
+
   // Load AI chat history from localStorage
   useEffect(() => {
     try {
@@ -316,8 +354,11 @@ const CustomerChatWidget = () => {
       const savedMetadata = localStorage.getItem(AI_CHAT_METADATA_KEY);
       setAiMetadata(
         savedMetadata
-          ? JSON.parse(savedMetadata) || { lastIntent: null, lastProductId: null }
-          : { lastIntent: null, lastProductId: null }
+          ? JSON.parse(savedMetadata) || {
+              lastIntent: null,
+              lastProductId: null,
+            }
+          : { lastIntent: null, lastProductId: null },
       );
     } catch (error) {
       console.error("Lỗi khi tải metadata chat AI:", error);
@@ -338,7 +379,11 @@ const CustomerChatWidget = () => {
     if (!isLoadedRef.current) return;
     try {
       const currentSaved = localStorage.getItem(AI_CHAT_STORAGE_KEY);
-      if ((!messages.ai || messages.ai.length === 0) && currentSaved && JSON.parse(currentSaved).length > 0) {
+      if (
+        (!messages.ai || messages.ai.length === 0) &&
+        currentSaved &&
+        JSON.parse(currentSaved).length > 0
+      ) {
         return;
       }
 
@@ -395,19 +440,19 @@ const CustomerChatWidget = () => {
     });
 
     setMessages((prev) => {
-      const lastProduct = [...prev.ai]
+      const lastProduct = [...prev.support]
         .reverse()
-        .find((m) => m.messageType === "product");
+        .find((m) => m.messageType === "product" || m.metadata?.product?.productid === context.productid);
 
       // Tránh thêm lại cùng 1 sản phẩm
-      if (lastProduct?.product?.productid === context.productid) {
+      if (lastProduct) {
         return prev;
       }
 
       return {
         ...prev,
-        ai: [
-          ...prev.ai,
+        support: [
+          ...prev.support,
           {
             _id: `product_${context.productid}_${Date.now()}`,
             senderType: "system",
@@ -420,10 +465,42 @@ const CustomerChatWidget = () => {
     });
   }, [context, isOpen, AI_CHAT_METADATA_KEY]);
 
+  // Auto-send product card to support when switching to support tab
+  useEffect(() => {
+    if (!isOpen || chatMode !== "support" || !context?.productid) return;
+    if (!conversations.support?._id) return;
+
+    const unsentProductMsg = messages.support.find(
+      (m) => m.messageType === "product" && !m.metadata?.type
+    );
+    if (!unsentProductMsg) return;
+
+    const autoSendProduct = async () => {
+      const prodRes = await sendProductCardToSupport(context, conversations.support._id);
+      if (prodRes) {
+        setMessages((prev) => ({
+          ...prev,
+          support: prev.support
+            .filter((m) => m._id !== unsentProductMsg._id)
+            .concat({
+              ...prodRes.message,
+              messageType: "product",
+              product: context,
+            }),
+        }));
+      }
+    };
+    autoSendProduct();
+  }, [isOpen, chatMode, context, conversations.support?._id, messages.support]);
+
   const { pathname } = useLocation();
-  const isAuthOrAdminPage = ["/login", "/register", "/reset-password", "/verify-otp", "/admin"].some(
-    (path) => pathname.startsWith(path)
-  );
+  const isAuthOrAdminPage = [
+    "/login",
+    "/register",
+    "/reset-password",
+    "/verify-otp",
+    "/admin",
+  ].some((path) => pathname.startsWith(path));
 
   if (isAuthOrAdminPage) return null;
 
@@ -509,6 +586,36 @@ const CustomerChatWidget = () => {
           });
         }
       } else {
+        let currentConvId = activeConv?._id;
+
+        // Check if there is an unsent product card in messages.support
+        const unsentProductMsg = messages.support.find(
+          (m) => m.messageType === "product" && !m.metadata?.type
+        );
+
+        if (unsentProductMsg && context?.type === "product") {
+          const prodRes = await sendProductCardToSupport(context, currentConvId);
+          if (prodRes) {
+            currentConvId = prodRes.conversationId;
+            if (!conversations.support) {
+              setConversations((prev) => ({
+                ...prev,
+                support: { _id: prodRes.conversationId, type: "support" },
+              }));
+            }
+            setMessages((prev) => ({
+              ...prev,
+              support: prev.support
+                .filter((m) => m._id !== unsentProductMsg._id)
+                .concat({
+                  ...prodRes.message,
+                  messageType: "product",
+                  product: context,
+                }),
+            }));
+          }
+        }
+
         // Send support message
         const tempUserMsg = {
           _id: Date.now().toString(),
@@ -523,7 +630,7 @@ const CustomerChatWidget = () => {
 
         const res = await sendCustomerSupportMessageService({
           content: text,
-          conversationId: activeConv?._id || undefined,
+          conversationId: currentConvId || undefined,
         });
 
         if (!conversations.support && res?.conversationId) {
@@ -576,7 +683,7 @@ const CustomerChatWidget = () => {
                 </span>
                 <div>
                   <h2 className="text-sm font-extrabold tracking-tight">
-                    404Studio Support
+                    {siteName} Support
                   </h2>
                   <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -685,13 +792,15 @@ const CustomerChatWidget = () => {
 
                   {/* 3. Active messages mapping  */}
                   {activeMessages.map((msg) => {
-                    if (msg.messageType === "product") {
+                    if (msg.messageType === "product" || msg.metadata?.type === "product") {
+                      const productInfo = msg.product || msg.metadata?.product;
+                      if (!productInfo) return null;
                       return (
-                        <div key={msg._id} className="flex justify-end">
+                        <div key={msg._id} className="flex justify-end animate-in fade-in-50 duration-250">
                           <div className="w-[200px] bg-white dark:bg-slate-800 rounded-2xl rounded-tr-none border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                             <img
-                              src={msg.product.image}
-                              alt={msg.product.productName}
+                              src={productInfo.image}
+                              alt={productInfo.productName}
                               className="w-full h-28 object-cover"
                             />
 
@@ -700,22 +809,22 @@ const CustomerChatWidget = () => {
                                 Sản phẩm đang xem
                               </span>
 
-                              <h4 className="mt-1 text-sm font-semibold">
-                                {msg.product.productName}
+                              <h4 className="mt-1 text-sm font-semibold text-left">
+                                {productInfo.productName}
                               </h4>
 
-                              <div className="mt-2 text-lg font-bold text-indigo-600">
+                              <div className="mt-2 text-lg font-bold text-indigo-600 text-left">
                                 {Number(
-                                  msg.product.new_price ||
-                                    msg.product.price ||
+                                  productInfo.new_price ||
+                                    productInfo.price ||
                                     0,
                                 ).toLocaleString("vi-VN")}
                                 đ
                               </div>
 
                               <a
-                                href={`/product/${msg.product.slug}`}
-                                className="mt-3 inline-flex items-center gap-1"
+                                href={`/product/${productInfo.slug}`}
+                                className="mt-3 inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:underline"
                               >
                                 <ExternalLink size={13} />
                                 Xem chi tiết
@@ -744,12 +853,16 @@ const CustomerChatWidget = () => {
                       }
 
                       // Parse inline products from AI message
-                      const { cleanedContent, items } = parseInlineProducts(m.content);
+                      const { cleanedContent, items } = parseInlineProducts(
+                        m.content,
+                      );
 
                       if (items.length > 0) {
                         return (
                           <div className="space-y-3">
-                            {cleanedContent && <Markdown>{cleanedContent}</Markdown>}
+                            {cleanedContent && (
+                              <Markdown>{cleanedContent}</Markdown>
+                            )}
                             <div className="grid grid-cols-1 gap-2.5 mt-2">
                               {items.map((item, idx) => (
                                 <div
@@ -775,9 +888,15 @@ const CustomerChatWidget = () => {
                                     <button
                                       onClick={() => {
                                         const targetMeta = item.id
-                                          ? { ...aiMetadata, lastProductId: item.id }
+                                          ? {
+                                              ...aiMetadata,
+                                              lastProductId: item.id,
+                                            }
                                           : aiMetadata;
-                                        sendMessageDirectly("chi tiết", targetMeta);
+                                        sendMessageDirectly(
+                                          "chi tiết",
+                                          targetMeta,
+                                        );
                                       }}
                                       className="mt-2 py-1 px-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white font-medium text-[9px] rounded-md transition-colors self-start duration-150 cursor-pointer"
                                     >

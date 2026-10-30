@@ -1,7 +1,3 @@
-import linenShirtImage from "./assets/product-linen-shirt.jpg";
-
-const fallbackProductImage = linenShirtImage;
-
 const firstValue = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
 
@@ -49,7 +45,7 @@ const getProductImage = (product) => {
     product.thumbnail,
     product.hinhAnh,
     product.avatar,
-    fallbackProductImage,
+    "",
   );
 };
 
@@ -114,7 +110,7 @@ export const normalizeProduct = (product = {}, index = 0, categoryMap = {}, isMo
     badge: firstValue(
       product.badge,
       product.tag,
-      oldPrice > price && price > 0 ? "Giảm giá" : "Mới",
+      oldPrice > price && price > 0 ? `-${Math.round(((oldPrice - price) / oldPrice) * 100)}%` : "Mới",
     ),
     isMock,
   };
