@@ -55,17 +55,16 @@ const Favorites = ({ isDashboard = false }) => {
         <div className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             {!isDashboard && (
-              <span className="atelier-eyebrow block mb-1.5">
+              <span className="atelier-eyebrow block mb-1.5 font-mono text-[11px] tracking-[0.24em] uppercase text-[var(--color-text-muted)]">
                 Bộ sưu tập cá nhân
               </span>
             )}
-            <h1 className="font-display text-2xl sm:text-4xl font-semibold tracking-tight">
+            <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight uppercase">
               Danh sách yêu thích ({favoriteItems.length})
             </h1>
             {!isDashboard && (
-              <p className="mt-2 max-w-xl text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed">
-                Những thiết kế bạn đã lưu lại để dễ dàng theo dõi và đặt hàng
-                bất cứ lúc nào.
+              <p className="mt-2 max-w-xl text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed font-sans">
+                Những thiết kế bạn đã lưu lại để theo dõi và chuẩn bị cho đơn hàng may đo tiếp theo.
               </p>
             )}
           </div>
@@ -88,16 +87,15 @@ const Favorites = ({ isDashboard = false }) => {
             <div className="flex h-14 w-14 items-center justify-center border border-[var(--color-border)] text-[var(--color-text)]">
               <Heart size={24} className="stroke-[1.5]" aria-hidden="true" />
             </div>
-            <h2 className="mt-5 font-display text-2xl font-semibold">
+            <h2 className="mt-5 font-display text-2xl font-extrabold uppercase tracking-tight">
               Chưa có sản phẩm yêu thích
             </h2>
-            <p className="mt-2 max-w-sm text-xs text-[var(--color-text-muted)] leading-relaxed">
-              Hãy nhấn biểu tượng trái tim trên các thiết kế bạn ưng ý khi khám
-              phá cửa hàng, sản phẩm sẽ được lưu tại đây.
+            <p className="mt-2 max-w-sm text-xs text-[var(--color-text-muted)] leading-relaxed font-sans">
+              Nhấn biểu tượng trái tim trên các tạo tác may đo trong cửa hàng để lưu trữ tại đây.
             </p>
             <Link
               to="/products"
-              className="mt-6 inline-flex items-center gap-2 min-h-[48px] bg-[var(--color-text)] text-[var(--color-bg)] px-6 py-3 text-xs uppercase tracking-[0.16em] font-medium hover:opacity-90 transition-opacity"
+              className="mt-6 inline-flex items-center gap-2 min-h-[46px] border border-foreground bg-foreground px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-background hover:bg-background hover:text-foreground transition-all"
             >
               <ShoppingBag size={14} aria-hidden="true" />
               <span>Khám phá bộ sưu tập</span>

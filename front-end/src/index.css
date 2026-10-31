@@ -211,3 +211,110 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* SweetAlert2 Monochrome Atelier Styling */
+.wf-swal-popup {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  padding: 2rem !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+.wf-swal-title {
+  font-family: var(--font-condensed), "Oswald", sans-serif !important;
+  font-size: 1.75rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: -0.01em !important;
+  color: var(--foreground) !important;
+  padding: 0 0 0.5rem 0 !important;
+}
+
+.wf-swal-html {
+  font-family: var(--font-sans), system-ui, sans-serif !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.6 !important;
+  color: var(--muted-foreground) !important;
+  margin: 0.5rem 0 1.5rem 0 !important;
+}
+
+.wf-swal-actions {
+  display: flex !important;
+  gap: 0.75rem !important;
+  justify-content: center !important;
+  margin-top: 1rem !important;
+}
+
+.wf-swal-confirm {
+  min-height: 44px !important;
+  padding: 0.625rem 1.5rem !important;
+  background: var(--foreground) !important;
+  color: var(--background) !important;
+  border: 1px solid var(--foreground) !important;
+  border-radius: 0 !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.16em !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.wf-swal-confirm:hover {
+  background: transparent !important;
+  color: var(--foreground) !important;
+}
+
+.wf-swal-cancel {
+  min-height: 44px !important;
+  padding: 0.625rem 1.5rem !important;
+  background: transparent !important;
+  color: var(--muted-foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.16em !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.wf-swal-cancel:hover {
+  border-color: var(--foreground) !important;
+  color: var(--foreground) !important;
+}
+
+/* Atelier Perforated Ticket Card */
+.atelier-ticket {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.atelier-ticket::before,
+.atelier-ticket::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.atelier-ticket::before {
+  left: -8px;
+}
+
+.atelier-ticket::after {
+  right: -8px;
+}
+
+

@@ -13,7 +13,7 @@ import { getCartService } from "@/services/cart.service";
 import { getReviewsByProductIdService } from "@/services/review.service";
 import { useAuthStore } from "../../store/auth.store";
 import { toast } from "react-toastify";
-import Swal from "sweetalert2";
+import { monochromeSwal } from "@/utils/swal";
 import { Search, X, Loader2 } from "lucide-react";
 
 import OrderFilterTabs from "../../components/order/OrderFilterTabs";
@@ -170,15 +170,13 @@ const UserAccountManagement = ({ isDashboard = false }) => {
 
   // Handle Order Cancellation
   const handleCancelOrder = async (orderId) => {
-    const result = await Swal.fire({
+    const result = await monochromeSwal.fire({
       title: "Xác nhận hủy đơn hàng?",
       text: "Bạn có chắc chắn muốn hủy đơn hàng này? Thao tác này không thể hoàn tác.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Hủy đơn hàng",
       cancelButtonText: "Đóng",
-      confirmButtonColor: "#111111",
-      cancelButtonColor: "#737373",
     });
 
     if (!result.isConfirmed) return;

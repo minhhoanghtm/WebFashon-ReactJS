@@ -208,12 +208,11 @@ const VoucherHunting = ({ isDashboard = false }) => {
                     {siteName} · Voucher Archive
                   </span>
                 </div>
-                <h1 className="font-display text-3xl md:text-4xl font-semibold tracking-tight">
-                  Đặc quyền ưu đãi dành cho khách hàng
+                <h1 className="font-display text-3xl md:text-5xl font-extrabold tracking-tight uppercase">
+                  Đặc quyền ưu đãi Atelier
                 </h1>
-                <p className="text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed">
-                  Lưu các mã ưu đãi đang mở từ {siteName} để sử dụng trực tiếp ở
-                  bước thanh toán.
+                <p className="text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed font-sans">
+                  Lưu trữ các mã ưu đãi may đo từ {siteName} để sử dụng trực tiếp tại bước thanh toán.
                 </p>
               </div>
               <div className="h-20 w-20 border border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-center shrink-0">
@@ -225,7 +224,7 @@ const VoucherHunting = ({ isDashboard = false }) => {
         {/* List Section */}
         <div className="space-y-6">
           <div className="flex items-baseline justify-between border-b border-[var(--color-border)] pb-4">
-            <h2 className="font-display text-xl sm:text-2xl font-semibold flex items-center gap-2">
+            <h2 className="font-display text-xl sm:text-3xl font-extrabold uppercase tracking-tight flex items-center gap-2.5">
               <Ticket className="h-5 w-5" aria-hidden="true" />
               <span>Voucher đang áp dụng</span>
             </h2>
@@ -283,20 +282,20 @@ const VoucherHunting = ({ isDashboard = false }) => {
                   <article
                     key={v._id}
                     onClick={() => openDetail(v)}
-                    className="group relative bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-text)] p-5 transition-colors flex flex-col justify-between cursor-pointer min-h-[190px]"
+                    className="group relative atelier-ticket p-6 transition-colors flex flex-col justify-between cursor-pointer min-h-[195px] hover:border-foreground"
                   >
                     <div className="flex items-start gap-4">
                       <div className="h-12 w-12 bg-[var(--color-bg)] border border-[var(--color-border)] flex items-center justify-center shrink-0">
                         <Ticket className="h-5 w-5" aria-hidden="true" />
                       </div>
-                      <div className="space-y-1 pr-6">
-                        <div className="text-xs font-mono font-semibold border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-0.5 w-fit uppercase tracking-wider">
+                      <div className="space-y-1.5 pr-6">
+                        <div className="text-[11px] font-mono font-bold border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-0.5 w-fit uppercase tracking-wider">
                           {v.code}
                         </div>
-                        <h3 className="font-display text-lg font-semibold line-clamp-1">
+                        <h3 className="font-display text-xl font-bold uppercase tracking-tight line-clamp-1">
                           {v.name}
                         </h3>
-                        <p className="text-xs text-[var(--color-text-muted)] line-clamp-2">
+                        <p className="text-xs text-[var(--color-text-muted)] line-clamp-2 font-sans">
                           Đơn tối thiểu:{" "}
                           {v.minOrderValue > 0
                             ? `${v.minOrderValue.toLocaleString("vi-VN")}đ`
@@ -305,15 +304,15 @@ const VoucherHunting = ({ isDashboard = false }) => {
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-[var(--color-border)] flex items-center justify-between gap-4">
+                    <div className="mt-5 pt-4 border-t border-dashed border-[var(--color-border)] flex items-center justify-between gap-4">
                       <div className="flex-1 space-y-1.5">
-                        <div className="flex justify-between text-[10px] font-mono text-[var(--color-text-muted)] uppercase">
+                        <div className="flex justify-between text-[10px] font-mono text-[var(--color-text-muted)] uppercase tracking-wider">
                           <span>Đã nhận {percentClaimed}%</span>
                           <span>Còn {v.remainingQuantity}</span>
                         </div>
                         <div className="h-1 w-full bg-[var(--color-border)] overflow-hidden">
                           <div
-                            className="h-full bg-[var(--color-text)]"
+                            className="h-full bg-foreground"
                             style={{ width: `${percentClaimed}%` }}
                           />
                         </div>
@@ -324,9 +323,9 @@ const VoucherHunting = ({ isDashboard = false }) => {
                           type="button"
                           disabled
                           onClick={(e) => e.stopPropagation()}
-                          className="min-h-[44px] px-4 py-2 border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-muted)] text-xs uppercase tracking-[0.14em] font-medium shrink-0 cursor-not-allowed"
+                          className="min-h-[44px] px-4 py-2 border border-border bg-secondary text-muted-foreground text-xs uppercase tracking-[0.16em] font-semibold shrink-0 cursor-not-allowed"
                         >
-                          Đã lưu
+                          ĐÃ LƯU
                         </button>
                       ) : (
                         <button
@@ -335,14 +334,14 @@ const VoucherHunting = ({ isDashboard = false }) => {
                             e.stopPropagation();
                             handleClaim(v._id);
                           }}
-                          className="min-h-[44px] px-4 py-2 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.14em] font-medium shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
+                          className="min-h-[44px] px-4 py-2 border border-foreground bg-foreground text-background text-xs uppercase tracking-[0.16em] font-semibold shrink-0 hover:bg-background hover:text-foreground transition-all cursor-pointer"
                         >
-                          Lưu mã
+                          LƯU MÃ
                         </button>
                       )}
                     </div>
 
-                    <div className="absolute right-3 top-3 text-[var(--color-text-muted)] group-hover:text-[var(--color-text)]">
+                    <div className="absolute right-3.5 top-3.5 text-muted-foreground group-hover:text-foreground">
                       <Info className="h-4 w-4" aria-hidden="true" />
                     </div>
                   </article>
