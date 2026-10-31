@@ -29,7 +29,7 @@ import {
 } from '@/components/admin/ui';
 
 const defaultCategoryPlaceholder =
-  'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500';
+  '/uploads/placeholder-product.svg';
 
 const CatalogManagement = () => {
   useDocumentTitle('Quản lý danh mục — 404Studio Admin');

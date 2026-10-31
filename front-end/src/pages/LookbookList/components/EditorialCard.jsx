@@ -40,7 +40,7 @@ const EditorialCard = ({ title, excerpt, image, href, publishedAt, priority = fa
     });
   };
 
-  const displayImage = image || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800";
+  const displayImage = image || "/uploads/placeholder-product.svg";
 
   return (
     <Link

@@ -12,12 +12,10 @@ const Footer = () => {
   const socialLinks = settings?.socialLinks || {};
   const footerData = settings?.footer || {};
 
-  const siteName =
-    !loading && general.siteName ? general.siteName : "WEBFASHION";
-  const address =
-    general.address || "123 Đường Đồng Khởi, Quận 1, TP. Hồ Chí Minh";
-  const hotline = general.hotline || "0901 234 567";
-  const contactEmail = general.email || "atelier@webfashion.vn";
+  const siteName = general.siteName || "404 STUDIO";
+  const address = general.address || "";
+  const hotline = general.hotline || "";
+  const contactEmail = general.email || "";
   const copyrightText =
     footerData.copyrightText ||
     `© ${new Date().getFullYear()} ${siteName} ATELIER. BẢN QUYỀN ĐƯỢC BẢO HỘ.`;
@@ -224,40 +222,46 @@ const Footer = () => {
               Liên hệ Atelier
             </h4>
             <div className="space-y-3 text-xs text-[#9E9EA8]">
-              <p className="flex items-start gap-2.5">
-                <MapPin
-                  size={15}
-                  strokeWidth={1.5}
-                  className="mt-0.5 shrink-0 text-[#F5F4F0]"
-                />
-                <span>{address}</span>
-              </p>
-              <p className="flex items-center gap-2.5">
-                <Phone
-                  size={15}
-                  strokeWidth={1.5}
-                  className="shrink-0 text-[#F5F4F0]"
-                />
-                <a
-                  href={`tel:${hotline.replace(/\s+/g, "")}`}
-                  className="transition-colors hover:text-[#F5F4F0]"
-                >
-                  {hotline}
-                </a>
-              </p>
-              <p className="flex items-center gap-2.5">
-                <Mail
-                  size={15}
-                  strokeWidth={1.5}
-                  className="shrink-0 text-[#F5F4F0]"
-                />
-                <a
-                  href={`mailto:${contactEmail}`}
-                  className="transition-colors hover:text-[#F5F4F0]"
-                >
-                  {contactEmail}
-                </a>
-              </p>
+              {address && (
+                <p className="flex items-start gap-2.5">
+                  <MapPin
+                    size={15}
+                    strokeWidth={1.5}
+                    className="mt-0.5 shrink-0 text-[#F5F4F0]"
+                  />
+                  <span>{address}</span>
+                </p>
+              )}
+              {hotline && (
+                <p className="flex items-center gap-2.5">
+                  <Phone
+                    size={15}
+                    strokeWidth={1.5}
+                    className="shrink-0 text-[#F5F4F0]"
+                  />
+                  <a
+                    href={`tel:${hotline.replace(/\s+/g, "")}`}
+                    className="transition-colors hover:text-[#F5F4F0]"
+                  >
+                    {hotline}
+                  </a>
+                </p>
+              )}
+              {contactEmail && (
+                <p className="flex items-center gap-2.5">
+                  <Mail
+                    size={15}
+                    strokeWidth={1.5}
+                    className="shrink-0 text-[#F5F4F0]"
+                  />
+                  <a
+                    href={`mailto:${contactEmail}`}
+                    className="transition-colors hover:text-[#F5F4F0]"
+                  >
+                    {contactEmail}
+                  </a>
+                </p>
+              )}
 
               {/* Social Links */}
               <div className="flex flex-wrap items-center gap-2 pt-3">

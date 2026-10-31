@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Phone,
   Search,
+  Layout,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -84,6 +85,20 @@ const WebsiteSettingsManagement = () => {
     );
   }
 
+
+  const handleHomeContentChange = (section, field, value) => {
+    setSettings((prev) => ({
+      ...prev,
+      homeContent: {
+        ...(prev.homeContent || {}),
+        [section]: {
+          ...(prev.homeContent?.[section] || {}),
+          [field]: value,
+        },
+      },
+    }));
+  };
+
   const handleInputChange = (group, field, value) => {
     setSettings((prev) => ({
       ...prev,
@@ -119,6 +134,12 @@ const WebsiteSettingsManagement = () => {
   };
 
   const tabs = [
+    {
+      id: "homeContent",
+      label: "Nội dung Trang Chủ",
+      description: "Tiêu đề Hero, manifesto, câu chuyện và CTA",
+      icon: Layout,
+    },
     {
       id: "general",
       label: "Cài đặt chung",
@@ -244,6 +265,200 @@ const WebsiteSettingsManagement = () => {
                 </button>
               );
             })}
+
+            {/* TAB: HOME CONTENT */}
+            {activeTab === "homeContent" && (
+              <div className="space-y-8">
+                <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    Nội dung Tiếp thị & Khẩu hiệu Trang Chủ
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Đồng bộ toàn bộ văn bản tiêu đề, mô tả và nút kêu gọi hành động (CTA) cho trang chủ
+                  </p>
+                </div>
+
+                {/* Hero Section */}
+                <div className="space-y-4 p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    1. Khối Mở Đầu (Cinematic Hero)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Dòng mở đầu (Eyebrow)</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.hero?.eyebrow || ""}
+                        onChange={(e) => handleHomeContentChange("hero", "eyebrow", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nút kêu gọi (CTA)</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.hero?.cta || ""}
+                        onChange={(e) => handleHomeContentChange("hero", "cta", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tiêu đề dòng 1</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.hero?.titleLine1 || ""}
+                        onChange={(e) => handleHomeContentChange("hero", "titleLine1", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tiêu đề dòng 2</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.hero?.titleLine2 || ""}
+                        onChange={(e) => handleHomeContentChange("hero", "titleLine2", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Mô tả chi tiết</label>
+                      <textarea
+                        rows={2}
+                        value={settings.homeContent?.hero?.subtitle || ""}
+                        onChange={(e) => handleHomeContentChange("hero", "subtitle", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Brand Chapter */}
+                <div className="space-y-4 p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    2. Chương Thương Hiệu (Brand Chapter)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Dòng mở đầu (Eyebrow)</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.brandChapter?.eyebrow || ""}
+                        onChange={(e) => handleHomeContentChange("brandChapter", "eyebrow", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nút kêu gọi (CTA)</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.brandChapter?.cta || ""}
+                        onChange={(e) => handleHomeContentChange("brandChapter", "cta", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Mô tả triết lý</label>
+                      <textarea
+                        rows={3}
+                        value={settings.homeContent?.brandChapter?.description || ""}
+                        onChange={(e) => handleHomeContentChange("brandChapter", "description", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Manifesto */}
+                <div className="space-y-4 p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    3. Tuyên Ngôn Bản Sắc (Manifesto)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Dòng mở đầu (Eyebrow)</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.manifesto?.eyebrow || ""}
+                        onChange={(e) => handleHomeContentChange("manifesto", "eyebrow", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Phụ đề video / tư liệu</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.manifesto?.videoSubtitle || ""}
+                        onChange={(e) => handleHomeContentChange("manifesto", "videoSubtitle", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Đoạn văn tuyên ngôn</label>
+                      <textarea
+                        rows={3}
+                        value={settings.homeContent?.manifesto?.description || ""}
+                        onChange={(e) => handleHomeContentChange("manifesto", "description", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Collage Lookbook */}
+                <div className="space-y-4 p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    4. Khối Collage Lookbook
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Dòng mở đầu (Eyebrow)</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.collage?.eyebrow || ""}
+                        onChange={(e) => handleHomeContentChange("collage", "eyebrow", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nút kêu gọi (CTA)</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.collage?.cta || ""}
+                        onChange={(e) => handleHomeContentChange("collage", "cta", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tiêu đề chính</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.collage?.title || ""}
+                        onChange={(e) => handleHomeContentChange("collage", "title", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tiêu đề phụ</label>
+                      <input
+                        type="text"
+                        value={settings.homeContent?.collage?.subtitle || ""}
+                        onChange={(e) => handleHomeContentChange("collage", "subtitle", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Mô tả lookbook</label>
+                      <textarea
+                        rows={2}
+                        value={settings.homeContent?.collage?.description || ""}
+                        onChange={(e) => handleHomeContentChange("collage", "description", e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </AdminCard>
         </div>
 

@@ -5,8 +5,8 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
 import { getLookbooksService } from "@/services/page.service";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 import CinematicWhiteTransition from "./CinematicWhiteTransition";
-import HOME_CONTENT from "../content";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -17,16 +17,24 @@ export const CollageLookbookSection = () => {
   const sectionRef = useRef(null);
   const centerContentRef = useRef(null);
 
-  const img1Ref = useRef(null); // Top Left
-  const img2Ref = useRef(null); // Top Right
-  const img3Ref = useRef(null); // Bottom Left
-  const img4Ref = useRef(null); // Bottom Right
+  const img1Ref = useRef(null);
+  const img2Ref = useRef(null);
+  const img3Ref = useRef(null);
+  const img4Ref = useRef(null);
 
   const [lookbooks, setLookbooks] = useState([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  const { collage } = HOME_CONTENT;
+  const { settings } = useWebsiteSettings();
+  const collage = settings?.homeContent?.collage || {
+    eyebrow: "CHƯƠNG 03 · TUYỂN TẬP HÌNH ẢNH",
+    title: "COLLAGE",
+    subtitle: "LOOKBOOK",
+    description:
+      "Sự đối thoại giữa phom dáng tối giản và không gian kiến trúc. Khám phá toàn cảnh các thiết kế được ghi hình qua lăng kính điện ảnh đương đại.",
+    cta: "KHÁM PHÁ TOÀN BỘ BỘ SƯU TẬP",
+  };
 
   // Fetch real lookbook items from API
   useEffect(() => {
@@ -42,7 +50,7 @@ export const CollageLookbookSection = () => {
             id: item._id || item.id || `lookbook-${idx}`,
             title: item.title || `BỘ SƯU TẬP 0${idx + 1}`,
             subtitle: item.excerpt || "Ấn bản nghệ thuật",
-            cover: item.cover || item.thumbnail || item.image || "",
+            cover: item.thumbnailUrl || item.cover || item.thumbnail || item.image || item.bannerUrl || "",
             code: `LOOK-0${idx + 1}`,
           }))
           .filter((item) => Boolean(item.cover));
@@ -51,7 +59,7 @@ export const CollageLookbookSection = () => {
           setLookbooks(mapped);
         }
       } catch {
-        // Fallback to placeholders
+        // Silently handled
       }
     };
 
@@ -61,50 +69,16 @@ export const CollageLookbookSection = () => {
     };
   }, []);
 
-  const items = useMemo(() => {
-    return lookbooks.length >= 4
-      ? lookbooks
-      : [
-          {
-            id: "collage-1",
-            title: "ÁNH SÁNG & BÓNG TỐI",
-            subtitle: "Studio Edit",
-            cover: "",
-            code: "VOL-01",
-          },
-          {
-            id: "collage-2",
-            title: "ĐƯỜNG NÉT THỦ CÔNG",
-            subtitle: "Atelier Tailoring",
-            cover: "",
-            code: "VOL-02",
-          },
-          {
-            id: "collage-3",
-            title: "DẠNG THỨC ĐƠN SẮC",
-            subtitle: "Monochrome Study",
-            cover: "",
-            code: "VOL-03",
-          },
-          {
-            id: "collage-4",
-            title: "CHUYỂN ĐỘNG TỰ DO",
-            subtitle: "Fluid Silhouette",
-            cover: "",
-            code: "VOL-04",
-          },
-        ];
-  }, [lookbooks]);
+  const items = lookbooks;
 
   // GSAP Parallax & Convergence Animation
   useEffect(() => {
-    if (prefersReducedMotion || !sectionRef.current) return undefined;
+    if (prefersReducedMotion || !sectionRef.current || items.length === 0) return undefined;
 
     const ctx = gsap.context(() => {
       const isMobile = window.innerWidth < 768;
 
       if (!isMobile) {
-        // Top-left image: moves slightly down & inwards
         if (img1Ref.current) {
           gsap.fromTo(
             img1Ref.current,
@@ -124,7 +98,6 @@ export const CollageLookbookSection = () => {
           );
         }
 
-        // Top-right image: moves faster down & inwards
         if (img2Ref.current) {
           gsap.fromTo(
             img2Ref.current,
@@ -144,7 +117,6 @@ export const CollageLookbookSection = () => {
           );
         }
 
-        // Bottom-left image: moves up & inwards
         if (img3Ref.current) {
           gsap.fromTo(
             img3Ref.current,
@@ -164,7 +136,6 @@ export const CollageLookbookSection = () => {
           );
         }
 
-        // Bottom-right image: moves down & inwards
         if (img4Ref.current) {
           gsap.fromTo(
             img4Ref.current,
@@ -187,10 +158,8 @@ export const CollageLookbookSection = () => {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, items]);
 
-  // Handle CTA Click: Trigger White Screen + Logo page transition (duration <= 0.6s)
-  // Directs to safe existing route /products
   const handleExploreLookbook = () => {
     setIsTransitioning(true);
     setTimeout(() => {
@@ -200,7 +169,6 @@ export const CollageLookbookSection = () => {
 
   return (
     <>
-      {/* White Page Transition Overlay */}
       <CinematicWhiteTransition isVisible={isTransitioning} />
 
       <section
@@ -208,106 +176,66 @@ export const CollageLookbookSection = () => {
         aria-label="Collage Lookbook đương đại"
         className="relative z-10 min-h-[900px] lg:min-h-[1100px] w-full overflow-hidden bg-[#FBF9F5] text-[#05251C] py-24 sm:py-36 flex items-center justify-center border-t border-[#05251C]/10"
       >
-        {/* Scattered Images around the perimeter (Parallax & Edge feathered) */}
+        {/* Scattered Real Images */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-          {/* 1. Top Left Image Card */}
-          <div
-            ref={img1Ref}
-            className="absolute top-[8%] left-[4%] sm:left-[8%] w-[200px] sm:w-[260px] lg:w-[320px] aspect-[3/4] border border-[#05251C]/10 bg-white shadow-xl overflow-hidden [mask-image:radial-gradient(circle_at_center,black_70%,transparent_100%)]"
-          >
-            {items[0].cover ? (
+          {items[0] && (
+            <div
+              ref={img1Ref}
+              className="absolute top-[8%] left-[4%] sm:left-[8%] w-[200px] sm:w-[260px] lg:w-[320px] aspect-[3/4] border border-[#05251C]/10 bg-white shadow-xl overflow-hidden [mask-image:radial-gradient(circle_at_center,black_70%,transparent_100%)]"
+            >
               <img
                 src={items[0].cover}
                 alt={items[0].title}
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-br from-neutral-100 to-neutral-300 flex flex-col justify-between p-4">
-                <span className="font-mono text-[9px] text-[#05251C]/40">
-                  {items[0].code}
-                </span>
-                <span className="font-condensed text-xl font-bold uppercase text-[#05251C]/70">
-                  {items[0].title}
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* 2. Top Right Image Card */}
-          <div
-            ref={img2Ref}
-            className="absolute top-[12%] right-[4%] sm:right-[7%] w-[220px] sm:w-[280px] lg:w-[340px] aspect-[3/4] border border-[#05251C]/10 bg-white shadow-xl overflow-hidden [mask-image:radial-gradient(circle_at_center,black_70%,transparent_100%)]"
-          >
-            {items[1].cover ? (
+          {items[1] && (
+            <div
+              ref={img2Ref}
+              className="absolute top-[12%] right-[4%] sm:right-[7%] w-[220px] sm:w-[280px] lg:w-[340px] aspect-[3/4] border border-[#05251C]/10 bg-white shadow-xl overflow-hidden [mask-image:radial-gradient(circle_at_center,black_70%,transparent_100%)]"
+            >
               <img
                 src={items[1].cover}
                 alt={items[1].title}
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-bl from-neutral-200 to-neutral-400 flex flex-col justify-between p-4">
-                <span className="font-mono text-[9px] text-[#05251C]/40">
-                  {items[1].code}
-                </span>
-                <span className="font-condensed text-xl font-bold uppercase text-[#05251C]/70">
-                  {items[1].title}
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* 3. Bottom Left Image Card */}
-          <div
-            ref={img3Ref}
-            className="absolute bottom-[6%] left-[3%] sm:left-[6%] w-[230px] sm:w-[290px] lg:w-[350px] aspect-[4/3] border border-[#05251C]/10 bg-white shadow-xl overflow-hidden [mask-image:radial-gradient(circle_at_center,black_70%,transparent_100%)]"
-          >
-            {items[2].cover ? (
+          {items[2] && (
+            <div
+              ref={img3Ref}
+              className="absolute bottom-[6%] left-[3%] sm:left-[6%] w-[230px] sm:w-[290px] lg:w-[350px] aspect-[4/3] border border-[#05251C]/10 bg-white shadow-xl overflow-hidden [mask-image:radial-gradient(circle_at_center,black_70%,transparent_100%)]"
+            >
               <img
                 src={items[2].cover}
                 alt={items[2].title}
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-tr from-neutral-100 to-neutral-300 flex flex-col justify-between p-4">
-                <span className="font-mono text-[9px] text-[#05251C]/40">
-                  {items[2].code}
-                </span>
-                <span className="font-condensed text-xl font-bold uppercase text-[#05251C]/70">
-                  {items[2].title}
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* 4. Bottom Right Image Card */}
-          <div
-            ref={img4Ref}
-            className="absolute bottom-[8%] right-[3%] sm:right-[6%] w-[210px] sm:w-[270px] lg:w-[330px] aspect-[3/4] border border-[#05251C]/10 bg-white shadow-xl overflow-hidden [mask-image:radial-gradient(circle_at_center,black_70%,transparent_100%)]"
-          >
-            {items[3].cover ? (
+          {items[3] && (
+            <div
+              ref={img4Ref}
+              className="absolute bottom-[8%] right-[3%] sm:right-[6%] w-[210px] sm:w-[270px] lg:w-[330px] aspect-[3/4] border border-[#05251C]/10 bg-white shadow-xl overflow-hidden [mask-image:radial-gradient(circle_at_center,black_70%,transparent_100%)]"
+            >
               <img
                 src={items[3].cover}
                 alt={items[3].title}
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-tl from-neutral-200 to-neutral-300 flex flex-col justify-between p-4">
-                <span className="font-mono text-[9px] text-[#05251C]/40">
-                  {items[3].code}
-                </span>
-                <span className="font-condensed text-xl font-bold uppercase text-[#05251C]/70">
-                  {items[3].title}
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Center Narrative Core: Big Title + Description + Thin CTA Button */}
+        {/* Center Narrative Core */}
         <div
           ref={centerContentRef}
           className="relative z-20 mx-auto max-w-2xl px-6 text-center space-y-6"

@@ -3,7 +3,7 @@ import { Play, Pause } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
-import HOME_CONTENT from "../content";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -18,7 +18,27 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  const { manifesto } = HOME_CONTENT;
+  const { settings } = useWebsiteSettings();
+  const manifesto = settings?.homeContent?.manifesto || {
+    eyebrow: "ATELIER MANIFESTO · TUYÊN NGÔN BẢN SẮC",
+    words: [
+      "TRONG",
+      "THẾ GIỚI",
+      "CỦA",
+      "SỰ PHỒN TẠP,",
+      "CẤU TRÚC",
+      "ĐƠN SẮC",
+      "CHÍNH LÀ",
+      "ĐỈNH CAO",
+      "CỦA",
+      "TỰ DO",
+      "BIỂU CẢM.",
+    ],
+    description:
+      "Được chế tác với niềm tin rằng sự xa xỉ thực thụ nằm ở những khoảng lặng tinh khiết và tính chính xác tuyệt đối của đường may.",
+    videoSubtitle: "BẢN SẮC ĐƠN SẮC · PHIM TƯ LIỆU",
+  };
+
   const hasRealVideo = Boolean(videoUrl && videoUrl.trim());
 
   useEffect(() => {
@@ -103,15 +123,16 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
 
           {/* Slogan Words that light up on scroll */}
           <h3 className="font-condensed text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold uppercase tracking-tight leading-[1.2] select-none">
-            {manifesto.words.map((word, idx) => (
-              <span
-                key={`${word}-${idx}`}
-                className="manifesto-word inline-block mx-1.5 transition-colors will-change-[opacity,transform]"
-                style={{ opacity: prefersReducedMotion ? 1 : 0.18 }}
-              >
-                {word}
-              </span>
-            ))}
+            {Array.isArray(manifesto.words) &&
+              manifesto.words.map((word, idx) => (
+                <span
+                  key={`${word}-${idx}`}
+                  className="manifesto-word inline-block mx-1.5 transition-colors will-change-[opacity,transform]"
+                  style={{ opacity: prefersReducedMotion ? 1 : 0.18 }}
+                >
+                  {word}
+                </span>
+              ))}
           </h3>
 
           <p className="mx-auto max-w-lg font-sans text-xs sm:text-sm font-normal text-white/60 leading-relaxed tracking-wider">
@@ -126,9 +147,8 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
           ref={videoWrapperRef}
           className="relative w-full max-w-[1600px] aspect-[16/9] sm:aspect-[21/9] min-h-[360px] sm:min-h-[500px] overflow-hidden bg-neutral-950 border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] will-change-transform flex items-center justify-center select-none"
         >
-          {/* Architectural Monochrome Visual Loop Canvas (Self-contained, no external URL) */}
+          {/* Architectural Monochrome Visual Loop Canvas */}
           <div className="absolute inset-0 bg-gradient-to-tr from-black via-[#0c0d11] to-[#040405]">
-            {/* Subtle animated geometric lines */}
             <div
               className={`absolute inset-0 opacity-[0.06] transition-opacity duration-700 ${
                 isPlaying ? "opacity-[0.14]" : ""
@@ -195,7 +215,7 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
             <span className="tracking-widest uppercase">
               CHAPTER 02 / MONOCHROME ARCHITECTURE
             </span>
-            <span className="tabular-nums uppercase">404 ATELIER · ARCHIVE</span>
+            <span className="tabular-nums uppercase">{settings?.general?.siteName || "404 STUDIO"} · ARCHIVE</span>
           </div>
         </div>
       </div>

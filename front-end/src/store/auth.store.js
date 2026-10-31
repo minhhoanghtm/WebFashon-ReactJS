@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { tokenStorage } from '../utils/token';
 import { rotateAnonymousId } from '../utils/anonymousId';
 import sessionService from '../services/session.service';
+import { signOutApi } from '../api/authApi';
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -14,6 +15,7 @@ export const useAuthStore = create((set) => ({
   },
 
   logout: () => {
+    signOutApi().catch(() => {});
     tokenStorage.removeToken();
     try {
       rotateAnonymousId();

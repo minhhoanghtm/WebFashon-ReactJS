@@ -35,7 +35,7 @@ import {
 } from '@/components/admin/ui';
 
 const defaultLookbookCover =
-  'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600';
+  '/uploads/placeholder-product.svg';
 
 const getLookbookStatusBadge = (status) => {
   const map = {

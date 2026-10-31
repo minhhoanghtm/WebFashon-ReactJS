@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
 import { getLookbooksService } from "@/services/page.service";
-import HOME_CONTENT from "../content";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -18,23 +18,37 @@ export const BrandChapterSection = () => {
   const col2Ref = useRef(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 
+  const { settings } = useWebsiteSettings();
+  const brandChapter = settings?.homeContent?.brandChapter || {
+    eyebrow: "CHƯƠNG 01 · TRIẾT LÝ THIẾT KẾ",
+    headingLines: ["NGHỆ THUẬT", "MAY ĐO", "KIẾN TRÚC."],
+    description:
+      "Mỗi đường cắt là một tuyên ngôn về sự chuẩn xác. Chúng tôi từ chối những chi tiết rườm rà để giải phóng cấu trúc nguyên bản — nơi chất liệu tự nhiên và đường may đơn sắc tôn vinh tỷ lệ hình thể đương đại.",
+    cta: "XEM TẤT CẢ THIẾT KẾ",
+  };
+
   const [lookbookImages, setLookbookImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fetch real lookbook images from API
   useEffect(() => {
     let isMounted = true;
     const fetchImages = async () => {
       try {
+        setIsLoading(true);
         const res = await getLookbooksService({ limit: 4 });
         const list = res.pages || res.data || [];
-        if (!isMounted || !Array.isArray(list) || list.length === 0) return;
+        if (!isMounted || !Array.isArray(list) || list.length === 0) {
+          setIsLoading(false);
+          return;
+        }
 
         const imgs = list
           .map((item, idx) => ({
             id: item._id || item.id || `lb-${idx}`,
             title: item.title || `ẤN BẢN ATELIER 0${idx + 1}`,
             subtitle: item.excerpt || "Kỹ nghệ may đo chuẩn mực",
-            imageUrl: item.cover || item.thumbnail || item.image || "",
+            imageUrl: item.thumbnailUrl || item.cover || item.thumbnail || item.image || item.bannerUrl || "",
             code: `ED-0${idx + 1}`,
           }))
           .filter((item) => Boolean(item.imageUrl));
@@ -43,7 +57,9 @@ export const BrandChapterSection = () => {
           setLookbookImages(imgs);
         }
       } catch {
-        // Fallback to architectural placeholders
+        // Handled silently
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     };
 
@@ -53,77 +69,39 @@ export const BrandChapterSection = () => {
     };
   }, []);
 
-  // Default items if API is empty or loading
-  const displayItems = useMemo(
-    () =>
-      lookbookImages.length >= 2
-        ? lookbookImages
-        : [
-            {
-              id: "chapter-item-1",
-              title: "ÁO KHOÁC MAY ĐO CẤU TRÚC",
-              subtitle: "Phom dáng hình học đơn sắc",
-              imageUrl: "",
-              code: "AT-01",
-            },
-            {
-              id: "chapter-item-2",
-              title: "SƠ MI KHỐI HỘP",
-              subtitle: "Đường cắt chuẩn mực",
-              imageUrl: "",
-              code: "AT-02",
-            },
-            {
-              id: "chapter-item-3",
-              title: "QUẦN TÂY ỐNG ĐỨNG TỐI GIẢN",
-              subtitle: "Tỷ lệ cơ thể đương đại",
-              imageUrl: "",
-              code: "AT-03",
-            },
-            {
-              id: "chapter-item-4",
-              title: "TÚI XÁCH HÌNH HỌC",
-              subtitle: "Chi tiết tinh giản tuyệt đối",
-              imageUrl: "",
-              code: "AT-04",
-            },
-          ],
-    [lookbookImages]
-  );
+  const displayItems = lookbookImages;
 
   // GSAP Animations: Clip-path reveal + Multi-speed Column Parallax
   useEffect(() => {
-    if (prefersReducedMotion || !containerRef.current) return undefined;
+    if (prefersReducedMotion || !containerRef.current || displayItems.length === 0) return undefined;
 
     const ctx = gsap.context(() => {
       const isMobile = window.innerWidth < 768;
 
-      // 1. Text reveal mask on left heading
-      const headingLines = containerRef.current.querySelectorAll(
-        ".brand-heading-line"
-      );
-      if (headingLines.length > 0) {
+      // 1. Text slide-up mask reveal
+      const headingLines = colLeftRef.current?.querySelectorAll(".brand-heading-line");
+      if (headingLines && headingLines.length > 0) {
         gsap.fromTo(
           headingLines,
-          { y: "100%", opacity: 0 },
+          { y: "115%", opacity: 0 },
           {
             y: "0%",
             opacity: 1,
-            duration: 0.9,
             stagger: 0.12,
+            duration: 1.0,
             ease: "power3.out",
             scrollTrigger: {
-              trigger: colLeftRef.current,
-              start: "top 80%",
+              trigger: containerRef.current,
+              start: "top 75%",
               toggleActions: "play none none reverse",
             },
           }
         );
       }
 
-      // 2. Clip-path reveal on image cards
-      const imageCards = containerRef.current.querySelectorAll(".clip-reveal-card");
-      imageCards.forEach((card) => {
+      // 2. Image Reveal via clip-path
+      const imageCards = containerRef.current?.querySelectorAll(".clip-reveal-card");
+      imageCards?.forEach((card) => {
         const innerImg = card.querySelector(".clip-reveal-img");
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -183,7 +161,6 @@ export const BrandChapterSection = () => {
       }
     }, containerRef);
 
-    // Refresh ScrollTrigger after DOM settle
     const refreshTimer = setTimeout(() => {
       ScrollTrigger.refresh();
     }, 300);
@@ -197,8 +174,6 @@ export const BrandChapterSection = () => {
   const itemsCol1 = [displayItems[0], displayItems[2]].filter(Boolean);
   const itemsCol2 = [displayItems[1], displayItems[3]].filter(Boolean);
 
-  const { brandChapter } = HOME_CONTENT;
-
   return (
     <section
       ref={containerRef}
@@ -207,12 +182,11 @@ export const BrandChapterSection = () => {
     >
       <div className="mx-auto max-w-[1600px]">
         <div className="grid gap-14 lg:grid-cols-12 lg:gap-16 items-start">
-          {/* Left Column: Brand Manifesto Narrative (~40%) */}
+          {/* Left Column: Brand Manifesto Narrative */}
           <div
             ref={colLeftRef}
             className="lg:col-span-5 lg:sticky lg:top-28 space-y-8"
           >
-            {/* Chapter eyebrow */}
             <div className="space-y-1">
               <span className="font-mono text-xs tracking-[0.28em] text-[#05251C]/60 uppercase">
                 {brandChapter.eyebrow}
@@ -220,30 +194,28 @@ export const BrandChapterSection = () => {
               <div className="h-[1px] w-16 bg-[#05251C]/20" />
             </div>
 
-            {/* Giant Condensed Heading with mask reveal */}
             <div className="overflow-hidden">
               <h2 className="font-condensed text-5xl font-bold uppercase tracking-tight text-[#05251C] sm:text-6xl lg:text-7xl leading-[1.18] sm:leading-[1.2] py-[0.12em]">
-                {brandChapter.headingLines.map((line, idx) => (
-                  <span
-                    key={line}
-                    className={`brand-heading-line block ${
-                      idx === brandChapter.headingLines.length - 1
-                        ? "text-[#05251C]/50"
-                        : ""
-                    }`}
-                  >
-                    {line}
-                  </span>
-                ))}
+                {Array.isArray(brandChapter.headingLines) &&
+                  brandChapter.headingLines.map((line, idx) => (
+                    <span
+                      key={line}
+                      className={`brand-heading-line block ${
+                        idx === brandChapter.headingLines.length - 1
+                          ? "text-[#05251C]/50"
+                          : ""
+                      }`}
+                    >
+                      {line}
+                    </span>
+                  ))}
               </h2>
             </div>
 
-            {/* Narrative Paragraph */}
             <p className="max-w-md font-sans text-sm font-normal leading-relaxed text-[#05251C]/75 sm:text-base">
               {brandChapter.description}
             </p>
 
-            {/* CTA Link to existing /products route */}
             <div className="pt-2">
               <Link
                 to="/products"
@@ -258,42 +230,29 @@ export const BrandChapterSection = () => {
             </div>
           </div>
 
-          {/* Right Column: 2 Staggered Columns with Parallax & Clip-path reveal (~60%) */}
+          {/* Right Column: Staggered Lookbook Columns */}
           <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
-            {/* Column 1 (Left of pair) */}
+            {displayItems.length === 0 && !isLoading && (
+              <div className="sm:col-span-2 py-16 text-center border border-dashed border-[#05251C]/20 rounded-md">
+                <p className="text-xs text-[#05251C]/50 font-mono tracking-widest uppercase">
+                  Hiện chưa có ấn bản lookbook được công bố
+                </p>
+              </div>
+            )}
+
+            {/* Column 1 */}
             <div ref={col1Ref} className="space-y-8 sm:space-y-12">
               {itemsCol1.map((item) => (
                 <div key={item.id} className="group space-y-3">
                   <div className="clip-reveal-card relative aspect-[3/4] w-full overflow-hidden bg-neutral-100 border border-[#05251C]/10 shadow-xs">
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.title}
-                        className="clip-reveal-img h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                        loading="lazy"
-                        onLoad={() => ScrollTrigger.refresh()}
-                      />
-                    ) : (
-                      /* Minimalist Monochrome Canvas Placeholder */
-                      <div className="clip-reveal-img h-full w-full bg-gradient-to-b from-neutral-100 via-neutral-200 to-neutral-300 flex flex-col justify-between p-6">
-                        <span className="font-mono text-[10px] text-[#05251C]/40 tracking-widest uppercase">
-                          {item.code}
-                        </span>
-                        <div className="text-center space-y-1">
-                          <span className="font-condensed text-2xl font-bold uppercase tracking-wider text-[#05251C]/80 block">
-                            {item.title}
-                          </span>
-                          <span className="font-sans text-[11px] text-[#05251C]/50 block">
-                            {item.subtitle}
-                          </span>
-                        </div>
-                        <span className="font-mono text-[9px] text-[#05251C]/30 text-right uppercase">
-                          404 ATELIER
-                        </span>
-                      </div>
-                    )}
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="clip-reveal-img h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                      onLoad={() => ScrollTrigger.refresh()}
+                    />
                   </div>
-                  {/* Caption underneath */}
                   <div className="flex items-baseline justify-between font-mono text-[11px] text-[#05251C]/60 pt-1">
                     <span className="font-semibold text-[#05251C]">
                       {item.title}
@@ -304,7 +263,7 @@ export const BrandChapterSection = () => {
               ))}
             </div>
 
-            {/* Column 2 (Right of pair, offset downwards for staggered flow) */}
+            {/* Column 2 */}
             <div
               ref={col2Ref}
               className="space-y-8 sm:space-y-12 sm:pt-16 lg:pt-24"
@@ -312,35 +271,14 @@ export const BrandChapterSection = () => {
               {itemsCol2.map((item) => (
                 <div key={item.id} className="group space-y-3">
                   <div className="clip-reveal-card relative aspect-[3/4] w-full overflow-hidden bg-neutral-100 border border-[#05251C]/10 shadow-xs">
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.title}
-                        className="clip-reveal-img h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                        loading="lazy"
-                        onLoad={() => ScrollTrigger.refresh()}
-                      />
-                    ) : (
-                      /* Minimalist Monochrome Canvas Placeholder */
-                      <div className="clip-reveal-img h-full w-full bg-gradient-to-b from-neutral-200 via-neutral-100 to-neutral-200 flex flex-col justify-between p-6">
-                        <span className="font-mono text-[10px] text-[#05251C]/40 tracking-widest uppercase">
-                          {item.code}
-                        </span>
-                        <div className="text-center space-y-1">
-                          <span className="font-condensed text-2xl font-bold uppercase tracking-wider text-[#05251C]/80 block">
-                            {item.title}
-                          </span>
-                          <span className="font-sans text-[11px] text-[#05251C]/50 block">
-                            {item.subtitle}
-                          </span>
-                        </div>
-                        <span className="font-mono text-[9px] text-[#05251C]/30 text-right uppercase">
-                          404 ATELIER
-                        </span>
-                      </div>
-                    )}
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="clip-reveal-img h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                      onLoad={() => ScrollTrigger.refresh()}
+                    />
                   </div>
-                  {/* Caption underneath */}
                   <div className="flex items-baseline justify-between font-mono text-[11px] text-[#05251C]/60 pt-1">
                     <span className="font-semibold text-[#05251C]">
                       {item.title}

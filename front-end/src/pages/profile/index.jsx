@@ -38,7 +38,7 @@ import { useAuthStore } from "../../store/auth.store";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const DEFAULT_AVATAR =
-  "https://cdn.sforum.vn/sforum/wp-content/uploads/2023/10/avatar-trang-4.jpg";
+  "/uploads/default-avatar.svg";
 
 const removeAdministrativePrefix = (name = "") =>
   name

@@ -6,4 +6,5 @@ export const authApi = {
   sendOTP: (data) => axiosClient.post('/auth/sendOTP', data),
   verifyOTP: (data) => axiosClient.post('/auth/verify-otp', data),
   resetPassword: (data) => axiosClient.post('/auth/resetPassword', data),
+  signOut: () => axiosClient.post('/auth/signOut'),
 };

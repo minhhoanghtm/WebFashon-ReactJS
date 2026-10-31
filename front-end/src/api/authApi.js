@@ -25,3 +25,7 @@ export const verifyOTPApi = (data) => {
 export const resetPasswordApi = (data) => {
   return axiosClient.post("/auth/resetPassword", data);
 };
+
+export const signOutApi = () => {
+  return axiosClient.post("/auth/signOut");
+};

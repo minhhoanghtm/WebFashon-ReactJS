@@ -36,7 +36,7 @@ import {
 } from '@/components/admin/ui';
 
 const defaultProductImage =
-  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500';
+  '/uploads/placeholder-product.svg';
 
 const ProductManagement = () => {
   useDocumentTitle('Quản lý sản phẩm — 404Studio Admin');
