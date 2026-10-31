@@ -2,7 +2,7 @@ import trackingService from "@/services/tracking.service";
 import trackingApi from "@/api/trackingApi";
 import { useState, useEffect, useRef } from "react";
 import logo from "../assets/logo.png";
-import { FaSearch, FaShoppingBag } from "react-icons/fa";
+import { FaSearch, FaShoppingBag, FaBars, FaTimes } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "antd";
 import { MdOutlineAccountCircle } from "react-icons/md";
@@ -20,6 +20,7 @@ const Header = () => {
   const [showSuggest, setShowSuggest] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
   const [searchHistory, setSearchHistory] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const loadSearchHistory = async () => {
     if (!isLoggedIn) return;
@@ -28,7 +29,7 @@ const Header = () => {
       if (res && res.data) {
         setSearchHistory(res.data);
       }
-    } catch (err) {
+    } catch (_err) {
       // ignore
     }
   };
@@ -39,7 +40,7 @@ const Header = () => {
     try {
       await trackingApi.clearSearchHistory();
       setSearchHistory([]);
-    } catch (err) {
+    } catch (_err) {
       // ignore
     }
   };
@@ -120,7 +121,10 @@ const Header = () => {
     navigate("/");
     setSearch(false);
     setKeyword("");
+    setMenuOpen(false);
   };
+
+  const closeMenu = () => setMenuOpen(false);
 
   //Dang xuat
   const handleLogout = () => {
@@ -231,27 +235,23 @@ const Header = () => {
     return () => window.removeEventListener("cartUpdated", handleCartUpdate);
   }, []);
 
-  const totalItems = cartItemCount;
   return (
-    <div
-      className={`sticky top-0 z-50 flex justify-between items-center h-16 min-w-min px-5 transition-all duration-300 ${
-        isScrolled
-          ? "bg-black bg-opacity-30 backdrop-blur-md shadow-lg"
-          : "bg-gray-800"
-      } text-white`}
-    >
+    <header className={`site-header sticky top-0 z-50 ${isScrolled ? "site-header--scrolled" : ""}`}>
+      <div className="site-header__bar">
       {/* Image  */}
-      <Link to="/" onClick={handleGoHome} className="h-full flex items-center">
+      <Link to="/" onClick={handleGoHome} className="site-header__brand" aria-label="404Studio trang chủ">
         <img
           src={logo}
           alt="404Studio"
-          className="h-12 w-auto object-contain"
+          className="site-header__logo"
         />
       </Link>
-      {/* Navigation  */}
-      <div className="relative">
+      <nav className="site-header__nav" aria-label="Điều hướng chính">
+        <Link to="/" onClick={closeMenu}>Trang chủ</Link><Link to="/lookbooks" onClick={closeMenu}>Lookbook</Link><Link to="/about" onClick={closeMenu}>Về chúng tôi</Link><Link to="/contact" onClick={closeMenu}>Liên hệ</Link>
+      </nav>
+      <div className="site-header__search relative" ref={wrapperRef}>
         {search ? (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="site-header__search-form">
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
@@ -261,7 +261,7 @@ const Header = () => {
               }}
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
-              className="border rounded-l-lg text-white placeholder:text-gray-400  focus:outline-none focus:ring-2 focus:ring-blue-500 px-2"
+              className="site-header__search-input"
             />
             {/* // Hiển thị gợi ý tìm kiếm & Lịch sử tìm kiếm */}
             {showSuggest && (
@@ -313,59 +313,50 @@ const Header = () => {
                 ) : null}
               </div>
             )}
-            <button type="submit" className="border rounded-r-lg px-4">
-              Tìm
+            <button type="submit" className="site-header__search-submit">
+              Tìm kiếm
             </button>
           </form>
         ) : (
-          <menu className="flex gap-6">
-            <Link to="/">
-              <li className="hover:underline">Home</li>
-            </Link>
-            <Link to="/lookbooks">
-              <li className="hover:underline">Lookbook</li>
-            </Link>
-            <Link to="/about">
-              <li className="hover:underline">About</li>
-            </Link>
-            <Link to="/contact">
-              <li className="hover:underline">Contact</li>
-            </Link>
-          </menu>
+          <span className="site-header__tagline">Contemporary Vietnamese tailoring</span>
         )}
       </div>
-      <div className="flex items-center gap-4">
+      <div className="site-header__actions">
         {/* Search  */}
-        <button onClick={() => setSearch(!search)} className="">
-          <FaSearch className="text-xl" />
+        <button onClick={() => setSearch(!search)} className="site-header__icon-button" aria-label={search ? "Đóng tìm kiếm" : "Mở tìm kiếm"}>
+          <FaSearch />
         </button>
         {/* Cart */}
-        <Link to={isLoggedIn ? "/cart" : "/login"} className="relative">
+        <Link to={isLoggedIn ? "/cart" : "/login"} className="site-header__icon-button relative" aria-label="Giỏ hàng">
           <Badge count={cartItemCount}>
             <div ref={cartRef}>
-              <FaShoppingBag className="text-white text-xl" />
+              <FaShoppingBag />
             </div>
           </Badge>
         </Link>
         {/* Me  */}
         <Dropdown menu={{ items }} placement="topRight">
           {isLoggedIn ? (
-            <div className="flex items-center gap-1 cursor-pointer">
+            <div className="site-header__account cursor-pointer">
               <img
                 src={user?.data.avatar || "/default-avatar.png"}
                 alt={user?.data.fullName}
-                className="w-8 h-8 rounded-full object-cover object-center"
+                className="site-header__avatar"
               />
-              <span>{user?.data.fullName || "Tài khoản"}</span>
+              <span className="hidden lg:inline">{user?.data.fullName || "Tài khoản"}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 cursor-pointer">
-              <MdOutlineAccountCircle className="text-2xl" />
+            <div className="site-header__icon-button cursor-pointer">
+              <MdOutlineAccountCircle />
             </div>
           )}
         </Dropdown>
-      </div>
-    </div>
+        <button className="site-header__menu-button" type="button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label="Mở menu">{menuOpen ? <FaTimes /> : <FaBars />}</button>
+      </div></div>
+      <nav id="mobile-navigation" className={`site-header__mobile-nav ${menuOpen ? "is-open" : ""}`} aria-label="Điều hướng di động">
+        <Link to="/" onClick={closeMenu}>Trang chủ</Link><Link to="/lookbooks" onClick={closeMenu}>Lookbook</Link><Link to="/about" onClick={closeMenu}>Về chúng tôi</Link><Link to="/contact" onClick={closeMenu}>Liên hệ</Link>
+      </nav>
+    </header>
   );
 };
 

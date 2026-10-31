@@ -1,6 +1,8 @@
 const ANON_KEY = "webfashion_anonymous_id";
+const ANON_TOKEN_KEY = "webfashion_anonymous_token";
 
 let inMemoryAnonymousId = null;
+let inMemoryAnonymousToken = null;
 
 const generateUUID = () => {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -30,11 +32,30 @@ export const getAnonymousId = () => {
   }
 };
 
+export const getAnonymousToken = () => {
+  try {
+    let token = localStorage.getItem(ANON_TOKEN_KEY);
+    if (!token) {
+      token = generateUUID();
+      localStorage.setItem(ANON_TOKEN_KEY, token);
+    }
+    return token;
+  } catch {
+    if (!inMemoryAnonymousToken) {
+      inMemoryAnonymousToken = generateUUID();
+    }
+    return inMemoryAnonymousToken;
+  }
+};
+
 export const rotateAnonymousId = () => {
   const newId = generateUUID();
+  const newToken = generateUUID();
   inMemoryAnonymousId = newId;
+  inMemoryAnonymousToken = newToken;
   try {
     localStorage.setItem(ANON_KEY, newId);
+    localStorage.setItem(ANON_TOKEN_KEY, newToken);
   } catch {
     // Bỏ qua lỗi localStorage
   }

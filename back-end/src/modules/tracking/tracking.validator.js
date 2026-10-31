@@ -12,6 +12,7 @@ const metaPrimitive = z.union([
   z.number(),
   z.boolean(),
   z.null(),
+  z.undefined(),
 ]);
 
 const metaItemObject = z.record(z.string().max(50), metaPrimitive);
@@ -28,6 +29,12 @@ export const singleEventCoreSchema = z
       .string()
       .trim()
       .uuid("anonymous_id phải đúng định dạng UUID")
+      .optional()
+      .nullable(),
+    anonymous_token: z
+      .string()
+      .trim()
+      .max(100, "anonymous_token tối đa 100 ký tự")
       .optional()
       .nullable(),
     session_id: z
@@ -154,6 +161,7 @@ export const updateConsentSchema = z.object({
         errorMap: () => ({ message: "consent phải là 'granted' hoặc 'denied'" }),
       }),
       anonymous_id: z.string().uuid().optional().nullable(),
+      anonymous_token: z.string().max(100).optional().nullable(),
     })
     .strict(),
 });

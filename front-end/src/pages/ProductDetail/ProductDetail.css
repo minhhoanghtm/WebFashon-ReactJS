@@ -6,11 +6,13 @@
   background: var(--wf-paper);
   color: var(--detail-ink);
   padding: 34px 24px 88px;
+  min-width: 0;
 }
 
 .product-detail__container {
   margin: 0 auto;
   max-width: 1536px;
+  min-width: 0;
 }
 
 .product-detail__breadcrumb {
@@ -37,6 +39,7 @@
   display: grid;
   gap: 56px;
   grid-template-columns: minmax(0, 1.08fr) minmax(390px, 0.72fr);
+  min-width: 0;
 }
 
 .product-gallery {
@@ -99,6 +102,7 @@
   padding: clamp(24px, 4vw, 38px);
   position: sticky;
   top: 96px;
+  min-width: 0;
 }
 
 .product-info__eyebrow {
@@ -892,6 +896,12 @@
 
   .product-detail__main {
     gap: 28px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-detail :is(.product-info__heading, .product-info__description, .product-tabs__copy, .product-review-card, .product-review-card__header) {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .product-gallery__main {

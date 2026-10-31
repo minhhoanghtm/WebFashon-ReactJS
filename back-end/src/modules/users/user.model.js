@@ -64,6 +64,12 @@ const userSchema = new mongoose.Schema(
       default:
         "https://cdn.sforum.vn/sforum/wp-content/uploads/2023/10/avatar-trang-4.jpg",
     },
+    consent_status: {
+      type: String,
+      enum: ['granted', 'denied'],
+      default: 'granted',
+      index: true,
+    },
     addresses: [addressSchema],
   },
   {

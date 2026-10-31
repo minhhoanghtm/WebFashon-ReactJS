@@ -11,9 +11,6 @@ const getMotion = (style, compact) => {
     autoAlpha: 0,
     y: distance,
     scale: compact ? 0.99 : 0.975,
-    // Clip-path is costly to repaint on low-power/mobile GPUs. Mobile keeps
-    // the same reveal hierarchy with transform + opacity only.
-    clipPath: compact ? "inset(0%)" : "inset(8% 0% 8% 0% round 18px)",
   };
 
   if (style === "fade-left") initial.x = -distance;
@@ -25,19 +22,18 @@ const getMotion = (style, compact) => {
   if (style === "editorial") {
     initial.y = compact ? 32 : 68;
     initial.scale = compact ? 0.985 : 0.965;
-    initial.clipPath = compact ? "inset(0%)" : "inset(12% 0% 12% 0% round 22px)";
   }
 
   return {
     initial,
-    visible: { autoAlpha: 1, x: 0, y: 0, scale: 1, clipPath: "inset(0% 0% 0% 0% round 0px)" },
+    visible: { autoAlpha: 1, x: 0, y: 0, scale: 1 },
     exit: { autoAlpha: 0.82, x: 0, y: compact ? -14 : -28, scale: compact ? 0.995 : 0.985 },
   };
 };
 
 /**
- * Adds a reversible, scroll-scrubbed timeline to every content section.
- * Sections can opt out with data-scroll-transition="none"; use
+ * Adds a reversible, scroll-scrubbed timeline only to deliberately marked
+ * sections. Use data-scroll-transition="true" sparingly; use
  * data-scroll-pin="true" or data-scroll-stack="true" only for purposeful
  * editorial compositions, never for normal document content.
  */
@@ -53,8 +49,7 @@ const ScrollSectionTransitions = ({ containerRef, routeKey }) => {
 
     const context = gsap.context(() => {
       const sections = gsap.utils
-        .toArray("section", container)
-        .filter((section) => section.dataset.scrollTransition !== "none");
+        .toArray('[data-scroll-transition="true"]', container);
 
       sections.forEach((section, index) => {
         const style = section.dataset.scrollStyle || "fade-up";
@@ -64,7 +59,7 @@ const ScrollSectionTransitions = ({ containerRef, routeKey }) => {
 
         gsap.set(section, {
           ...motion.initial,
-          willChange: compact ? "transform, opacity" : "transform, opacity, clip-path",
+          willChange: "transform, opacity",
           ...(stacked ? { position: "relative", zIndex: sections.length - index } : {}),
         });
 
@@ -78,7 +73,6 @@ const ScrollSectionTransitions = ({ containerRef, routeKey }) => {
             pin: pinned,
             pinSpacing: pinned,
             anticipatePin: pinned ? 1 : 0,
-            toggleActions: "play none none reverse",
             invalidateOnRefresh: true,
           },
         });

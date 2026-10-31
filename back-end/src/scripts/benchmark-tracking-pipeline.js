@@ -128,13 +128,45 @@ async function runTrackingBenchmark() {
   console.log(`   - Truy vấn lưu trong DB: "${piiEv?.query || 'null'}" (Sanitized: ${isPiiSanitized})`);
 
   // ---------------------------------------------------------------------------
-  // 4. RESILIENCE: QUEUE BACKLOG & DRAIN
+  // 4. RESILIENCE: QUEUE BACKLOG & DRAIN (100% DRAIN VERIFICATION)
   // ---------------------------------------------------------------------------
-  console.log("\n▶ [Test 4] Resilience: Kiểm tra hàng đợi BullMQ và Worker drain...");
+  console.log("\n▶ [Test 4] Resilience: Đo lường tiến độ xả hàng đợi BullMQ (Drain to 0)...");
   const queue = getTrackingQueue();
-  const jobCounts = await queue.getJobCounts("active", "completed", "failed", "delayed", "waiting");
-  console.log("   - BullMQ Job Counts:", jobCounts);
-  results.resilience.jobCounts = jobCounts;
+  const initialCounts = await queue.getJobCounts("active", "completed", "failed", "delayed", "waiting");
+  console.log("   - Trạng thái hàng đợi ban đầu:", initialCounts);
+
+  const drainStart = Date.now();
+  let finalCounts = initialCounts;
+  let drained = false;
+  const maxDrainWaitMs = 30000;
+
+  while (Date.now() - drainStart < maxDrainWaitMs) {
+    finalCounts = await queue.getJobCounts("active", "completed", "failed", "delayed", "waiting");
+    if ((finalCounts.waiting || 0) === 0 && (finalCounts.active || 0) === 0) {
+      drained = true;
+      break;
+    }
+    await delay(300);
+  }
+
+  const drainDurationSec = Number(((Date.now() - drainStart) / 1000).toFixed(2));
+  const workerThroughput = drained && drainDurationSec > 0
+    ? Number((N / drainDurationSec).toFixed(1))
+    : Number((N / Math.max(1, drainDurationSec)).toFixed(1));
+
+  console.log(`   - Trạng thái hàng đợi sau khi xả:`, finalCounts);
+  console.log(`   - Backlog tồn đọng: waiting = ${finalCounts.waiting || 0}, active = ${finalCounts.active || 0}`);
+  console.log(`   - Thời gian xả hết hàng đợi (Drain Time): ${drainDurationSec}s`);
+  console.log(`   - Tốc độ xử lý Worker (Worker Throughput): ${workerThroughput} events/sec`);
+  console.log(`   - Kết quả xả hàng đợi 100% (Backlog = 0): ${drained ? "VERIFIED ✅" : "INCOMPLETE ❌"}`);
+
+  results.resilience = {
+    initialJobCounts: initialCounts,
+    finalJobCounts: finalCounts,
+    drainDurationSec,
+    workerThroughput,
+    backlogDrainedToZero: drained,
+  };
 
   // ---------------------------------------------------------------------------
   // 5. CLEANUP BENCHMARK DATA

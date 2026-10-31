@@ -159,18 +159,6 @@ const ProductSearch = () => {
     setCurrentPage(1);
   }, [searchParams]);
 
-  // Ghi nhận tìm kiếm và tìm kiếm ngữ nghĩa khi kết quả tải xong
-  useEffect(() => {
-    const cleanQuery = (searchTerm || "").trim();
-    if (cleanQuery && !isLoading && !error) {
-      const count = normalizedProducts.length;
-      if (isSemantic) {
-        trackingService.trackSemanticSearchUsed(cleanQuery, count);
-      }
-      trackingService.trackSearch(cleanQuery, count);
-    }
-  }, [searchTerm, isSemantic, isLoading, error, normalizedProducts.length]);
-
   const normalizedProducts = useMemo(() => {
     const sourceProducts = Array.isArray(apiProducts)
       ? apiProducts
@@ -182,6 +170,18 @@ const ProductSearch = () => {
       normalizeProduct(product, index, categoryMap),
     );
   }, [apiProducts, categoryMap]);
+
+  // Record a completed search only after its normalized result set exists.
+  useEffect(() => {
+    const cleanQuery = searchTerm.trim();
+    if (!cleanQuery || isLoading || error) return;
+
+    const count = normalizedProducts.length;
+    if (isSemantic) {
+      trackingService.trackSemanticSearchUsed(cleanQuery, count);
+    }
+    trackingService.trackSearch(cleanQuery, count);
+  }, [searchTerm, isSemantic, isLoading, error, normalizedProducts.length]);
 
   const filterOptions = useMemo(
     () => buildFilterOptions(normalizedProducts),

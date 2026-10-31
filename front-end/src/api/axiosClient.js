@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ENV } from '../config/env';
 import { tokenStorage } from '../utils/token';
 import { useAuthStore } from '../store/auth.store';
-import { getAnonymousId } from '../utils/anonymousId';
+import { getAnonymousId, getAnonymousToken } from '../utils/anonymousId';
 
 const cleanUrls = (obj) => {
   if (!obj) return obj;
@@ -129,6 +129,11 @@ axiosClient.interceptors.request.use(
     const anonymousId = getAnonymousId();
     if (anonymousId && config.headers) {
       config.headers['x-anonymous-id'] = anonymousId;
+    }
+
+    const anonymousToken = getAnonymousToken();
+    if (anonymousToken && config.headers) {
+      config.headers['x-anonymous-token'] = anonymousToken;
     }
 
     return config;

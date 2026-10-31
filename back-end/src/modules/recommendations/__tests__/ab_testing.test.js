@@ -14,12 +14,15 @@ describe("A/B Testing Framework Comprehensive Verification Suite (12 Scenarios)"
       const { getRedisConnection } = await import("../../../configs/redis.js");
       const redis = getRedisConnection();
       if (redis && redis.status !== "end") {
-        await redis.quit();
+        await Promise.race([
+          redis.quit(),
+          new Promise((resolve) => setTimeout(resolve, 500)),
+        ]);
       }
     } catch {
       // Bỏ qua lỗi ngắt kết nối
     }
-  });
+  }, 10000);
 
   // =========================================================================
   // SCENARIO 1: DETERMINISTIC ASSIGNMENT (NO MATH.RANDOM())

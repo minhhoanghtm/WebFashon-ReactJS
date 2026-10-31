@@ -1,6 +1,7 @@
 import rateLimit from "express-rate-limit";
-// Environment flag to bypass rate limiting during automated tests
-const DISABLE_RATE_LIMIT_FOR_TESTS = process.env.DISABLE_RATE_LIMIT_FOR_TESTS === "true";
+// Environment flag to bypass rate limiting strictly during isolated unit tests (NODE_ENV=test)
+const DISABLE_RATE_LIMIT_FOR_TESTS =
+  process.env.NODE_ENV === "test" && process.env.DISABLE_RATE_LIMIT_FOR_TESTS === "true";
 
 /**
  * Rate limiter cho các route auth nhạy cảm.

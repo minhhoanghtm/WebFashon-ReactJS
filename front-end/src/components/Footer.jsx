@@ -35,20 +35,20 @@ const Footer = () => {
   };
 
   return (
-    <footer className="relative bg-[#062D22] text-[#F7F6F1] pt-20 pb-12 overflow-hidden border-t border-[#041E17] selection:bg-[#F5DD20] selection:text-[#062D22]">
+    <footer className="site-footer relative bg-[#062D22] text-[#F7F6F1] pt-16 sm:pt-24 pb-10 sm:pb-12 overflow-hidden border-t border-[#041E17] selection:bg-[#F5DD20] selection:text-[#062D22]">
       {/* Decorative architectural background glow */}
       <div className="pointer-events-none absolute -top-40 right-10 w-96 h-96 rounded-full bg-[#041E17]/80 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 left-0 w-80 h-80 rounded-full bg-[#F5DD20]/5 blur-3xl" />
 
-      <div className="relative mx-auto max-w-[1536px] w-full px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1440px] w-full px-4 sm:px-6 lg:px-10">
         {/* Top Editorial Row: Manifesto & Newsletter */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-16 border-b border-white/10">
           <div className="lg:col-span-7 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold tracking-[0.2em] text-[#F5DD20] uppercase">
+            <div className="inline-flex items-center gap-2 px-0 py-1 border-y border-white/15 text-[10px] font-bold tracking-[0.2em] text-[#F5DD20] uppercase">
               <Sparkles size={12} />
               <span>Digital Fashion Atelier 2026</span>
             </div>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tighter text-[#F7F6F1] font-display leading-[0.98]">
+            <h2 className="text-4xl sm:text-6xl font-black tracking-tighter text-[#F7F6F1] font-display leading-[0.92]">
               DESIGNED TO MOVE WITH YOU.<br />
               <span className="text-[#F5DD20]">WEAR YOUR STORY.</span>
             </h2>
@@ -58,7 +58,7 @@ const Footer = () => {
           </div>
 
           <div className="lg:col-span-5 flex flex-col justify-end">
-            <div className="bg-[#041E17]/80 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md">
+            <div className="bg-[#041E17]/80 border border-white/10 rounded-none p-6 sm:p-8 backdrop-blur-md">
               <h3 className="text-xs font-bold uppercase tracking-[0.25em] text-[#F5DD20] mb-2">
                 Brand Community & Newsletter
               </h3>
@@ -71,11 +71,11 @@ const Footer = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Nhập email của bạn..."
-                  className="flex-1 bg-[#062D22] border border-white/15 rounded-xl px-4 py-3 text-xs text-[#F7F6F1] placeholder:text-[#D1D9CF]/40 outline-none focus:border-[#F5DD20] transition-colors"
+                  className="flex-1 bg-[#062D22] border border-white/15 rounded-none px-4 py-3 text-xs text-[#F7F6F1] placeholder:text-[#D1D9CF]/40 outline-none focus:border-[#F5DD20] transition-colors"
                 />
                 <button
                   type="submit"
-                  className="px-6 py-3 rounded-xl bg-[#F5DD20] text-[#062D22] font-bold text-xs uppercase tracking-wider hover:bg-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                  className="px-6 py-3 rounded-none bg-[#F5DD20] text-[#062D22] font-bold text-xs uppercase tracking-wider hover:bg-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
                 >
                   <span>Gia nhập</span>
                   <ArrowUpRight size={14} />

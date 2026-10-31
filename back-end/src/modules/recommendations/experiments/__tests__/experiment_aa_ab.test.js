@@ -12,12 +12,15 @@ describe("A/A & A/B Testing Hardening & Statistical Verification Suite", () => {
     try {
       const redis = getRedisConnection();
       if (redis && redis.status !== "end") {
-        await redis.quit();
+        await Promise.race([
+          redis.quit(),
+          new Promise((resolve) => setTimeout(resolve, 500)),
+        ]);
       }
     } catch {
       // Graceful shutdown
     }
-  });
+  }, 10000);
 
   // =========================================================================
   // 1. A/A TEST SIMULATION & SRM VERIFICATION (1,000 SUBJECTS)

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import path from "path";
+import bcrypt from "bcrypt";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +15,7 @@ import PageSection from "../modules/pageSections/pageSection.model.js";
 import Voucher from "../modules/vouchers/voucher.model.js";
 import WebsiteSettings from "../modules/websiteSettings/websiteSettings.model.js";
 import Experiment from "../modules/recommendations/experiments/experiment.model.js";
+import User from "../modules/users/user.model.js";
 import vectorIndexService from "../modules/ai/services/vectorIndex.service.js";
 import { AA_EXPERIMENT_ID } from "../modules/recommendations/experiments/experiment.service.js";
 
@@ -26,6 +28,50 @@ async function seedStaging() {
     serverSelectionTimeoutMS: 5000,
   });
   console.log(" Connected to Staging MongoDB successfully.");
+
+  // 0. Seed Users (Admin & Customer)
+  const hashedCustomerPassword = await bcrypt.hash("StagingPass123!", 10);
+  await User.findOneAndUpdate(
+    { email: "customer@404studio.vn" },
+    {
+      $set: {
+        fullName: "Khách Hàng Staging",
+        passWord: hashedCustomerPassword,
+        role: "user",
+        status: "active",
+        consent_status: "granted",
+        addresses: [
+          {
+            fullName: "Khách Hàng Staging",
+            phone: "0987654321",
+            provinceCode: "01",
+            districtCode: "001",
+            wardCode: "00001",
+            addressDetail: "123 Phố Huế, Hoàn Kiếm, Hà Nội",
+            isDefault: true,
+          },
+        ],
+      },
+    },
+    { upsert: true, new: true }
+  );
+  console.log("  + Seeded test customer user: customer@404studio.vn / StagingPass123!");
+
+  const hashedAdminPassword = await bcrypt.hash("StagingAdmin123!", 10);
+  await User.findOneAndUpdate(
+    { email: "admin@404studio.vn" },
+    {
+      $set: {
+        fullName: "Admin Staging",
+        passWord: hashedAdminPassword,
+        role: "admin",
+        status: "active",
+        consent_status: "granted",
+      },
+    },
+    { upsert: true, new: true }
+  );
+  console.log("  + Seeded test admin user: admin@404studio.vn / StagingAdmin123!");
 
   // 1. Seed Categories
   const existingCat = await Category.findOne({ slug: "ao-nam" });
@@ -233,6 +279,7 @@ async function seedStaging() {
 
   await mongoose.disconnect();
   console.log("=== STAGING DATABASE SEEDING COMPLETED ===");
+  process.exit(0);
 }
 
 seedStaging().catch((err) => {

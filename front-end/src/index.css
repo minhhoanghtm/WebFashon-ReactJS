@@ -242,6 +242,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--studio-lime);
+    outline-offset: 3px;
+  }
   button,
   input,
   optgroup,
@@ -258,6 +263,40 @@
   h6 {
     font-family: var(--font-heading);
     text-wrap: balance;
+  }
+}
+
+/* Storefront-wide editorial floor: applied to every public route without changing content or behavior. */
+.storefront-shell {
+  background: #fbf9f5;
+  letter-spacing: -0.01em;
+}
+
+.storefront-shell main {
+  min-width: 0;
+}
+
+.storefront-shell a,
+.storefront-shell button,
+.storefront-shell input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.storefront-shell button,
+.storefront-shell a {
+  transition-property: color, background-color, border-color, opacity, transform;
+  transition-duration: 180ms;
+  transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storefront-shell *,
+  .storefront-shell *::before,
+  .storefront-shell *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
   }
 }
 

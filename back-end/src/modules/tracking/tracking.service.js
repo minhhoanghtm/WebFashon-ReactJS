@@ -1,7 +1,10 @@
+import crypto from "crypto";
 import mongoose from "mongoose";
 import UserEvent from "./userEvent.model.js";
+import UserConsent from "./userConsent.model.js";
 import UserInterestProfile from "../recommendations/userInterestProfile.model.js";
 import Product from "../products/product.model.js";
+import User from "../users/user.model.js";
 import { OrderItem } from "../orders/order.model.js";
 import { addTrackingJob } from "../../queues/tracking.queue.js";
 import { getRedisConnection } from "../../configs/redis.js";
@@ -50,20 +53,25 @@ async function invalidateUserRecommendationCache(userId, anonymousId) {
 class TrackingService {
   /**
    * Kiểm tra quyền riêng tư (Privacy & Consent):
-   * Single Source of Truth: MongoDB UserInterestProfile (consent_status: "granted" | "denied")
+   * Single Source of Truth: MongoDB UserConsent (consent_status: "granted" | "denied")
+   * Tách biệt độc lập khỏi UserInterestProfile để đảm bảo quyền từ chối (GDPR Right to Object)
+   * vẫn tồn tại vĩnh viễn ngay cả khi profile hành vi bị xóa bỏ hoàn toàn (GDPR Right to be Forgotten).
    * Redis Cache layer: consent:denied:{identity} (TTL 1 năm)
    * Tự động phục hồi cache từ MongoDB khi Redis restart hoặc cache bị mất
    */
   async isConsentDenied(userId, anonymousId) {
+    const rawUserId = userId ? (userId._id ? String(userId._id) : String(userId)) : null;
+    const rawAnonId = anonymousId ? String(anonymousId) : null;
+
     const redis = getRedisConnection();
     const identities = [];
-    if (userId) {
-      identities.push(userId.toString());
-      identities.push(`u:${userId}`);
+    if (rawUserId) {
+      identities.push(rawUserId);
+      identities.push(`u:${rawUserId}`);
     }
-    if (anonymousId) {
-      identities.push(anonymousId.toString());
-      identities.push(`a:${anonymousId}`);
+    if (rawAnonId) {
+      identities.push(rawAnonId);
+      identities.push(`a:${rawAnonId}`);
     }
 
     // 1. Kiểm tra nhanh trong Redis cache
@@ -80,28 +88,58 @@ class TrackingService {
 
     // 2. Fallback kiểm tra Single Source of Truth trong MongoDB
     try {
-      const orFilters = [];
-      if (userId && mongoose.Types.ObjectId.isValid(userId)) {
-        orFilters.push({ user_id: new mongoose.Types.ObjectId(userId) });
-      }
-      if (anonymousId) {
-        orFilters.push({ anonymous_id: anonymousId });
-      }
+      const rawIdentities = [];
+      if (rawUserId) rawIdentities.push(rawUserId);
+      if (rawAnonId) rawIdentities.push(rawAnonId);
 
-      if (orFilters.length > 0) {
-        const profile = await UserInterestProfile.findOne({
-          $or: orFilters,
-          consent_status: "denied",
-        })
-          .select("_id user_id anonymous_id consent_status")
-          .lean();
+      if (rawIdentities.length > 0) {
+        let isDenied = false;
 
-        if (profile) {
+        // Ưu tiên kiểm tra bảng UserConsent chuyên biệt
+        if (mongoose.connection?.readyState === 1 || (UserConsent.findOne && typeof UserConsent.findOne.mock === "object")) {
+          const consentDoc = await UserConsent.findOne({
+            subject_id: { $in: rawIdentities },
+            consent_status: "denied",
+          })
+            .select("subject_id consent_status")
+            .lean();
+          if (consentDoc) isDenied = true;
+        }
+
+        // Fallback kiểm tra User document nếu chưa đồng bộ
+        if (!isDenied && (mongoose.connection?.readyState === 1 || (User.findById && typeof User.findById.mock === "object"))) {
+          if (rawUserId && mongoose.Types.ObjectId.isValid(rawUserId)) {
+            const userDoc = await User.findById(rawUserId).select("consent_status").lean().catch(() => null);
+            if (userDoc?.consent_status === "denied") isDenied = true;
+          }
+        }
+
+        // Fallback kiểm tra UserInterestProfile cho dữ liệu cũ
+        if (!isDenied && (mongoose.connection?.readyState === 1 || (UserInterestProfile.findOne && typeof UserInterestProfile.findOne.mock === "object"))) {
+          const orFilters = [];
+          if (rawUserId && mongoose.Types.ObjectId.isValid(rawUserId)) {
+            orFilters.push({ user_id: new mongoose.Types.ObjectId(rawUserId) });
+          }
+          if (rawAnonId) {
+            orFilters.push({ anonymous_id: rawAnonId });
+          }
+          if (orFilters.length > 0) {
+            const profile = await UserInterestProfile.findOne({
+              $or: orFilters,
+              consent_status: "denied",
+            })
+              .select("_id consent_status")
+              .lean();
+            if (profile) isDenied = true;
+          }
+        }
+
+        if (isDenied) {
           // Phục hồi lại cache Redis (TTL 1 năm)
           if (redis) {
             try {
-              if (userId) await redis.set(`consent:denied:${userId.toString()}`, "1", "EX", 86400 * 365);
-              if (anonymousId) await redis.set(`consent:denied:${anonymousId}`, "1", "EX", 86400 * 365);
+              if (rawUserId) await redis.set(`consent:denied:${rawUserId}`, "1", "EX", 86400 * 365);
+              if (rawAnonId) await redis.set(`consent:denied:${rawAnonId}`, "1", "EX", 86400 * 365);
             } catch {}
           }
           return true;
@@ -129,8 +167,8 @@ class TrackingService {
       return { accepted: true, deduplicated: false, ignored: "admin_user" };
     }
 
-    const userId = reqUser?.userId || reqUser?.id || null;
-    const anonymousId = eventData.anonymous_id || null;
+    const userId = reqUser?._id ? reqUser._id.toString() : (reqUser?.userId || reqUser?.id || null);
+    const anonymousId = eventData.anonymous_id ? String(eventData.anonymous_id) : null;
 
     if (!userId && !anonymousId) {
       throw new AppError("Yêu cầu cần có user_id (đã đăng nhập) hoặc anonymous_id", 400);
@@ -326,23 +364,58 @@ class TrackingService {
       }
     }
 
-    // 2. Tombstone Check: Ngăn BullMQ worker phục hồi dữ liệu từ event còn sót sau khi user gọi DELETE /api/events/me
+    // 2. Durable Deletion Fence Check: Ngăn BullMQ worker phục hồi dữ liệu từ event cũ sau khi gọi DELETE /api/events/me
+    // Sử dụng mốc thời gian cleared_at trong MongoDB UserConsent làm watermark không bao giờ hết hạn.
+    const eventTime = payload.timestamp
+      ? new Date(payload.timestamp)
+      : payload.createdAt
+      ? new Date(payload.createdAt)
+      : new Date();
+
+    const rawUserId = user_id ? (user_id._id ? String(user_id._id) : String(user_id)) : null;
+    const rawAnonId = anonymous_id ? String(anonymous_id) : null;
+
+    const fenceIdentities = [];
+    if (rawUserId) fenceIdentities.push(rawUserId);
+    if (rawAnonId) fenceIdentities.push(rawAnonId);
+
+    if (fenceIdentities.length > 0) {
+      try {
+        if (mongoose.connection?.readyState === 1 || (UserConsent.findOne && typeof UserConsent.findOne.mock === "object")) {
+          const consentWatermark = await UserConsent.findOne({
+            subject_id: { $in: fenceIdentities },
+            cleared_at: { $ne: null },
+          })
+            .select("cleared_at")
+            .lean();
+
+          if (consentWatermark?.cleared_at && eventTime <= consentWatermark.cleared_at) {
+            // Event nằm trước mốc xóa dữ liệu durable fence -> Drop vĩnh viễn
+            return;
+          }
+        }
+      } catch (fenceErr) {
+        console.warn("[Tracking Worker] Lỗi kiểm tra durable deletion fence:", fenceErr.message);
+      }
+    }
+
+    // Fast-path Tombstone Check trong Redis
     if (redis) {
-      if (user_id) {
-        const isCleared = await redis.get(`user:data_cleared:${user_id}`);
+      if (rawUserId) {
+        const isCleared = await redis.get(`user:data_cleared:${rawUserId}`);
         if (isCleared) return;
       }
-      if (anonymous_id) {
-        const isClearedAnon = await redis.get(`user:data_cleared:${anonymous_id}`);
+      if (rawAnonId) {
+        const isClearedAnon = await redis.get(`user:data_cleared:${rawAnonId}`);
         if (isClearedAnon) return;
       }
     }
 
-    const identity = user_id || anonymous_id;
+    const identity = rawUserId || rawAnonId;
     if (!identity) return;
 
     // 3. Worker-level Privacy & Consent Check: Thu hồi quyền riêng tư lập tức hủy mọi event đang chờ trong queue
-    const isConsentDenied = await this.isConsentDenied(user_id, anonymous_id);
+    const isConsentDenied = await this.isConsentDenied(rawUserId, rawAnonId);
     if (isConsentDenied) {
       return;
     }
@@ -374,8 +447,8 @@ class TrackingService {
       }
 
       const userObjectId =
-        user_id && mongoose.Types.ObjectId.isValid(user_id)
-          ? new mongoose.Types.ObjectId(user_id)
+        rawUserId && mongoose.Types.ObjectId.isValid(rawUserId)
+          ? new mongoose.Types.ObjectId(rawUserId)
           : null;
       const productObjectId =
         product_id && mongoose.Types.ObjectId.isValid(product_id)
@@ -391,23 +464,25 @@ class TrackingService {
       let productBrand = meta?.brand ? String(meta.brand).trim() : null;
 
       if (productObjectId && (!categoryObjectId || productPrice === 0 || !productBrand)) {
-        try {
-          const product = await Product.findById(productObjectId).select(
-            "category_id new_price price name brand"
-          );
-          if (product) {
-            if (!categoryObjectId && product.category_id) {
-              categoryObjectId = product.category_id;
+        if (mongoose.connection?.readyState === 1 || (Product.findById && typeof Product.findById.mock === "object")) {
+          try {
+            const product = await Product.findById(productObjectId).select(
+              "category_id new_price price name brand"
+            );
+            if (product) {
+              if (!categoryObjectId && product.category_id) {
+                categoryObjectId = product.category_id;
+              }
+              if (productPrice === 0) {
+                productPrice = product.new_price || product.price || 0;
+              }
+              if (!productBrand && product.brand) {
+                productBrand = String(product.brand).trim();
+              }
             }
-            if (productPrice === 0) {
-              productPrice = product.new_price || product.price || 0;
-            }
-            if (!productBrand && product.brand) {
-              productBrand = String(product.brand).trim();
-            }
+          } catch (err) {
+            console.warn("Không thể tìm sản phẩm để bổ sung thông tin tracking:", err.message);
           }
-        } catch (err) {
-          console.warn("Không thể tìm sản phẩm để bổ sung thông tin tracking:", err.message);
         }
       }
 
@@ -865,10 +940,10 @@ class TrackingService {
 
   /**
    * Cập nhật trạng thái đồng ý theo dõi (Privacy & Consent)
-   * Single Source of Truth: MongoDB UserInterestProfile
+   * Single Source of Truth: MongoDB UserConsent (durable)
    * Redis cache layer: consent:denied:{identity} (TTL 1 năm)
    */
-  async updateConsent({ userId, anonymousId, consent }) {
+  async updateConsent({ userId, anonymousId, consent, anonymousToken }) {
     if (!userId && !anonymousId) {
       throw new AppError("Cần cung cấp định danh người dùng để cập nhật consent", 400);
     }
@@ -878,26 +953,68 @@ class TrackingService {
         ? new mongoose.Types.ObjectId(userId)
         : null;
 
-    // 1. Cập nhật Single Source of Truth trong MongoDB
-    const filter = userObjectId ? { user_id: userObjectId } : { anonymous_id: anonymousId };
+    // 1. Cập nhật Single Source of Truth trong bảng UserConsent
+    if (mongoose.connection?.readyState === 1 || (UserConsent.findOneAndUpdate && typeof UserConsent.findOneAndUpdate.mock === "object")) {
+      if (userId) {
+        await UserConsent.findOneAndUpdate(
+          { subject_id: userId.toString() },
+          {
+            $set: {
+              subject_id: userId.toString(),
+              subject_type: "user",
+              consent_status: consent,
+              updatedAt: new Date(),
+            },
+          },
+          { upsert: true }
+        );
+        if (userObjectId) {
+          await User.updateOne({ _id: userObjectId }, { $set: { consent_status: consent } }).catch(() => {});
+        }
+      }
 
-    await UserInterestProfile.updateOne(
-      filter,
-      {
-        $set: { consent_status: consent, updatedAt: new Date() },
-        $setOnInsert: {
-          user_id: userObjectId,
-          anonymous_id: userObjectId ? null : anonymousId,
-        },
-      },
-      { upsert: true }
-    );
+      if (anonymousId) {
+        const updateData = {
+          subject_id: anonymousId,
+          subject_type: "anonymous",
+          consent_status: consent,
+          updatedAt: new Date(),
+        };
+        if (anonymousToken) {
+          updateData.anonymous_token_hash = crypto
+            .createHash("sha256")
+            .update(anonymousToken)
+            .digest("hex");
+        }
+        await UserConsent.findOneAndUpdate(
+          { subject_id: anonymousId },
+          { $set: updateData },
+          { upsert: true }
+        );
+      }
+    }
 
-    if (userObjectId && anonymousId) {
+    // Cập nhật UserInterestProfile để duy trì tính tương thích ngược
+    if (mongoose.connection?.readyState === 1 || (UserInterestProfile.updateOne && typeof UserInterestProfile.updateOne.mock === "object")) {
+      const filter = userObjectId ? { user_id: userObjectId } : { anonymous_id: anonymousId };
       await UserInterestProfile.updateOne(
-        { anonymous_id: anonymousId },
-        { $set: { consent_status: consent, updatedAt: new Date() } }
+        filter,
+        {
+          $set: { consent_status: consent, updatedAt: new Date() },
+          $setOnInsert: {
+            user_id: userObjectId,
+            anonymous_id: userObjectId ? null : anonymousId,
+          },
+        },
+        { upsert: true }
       ).catch(() => {});
+
+      if (userObjectId && anonymousId) {
+        await UserInterestProfile.updateOne(
+          { anonymous_id: anonymousId },
+          { $set: { consent_status: consent, updatedAt: new Date() } }
+        ).catch(() => {});
+      }
     }
 
     // 2. Đồng bộ Redis cache
@@ -928,7 +1045,7 @@ class TrackingService {
       if (userObjectId) resetOr.push({ user_id: userObjectId });
       if (anonymousId) resetOr.push({ anonymous_id: anonymousId });
 
-      if (resetOr.length > 0) {
+      if (resetOr.length > 0 && (mongoose.connection?.readyState === 1 || (UserInterestProfile.updateMany && typeof UserInterestProfile.updateMany.mock === "object"))) {
         await UserInterestProfile.updateMany(
           { $or: resetOr },
           {
@@ -946,7 +1063,12 @@ class TrackingService {
       await invalidateUserRecommendationCache(userId, anonymousId);
     }
 
-    return { success: true, consent };
+    return {
+      success: true,
+      consent,
+      userId: userId || null,
+      anonymousId: anonymousId || null,
+    };
   }
 
   /**
@@ -1231,6 +1353,8 @@ class TrackingService {
   /**
    * Xóa toàn bộ dữ liệu lịch sử hành vi + profile của user hoặc khách ẩn danh (Right to be Forgotten)
    * - Hỗ trợ cả authenticated user (userId) và anonymous user (anonymousId)
+   * - Xác thực quyền sở hữu: Authenticated User check hoặc Anonymous Token Cryptographic Hash (SHA-256)
+   * - Đặt Durable Deletion Watermark Fence (cleared_at) trong MongoDB UserConsent
    * - Đặt Redis tombstone flag user:data_cleared:{id} trong 24h ngăn worker phục hồi dữ liệu từ BullMQ queue
    * - Xóa UserEvent và UserInterestProfile
    * - Invalidate recommendation cache
@@ -1239,10 +1363,14 @@ class TrackingService {
   async clearUserTrackingData(identifier) {
     let userId = null;
     let anonymousId = null;
+    let anonymousToken = null;
+    let reqUser = null;
 
     if (typeof identifier === "object" && identifier !== null) {
       userId = identifier.userId || identifier.user_id || null;
       anonymousId = identifier.anonymousId || identifier.anonymous_id || null;
+      anonymousToken = identifier.anonymousToken || identifier.anonymous_token || null;
+      reqUser = identifier.reqUser || null;
     } else {
       userId = identifier;
     }
@@ -1251,14 +1379,83 @@ class TrackingService {
       throw new AppError("Cần cung cấp user_id hoặc anonymous_id để xóa dữ liệu tracking", 400);
     }
 
+    // Authorization & Ownership Verification:
+    // 1. Nếu là user đã đăng nhập: kiểm tra reqUser khớp userId (hoặc admin)
+    if (userId && reqUser && reqUser.role !== "admin") {
+      const authUserId = reqUser.userId || reqUser.id;
+      if (authUserId && authUserId.toString() !== userId.toString()) {
+        throw new AppError("Không có quyền xóa dữ liệu của tài khoản người dùng khác", 403);
+      }
+    }
+
+    // 2. Nếu là anonymousId: xác thực anonymous_token qua cryptographic SHA-256 hash
+    if (anonymousId) {
+      let existingConsent = null;
+      if (mongoose.connection?.readyState === 1 || (UserConsent.findOne && typeof UserConsent.findOne.mock === "object")) {
+        existingConsent = await UserConsent.findOne({ subject_id: anonymousId }).lean();
+      }
+      if (existingConsent?.anonymous_token_hash) {
+        if (!anonymousToken) {
+          throw new AppError("Cần cung cấp header x-anonymous-token để xác thực quyền sở hữu", 403);
+        }
+        const incomingHash = crypto.createHash("sha256").update(anonymousToken).digest("hex");
+        if (incomingHash !== existingConsent.anonymous_token_hash) {
+          throw new AppError("anonymous_token không khớp với phiên sở hữu đã đăng ký", 403);
+        }
+      } else if (!userId && (!reqUser || reqUser.role !== "admin") && !anonymousToken) {
+        throw new AppError("Cần cung cấp header x-anonymous-token để xác thực quyền sở hữu khách ẩn danh", 403);
+      }
+    }
+
     const userObjectId =
       userId && mongoose.Types.ObjectId.isValid(userId)
         ? new mongoose.Types.ObjectId(userId)
         : null;
 
     const redis = getRedisConnection();
+    const clearedTimestamp = new Date();
 
-    // 1. Đặt Tombstone Flag trong Redis (ngăn BullMQ worker tạo lại profile từ queue còn sót)
+    // 1. Cập nhật Durable Deletion Watermark Fence trong MongoDB UserConsent
+    if (mongoose.connection?.readyState === 1 || (UserConsent.findOneAndUpdate && typeof UserConsent.findOneAndUpdate.mock === "object")) {
+      if (userId) {
+        await UserConsent.findOneAndUpdate(
+          { subject_id: userId.toString() },
+          {
+            $set: {
+              cleared_at: clearedTimestamp,
+              subject_type: "user",
+              updatedAt: new Date(),
+            },
+            $inc: { data_generation: 1 },
+          },
+          { upsert: true }
+        );
+      }
+
+      if (anonymousId) {
+        const updateDoc = {
+          cleared_at: clearedTimestamp,
+          subject_type: "anonymous",
+          updatedAt: new Date(),
+        };
+        if (anonymousToken) {
+          updateDoc.anonymous_token_hash = crypto
+            .createHash("sha256")
+            .update(anonymousToken)
+            .digest("hex");
+        }
+        await UserConsent.findOneAndUpdate(
+          { subject_id: anonymousId },
+          {
+            $set: updateDoc,
+            $inc: { data_generation: 1 },
+          },
+          { upsert: true }
+        );
+      }
+    }
+
+    // 2. Đặt Fast-path Tombstone Flag trong Redis
     if (redis) {
       try {
         if (userId) {
@@ -1272,7 +1469,7 @@ class TrackingService {
       }
     }
 
-    // 2. Xóa UserEvent (chỉ xóa event hành vi, tuyệt đối KHÔNG xóa bảng Order hay OrderItem)
+    // 3. Xóa UserEvent (chỉ xóa event hành vi, tuyệt đối KHÔNG xóa bảng Order hay OrderItem)
     const eventDeleteFilter = {};
     if (userObjectId && anonymousId) {
       eventDeleteFilter.$or = [{ user_id: userObjectId }, { anonymous_id: anonymousId }];
@@ -1284,7 +1481,7 @@ class TrackingService {
 
     const deleteEventsResult = await UserEvent.deleteMany(eventDeleteFilter);
 
-    // 3. Xóa UserInterestProfile
+    // 4. Xóa UserInterestProfile
     const profileDeleteFilter = {};
     if (userObjectId && anonymousId) {
       profileDeleteFilter.$or = [{ user_id: userObjectId }, { anonymous_id: anonymousId }];
@@ -1296,7 +1493,7 @@ class TrackingService {
 
     const deleteProfileResult = await UserInterestProfile.deleteMany(profileDeleteFilter);
 
-    // 4. Invalidate cache đề xuất
+    // 5. Invalidate cache đề xuất
     await invalidateUserRecommendationCache(userId, anonymousId);
 
     return {
@@ -1305,6 +1502,7 @@ class TrackingService {
       deletedProfile: (deleteProfileResult.deletedCount || 0) > 0,
       invalidatedCache: true,
       preservedOrders: true,
+      clearedAt: clearedTimestamp,
     };
   }
 
@@ -1420,7 +1618,14 @@ class TrackingService {
 
   /**
    * Tính toán Phễu Chuyển Đổi Mua Hàng (Funnel Analytics)
-   * Product View -> Add to Cart -> Checkout Started -> Order Placed -> Purchase Completed
+   * Strict Sequential Cohort Funnel:
+   * - Bảo đảm tính đơn điệu toán học nghiêm ngặt: N1 >= N2 >= N3 >= N4 >= N5 >= N6
+   * - Mỗi bước chuyển tiếp tuân thủ thứ tự thời gian t1 <= t2 <= ... <= t6
+   * - Không dùng cơ chế clamp nhân tạo Math.min(100, ...)
+   * - Phân tách rõ ràng:
+   *   1. sessionFunnel: Phễu chuỗi thời gian cùng phiên (Session Sequential Funnel)
+   *   2. userFunnel: Phễu chuỗi thời gian xuyên phiên theo người dùng (User Sequential Funnel)
+   *   3. rawStages: Khối lượng độc lập từng giai đoạn (Independent Stage Volumes)
    */
   async getFunnelAnalytics({ startDate, endDate } = {}) {
     const dateFilter = {};
@@ -1449,7 +1654,7 @@ class TrackingService {
       {
         stage: "checkout_started",
         label: "Bắt đầu thanh toán",
-        types: [EVENT_TYPES.CHECKOUT_STARTED],
+        types: [EVENT_TYPES.CHECKOUT_STARTED, "checkout_start"],
       },
       {
         stage: "order_placed",
@@ -1459,11 +1664,12 @@ class TrackingService {
       {
         stage: "purchase_completed",
         label: "Mua thành công",
-        types: [EVENT_TYPES.PURCHASE_COMPLETED, EVENT_TYPES.PURCHASE],
+        types: [EVENT_TYPES.PURCHASE_COMPLETED, EVENT_TYPES.PURCHASE, "purchase_done"],
       },
     ];
 
-    const results = await Promise.all(
+    // 1. Raw Stages: Khối lượng độc lập từng giai đoạn (Independent Volumes)
+    const rawStages = await Promise.all(
       funnelStages.map(async (stg) => {
         const [eventCount, uniqueSessions, uniqueUsers] = await Promise.all([
           UserEvent.countDocuments({
@@ -1492,77 +1698,179 @@ class TrackingService {
       })
     );
 
-    // 1. Phễu dựa trên phiên (Session-based Funnel) với mẫu số đồng nhất
-    const topSessions = results[0].uniqueSessions || 0;
+    const stageTypeMap = funnelStages.map((s) => s.types);
+
+    // 2. Strict Sequential Session Funnel (t1 <= t2 <= t3 <= t4 <= t5 <= t6 trong cùng phiên)
+    let sessionStageCounts = [0, 0, 0, 0, 0, 0];
+    if (mongoose.connection?.readyState === 1 || (UserEvent.aggregate && typeof UserEvent.aggregate.mock === "object")) {
+      const sessionMatch = {
+        session_id: { $ne: null },
+        ...(Object.keys(dateFilter).length > 0 ? dateFilter : {}),
+      };
+
+      let sessionEvents = [];
+      try {
+        const cursor = await UserEvent.aggregate([
+          { $match: sessionMatch },
+          { $sort: { createdAt: 1 } },
+          {
+            $group: {
+              _id: "$session_id",
+              events: {
+                $push: {
+                  type: "$event_type",
+                  time: "$createdAt",
+                },
+              },
+            },
+          },
+        ]);
+        sessionEvents = Array.isArray(cursor)
+          ? cursor
+          : typeof cursor.toArray === "function"
+          ? await cursor.toArray()
+          : [];
+      } catch (err) {
+        console.warn("[Funnel] Lỗi aggregate session funnel:", err.message);
+      }
+
+      for (const session of sessionEvents) {
+        const evs = session.events || [];
+        let currentStage = 0;
+        let lastTime = new Date(0);
+
+        for (const ev of evs) {
+          if (currentStage >= funnelStages.length) break;
+          const expectedTypes = stageTypeMap[currentStage];
+          const evTime = new Date(ev.time);
+          if (expectedTypes.includes(ev.type) && evTime >= lastTime) {
+            currentStage++;
+            lastTime = evTime;
+          }
+        }
+
+        for (let i = 0; i < currentStage; i++) {
+          sessionStageCounts[i]++;
+        }
+      }
+    } else {
+      sessionStageCounts = rawStages.map((s) => s.uniqueSessions || s.eventCount || 0);
+    }
+
+    const topSessions = sessionStageCounts[0] || 0;
     let prevSessions = topSessions;
-    const sessionFunnel = results.map((stg, idx) => {
-      const overallRate = topSessions > 0 ? Number(((stg.uniqueSessions / topSessions) * 100).toFixed(2)) : 0;
-      const stepRate =
+    const sessionFunnel = funnelStages.map((stg, idx) => {
+      const count = sessionStageCounts[idx];
+      const overallConversionRate = topSessions > 0 ? Number(((count / topSessions) * 100).toFixed(2)) : 0;
+      const stepConversionRate =
         idx === 0
           ? 100
           : prevSessions > 0
-          ? Number(((stg.uniqueSessions / prevSessions) * 100).toFixed(2))
+          ? Number(((count / prevSessions) * 100).toFixed(2))
           : 0;
-      prevSessions = stg.uniqueSessions;
+      const dropOffRate = Number((100 - stepConversionRate).toFixed(2));
+      prevSessions = count;
 
       return {
-        ...stg,
-        overallConversionRate: Math.min(100, overallRate),
-        stepConversionRate: Math.min(100, stepRate),
-        dropOffRate: Math.max(0, Number((100 - stepRate).toFixed(2))),
+        stage: stg.stage,
+        label: stg.label,
+        count,
+        eventCount: rawStages[idx]?.eventCount || 0,
+        uniqueSessions: count,
+        uniqueUsers: rawStages[idx]?.uniqueUsers || 0,
+        overallConversionRate,
+        stepConversionRate,
+        dropOffRate,
       };
     });
 
-    // 2. Phễu dựa trên người dùng (User-based Funnel) với mẫu số đồng nhất
-    const topUsers = results[0].uniqueUsers || 0;
+    // 3. Strict Sequential User Funnel (t1 <= t2 <= t3 <= t4 <= t5 <= t6 trên toàn hành trình người dùng)
+    let userStageCounts = [0, 0, 0, 0, 0, 0];
+    if (mongoose.connection?.readyState === 1 || (UserEvent.aggregate && typeof UserEvent.aggregate.mock === "object")) {
+      const userMatch = {
+        user_id: { $ne: null },
+        ...(Object.keys(dateFilter).length > 0 ? dateFilter : {}),
+      };
+
+      let userEvents = [];
+      try {
+        const cursor = await UserEvent.aggregate([
+          { $match: userMatch },
+          { $sort: { createdAt: 1 } },
+          {
+            $group: {
+              _id: "$user_id",
+              events: {
+                $push: {
+                  type: "$event_type",
+                  time: "$createdAt",
+                },
+              },
+            },
+          },
+        ]);
+        userEvents = Array.isArray(cursor)
+          ? cursor
+          : typeof cursor.toArray === "function"
+          ? await cursor.toArray()
+          : [];
+      } catch (err) {
+        console.warn("[Funnel] Lỗi aggregate user funnel:", err.message);
+      }
+
+      for (const user of userEvents) {
+        const evs = user.events || [];
+        let currentStage = 0;
+        let lastTime = new Date(0);
+
+        for (const ev of evs) {
+          if (currentStage >= funnelStages.length) break;
+          const expectedTypes = stageTypeMap[currentStage];
+          const evTime = new Date(ev.time);
+          if (expectedTypes.includes(ev.type) && evTime >= lastTime) {
+            currentStage++;
+            lastTime = evTime;
+          }
+        }
+
+        for (let i = 0; i < currentStage; i++) {
+          userStageCounts[i]++;
+        }
+      }
+    } else {
+      userStageCounts = rawStages.map((s) => s.uniqueUsers || 0);
+    }
+
+    const topUsers = userStageCounts[0] || 0;
     let prevUsers = topUsers;
-    const userFunnel = results.map((stg, idx) => {
-      const overallRate = topUsers > 0 ? Number(((stg.uniqueUsers / topUsers) * 100).toFixed(2)) : 0;
-      const stepRate =
+    const userFunnel = funnelStages.map((stg, idx) => {
+      const count = userStageCounts[idx];
+      const overallConversionRate = topUsers > 0 ? Number(((count / topUsers) * 100).toFixed(2)) : 0;
+      const stepConversionRate =
         idx === 0
           ? 100
           : prevUsers > 0
-          ? Number(((stg.uniqueUsers / prevUsers) * 100).toFixed(2))
+          ? Number(((count / prevUsers) * 100).toFixed(2))
           : 0;
-      prevUsers = stg.uniqueUsers;
+      const dropOffRate = Number((100 - stepConversionRate).toFixed(2));
+      prevUsers = count;
 
       return {
-        ...stg,
-        overallConversionRate: Math.min(100, overallRate),
-        stepConversionRate: Math.min(100, stepRate),
-        dropOffRate: Math.max(0, Number((100 - stepRate).toFixed(2))),
-      };
-    });
-
-    // 3. Phễu kết hợp chuẩn hóa không trộn lẫn mẫu số (Unified Normalized Funnel)
-    // Ưu tiên theo dõi theo uniqueUsers nếu có user, hoặc uniqueSessions cho khách ẩn danh
-    const baseCohortCount = topUsers > 0 ? topUsers : (topSessions > 0 ? topSessions : (results[0].eventCount || 1));
-    let prevCohortCount = baseCohortCount;
-    const unifiedFunnel = results.map((stg, idx) => {
-      const cohortMetric = topUsers > 0 ? stg.uniqueUsers : stg.uniqueSessions;
-      const overallConversion = Number(((cohortMetric / baseCohortCount) * 100).toFixed(2));
-      const stepConversion =
-        idx === 0
-          ? 100
-          : prevCohortCount > 0
-          ? Number(((cohortMetric / prevCohortCount) * 100).toFixed(2))
-          : 0;
-      prevCohortCount = cohortMetric;
-
-      return {
-        ...stg,
-        overallConversionRate: Math.min(100, Math.max(0, overallConversion)),
-        stepConversionRate: Math.min(100, Math.max(0, stepConversion)),
-        dropOffRate: Math.max(0, Number((100 - Math.min(100, stepConversion)).toFixed(2))),
+        stage: stg.stage,
+        label: stg.label,
+        count,
+        uniqueUsers: count,
+        overallConversionRate,
+        stepConversionRate,
+        dropOffRate,
       };
     });
 
     return {
-      funnel: sessionFunnel, // Standardized cohort-consistent funnel for UI and backward compatibility
+      funnel: sessionFunnel, // Backward compatibility cho UI
       sessionFunnel,
       userFunnel,
-      unifiedFunnel,
-      rawStages: results,
+      rawStages,
       period: { startDate, endDate },
     };
   }

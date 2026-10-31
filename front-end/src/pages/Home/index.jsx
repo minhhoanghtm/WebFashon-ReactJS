@@ -1,5 +1,5 @@
 import RecommendedSection from "./RecommendedSection";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useOutletContext, useNavigate, useLocation } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
 import HeroBanner from "./HeroBanner";
@@ -22,10 +22,14 @@ import { toast } from "react-toastify";
 import voucherApi from "../../api/voucher.api";
 import { useAuthStore } from "../../store/auth.store";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 
 const Home = () => {
-  
+  const homeRef = useRef(null);
+  const prefersReduced = usePrefersReducedMotion();
   useDocumentTitle("Trang chủ");
   const { products: apiProducts, isLoading, error } = useProducts();
   const { homeSearchTerm = "" } = useOutletContext() || {};
@@ -150,6 +154,33 @@ const Home = () => {
     fetchCategories();
   }, []);
 
+  // ScrollTrigger is limited to the home page so route changes cannot leave stale triggers behind.
+  useLayoutEffect(() => {
+    if (prefersReduced || !homeRef.current) return undefined;
+    gsap.registerPlugin(ScrollTrigger);
+    const context = gsap.context(() => {
+      const sections = gsap.utils.toArray(".home-section");
+      sections.forEach((section) => {
+        const heading = section.querySelector(".home-section-header");
+        if (!heading) return;
+        gsap.from(heading, {
+          autoAlpha: 0,
+          y: 22,
+          duration: 0.62,
+          ease: "power3.out",
+          scrollTrigger: { trigger: section, start: "top 82%", toggleActions: "play none none reverse" },
+        });
+      });
+
+      gsap.to(".ambient-blob-terracotta", {
+        yPercent: -10,
+        ease: "none",
+        scrollTrigger: { trigger: homeRef.current, start: "top top", end: "bottom bottom", scrub: 1 },
+      });
+    }, homeRef);
+    return () => context.revert();
+  }, [prefersReduced]);
+
   const handleClaim = async (voucherId) => {
     if (!isAuthenticated) {
       toast.info("Vui lòng đăng nhập để lưu mã giảm giá!");
@@ -169,7 +200,7 @@ const Home = () => {
   };
 
   return (
-    <div className="home-page relative overflow-hidden">
+    <div ref={homeRef} className="home-page relative overflow-hidden">
       {/* Cinematic Ambient Background Blobs */}
       <div className="ambient-blob-terracotta top-[18%] -left-32" aria-hidden="true" />
       <div className="ambient-blob-stone top-[45%] -right-40" aria-hidden="true" />

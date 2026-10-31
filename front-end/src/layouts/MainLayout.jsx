@@ -126,7 +126,7 @@ const MainLayout = () => {
 
       {/* Main Header with Smart Adaptive Scroll Direction & Depth */}
       <header
-        className={`sticky top-0 z-50 border-b transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
+        className={`storefront-header sticky top-0 z-50 border-b transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
           isHeaderHidden ? '-translate-y-full shadow-none' : 'translate-y-0'
         } ${
           isScrolled
@@ -135,8 +135,8 @@ const MainLayout = () => {
         }`}
       >
         <div
-          className={`mx-auto flex max-w-[1536px] w-full items-center justify-between gap-4 px-4 transition-all duration-300 sm:px-6 lg:px-8 ${
-            isScrolled ? 'py-2.5' : 'py-3.5'
+          className={`mx-auto flex max-w-[1440px] w-full items-center justify-between gap-3 px-4 transition-all duration-300 sm:px-6 lg:px-10 ${
+            isScrolled ? 'py-2.5' : 'py-3'
           }`}
         >
           {/* Left: Mobile Menu Button & Brand Logo */}
@@ -144,7 +144,7 @@ const MainLayout = () => {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden flex items-center justify-center w-9 h-9 rounded-full text-neutral-800 hover:bg-neutral-100 transition-colors"
+              className="lg:hidden flex items-center justify-center w-9 h-9 rounded-none text-neutral-800 hover:bg-neutral-100 transition-colors"
               aria-label="Mở menu điều hướng"
             >
               <Menu size={22} />
@@ -173,14 +173,14 @@ const MainLayout = () => {
           </div>
 
           {/* Center: Desktop Navigation Links with Animated Underline */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-7">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-[13px] font-semibold tracking-wide transition-colors py-1 relative ${
+                  className={`text-[11px] font-bold uppercase tracking-[0.1em] transition-colors py-2 relative ${
                     isActive
                       ? 'text-neutral-950 font-bold'
                       : 'text-neutral-600 hover:text-neutral-950'
@@ -218,7 +218,7 @@ const MainLayout = () => {
                 onChange={(e) => setHomeSearchTerm(e.target.value)}
                 placeholder="Tìm sản phẩm..."
                 aria-label="Tìm kiếm sản phẩm"
-                className="h-9 w-full rounded-full border border-[#05251C]/10 bg-[#F2EFE9] py-1.5 pl-9 pr-8 text-xs font-medium text-[#05251C] placeholder:text-[#05251C]/40 outline-none transition focus:border-[#073D2A] focus:bg-white focus:ring-2 focus:ring-[#073D2A]/15"
+                className="h-9 w-full rounded-none border border-[#05251C]/10 bg-[#F2EFE9] py-1.5 pl-9 pr-8 text-xs font-medium text-[#05251C] placeholder:text-[#05251C]/40 outline-none transition focus:border-[#073D2A] focus:bg-white focus:ring-2 focus:ring-[#073D2A]/15"
               />
               {homeSearchTerm && (
                 <button
@@ -235,7 +235,7 @@ const MainLayout = () => {
             {/* Favorite Button */}
             <Link
               to="/favorites"
-              className="relative flex items-center justify-center w-9 h-9 rounded-full text-[#05251C] hover:text-[#073D2A] hover:bg-[#F2EFE9] transition-colors"
+              className="relative flex items-center justify-center w-9 h-9 rounded-none text-[#05251C] hover:text-[#073D2A] hover:bg-[#F2EFE9] transition-colors"
               aria-label="Danh sách yêu thích"
             >
               <Heart size={20} />
@@ -249,7 +249,7 @@ const MainLayout = () => {
             {/* Cart Button */}
             <Link
               to="/cart"
-              className="relative flex items-center justify-center w-9 h-9 rounded-full text-[#05251C] hover:text-[#073D2A] hover:bg-[#F2EFE9] transition-colors"
+              className="relative flex items-center justify-center w-9 h-9 rounded-none text-[#05251C] hover:text-[#073D2A] hover:bg-[#F2EFE9] transition-colors"
               aria-label="Giỏ hàng"
             >
               <ShoppingCart size={20} />
@@ -278,7 +278,7 @@ const MainLayout = () => {
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#073D2A] px-4 py-2 text-xs font-bold text-[#FBF9F5] hover:bg-[#0E5A3E] transition-all shadow-sm active:scale-95"
+                className="inline-flex items-center gap-1.5 rounded-none bg-[#073D2A] px-4 py-2 text-xs font-bold text-[#FBF9F5] hover:bg-[#0E5A3E] transition-all shadow-sm active:scale-95"
               >
                 <User size={13} />
                 <span>Đăng nhập</span>
@@ -305,7 +305,7 @@ const MainLayout = () => {
               onChange={(e) => setHomeSearchTerm(e.target.value)}
               placeholder="Tìm kiếm trang phục, phụ kiện..."
               aria-label="Tìm kiếm sản phẩm"
-              className="h-10 w-full rounded-full border border-neutral-200/80 bg-neutral-100/80 py-2 pl-9 pr-9 text-xs font-medium text-neutral-800 placeholder:text-neutral-400 outline-none transition focus:border-neutral-400 focus:bg-white"
+            className="h-10 w-full rounded-none border border-neutral-200/80 bg-neutral-100/80 py-2 pl-9 pr-9 text-xs font-medium text-neutral-800 placeholder:text-neutral-400 outline-none transition focus:border-neutral-400 focus:bg-white"
             />
             {homeSearchTerm && (
               <button
@@ -331,7 +331,7 @@ const MainLayout = () => {
           />
 
           {/* Drawer Panel */}
-          <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-white shadow-2xl flex flex-col justify-between p-6 z-10 animate-in slide-in-from-left duration-300">
+          <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-[#FBF9F5] shadow-2xl flex flex-col justify-between p-6 z-10 animate-in slide-in-from-left duration-300">
             <div>
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-5 border-b border-[#05251C]/10">
@@ -356,7 +356,7 @@ const MainLayout = () => {
                     key={link.path}
                     to={link.path}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-3 rounded-xl text-sm font-semibold text-[#05251C] hover:bg-[#F2EFE9] transition"
+                    className="flex items-center justify-between px-2 py-3.5 border-b border-[#05251C]/8 text-[12px] font-bold uppercase tracking-[0.1em] text-[#05251C] hover:bg-[#F2EFE9] transition"
                   >
                     <span>{link.name}</span>
                     <span className="text-[#05251C]/40 text-xs">&rarr;</span>
@@ -401,7 +401,7 @@ const MainLayout = () => {
                 <Link
                   to="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center w-full py-3 rounded-xl bg-[#073D2A] text-[#FBF9F5] text-sm font-bold shadow-md hover:bg-[#0E5A3E] transition"
+                  className="flex items-center justify-center w-full py-3 rounded-none bg-[#073D2A] text-[#FBF9F5] text-sm font-bold shadow-md hover:bg-[#0E5A3E] transition"
                 >
                   Đăng nhập / Đăng ký
                 </Link>

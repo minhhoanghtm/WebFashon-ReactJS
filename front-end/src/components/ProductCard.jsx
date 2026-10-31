@@ -129,7 +129,7 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite, trackingMeta = nul
       ref={impressionRef}
       onClick={handleCardClick}
       whileHover={{ y: -4, transition: { duration: 0.25 } }}
-      className="group relative flex flex-col bg-white dark:bg-slate-900 border border-[#05251C]/10 dark:border-slate-800/60 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-[#073D2A]/30 cursor-pointer w-full will-change-transform"
+      className="product-card group relative flex flex-col bg-transparent border-0 rounded-none overflow-hidden transition-all duration-300 cursor-pointer w-full will-change-transform"
     >
       {/* Media section với Soft Image Follow & Image Hover Swap */}
       <div className="relative w-full aspect-[3/4] overflow-hidden bg-neutral-100">
@@ -207,7 +207,7 @@ const ProductCard = ({ product, isFavorite, onToggleFavorite, trackingMeta = nul
       </div>
 
       {/* Content section */}
-      <div className="flex flex-col flex-1 p-4 text-left">
+      <div className="product-card__body flex flex-col flex-1 pt-3 text-left">
         <span className="micro-label text-[#05251C]/60 mb-1">
           {category}
         </span>

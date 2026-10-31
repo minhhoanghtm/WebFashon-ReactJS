@@ -1,4 +1,5 @@
 import { describe, test, expect, jest, beforeEach } from "@jest/globals";
+import crypto from "crypto";
 import mongoose from "mongoose";
 import { trackEventSchema, updateConsentSchema } from "../tracking.validator.js";
 import {
@@ -9,6 +10,7 @@ import {
 } from "../tracking.constants.js";
 import trackingService from "../tracking.service.js";
 import UserEvent from "../userEvent.model.js";
+import UserConsent from "../userConsent.model.js";
 import UserInterestProfile from "../../recommendations/userInterestProfile.model.js";
 import Product from "../../products/product.model.js";
 import { getRedisConnection } from "../../../configs/redis.js";
@@ -386,6 +388,302 @@ describe("Tracking Production Hardening & Acceptance Gate Test Suite", () => {
 
       countDocsSpy.mockRestore();
       distinctSpy.mockRestore();
+    });
+  });
+
+  // =========================================================================
+  // 6. FINAL RELEASE BLOCKERS VERIFICATION SUITE
+  // =========================================================================
+  describe("6. Final Release Blockers Acceptance Verification Suite", () => {
+    // -----------------------------------------------------------------------
+    // BLOCKER 1: CONVERSION FUNNEL CORRECTNESS & SEQUENTIAL MONOTONICITY
+    // -----------------------------------------------------------------------
+    test("Release Blocker 1: Sequential Funnel bảo đảm tính đơn điệu toán học (N1 >= N2 >= ... >= N6), không có tỉ lệ bất khả thi", async () => {
+      // Giả lập 4 session với chuỗi hành vi khác nhau theo mốc thời gian:
+      // Session 1: Hoàn thành đầy đủ: page_view(t1) -> product_view(t2) -> add_to_cart(t3) -> checkout_started(t4) -> order_placed(t5) -> purchase_completed(t6)
+      // Session 2: Đến bước checkout: page_view(t1) -> product_view(t2) -> add_to_cart(t3) -> checkout_started(t4)
+      // Session 3: Đến bước add_to_cart: page_view(t1) -> product_view(t2) -> add_to_cart(t3)
+      // Session 4: Nhảy thẳng vào checkout (không qua add_to_cart trong session này): page_view(t1) -> checkout_started(t2)
+      const mockSessionEvents = [
+        {
+          _id: "sess_1",
+          events: [
+            { type: "page_view", time: new Date("2026-10-31T10:00:00Z") },
+            { type: "product_view", time: new Date("2026-10-31T10:01:00Z") },
+            { type: "add_to_cart", time: new Date("2026-10-31T10:02:00Z") },
+            { type: "checkout_started", time: new Date("2026-10-31T10:03:00Z") },
+            { type: "order_placed", time: new Date("2026-10-31T10:04:00Z") },
+            { type: "purchase_completed", time: new Date("2026-10-31T10:05:00Z") },
+          ],
+        },
+        {
+          _id: "sess_2",
+          events: [
+            { type: "page_view", time: new Date("2026-10-31T10:00:00Z") },
+            { type: "product_view", time: new Date("2026-10-31T10:01:00Z") },
+            { type: "add_to_cart", time: new Date("2026-10-31T10:02:00Z") },
+            { type: "checkout_started", time: new Date("2026-10-31T10:03:00Z") },
+          ],
+        },
+        {
+          _id: "sess_3",
+          events: [
+            { type: "page_view", time: new Date("2026-10-31T10:00:00Z") },
+            { type: "product_view", time: new Date("2026-10-31T10:01:00Z") },
+            { type: "add_to_cart", time: new Date("2026-10-31T10:02:00Z") },
+          ],
+        },
+        {
+          _id: "sess_4", // Bỏ qua bước add_to_cart -> Tuyệt đối không tính vào checkout_started của sequential funnel
+          events: [
+            { type: "page_view", time: new Date("2026-10-31T10:00:00Z") },
+            { type: "checkout_started", time: new Date("2026-10-31T10:03:00Z") },
+          ],
+        },
+      ];
+
+      const aggSpy = jest.spyOn(UserEvent, "aggregate").mockImplementation((pipeline) => {
+        // Trả về mock sessionEvents
+        return Promise.resolve(mockSessionEvents);
+      });
+
+      const countDocsSpy = jest.spyOn(UserEvent, "countDocuments").mockResolvedValue(10);
+      const distinctSpy = jest.spyOn(UserEvent, "distinct").mockResolvedValue(["s1", "s2", "s3", "s4"]);
+
+      const funnelResult = await trackingService.getFunnelAnalytics();
+      expect(funnelResult).toBeDefined();
+      expect(funnelResult.sessionFunnel).toBeDefined();
+      expect(funnelResult.rawStages).toBeDefined();
+
+      const stages = funnelResult.sessionFunnel;
+      // 1. Kiểm tra tính đơn điệu: N1 >= N2 >= N3 >= N4 >= N5 >= N6
+      for (let i = 0; i < stages.length - 1; i++) {
+        expect(stages[i].count).toBeGreaterThanOrEqual(stages[i + 1].count);
+        expect(stages[i].overallConversionRate).toBeGreaterThanOrEqual(stages[i + 1].overallConversionRate);
+      }
+
+      // 2. Session 4 nhảy cóc không được tính vào stage checkout:
+      // Page view: 4 sessions (100%)
+      // Product view: 3 sessions (75%)
+      // Add to cart: 3 sessions (75%)
+      // Checkout started: đúng 2 sessions (50%) <= 3 sessions Add to cart (75%) -> Không bao giờ có tỉ lệ Checkout > Cart!
+      expect(stages[0].count).toBe(4);
+      expect(stages[1].count).toBe(3);
+      expect(stages[2].count).toBe(3);
+      expect(stages[3].count).toBe(2);
+      expect(stages[4].count).toBe(1);
+      expect(stages[5].count).toBe(1);
+
+      // 3. Step conversion rate và drop-off rate hợp lệ toán học
+      stages.forEach((stg) => {
+        expect(stg.stepConversionRate).toBeLessThanOrEqual(100);
+        expect(stg.dropOffRate).toBeGreaterThanOrEqual(0);
+        expect(stg.stepConversionRate + stg.dropOffRate).toBeCloseTo(100, 1);
+      });
+
+      aggSpy.mockRestore();
+      countDocsSpy.mockRestore();
+      distinctSpy.mockRestore();
+    });
+
+    // -----------------------------------------------------------------------
+    // BLOCKER 2: DURABLE CONSENT PERSISTENCE (GDPR Art 17 vs Art 21)
+    // -----------------------------------------------------------------------
+    test("Release Blocker 2: UserConsent độc lập lưu trữ consent = denied ngay cả khi UserInterestProfile bị xóa sạch", async () => {
+      const testAnonId = "a9b8c7d6-e5f4-4321-abcd-ef0123456789";
+      const redis = getRedisConnection();
+
+      // Cập nhật consent = denied
+      const findOneAndUpdateSpy = jest.spyOn(UserConsent, "findOneAndUpdate").mockResolvedValue({
+        subject_id: testAnonId,
+        consent_status: "denied",
+      });
+
+      await trackingService.updateConsent({
+        anonymousId: testAnonId,
+        consent: "denied",
+      });
+
+      // Giả lập xóa hoàn toàn UserInterestProfile (GDPR Right to be Forgotten)
+      const findProfileSpy = jest.spyOn(UserInterestProfile, "findOne").mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue(null), // Profile không còn tồn tại
+        }),
+      });
+
+      // Giả lập Redis cache bị xóa / restart hoàn toàn
+      if (redis) {
+        await redis.del(`consent:denied:${testAnonId}`);
+        await redis.del(`consent:denied:a:${testAnonId}`);
+      }
+
+      // UserConsent trả về denied
+      const findConsentSpy = jest.spyOn(UserConsent, "findOne").mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue({
+            subject_id: testAnonId,
+            consent_status: "denied",
+          }),
+        }),
+      });
+
+      // Kiểm tra quyền riêng tư: Vẫn phải nhận diện là DENIED
+      const isDenied = await trackingService.isConsentDenied(null, testAnonId);
+      expect(isDenied).toBe(true);
+
+      // Kiểm tra Redis cache được tự động rehydrate
+      if (redis) {
+        const cached = await redis.get(`consent:denied:${testAnonId}`);
+        expect(cached).toBe("1");
+        await redis.del(`consent:denied:${testAnonId}`);
+        await redis.del(`consent:denied:a:${testAnonId}`);
+      }
+
+      findOneAndUpdateSpy.mockRestore();
+      findProfileSpy.mockRestore();
+      findConsentSpy.mockRestore();
+    });
+
+    // -----------------------------------------------------------------------
+    // BLOCKER 3: DURABLE DELETION FENCE (WATERMARK cleared_at)
+    // -----------------------------------------------------------------------
+    test("Release Blocker 3: Mọi queued event phát sinh trước cleared_at đều bị Worker drop vĩnh viễn, bảo toàn đơn hàng", async () => {
+      const testAnonId = "d1e2f3a4-b5c6-7d8e-9f0a-1b2c3d4e5f6a";
+      const clearedWatermark = new Date("2026-10-31T12:00:00.000Z");
+
+      // Event cũ phát sinh lúc 11:59 (trước thời điểm xóa dữ liệu)
+      const oldEventTimestamp = new Date("2026-10-31T11:59:00.000Z").toISOString();
+
+      const findConsentSpy = jest.spyOn(UserConsent, "findOne").mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue({
+            subject_id: testAnonId,
+            cleared_at: clearedWatermark,
+          }),
+        }),
+      });
+
+      const updateProfileSpy = jest.spyOn(trackingService, "_updateInterestProfile");
+
+      // Giả lập BullMQ worker xử lý event cũ này
+      await trackingService.processEvent({
+        event_id: new mongoose.Types.ObjectId().toString(),
+        anonymous_id: testAnonId,
+        event_type: "product_view",
+        product_id: new mongoose.Types.ObjectId().toString(),
+        timestamp: oldEventTimestamp,
+      });
+
+      // Worker drop vĩnh viễn do dính Durable Deletion Fence
+      expect(updateProfileSpy).not.toHaveBeenCalled();
+
+      findConsentSpy.mockRestore();
+      updateProfileSpy.mockRestore();
+    });
+
+    // -----------------------------------------------------------------------
+    // BLOCKER 4: ANONYMOUS OWNERSHIP & CRYPTOGRAPHIC DELETE AUTHORIZATION
+    // -----------------------------------------------------------------------
+    test("Release Blocker 4: Xóa dữ liệu ẩn danh yêu cầu companion anonymous_token hợp lệ (SHA-256 hash)", async () => {
+      const testAnonId = "c1b2a3d4-e5f6-7890-abcd-ef1234567890";
+      const validToken = "secret_uuid_token_wf_2026";
+      const tokenHash = crypto.createHash("sha256").update(validToken).digest("hex");
+
+      // Đã có bản ghi UserConsent lưu hash của token này
+      const findConsentSpy = jest.spyOn(UserConsent, "findOne").mockReturnValue({
+        lean: jest.fn().mockResolvedValue({
+          subject_id: testAnonId,
+          anonymous_token_hash: tokenHash,
+        }),
+      });
+
+      // 1. Kẻ tấn công gửi anonymousId nhưng sai hoặc thiếu token -> Bị từ chối 403 Forbidden
+      await expect(
+        trackingService.clearUserTrackingData({
+          anonymousId: testAnonId,
+          anonymousToken: "wrong_token_attacker_guess",
+        })
+      ).rejects.toThrow("anonymous_token không khớp với phiên sở hữu đã đăng ký");
+
+      // 2. Khách hợp lệ gửi đúng anonymousToken -> Được phép xóa
+      const deleteEventsSpy = jest.spyOn(UserEvent, "deleteMany").mockResolvedValue({ deletedCount: 5 });
+      const deleteProfileSpy = jest.spyOn(UserInterestProfile, "deleteMany").mockResolvedValue({ deletedCount: 1 });
+      const findOneAndUpdateSpy = jest.spyOn(UserConsent, "findOneAndUpdate").mockResolvedValue({});
+
+      const validResult = await trackingService.clearUserTrackingData({
+        anonymousId: testAnonId,
+        anonymousToken: validToken,
+      });
+
+      expect(validResult.success).toBe(true);
+      expect(validResult.preservedOrders).toBe(true);
+
+      findConsentSpy.mockRestore();
+      deleteEventsSpy.mockRestore();
+      deleteProfileSpy.mockRestore();
+      findOneAndUpdateSpy.mockRestore();
+    });
+
+    // -----------------------------------------------------------------------
+    // BLOCKER 5: MULTI-ITEM PURCHASE IDEMPOTENCY & PARTIAL UNIQUE INDEX
+    // -----------------------------------------------------------------------
+    test("Release Blocker 5: Đơn hàng đa sản phẩm tạo đúng 1 event/item; Duplicate callback bị chặn ở mã lỗi 11000", async () => {
+      const orderId = new mongoose.Types.ObjectId().toString();
+      const product1 = new mongoose.Types.ObjectId().toString();
+      const product2 = new mongoose.Types.ObjectId().toString();
+      const userId = new mongoose.Types.ObjectId().toString();
+
+      // Giả lập dispatchJob được gọi cho 2 items khác nhau của cùng 1 đơn hàng
+      const dispatchedJobs = [];
+      const dispatchSpy = jest.spyOn(trackingService, "_dispatchJob").mockImplementation((job) => {
+        dispatchedJobs.push(job);
+        return Promise.resolve(true);
+      });
+
+      const multiItemOrder = {
+        _id: orderId,
+        user_id: userId,
+        items: [
+          { product_id: product1, quantity: 1, price: 150000 },
+          { product_id: product2, quantity: 2, price: 200000 },
+        ],
+        payment_method: "vnpay",
+      };
+
+      await trackingService.trackPurchaseCompleted(multiItemOrder);
+
+      // Đơn hàng có 2 items phải dispatch đúng 2 jobs
+      expect(dispatchedJobs.length).toBe(2);
+      expect(dispatchedJobs[0].product_id).toBe(product1);
+      expect(dispatchedJobs[1].product_id).toBe(product2);
+
+      // Duplicate payment callback cho cùng (order_id, product_id, purchase_completed):
+      // Worker bắt mã lỗi code 11000 từ MongoDB Partial Unique Index và return early, không cập nhật profile 2 lần
+      const updateOneSpy = jest.spyOn(UserEvent, "updateOne").mockRejectedValue({
+        code: 11000,
+        message: "E11000 duplicate key error on index: meta.order_id_1_product_id_1_event_type_1",
+      });
+      const updateProfileSpy = jest.spyOn(trackingService, "_updateInterestProfile");
+
+      const findProductSpy = jest.spyOn(Product, "findById").mockReturnValue({
+        select: jest.fn().mockResolvedValue(null),
+      });
+
+      await trackingService.processEvent({
+        event_id: new mongoose.Types.ObjectId().toString(),
+        user_id: userId,
+        event_type: "purchase_completed",
+        product_id: product1,
+        meta: { order_id: orderId },
+      });
+
+      // Tuyệt đối không cập nhật profile lần 2
+      expect(updateProfileSpy).not.toHaveBeenCalled();
+
+      dispatchSpy.mockRestore();
+      updateOneSpy.mockRestore();
+      updateProfileSpy.mockRestore();
+      findProductSpy.mockRestore();
     });
   });
 });

@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getActiveBannersService, trackBannerClickService } from "../../services/banner.service";
 import { motionEase } from "../../config/motionTokens";
 import usePrefersReducedMotion from "../../hooks/usePrefersReducedMotion";
@@ -21,17 +23,43 @@ const HeroBanner = () => {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const heroRef = useRef(null);
+  const editorialRef = useRef(null);
   const prefersReduced = usePrefersReducedMotion();
 
-  // Scroll parallax for hero exit
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
+  // Scoped GSAP choreography: entrance and scroll depth are cleaned up on every slide change.
+  useLayoutEffect(() => {
+    if (prefersReduced || !editorialRef.current) return undefined;
+    gsap.registerPlugin(ScrollTrigger);
+    const context = gsap.context(() => {
+      const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
+      timeline
+        .fromTo("[data-hero-image]", { scale: 1.06 }, { scale: 1, duration: 1.25 })
+        .fromTo("[data-hero-eyebrow]", { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.45 }, "-=0.82")
+        .fromTo("[data-hero-title]", { autoAlpha: 0, y: 34 }, { autoAlpha: 1, y: 0, duration: 0.7 }, "-=0.25")
+        .fromTo("[data-hero-copy]", { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.5 }, "-=0.4")
+        .fromTo("[data-hero-cta]", { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.42 }, "-=0.28");
 
-  const heroImageY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
-  const heroContentY = useTransform(scrollYProgress, [0, 1], ["0px", "-26px"]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.8, 1], [1, 0.95, 0.86]);
+      gsap.to("[data-hero-image]", {
+        yPercent: 11,
+        scale: 1.035,
+        ease: "none",
+        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 0.7 },
+      });
+      gsap.to("[data-hero-atmosphere]", {
+        yPercent: -16,
+        opacity: 0.28,
+        ease: "none",
+        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 0.7 },
+      });
+      gsap.to("[data-hero-content]", {
+        yPercent: -8,
+        opacity: 0.78,
+        ease: "none",
+        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 0.7 },
+      });
+    }, editorialRef);
+    return () => context.revert();
+  }, [currentIndex, prefersReduced]);
 
   useEffect(() => {
     let isMounted = true;
@@ -146,12 +174,12 @@ const HeroBanner = () => {
   return (
     <MotionSection
       ref={heroRef}
-      style={prefersReduced ? {} : { opacity: heroOpacity }}
       className="home-hero group min-h-[510px] relative w-full overflow-hidden rounded-[22px] bg-[#272522] will-change-transform shadow-lg"
     >
       {/* Editorial Frame Expansion Stage */}
       <AnimatePresence mode="wait">
         <MotionDiv
+          ref={editorialRef}
           key={currentBanner.id + "-" + currentIndex}
           initial={
             prefersReduced
@@ -173,7 +201,7 @@ const HeroBanner = () => {
           className="absolute inset-0 w-full h-full cursor-pointer flex items-center overflow-hidden"
         >
           <MotionDiv
-            style={prefersReduced ? {} : { y: heroImageY }}
+            data-hero-image
             className="absolute inset-0 w-full h-full select-none"
           >
             <picture className="w-full h-full">
@@ -190,10 +218,11 @@ const HeroBanner = () => {
 
           {/* Premium Dark Overlay */}
           <div className="home-hero__overlay" />
+          <div data-hero-atmosphere className="home-hero__atmosphere" aria-hidden="true" />
 
           {/* Animated Slide Text Content */}
           <MotionDiv
-            style={prefersReduced ? {} : { y: heroContentY }}
+            data-hero-content
             className="home-hero__content select-none relative z-10"
           >
             {/* Eyebrow */}
@@ -201,6 +230,7 @@ const HeroBanner = () => {
               initial={{ opacity: 0, y: 14, letterSpacing: "0.15em" }}
               animate={{ opacity: 1, y: 0, letterSpacing: "0.22em" }}
               transition={{ duration: 0.6, delay: 0.15, ease: motionEase.editorialReveal }}
+              data-hero-eyebrow
               className="home-hero__eyebrow text-[#F5DD20] font-bold uppercase tracking-[0.22em]"
             >
               {currentBanner.eyebrow}
@@ -210,6 +240,7 @@ const HeroBanner = () => {
             <div className="overflow-hidden">
               <MotionH1
                 id="home-hero-title"
+                data-hero-title
                 initial={{ opacity: 0, y: "100%" }}
                 animate={{ opacity: 1, y: "0%" }}
                 transition={{ duration: 0.7, delay: 0.24, ease: motionEase.editorialReveal }}
@@ -222,6 +253,7 @@ const HeroBanner = () => {
             {/* Subtitle */}
             {currentBanner.subtitle && (
               <MotionP
+                data-hero-copy
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.55, delay: 0.38, ease: motionEase.cinematic }}
@@ -243,6 +275,7 @@ const HeroBanner = () => {
                   e.stopPropagation();
                   handleBannerClick(currentBanner);
                 }}
+                data-hero-cta
                 className="group/btn cursor-pointer shadow-md"
               >
                 <span>{currentBanner.buttonText}</span>

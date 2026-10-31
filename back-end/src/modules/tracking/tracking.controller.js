@@ -55,12 +55,14 @@ class TrackingController {
     try {
       const userId = req.user?.userId;
       const anonymousId = req.body.anonymous_id || req.headers["x-anonymous-id"] || null;
+      const anonymousToken = req.body.anonymous_token || req.headers["x-anonymous-token"] || null;
       const consent = req.body.consent;
 
       const result = await trackingService.updateConsent({
         userId,
         anonymousId,
         consent,
+        anonymousToken,
       });
 
       return successResponse(res, result, "Cập nhật tùy chọn quyền riêng tư thành công");
@@ -93,6 +95,7 @@ class TrackingController {
     try {
       const userId = req.user?.userId || null;
       const anonymousId = req.body?.anonymous_id || req.headers["x-anonymous-id"] || null;
+      const anonymousToken = req.body?.anonymous_token || req.headers["x-anonymous-token"] || null;
 
       if (!userId && !anonymousId) {
         return res.status(400).json({
@@ -101,7 +104,12 @@ class TrackingController {
         });
       }
 
-      const result = await trackingService.clearUserTrackingData({ userId, anonymousId });
+      const result = await trackingService.clearUserTrackingData({
+        userId,
+        anonymousId,
+        anonymousToken,
+        reqUser: req.user,
+      });
       return successResponse(res, result, "Đã xóa toàn bộ lịch sử hành vi của bạn thành công");
     } catch (error) {
       next(error);

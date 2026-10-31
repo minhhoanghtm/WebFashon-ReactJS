@@ -53,6 +53,8 @@ const corsOptions = {
     "Content-Type",
     "Authorization",
     "x-anonymous-id",
+    "x-anonymous-token",
+    "x-session-id",
     "X-Requested-With",
     "Accept",
     "Origin",
