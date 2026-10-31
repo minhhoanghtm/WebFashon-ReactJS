@@ -1,11 +1,11 @@
-import React, { useRef, useState } from "react";
+﻿import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 
-import summerImg from "./assets/lookbook-summer.jpg";
-import eveningImg from "./assets/lookbook-evening.jpg";
-import heroImg from "./assets/hero-atelier.jpg";
+import summerImg from "./assets/lookbook-summer.webp";
+import eveningImg from "./assets/lookbook-evening.webp";
+import heroImg from "./assets/hero-atelier.webp";
 
 const collections = [
   {

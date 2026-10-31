@@ -1,9 +1,9 @@
-import React from "react";
+﻿import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
-import blazerImg from "./assets/product-navy-blazer.jpg";
-import bagImg from "./assets/product-brown-bag.jpg";
+import blazerImg from "./assets/product-navy-blazer.webp";
+import bagImg from "./assets/product-brown-bag.webp";
 
 export const BrandIntroductionEditorial = () => {
   return (

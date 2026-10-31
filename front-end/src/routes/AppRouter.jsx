@@ -20,7 +20,9 @@ import Review from "@/pages/Review";
 import Favorites from "@/pages/Favorites";
 import MyCoupons from "@/pages/MyCoupons";
 import VoucherHunting from "@/pages/VoucherHunting";
-import Dashboard from "@/pages/admin/Dashboard";
+import { KPISkeleton, TableSkeleton } from "@/components/admin/ui/AdminSkeleton";
+
+const Dashboard = lazy(() => import("@/pages/admin/Dashboard"));
 
 const CatalogManagement = lazy(() =>
   import("@/pages/admin/CatalogManagement")
@@ -49,18 +51,16 @@ const WebsiteSettingsManagement = lazy(() =>
   import("@/pages/admin/WebsiteSettingsManagement")
 );
 
+const AdminFallbackSkeleton = () => (
+  <div className="space-y-6 p-6" aria-busy="true" aria-label="Đang tải trang quản trị">
+    <KPISkeleton count={4} />
+    <TableSkeleton rows={4} cols={4} />
+  </div>
+);
+
 const withSuspense = (Component) => (
-  <Suspense
-    fallback={
-      <div
-        className="flex min-h-[45vh] items-center justify-center text-xs uppercase tracking-[0.2em] text-[var(--color-text-muted)]"
-        aria-live="polite"
-      >
-        Đang tải mô-đun quản trị...
-      </div>
-    }
-  >
-    <Component />
+  <Suspense fallback={<AdminFallbackSkeleton />}>
+    {React.createElement(Component)}
   </Suspense>
 );
 
@@ -124,7 +124,7 @@ const router = createBrowserRouter([
     path: "/admin",
     element: <ProtectedRoute allowedRoles={["admin"]} element={<AdminLayout />} />,
     children: [
-      { index: true, element: <Dashboard /> },
+      { index: true, element: withSuspense(Dashboard) },
       { path: "categories", element: withSuspense(CatalogManagement) },
       { path: "products", element: withSuspense(ProductManagement) },
       { path: "orders", element: withSuspense(OrderManagement) },

@@ -1,9 +1,9 @@
-import React from "react";
+﻿import React from "react";
 import { ArrowDown, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
-import summerLookImage from "../../Home/assets/lookbook-summer.jpg";
-import eveningLookImage from "../../Home/assets/lookbook-evening.jpg";
+import summerLookImage from "../../Home/assets/lookbook-summer.webp";
+import eveningLookImage from "../../Home/assets/lookbook-evening.webp";
 
 export const LookbookMagazineHero = () => {
   const prefersReduced = usePrefersReducedMotion();

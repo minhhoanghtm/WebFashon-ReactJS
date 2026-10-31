@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import resetImage from "@/pages/Home/assets/lookbook-summer.jpg";
+﻿import React, { useState } from "react";
+import resetImage from "@/pages/Home/assets/lookbook-summer.webp";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const ResetPasswordBanner = () => {

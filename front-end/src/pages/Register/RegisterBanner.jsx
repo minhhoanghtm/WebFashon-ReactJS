@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import registerImage from "@/pages/Home/assets/hero-atelier.jpg";
+﻿import React, { useState } from "react";
+import registerImage from "@/pages/Home/assets/hero-atelier.webp";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const RegisterBanner = () => {

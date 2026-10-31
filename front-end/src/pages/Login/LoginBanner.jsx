@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import loginImage from "@/pages/Home/assets/lookbook-evening.jpg";
+﻿import React, { useState } from "react";
+import loginImage from "@/pages/Home/assets/lookbook-evening.webp";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const LoginBanner = () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
@@ -11,8 +11,8 @@ import MagneticCTA from "../../components/motion/MagneticCTA";
 import TextReveal from "../../components/motion/TextReveal";
 import { motionEase } from "../../config/motionTokens";
 
-import summerLookImage from "./assets/lookbook-summer.jpg";
-import eveningLookImage from "./assets/lookbook-evening.jpg";
+import summerLookImage from "./assets/lookbook-summer.webp";
+import eveningLookImage from "./assets/lookbook-evening.webp";
 
 const MotionArticle = motion.article;
 const MotionDiv = motion.div;

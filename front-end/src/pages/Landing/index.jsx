@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getPageBySlugService } from "@/services/page.service";
@@ -13,9 +13,9 @@ import ProductsSection from "@/components/page-sections/ProductsSection";
 import BannerSection from "@/components/page-sections/BannerSection";
 import CTASection from "@/components/page-sections/CTASection";
 
-import heroImg from "../Home/assets/hero-atelier.jpg";
-import summerImg from "../Home/assets/lookbook-summer.jpg";
-import eveningImg from "../Home/assets/lookbook-evening.jpg";
+import heroImg from "../Home/assets/hero-atelier.webp";
+import summerImg from "../Home/assets/lookbook-summer.webp";
+import eveningImg from "../Home/assets/lookbook-evening.webp";
 
 export const Landing = () => {
   useDocumentTitle("Không gian trải nghiệm — 404STUDIO");

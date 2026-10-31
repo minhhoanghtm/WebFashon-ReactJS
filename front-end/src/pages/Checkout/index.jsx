@@ -166,7 +166,19 @@ const Checkout = () => {
 
   const { items, setCartItems } = useCartStore();
   const { user } = useAuthStore();
-  const checkoutItems = location.state?.checkoutItems || items;
+
+  const fallbackStoredItems = useMemo(() => {
+    try {
+      const stored = sessionStorage.getItem("checkout_items_seed");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const checkoutItems =
+    location.state?.checkoutItems ||
+    (items.length > 0 ? items : fallbackStoredItems);
 
   const normalizedCheckoutItems = useMemo(
     () => (checkoutItems || []).map(normalizeCheckoutItem),

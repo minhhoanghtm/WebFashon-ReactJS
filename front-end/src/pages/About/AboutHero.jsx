@@ -1,4 +1,4 @@
-import heroImage from "../Home/assets/hero-atelier.jpg";
+﻿import heroImage from "../Home/assets/hero-atelier.webp";
 
 const AboutHero = ({ title, description }) => {
   return (

@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { X, Sparkles, Clock, ArrowRight, Zap, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import campaignApi from "@/api/campaignApi";
 import { useServerCountdown } from "@/hooks/useServerCountdown";
 import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
-import defaultCampaignImage from "@/pages/Home/assets/hero-atelier.jpg";
+import defaultCampaignImage from "@/pages/Home/assets/hero-atelier.webp";
 
 export const EventWelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);

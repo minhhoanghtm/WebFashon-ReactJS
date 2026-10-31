@@ -46,3 +46,7 @@ export const useCartStore = create((set, get) => ({
     return get().items.reduce((total, item) => total + (item.price || 0) * (item.quantity || 0), 0);
   },
 }));
+
+if (typeof window !== "undefined") {
+  window.__cartStore = useCartStore;
+}

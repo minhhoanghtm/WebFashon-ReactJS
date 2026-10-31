@@ -1,4 +1,4 @@
-import storyImage from "../Home/assets/lookbook-summer.jpg";
+﻿import storyImage from "../Home/assets/lookbook-summer.webp";
 
 const BrandStory = () => {
   return (

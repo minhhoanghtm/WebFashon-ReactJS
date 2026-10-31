@@ -22,8 +22,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/antd')) return 'vendor-antd';
-          if (id.includes('node_modules/echarts')) return 'vendor-echarts';
+                    if (id.includes('node_modules/echarts')) return 'vendor-echarts';
           if (id.includes('node_modules/motion')) return 'vendor-motion';
           if (id.includes('node_modules/gsap')) return 'vendor-gsap';
           if (
