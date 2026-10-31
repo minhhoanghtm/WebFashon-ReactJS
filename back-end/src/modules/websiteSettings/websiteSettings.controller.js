@@ -46,6 +46,7 @@ const filterSettingsResponse = (settings, isAdmin = false) => {
       googleTagManager: raw.integrations?.googleTagManager || "",
       chatbotScript: raw.integrations?.chatbotScript || "",
     },
+    homeContent: raw.homeContent || {},
     updatedAt: raw.updatedAt,
   };
 

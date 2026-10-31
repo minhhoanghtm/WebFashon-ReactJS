@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <rect width="600" height="800" fill="#121214"/>
+  <rect x="150" y="220" width="300" height="360" rx="4" fill="#1C1C20" stroke="#2E2E36" stroke-width="2"/>
+  <path d="M220 220 L300 300 L380 220" fill="none" stroke="#3F3F46" stroke-width="2"/>
+  <text x="300" y="640" text-anchor="middle" fill="#71717A" font-family="monospace" font-size="14" letter-spacing="3">404 STUDIO ATELIER</text>
+</svg>
