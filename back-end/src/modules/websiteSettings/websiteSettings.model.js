@@ -49,6 +49,10 @@ const websiteSettingsSchema = new mongoose.Schema(
       googleTagManager: { type: String, default: "" },
       chatbotScript: { type: String, default: "" },
     },
+    homeContent: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
     // Audit fields
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
