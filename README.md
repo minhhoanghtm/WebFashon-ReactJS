@@ -1,125 +1,231 @@
-# 👗 WebFashion - Premium Fashion E-Commerce Platform
+# WebFashion — Monochrome Luxury Atelier E-Commerce
 
-WebFashion là một nền tảng thương mại điện tử mua sắm thời trang cao cấp, được xây dựng theo kiến trúc phân tách rõ ràng giữa **Client (React + Vite)** và **API Server (Node.js + Express + MongoDB + Redis)**. 
-
-Dự án sở hữu thiết kế giao diện theo phong cách tối giản đơn sắc (Monochromatic) sang trọng, hỗ trợ chuyển đổi giao diện Sáng/Tối linh hoạt và tích hợp các tính năng vận hành doanh nghiệp hoàn chỉnh.
+WebFashion là nền tảng thương mại điện tử thời trang may đo cao cấp được thiết kế theo phong cách tối giản đơn sắc (Monochrome Luxury). Hệ thống áp dụng kiến trúc tách biệt hoàn toàn giữa Front-end Single Page Application (SPA) và Back-end RESTful API Server, tối ưu hiệu năng tải trang, chuyển động mượt mà và quy trình vận hành toàn diện.
 
 ---
 
-## 🚀 Tính Năng Nổi Bật
+## 📸 Hình Ảnh Demo & Trải Nghiệm
 
-### 👤 Xác thực & Quản lý phiên (JWT + Redis Session)
-- **Cơ chế bảo mật kép:** Sử dụng Access Token (định dạng JWT có JTI ngẫu nhiên) lưu ở LocalStorage và Refresh Token lưu trong Cookie bảo mật (`httpOnly`, `secure`, `sameSite: none`).
-- **Gia hạn phiên chủ động (Proactive sliding session renewal):** Client tự động giải mã và kiểm tra thời hạn sống của Access Token trước mỗi yêu cầu API. Nếu thời gian còn lại dưới **5 phút**, Client sẽ chủ động gửi yêu cầu làm mới để gia hạn phiên làm việc thêm 30 phút mà không làm gián đoạn hay gây lỗi 401 cho người dùng.
-- **progressive throttling:** Khóa đăng nhập tạm thời dựa trên số lần thử thất bại liên tiếp (lưu vết bằng Redis atomic counters).
-- **Đăng xuất đa thiết bị (Sign out all devices):** Thu hồi toàn bộ token liên quan đến UserId được lưu trữ trong Redis whitelist.
+<!-- Thêm liên kết ảnh chụp màn hình hoặc GIF demo giao diện tại đây -->
+| Trang chủ điện ảnh (Cinematic) | Danh mục & Bộ lọc sản phẩm |
+| :---: | :---: |
+| ![Trang chủ](https://placehold.co/600x340/0c0c0e/ffffff?text=Cinematic+Homepage) | ![Danh mục sản phẩm](https://placehold.co/600x340/0c0c0e/ffffff?text=Product+Catalog) |
 
-### 🛍️ Quản lý danh mục & Sản phẩm nâng cao
-- **Quản lý đa hình ảnh:** Cho phép quản trị viên thêm nhiều liên kết ảnh cho một sản phẩm. Hình ảnh đầu tiên sẽ được chọn làm ảnh đại diện hiển thị đại diện chính.
-- **Huy hiệu chiết khấu trực quan:** Tự động tính toán và hiển thị phần trăm giảm giá chính xác (ví dụ: `-$15%`) thay vì các huy hiệu tĩnh, tăng tính hấp dẫn khi mua sắm.
-- **Chống crop ảnh thông minh:** Catalog sản phẩm sử dụng tỉ lệ co giãn ảnh chuẩn `object-contain` kết hợp với màu nền bổ trợ, bảo toàn tỷ lệ ảnh gốc của người mẫu mà không bị cắt xén góc.
+| Chi tiết sản phẩm & 3D Tilt | Xác nhận thanh toán (Checkout) |
+| :---: | :---: |
+| ![Chi tiết sản phẩm](https://placehold.co/600x340/0c0c0e/ffffff?text=Product+Detail) | ![Thanh toán](https://placehold.co/600x340/0c0c0e/ffffff?text=Checkout+Order) |
 
-### ⚙️ Hệ thống Cấu hình Website Động (Admin Settings)
-- **Đồng bộ Favicon & Tiêu đề:** Favicon và Tiêu đề website được cập nhật động từ cơ sở dữ liệu qua Zustand store. Trình duyệt tự động thay đổi favicon và title tab tương ứng theo cấu hình mới của Admin trong Database.
-- **Chọn địa chỉ 3 cấp độ:** Sử dụng bộ dữ liệu phân cấp hành chính (Tỉnh/Thành phố $\rightarrow$ Quận/Huyện $\rightarrow$ Phường/Xã) tải qua API, đi kèm với hộp xem trước địa chỉ trụ sở chi tiết.
-- **Tích hợp mã nhúng Scripts:** Cho phép admin chèn trực tiếp các mã theo dõi phân tích hoặc chatbot như *Google Tag Manager*, *Google Analytics ID (G-ID)*, *Facebook Pixel* và *Live Chat Script*.
+---
 
-### 💬 Chat Hỗ Trợ Trực Tuyến & Đơn Hàng
-- **Websockets Live Chat:** Khách hàng có thể kết nối chat trực tiếp với đội ngũ Admin trực tuyến thông qua kênh truyền Websocket thời gian thực.
-- **Quy trình xử lý đơn hàng chi tiết:** Theo dõi và cập nhật trạng thái đơn hàng qua các bước: *Chờ xác nhận* $\rightarrow$ *Đang xử lý* $\rightarrow$ *Đang giao* $\rightarrow$ *Đã giao* / *Đã hủy*.
+## 🌐 Liên Kết Triển Khai (Live Demo)
+
+- **Website Khách hàng:** `https://your-domain.com` *(Điền link triển khai thực tế)*
+- **Trang Quản trị (Admin):** `https://your-domain.com/admin`
+- **Tài liệu API (Swagger / Postman):** `https://api.your-domain.com/docs` *(Nếu có)*
 
 ---
 
 ## 🛠️ Công Nghệ Sử Dụng
 
-### Phân Hệ Front-end (Client)
-- **Vite 8** + **React 18** (Runtime tối ưu hiệu năng)
-- **Tailwind CSS v4** (Hệ thống thiết kế tiện ích thế hệ mới)
-- **Zustand** (Quản lý trạng thái gọn nhẹ, chia nhỏ Store cho Auth và WebsiteSettings)
-- **React Query (@tanstack/react-query)** (Caching và đồng bộ hóa dữ liệu API)
-- **Ant Design** (Thư viện UI phụ trợ cho bảng biểu và biểu đồ)
-- **React Toastify** (Hiển thị thông báo, đã cấu hình cố định ở góc phải trên cùng `top-right`)
+### Front-end (`front-end/package.json`)
+- **Core Runtime:** React 19 (`19.2.4`), Vite 8 (`8.0.1`), React Router DOM v7 (`7.13.1`).
+- **Styling & Design System:** Tailwind CSS v4 (`@tailwindcss/vite`), typography đơn sắc (Oswald & Plus Jakarta Sans).
+- **Chuyển động & Cuộn mượt:** GSAP 3 (`ScrollTrigger`), Lenis smooth scroll.
+- **Quản lý dữ liệu & Trạng thái:** TanStack Query (React Query v5), Zustand.
+- **Giao diện & Tiện ích:** Lucide React, Axios, SweetAlert2, React Toastify, Socket.io Client.
+- **Biểu đồ Quản trị:** Apache ECharts (`echarts`, `echarts-for-react`) được code-split / lazy-load độc lập cho Admin Dashboard.
+- **Xử lý nội dung:** Marked, DOMPurify.
 
-### Phân Hệ Back-end (API Server)
-- **Node.js** + **Express**
-- **MongoDB** + **Mongoose** (NoSQL Database lưu trữ dữ liệu sản phẩm, đơn hàng, người dùng và cài đặt)
-- **Redis** (Cơ chế whitelist/blacklist Token, lưu trữ phiên đăng nhập và khóa tài khoản tạm thời)
-- **Zod** (Khung xác thực dữ liệu đầu vào mạnh mẽ, hỗ trợ `.passthrough()` lưu trữ cấu hình linh động)
+### Back-end (`back-end/package.json`)
+- **Nền tảng máy chủ:** Node.js, Express (`4.18.2`).
+- **Cơ sở dữ liệu & Caching:** MongoDB (Mongoose `9.3.0`), Redis (ioredis `5.11.1`, BullMQ `5.78.0`).
+- **Thời gian thực (Real-time):** Socket.io (`4.8.3`).
+- **Bảo mật & Xác thực:** JWT (jsonwebtoken), Bcrypt, Google Auth Library (OAuth 2.0), Helmet, Express Rate Limit, Mongo Sanitize.
+- **Xác thực dữ liệu (Validation):** Zod (`4.4.3`).
+- **Gửi thư & Tác vụ nền:** Nodemailer, Node-cron.
+- **Ghi nhật ký (Logging):** Winston.
+- **Tích hợp cổng thanh toán:** MoMo Payment API, VNPay Payment API.
 
 ---
 
-## 📁 Cấu Trúc Thư Mục Dự Án
+## ✨ Tính Năng Chính
+
+### 1. Trải nghiệm Khách hàng (Storefront)
+- **Trang chủ điện ảnh (Cinematic):** Hero banner toàn cảnh, các chương giới thiệu triết lý may đo, video manifesto, dòng thời gian timeline ngang ghim cuộn (GSAP pin/horizontal scroll), tuyển tập sản phẩm boutique và bản tin atelier.
+- **Danh mục & Tìm kiếm (`/products`, `/product/:slug`):**
+  - Tìm kiếm theo từ khóa và hỗ trợ tìm kiếm ngữ nghĩa AI.
+  - Bộ lọc đa chiều: Phân cấp danh mục (Cha - Con), khoảng giá, màu sắc thực tế, kích cỡ.
+  - Sắp xếp linh hoạt theo độ phổ biến, giá tăng/giảm, đánh giá.
+  - Thẻ sản phẩm với hiệu ứng nghiêng 3D (GSAP quickTo tilt) theo con trỏ chuột và chuyển ảnh thứ hai khi rê chuột.
+- **Giỏ hàng & Thanh toán (`/cart`, `/checkout`):**
+  - Quản lý số lượng, cập nhật kho hàng thời gian thực.
+  - Áp dụng đồng thời voucher giảm giá sản phẩm và voucher miễn phí vận chuyển.
+  - Tính phí giao hàng theo địa giới hành chính (Tỉnh/Thành phố, Quận/Huyện, Phường/Xã).
+  - Hỗ trợ 3 phương thức thanh toán: COD (Tiền mặt khi nhận hàng), Ví điện tử MoMo, Cổng thanh toán ngân hàng VNPay.
+- **Khuyến mãi & Yêu thích (`/vouchers`, `/favorites`, `/my-coupons`):**
+  - Bộ sưu tập mã giảm giá phong cách vé atelier với đường cắt răng cưa CSS.
+  - Lưu voucher vào ví cá nhân, kiểm tra điều kiện áp dụng và hạn dùng.
+  - Lưu và quản lý danh sách sản phẩm yêu thích (Favorites).
+- **Tài khoản & Đơn hàng (`/login`, `/register`, `/verify-otp`, `/reset-password`, `/profile`, `/orders`):**
+  - Đăng nhập bằng tài khoản hoặc Google OAuth 2.0.
+  - Đăng ký và kích hoạt tài khoản qua mã xác thực OTP gửi về email.
+  - Đổi mật khẩu, quên mật khẩu và đặt lại mật khẩu bảo mật.
+  - Quản lý thông tin cá nhân, sổ địa chỉ nhận hàng.
+  - Theo dõi trạng thái đơn hàng (Chờ xác nhận, Đang xử lý, Đang giao, Hoàn tất, Đã hủy).
+- **Hỗ trợ khách hàng & Theo dõi:**
+  - Widget chat trực tuyến thời gian thực kết nối với tư vấn viên qua Socket.io.
+  - Theo dõi hiển thị sản phẩm (Product Impression tracking) với IntersectionObserver nhằm tối ưu đề xuất mua sắm.
+
+### 2. Quản trị Hệ thống (`/admin`)
+- **Dashboard Tổng quan:** Biểu đồ doanh thu theo chu kỳ (7 ngày, 30 ngày, 1 năm), phễu chuyển đổi hành vi (Conversion Funnel), thống kê tương tác voucher, top sản phẩm và từ khóa tìm kiếm.
+- **Quản lý Danh mục & Sản phẩm:** Tạo, cập nhật, tải ảnh, quản lý biến thể (màu sắc, size, số lượng tồn kho).
+- **Quản lý Đơn hàng:** Xem danh sách, lọc theo trạng thái, cập nhật tiến độ vận chuyển đơn hàng.
+- **Quản lý Khuyến mãi (Voucher & Campaign):** Tạo mã giảm giá theo số tiền hoặc phần trăm, phân loại voucher đơn hàng/vận chuyển, thiết lập thời hạn và giới hạn sử dụng.
+- **Cấu hình Website:** Cập nhật tên thương hiệu, favicon, logo, địa chỉ trụ sở và tích hợp mã script bên thứ ba.
+
+---
+
+## 📁 Cấu Trúc Thư Mục
 
 ```text
 REACT-WebFashion/
-├── back-end/                     # API Server & Services
+├── back-end/                     # API Server (Node.js + Express)
 │   ├── src/
-│   │   ├── configs/              # Cấu hình Mongoose, Redis
-│   │   ├── middlewares/          # Xác thực JWT, phân quyền Admin, xử lý lỗi
-│   │   ├── modules/              # Các phân hệ logic (Auth, Users, Products, Carts, Orders...)
-│   │   │   ├── auth/             # Quản lý token, kiểm tra whitelist Redis
-│   │   │   └── websiteSettings/  # Lưu trữ cấu hình SEO, Address, Integration Scripts
-│   │   └── app.js                # Khởi tạo Express app
-│   └── docker-compose.yml        # Docker hỗ trợ chạy Redis nhanh
+│   │   ├── api/                  # Tích hợp cổng thanh toán bên ngoài (MoMo, VNPay)
+│   │   ├── configs/              # Cấu hình Mongoose, Redis, Socket
+│   │   ├── controllers/          # Bộ điều khiển xử lý logic nghiệp vụ
+│   │   ├── middlewares/          # Xác thực JWT, phân quyền, kiểm tra rate limit
+│   │   ├── models/               # Định nghĩa Schema MongoDB
+│   │   ├── routes/               # Khai báo các endpoint API
+│   │   ├── services/             # Xử lý nghiệp vụ chính và database
+│   │   └── server.js             # Khởi chạy Express server
+│   ├── Dockerfile
+│   └── package.json
 │
-└── front-end/                    # Single Page Application
-    ├── src/
-    │   ├── api/                  # Khởi tạo axiosClient với cơ chế tự động gia hạn phiên
-    │   ├── components/
-    │   │   ├── admin/            # Bộ chọn địa chỉ 3 cấp (HeadquartersAddressPicker)
-    │   │   └── layout/           # Sidebar cuộn mượt (overflow-y-auto)
-    │   ├── store/                # Zustand Store (auth.store, websiteSettings.store)
-    │   ├── pages/
-    │   │   └── admin/            # Dashboard và Cài đặt Website (WebsiteSettingsManagement)
-    │   ├── index.css             # Cấu hình Theme đơn sắc và Custom Dark Mode
-    │   └── App.jsx               # Khởi chạy session & định tuyến ứng dụng
-    └── vite.config.js            # Cấu hình build Vite
+├── front-end/                    # Client Application (React 19 + Vite 8)
+│   ├── src/
+│   │   ├── api/                  # Cấu hình axiosClient và các hàm gọi API
+│   │   ├── components/           # UI components dùng chung (Header, Footer, ProductCard...)
+│   │   ├── hooks/                # Custom React hooks (useLenis, useTracking, useWebsiteSettings...)
+│   │   ├── layouts/              # MainLayout, AuthLayout, AdminLayout
+│   │   ├── pages/                # Các trang chức năng (Home, ProductSearch, Checkout, Profile, Admin...)
+│   │   ├── routes/               # AppRouter cấu hình định tuyến và code-splitting
+│   │   ├── services/             # Lớp kết nối API và chuẩn hóa dữ liệu
+│   │   ├── store/                # Zustand stores (auth, cart, favorite, chat...)
+│   │   └── index.css             # Tailwind CSS tokens và phong cách Monochrome
+│   ├── Dockerfile
+│   ├── package.json
+│   └── vite.config.js
+│
+├── docker-compose.yml            # Điều phối các container Docker (App, Mongo, Redis)
+└── README.md
 ```
 
 ---
 
-## ⚙️ Hướng Dẫn Cài Đặt & Khởi Chạy
+## 🚀 Hướng Dẫn Cài Đặt & Chạy Cục Bộ
 
-### 1. Khởi động các dịch vụ bổ trợ (Redis & MongoDB)
-Nếu bạn sử dụng Docker, có thể chạy nhanh Redis bằng Docker Compose có sẵn trong dự án:
-```bash
-docker-compose up -d redis
-```
-Đồng thời đảm bảo rằng bạn đã khởi động cơ sở dữ liệu MongoDB cục bộ hoặc có kết nối MongoDB Atlas.
-
-### 2. Cài đặt & Khởi chạy Backend
-Di chuyển vào thư mục `back-end`, tạo file cấu hình `.env` dựa theo mẫu:
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/web-fashion
-REDIS_URL=redis://localhost:6379
-ACCESS_TOKEN_SECRET=your_jwt_access_secret_key
-REFRESH_TOKEN_SECRET=your_jwt_refresh_secret_key
-```
-Sau đó tiến hành cài đặt dependencies và khởi chạy chế độ phát triển:
-```bash
-cd back-end
-npm install
-npm run dev
-```
-
-### 3. Cài đặt & Khởi chạy Frontend
-Di chuyển vào thư mục `front-end`, tạo file cấu hình `.env` kết nối API:
-```env
-VITE_API_BASE_URL=http://localhost:5000/api
-```
-Tiến hành cài đặt và khởi chạy:
-```bash
-cd front-end
-npm install
-npm run dev
-```
-Mở trình duyệt truy cập ứng dụng tại địa chỉ: `http://localhost:5173`.
+### 1. Yêu cầu Tiên quyết
+- Node.js (phiên bản 20 trở lên)
+- Trình quản lý gói `npm`
+- MongoDB (chạy cục bộ cổng `27017` hoặc tài khoản MongoDB Atlas)
+- Redis (chạy cục bộ cổng `6379` hoặc qua Docker)
 
 ---
 
-## 📝 Xác Minh & Kiểm Thử
-Dự án được trang bị sẵn các mã kịch bản kiểm thử nhanh để xác minh tính ổn định của API và dữ liệu:
-- **Kiểm thử logic xác thực đầu vào:** `node back-end/src/scratch/test_validators.js`
-- **Kiểm thử lưu dữ liệu cài đặt trực tiếp:** `node back-end/src/scratch/test_live_save.js`
-- **Biên dịch Frontend:** Chạy lệnh `npm run build` bên trong thư mục `front-end` để đảm bảo dự án luôn sẵn sàng đóng gói cho môi trường Production mà không phát sinh lỗi kiểu hoặc cú pháp.
+### 2. Khởi chạy Dịch vụ Nền (Redis & MongoDB)
+Nếu sử dụng Docker Compose:
+```bash
+docker compose up -d mongo redis
+```
+
+---
+
+### 3. Cài đặt & Chạy Back-end
+
+1. Di chuyển vào thư mục back-end:
+   ```bash
+   cd back-end
+   npm install
+   ```
+
+2. Tạo file `.env` từ mẫu sau (thay thế bằng cấu hình của bạn):
+   ```env
+   PORT=5000
+   NODE_ENV=development
+   CLIENT_URL=http://localhost:5173
+   FRONTEND_URL=http://localhost:5173
+
+   # Kết nối MongoDB
+   MONGO_CONNECTIONSTRING=mongodb://localhost:27017/webfashion
+
+   # Kết nối Redis
+   REDIS_URL=redis://localhost:6379
+
+   # Khóa bảo mật JWT
+   ACCESS_TOKEN_SECRET=your_jwt_access_secret_64_byte_hex
+   REFRESH_TOKEN_SECRET=your_jwt_refresh_secret_64_byte_hex
+
+   # Cấu hình gửi mail xác thực (Nodemailer)
+   EMAIL_USER=your_email@example.com
+   EMAIL_PASS=your_email_app_password
+
+   # Đăng nhập Google
+   GOOGLE_CLIENT_ID=your_google_oauth_client_id.apps.googleusercontent.com
+
+   # Cổng thanh toán MoMo (Môi trường Test)
+   MOMO_PARTNER_CODE=your_momo_partner_code
+   MOMO_ACCESS_KEY=your_momo_access_key
+   MOMO_SECRET_KEY=your_momo_secret_key
+   MOMO_ENDPOINT=https://test-payment.momo.vn/v2/gateway/api/create
+   MOMO_REDIRECT_URL=http://localhost:5173/payment-result
+   MOMO_IPN_URL=http://localhost:5000/api/payments/momo/ipn
+
+   # Cổng thanh toán VNPay (Môi trường Sandbox)
+   VNP_TMNCODE=your_vnpay_tmncode
+   VNP_HASHSECRET=your_vnpay_hashsecret
+   VNP_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+   VNP_RETURNURL=http://localhost:5173/payment-result
+   ```
+
+3. Khởi chạy máy chủ ở chế độ phát triển:
+   ```bash
+   npm run dev
+   ```
+   Máy chủ API sẽ chạy tại: `http://localhost:5000`
+
+---
+
+### 4. Cài đặt & Chạy Front-end
+
+1. Di chuyển vào thư mục front-end:
+   ```bash
+   cd front-end
+   npm install --legacy-peer-deps
+   ```
+
+2. Tạo file `.env`:
+   ```env
+   PORT=5173
+   VITE_API_URL=http://localhost:5000/api
+   VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id.apps.googleusercontent.com
+   ```
+
+3. Khởi chạy ứng dụng:
+   ```bash
+   npm run dev
+   ```
+   Mở trình duyệt truy cập: `http://localhost:5173`
+
+4. Đóng gói cho Production:
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 🔒 Kiểm Tra An Toàn & Bảo Mật
+
+- File `.env` chứa thông tin nhạy cảm đã được loại trừ qua `.gitignore` và không bao giờ commit lên kho lưu trữ mã nguồn.
+- Mọi mật khẩu người dùng đều được mã hóa một chiều bằng thư viện `bcrypt`.
+- Cookie chứa Refresh Token được cấu hình bảo vệ chống truy cập trái phép qua script (`httpOnly: true`).

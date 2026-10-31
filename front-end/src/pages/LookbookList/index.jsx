@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getLookbooksService } from '../../services/page.service';
 import { getActiveBannersService } from '../../services/banner.service';
 import LookbookHero from './components/LookbookHero';
-import LookbookMagazineHero from './components/LookbookMagazineHero';
 import LookbookGrid from './components/LookbookGrid';
 import EditorialCard from './components/EditorialCard';
 import LookbookSkeleton from './components/LookbookSkeleton';
@@ -137,7 +136,6 @@ const LookbookList = () => {
   return (
     <main className="min-h-screen bg-[#FBF9F5] text-[#05251C] pb-24 font-sans select-none">
       {/* 1. 2D Editorial Magazine Hero */}
-      <LookbookMagazineHero />
 
       {/* 1.5. Fullscreen Editorial Hero if custom banner exists */}
       {!isLoadingBanner && lookbookBanner && heroImage && (
