@@ -828,7 +828,7 @@ const Profile = () => {
                       <span className="atelier-eyebrow block">
                         Hồ sơ cá nhân
                       </span>
-                      <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight">
+                      <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight uppercase">
                         {getUserName(userProfile)}
                       </h1>
                       <span className="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">

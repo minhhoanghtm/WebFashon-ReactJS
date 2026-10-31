@@ -339,12 +339,11 @@ const UserAccountManagement = ({ isDashboard = false }) => {
                 Đơn hàng
               </span>
             </nav>
-            <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight">
+            <h1 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight uppercase">
               Đơn hàng của bạn
             </h1>
-            <p className="text-xs sm:text-sm text-[var(--color-text-muted)] mt-2">
-              Theo dõi trạng thái xử lý, vận chuyển và lịch sử giao nhận đơn
-              hàng.
+            <p className="text-xs sm:text-sm text-[var(--color-text-muted)] mt-2 font-sans">
+              Theo dõi tiến độ chế tác, giao nhận và lưu trữ biên nhận mua hàng.
             </p>
           </div>
         </div>

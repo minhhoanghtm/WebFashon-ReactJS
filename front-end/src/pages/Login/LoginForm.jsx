@@ -17,8 +17,11 @@ const LoginForm = () => {
   const { settings } = useWebsiteSettings();
   const siteName = settings?.general?.siteName || "WEBFASHION";
 
-  // Đường dẫn chuyển hướng trước đó hoặc mặc định "/"
-  const fromPath = location.state?.from?.pathname || "/";
+  // Đường dẫn chuyển hướng trước đó hoặc mặc định "/" (loại bỏ trường hợp tự chuyển ngược vào trang auth)
+  const rawFrom = location.state?.from?.pathname || "/";
+  const fromPath = ["/login", "/register", "/verify-otp", "/reset-password"].includes(rawFrom)
+    ? "/"
+    : rawFrom;
 
   const [formData, setFormData] = useState(() => ({
     email: localStorage.getItem("rememberedEmail") || "",
