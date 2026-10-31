@@ -91,9 +91,18 @@ class TrackingController {
 
   async clearUserTrackingData(req, res, next) {
     try {
-      const userId = req.user?.userId;
-      await trackingService.clearUserTrackingData(userId);
-      return successResponse(res, null, "Đã xóa toàn bộ lịch sử hành vi của bạn thành công");
+      const userId = req.user?.userId || null;
+      const anonymousId = req.body?.anonymous_id || req.headers["x-anonymous-id"] || null;
+
+      if (!userId && !anonymousId) {
+        return res.status(400).json({
+          success: false,
+          message: "Cần cung cấp tài khoản đăng nhập hoặc header x-anonymous-id để xóa dữ liệu",
+        });
+      }
+
+      const result = await trackingService.clearUserTrackingData({ userId, anonymousId });
+      return successResponse(res, result, "Đã xóa toàn bộ lịch sử hành vi của bạn thành công");
     } catch (error) {
       next(error);
     }

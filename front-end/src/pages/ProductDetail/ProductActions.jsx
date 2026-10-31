@@ -159,6 +159,9 @@ const ProductActions = ({ product, variants = [] }) => {
   });
 
   const handleAddToCart = async () => {
+    // 1. Chống duplicate do double-click
+    if (isAdding) return false;
+
     console.log("Add to cart:", {
       productId: product.id,
       quantity,
@@ -171,6 +174,7 @@ const ProductActions = ({ product, variants = [] }) => {
       return false;
     }
 
+    // 2. Không phát sự kiện khi không đủ điều kiện (hết hàng, chưa chọn size/màu)
     if (!canAdd) {
       toast.error(warningText || "Vui lòng chọn đầy đủ thông tin sản phẩm");
       return false;
@@ -181,32 +185,55 @@ const ProductActions = ({ product, variants = [] }) => {
       return false;
     }
 
+    // 3. Khách vãng lai: Ghi nhận ý định mua hàng (add_to_cart_attempt), KHÔNG phát add_to_cart thành công
+    if (!isAuthenticated) {
+      trackingService.trackAddToCartAttempt(product, quantity, selectedVariant, {
+        reason: "unauthenticated",
+      });
+
+      // Lưu giỏ hàng chờ để khôi phục sau khi đăng nhập thành công
+      try {
+        sessionStorage.setItem(
+          "pending_add_to_cart",
+          JSON.stringify({
+            productId: product.id || product._id,
+            variantId: selectedVariant?._id || null,
+            quantity: Number(quantity) || 1,
+            product,
+            variant: selectedVariant,
+          })
+        );
+      } catch (_) {}
+
+      toast.info("Vui lòng đăng nhập để lưu sản phẩm vào giỏ hàng");
+      navigate("/login");
+      return false;
+    }
+
     try {
       setIsAdding(true);
       const result = await addCartItemService(buildCartPayload());
 
-      trackingService.trackEvent({
-        event_type: "add_to_cart",
-        product_id: product?.id || product?._id,
-        category_id: product?.category_id,
-        meta: {
-          price: product?.price || product?.new_price || 0,
-          quantity,
-        },
-      });
+      // 4. CHỈ phát add_to_cart khi API trả về kết quả thành công thực sự
+      if (result && result.success !== false) {
+        trackingService.trackAddToCart(product, quantity, selectedVariant);
 
-      window.dispatchEvent(
-        new CustomEvent("cartUpdated", {
-          detail: {
-            cart: result?.cart,
-            totalQuantity: result?.cart?.total_items ?? 0,
-            total: result?.cart?.total_price ?? 0,
-          },
-        }),
-      );
+        window.dispatchEvent(
+          new CustomEvent("cartUpdated", {
+            detail: {
+              cart: result?.cart,
+              totalQuantity: result?.cart?.total_items ?? 0,
+              total: result?.cart?.total_price ?? 0,
+            },
+          }),
+        );
 
-      toast.success("Đã thêm sản phẩm vào giỏ hàng");
-      return true;
+        toast.success("Đã thêm sản phẩm vào giỏ hàng");
+        return true;
+      } else {
+        toast.error(result?.message || "Thêm vào giỏ hàng thất bại");
+        return false;
+      }
     } catch (error) {
       console.error("Không thể thêm sản phẩm vào giỏ hàng:", error);
       toast.error("Thêm vào giỏ hàng thất bại");

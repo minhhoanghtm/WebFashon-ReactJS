@@ -951,13 +951,9 @@ const CustomerChatWidget = () => {
                                       </div>
                                       <button
                                         onClick={() => {
-                                          trackingService.trackAIChatInteraction(
-                                            "ai_recommendation_clicked",
-                                            {
-                                              productId: item.id,
-                                              productName: item.name,
-                                              position: idx + 1,
-                                            }
+                                          trackingService.trackAIRecommendationClick(
+                                            { id: item.id, _id: item.id, name: item.name },
+                                            { position: idx + 1 }
                                           );
                                           const targetMeta = item.id
                                             ? {

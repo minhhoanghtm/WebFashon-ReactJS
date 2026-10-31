@@ -7,6 +7,8 @@ import { useAuthStore } from "@/store/auth.store";
 import { userApi } from "@/api/user.api";
 import { toast } from "react-toastify";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
+import { addCartItemService } from "@/services/cartItem.service";
+import trackingService from "@/services/tracking.service";
 
 const FacebookIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -114,6 +116,27 @@ const LoginForm = () => {
           console.error("Lỗi khi lấy thông tin user sau khi đăng nhập:", err);
         }
         toast.success("Đăng nhập thành công!");
+
+        // Khôi phục giỏ hàng chờ sau khi đăng nhập và phát add_to_cart nếu thành công
+        const pendingCart = sessionStorage.getItem("pending_add_to_cart");
+        if (pendingCart && userRole !== "admin") {
+          try {
+            sessionStorage.removeItem("pending_add_to_cart");
+            const parsed = JSON.parse(pendingCart);
+            const addRes = await addCartItemService({
+              product_id: parsed.productId,
+              variant_id: parsed.variantId,
+              quantity: parsed.quantity || 1,
+              price: parsed.product?.new_price || parsed.product?.price || 0,
+            });
+            if (addRes && addRes.success !== false) {
+              trackingService.trackAddToCart(parsed.product, parsed.quantity || 1, parsed.variant);
+            }
+          } catch (restoreErr) {
+            console.error("Không thể khôi phục giỏ hàng sau đăng nhập:", restoreErr);
+          }
+        }
+
         if (userRole === "admin") {
           navigate("/admin");
         } else {

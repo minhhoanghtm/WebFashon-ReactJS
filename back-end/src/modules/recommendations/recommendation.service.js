@@ -427,7 +427,23 @@ class RecommendationService {
       }
 
       // Nếu người dùng đã từ chối theo dõi (consent = denied), chỉ trả về phổ biến không cá nhân hóa
-      if (profile?.consent_status === "denied" || assignment?.reason === "consent_denied") {
+      let isConsentDenied = profile?.consent_status === "denied" || assignment?.reason === "consent_denied";
+      if (!isConsentDenied && redis) {
+        const checkIdentities = [];
+        if (userId) checkIdentities.push(userId.toString(), `u:${userId}`);
+        if (anonymousId) checkIdentities.push(anonymousId.toString(), `a:${anonymousId}`);
+        for (const cid of checkIdentities) {
+          try {
+            const deniedVal = await redis.get(`consent:denied:${cid}`);
+            if (deniedVal === "1") {
+              isConsentDenied = true;
+              break;
+            }
+          } catch {}
+        }
+      }
+
+      if (isConsentDenied) {
         const popularProducts = await this.getPopularProductsCached({ limit: finalLimit });
         const formatted = await this.formatProducts(popularProducts, userId);
         return {

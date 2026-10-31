@@ -7,6 +7,21 @@ const isValidObjectId = (val) => {
   return mongoose.Types.ObjectId.isValid(val);
 };
 
+const metaPrimitive = z.union([
+  z.string().max(200, "Giá trị chuỗi meta tối đa 200 ký tự"),
+  z.number(),
+  z.boolean(),
+  z.null(),
+]);
+
+const metaItemObject = z.record(z.string().max(50), metaPrimitive);
+
+const metaValue = z.union([
+  metaPrimitive,
+  z.array(z.union([metaPrimitive, metaItemObject])).max(50),
+  metaItemObject,
+]);
+
 export const singleEventCoreSchema = z
   .object({
     anonymous_id: z
@@ -76,12 +91,7 @@ export const singleEventCoreSchema = z
     meta: z
       .record(
         z.string().max(50, "Tên thuộc tính meta tối đa 50 ký tự"),
-        z.union([
-          z.string().max(200, "Giá trị chuỗi meta tối đa 200 ký tự"),
-          z.number(),
-          z.boolean(),
-          z.null(),
-        ])
+        metaValue
       )
       .optional()
       .default({}),

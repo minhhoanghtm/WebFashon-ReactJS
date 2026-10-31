@@ -8,13 +8,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-import Experiment from "../modules/recommendations/experiments/experiment.model.js";
-import experimentService, { AA_EXPERIMENT_ID } from "../modules/recommendations/experiments/experiment.service.js";
-import semanticSearchService from "../modules/ai/services/semanticSearch.service.js";
-import ragService from "../modules/ai/services/rag.service.js";
-
 const STAGING_MONGO_URI = "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin";
 const STAGING_REDIS_URL = "redis://127.0.0.1:6381";
+
+process.env.REDIS_URL = STAGING_REDIS_URL;
+process.env.REDIS_PORT = "6381";
+process.env.MONGO_CONNECTIONSTRING = STAGING_MONGO_URI;
+
+const { default: Experiment } = await import("../modules/recommendations/experiments/experiment.model.js");
+const { default: experimentService, AA_EXPERIMENT_ID } = await import("../modules/recommendations/experiments/experiment.service.js");
+const { default: semanticSearchService } = await import("../modules/ai/services/semanticSearch.service.js");
+const { default: ragService } = await import("../modules/ai/services/rag.service.js");
 
 async function verifyStaging() {
   console.log("================================================================================");
@@ -40,6 +44,7 @@ async function verifyStaging() {
 
   // 4. Test Deterministic Assignment
   console.log(`\n--- [Staging Check 2] Deterministic Assignment (100 Seeds) ---`);
+  await experimentService.invalidateExperimentCache(AA_EXPERIMENT_ID);
   let countA = 0;
   let countB = 0;
   for (let i = 1; i <= 100; i++) {
@@ -89,6 +94,7 @@ async function verifyStaging() {
 
   await redis.quit();
   await mongoose.disconnect();
+  process.exit(0);
 }
 
 verifyStaging().catch((err) => {

@@ -9,18 +9,18 @@
 
 | Phase | Description | Status | Deliverables & Verified Components |
 | :--- | :--- | :---: | :--- |
-| **Phase 00** | Resource Guard & Baseline Isolation | **VERIFIED** | [RESOURCE_ISOLATION.md](file:///D:/Project/REACT-WebFashion/docs/tracking/RESOURCE_ISOLATION.md), `back-end/src/scripts/verify-resources.js` |
+| **Phase 00** | Resource Guard & Baseline Isolation | **VERIFIED** | [RESOURCE_ISOLATION.md](file:///D:/Project/REACT-WebFashion/docs/tracking/RESOURCE_ISOLATION.md), `audit-environment-resources.js` (Port 27018 & 6381) |
 | **Phase 01** | Tracking Architecture Audit | **VERIFIED** | [TRACKING_ARCHITECTURE.md](file:///D:/Project/REACT-WebFashion/docs/tracking/TRACKING_ARCHITECTURE.md), Unified `/api/events` & `/api/tracking` routes |
 | **Phase 02** | Event Taxonomy & Canonical Data Contract | **VERIFIED** | [EVENT_TAXONOMY.md](file:///D:/Project/REACT-WebFashion/docs/tracking/EVENT_TAXONOMY.md), `tracking.constants.js`, `tracking.validator.js` |
-| **Phase 03** | Complete Frontend Tracking Implementation | **VERIFIED** | `useProductImpression.js` (50% viewport, 500ms dwell), `ProductCard.jsx`, `CustomerChatWidget.jsx` |
-| **Phase 04** | Session, Identity Resolution & Consent Lifecycle | **VERIFIED** | `session.service.js` (30m sliding window), `consent.service.js`, `mergeAnonymousToUser` in `auth.controller.js` |
-| **Phase 05** | Backend Ingestion, BullMQ Pipeline & Exactly-Once | **VERIFIED** | BullMQ Ingestion Queue, Worker concurrency = 5, Redis 5m Dedup (`sess:prod:dwell`), Spin-lock jitter |
-| **Phase 06** | Business Tracking & Order Attribution | **VERIFIED** | Server-Only Order Guard (`purchase_completed` blocked from client), 24h Attribution Window (`resolveOrderAttribution`) |
+| **Phase 03** | Complete Frontend Tracking Implementation | **VERIFIED** | `useProductImpression.js` (50% viewport, 500ms dwell), `ProductCard.jsx`, `CustomerChatWidget.jsx`, `ProductActions.jsx` |
+| **Phase 04** | Session, Identity Resolution & Consent Lifecycle | **VERIFIED** | `session.service.js` (30m sliding window), `consent.service.js`, `mergeAnonymousToUser` (fixed MongoDB query `$nin`) |
+| **Phase 05** | Backend Ingestion, BullMQ Pipeline & Exactly-Once | **VERIFIED** | BullMQ Ingestion Queue, Worker concurrency = 5, Redis 5m Dedup (`sess:prod:dwell`), Spin-lock jitter, Durable `_dispatchJob` Redis outage fallback |
+| **Phase 06** | Business Tracking & Order Attribution | **VERIFIED** | Server-Only Order Guard (`purchase_completed` blocked from client), 24h Attribution Window (`resolveOrderAttribution`), Idempotent payment webhook |
 | **Phase 07** | User Interest Profile & Personalization Scoring | **VERIFIED** | Half-life 14-day exponential decay scoring ($S(t) = W_e \cdot 0.5^{\Delta t / 14}$), Affinity updates, 20 recent products dedup |
-| **Phase 08** | Tracking Analytics Engine & Admin Dashboard | **VERIFIED** | [ANALYTICS_METRICS.md](file:///D:/Project/REACT-WebFashion/docs/tracking/ANALYTICS_METRICS.md), ECharts Funnel in `Dashboard.jsx`, Normalized Cohort Funnel |
-| **Phase 09** | A/A & A/B Experiment Tracking Hardening | **VERIFIED** | `AA_Recommendation_Validation` in `draft`, Deterministic assignment, SRM Chi-Square validation, Emergency rollback <100ms |
-| **Phase 10** | Security, Performance & Resilience Benchmarking | **VERIFIED** | 565 events/s, p50=1.66ms, p95=2.44ms, p99=3.68ms, PII Scrubbing, 500 jobs drained 0 failures |
-| **Phase 11** | Automated Testing, Browser E2E & Final Deliverables | **VERIFIED** | [TESTING_EVIDENCE.md](file:///D:/Project/REACT-WebFashion/docs/tracking/TESTING_EVIDENCE.md), [STAGING_RUNBOOK.md](file:///D:/Project/REACT-WebFashion/docs/tracking/STAGING_RUNBOOK.md), [TRACKING_FINAL_ACCEPTANCE_REPORT.md](file:///D:/Project/REACT-WebFashion/docs/tracking/TRACKING_FINAL_ACCEPTANCE_REPORT.md), 114/114 Backend Tests PASS |
+| **Phase 08** | Tracking Analytics Engine & Admin Dashboard | **VERIFIED** | [ANALYTICS_METRICS.md](file:///D:/Project/REACT-WebFashion/docs/tracking/ANALYTICS_METRICS.md), Normalized Funnel $\le 100\%$ (`sessionFunnel`) |
+| **Phase 09** | A/A & A/B Experiment Tracking Hardening | **VERIFIED** | `AA_Recommendation_Validation` in dedicated Staging (Mongo 27018, Redis 6381), Deterministic assignment (42% A vs 58% B) |
+| **Phase 10** | Security, Performance & Resilience Benchmarking | **VERIFIED** | 551.9 events/s, p50=1.72ms, p95=2.35ms, p99=3.45ms, PII Scrubbing, 0 job failures |
+| **Phase 11** | Automated Testing, Browser E2E & Final Deliverables | **VERIFIED** | [TRACKING_VERIFIED_COMPLETION_REPORT.md](file:///D:/Project/REACT-WebFashion/docs/tracking/TRACKING_VERIFIED_COMPLETION_REPORT.md), [TESTING_EVIDENCE.md](file:///D:/Project/REACT-WebFashion/docs/tracking/TESTING_EVIDENCE.md), 16/16 Browser E2E PASS, 132/132 Backend Tests PASS (10 Suites) |
 
 ---
 
@@ -122,7 +122,7 @@
 - **Task ID**: `TASK-111`
 - **Status**: **VERIFIED**
 - **Evidence**:
-  - Jest Backend Test Suite: 9/9 Suites passed, 114/114 Tests passed (100%).
+  - Jest Backend Test Suite: 10/10 Suites passed, 132/132 Tests passed (100%).
   - Vite Frontend Production Build: 4,659 modules transformed in 2.00s with 0 errors.
-  - Playwright visual proofs captured across 6 core user journeys.
+  - Playwright visual proofs captured across 16 core user journeys (`e2e-playwright-16-scenarios.js` - 16/16 PASS).
   - Complete 8-document suite published in `docs/tracking/`.

@@ -67,11 +67,10 @@ const userInterestProfileSchema = new mongoose.Schema(
 );
 
 // Bắt buộc có user_id hoặc anonymous_id
-userInterestProfileSchema.pre("validate", function (next) {
+userInterestProfileSchema.pre("validate", function () {
   if (!this.user_id && !this.anonymous_id) {
-    return next(new Error("Phải có ít nhất user_id hoặc anonymous_id"));
+    throw new Error("Phải có ít nhất user_id hoặc anonymous_id");
   }
-  next();
 });
 
 // Partial unique indexes: đảm bảo duy nhất theo user_id hoặc anonymous_id

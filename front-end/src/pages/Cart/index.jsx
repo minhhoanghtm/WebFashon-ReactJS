@@ -390,6 +390,9 @@ const Cart = () => {
 
           toast.success(`Đã thêm "${product.name}" vào giỏ hàng!`);
           
+          // Ghi nhận sự kiện add_to_cart khi thêm thành công vào giỏ hàng
+          trackingService.trackAddToCart(product, 1);
+          
           // Notify headers
           window.dispatchEvent(
             new CustomEvent("cartUpdated", {

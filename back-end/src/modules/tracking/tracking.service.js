@@ -49,8 +49,75 @@ async function invalidateUserRecommendationCache(userId, anonymousId) {
 
 class TrackingService {
   /**
+   * Kiểm tra quyền riêng tư (Privacy & Consent):
+   * Single Source of Truth: MongoDB UserInterestProfile (consent_status: "granted" | "denied")
+   * Redis Cache layer: consent:denied:{identity} (TTL 1 năm)
+   * Tự động phục hồi cache từ MongoDB khi Redis restart hoặc cache bị mất
+   */
+  async isConsentDenied(userId, anonymousId) {
+    const redis = getRedisConnection();
+    const identities = [];
+    if (userId) {
+      identities.push(userId.toString());
+      identities.push(`u:${userId}`);
+    }
+    if (anonymousId) {
+      identities.push(anonymousId.toString());
+      identities.push(`a:${anonymousId}`);
+    }
+
+    // 1. Kiểm tra nhanh trong Redis cache
+    if (redis && identities.length > 0) {
+      try {
+        for (const id of identities) {
+          const val = await redis.get(`consent:denied:${id}`);
+          if (val === "1") return true;
+        }
+      } catch (redisErr) {
+        // Fallback to MongoDB
+      }
+    }
+
+    // 2. Fallback kiểm tra Single Source of Truth trong MongoDB
+    try {
+      const orFilters = [];
+      if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+        orFilters.push({ user_id: new mongoose.Types.ObjectId(userId) });
+      }
+      if (anonymousId) {
+        orFilters.push({ anonymous_id: anonymousId });
+      }
+
+      if (orFilters.length > 0) {
+        const profile = await UserInterestProfile.findOne({
+          $or: orFilters,
+          consent_status: "denied",
+        })
+          .select("_id user_id anonymous_id consent_status")
+          .lean();
+
+        if (profile) {
+          // Phục hồi lại cache Redis (TTL 1 năm)
+          if (redis) {
+            try {
+              if (userId) await redis.set(`consent:denied:${userId.toString()}`, "1", "EX", 86400 * 365);
+              if (anonymousId) await redis.set(`consent:denied:${anonymousId}`, "1", "EX", 86400 * 365);
+            } catch {}
+          }
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn("[Tracking] Lỗi kiểm tra consent MongoDB:", err.message);
+    }
+
+    return false;
+  }
+
+  /**
    * Tiếp nhận sự kiện từ HTTP request:
    * - Bỏ qua hành vi của Admin và bot để không làm sai lệch số liệu
+   * - Kiểm tra quyền riêng tư (Consent) ngay tại tầng Ingestion API
    * - Lọc quyền riêng tư (loại bỏ PII email/số điện thoại)
    * - Kiểm tra tồn tại sản phẩm
    * - Kiểm tra chống trùng qua Redis TTL (5 phút)
@@ -67,6 +134,12 @@ class TrackingService {
 
     if (!userId && !anonymousId) {
       throw new AppError("Yêu cầu cần có user_id (đã đăng nhập) hoặc anonymous_id", 400);
+    }
+
+    // Ingestion-level Privacy & Consent Check: Drop ngay lập tức nếu người dùng đã từ chối theo dõi
+    const consentDenied = await this.isConsentDenied(userId, anonymousId);
+    if (consentDenied) {
+      return { accepted: false, suppressed: "consent_denied", deduplicated: false };
     }
 
     const {
@@ -165,10 +238,26 @@ class TrackingService {
       timestamp: new Date().toISOString(),
     };
 
-    // Đẩy bất đồng bộ vào BullMQ queue
-    await addTrackingJob(jobPayload);
+    // Đẩy bất đồng bộ vào BullMQ queue với durable fallback nếu Redis/Queue gặp sự cố
+    await this._dispatchJob(jobPayload);
 
     return { accepted: true, deduplicated: false };
+  }
+
+  /**
+   * Điều phối đẩy job vào BullMQ kèm cơ chế Durable Fallback trực tiếp vào MongoDB nếu Redis outage
+   */
+  async _dispatchJob(jobPayload) {
+    try {
+      await addTrackingJob(jobPayload);
+    } catch (queueErr) {
+      console.warn("[Tracking] BullMQ dispatch failed (Redis outage?), falling back to direct MongoDB persistence:", queueErr.message);
+      try {
+        await this.processEvent(jobPayload);
+      } catch (directErr) {
+        console.error("[Tracking] Direct persistence fallback failed:", directErr.message);
+      }
+    }
   }
 
   /**
@@ -176,22 +265,25 @@ class TrackingService {
    */
   async recordBatchEvents(events, reqUser) {
     if (!Array.isArray(events) || events.length === 0) {
-      return { accepted: 0, deduplicated: 0 };
+      return { accepted: 0, deduplicated: 0, suppressed: 0, total: 0 };
     }
 
     if (reqUser?.role === "admin") {
-      return { accepted: events.length, deduplicated: 0, ignored: "admin_user" };
+      return { accepted: events.length, deduplicated: 0, suppressed: 0, total: events.length, ignored: "admin_user" };
     }
 
     let accepted = 0;
     let deduplicated = 0;
+    let suppressed = 0;
 
     for (const ev of events) {
       try {
         const res = await this.recordEvent(ev, reqUser);
-        if (res.deduplicated) {
+        if (res.suppressed === "consent_denied") {
+          suppressed++;
+        } else if (res.deduplicated) {
           deduplicated++;
-        } else {
+        } else if (res.accepted) {
           accepted++;
         }
       } catch {
@@ -199,13 +291,15 @@ class TrackingService {
       }
     }
 
-    return { accepted, deduplicated, total: events.length };
+    return { accepted, deduplicated, suppressed, total: events.length };
   }
 
   /**
    * Xử lý sự kiện trong Worker của BullMQ:
    * - Distributed Lock qua Redis theo user/anonymous ID để chống race condition
    * - Idempotent check qua Redis key tracking:processed:${event_id}
+   * - Kiểm tra Tombstone Flag ngăn chặn worker hồi sinh profile sau khi xóa dữ liệu
+   * - Worker-level Privacy & Consent Check (bỏ job ngay cả khi đã vào queue trước đó)
    * - Lưu UserEvent và cập nhật UserInterestProfile
    */
   async processEvent(payload) {
@@ -232,13 +326,26 @@ class TrackingService {
       }
     }
 
-    if (user_id && redis) {
-      const isCleared = await redis.get(`user:data_cleared:${user_id}`);
-      if (isCleared) return;
+    // 2. Tombstone Check: Ngăn BullMQ worker phục hồi dữ liệu từ event còn sót sau khi user gọi DELETE /api/events/me
+    if (redis) {
+      if (user_id) {
+        const isCleared = await redis.get(`user:data_cleared:${user_id}`);
+        if (isCleared) return;
+      }
+      if (anonymous_id) {
+        const isClearedAnon = await redis.get(`user:data_cleared:${anonymous_id}`);
+        if (isClearedAnon) return;
+      }
     }
 
     const identity = user_id || anonymous_id;
     if (!identity) return;
+
+    // 3. Worker-level Privacy & Consent Check: Thu hồi quyền riêng tư lập tức hủy mọi event đang chờ trong queue
+    const isConsentDenied = await this.isConsentDenied(user_id, anonymous_id);
+    if (isConsentDenied) {
+      return;
+    }
 
     // 2. Lấy Distributed Lock theo user/anonymous với spin-wait có jitter (tối đa 5 giây)
     const lockKey = `lock:profile:${identity}`;
@@ -333,6 +440,11 @@ class TrackingService {
           { upsert: true }
         );
       } catch (saveErr) {
+        if (saveErr.code === 11000) {
+          // Idempotency: Unique partial index (e.g. meta.order_id + product_id + purchase_completed)
+          // ngăn chặn duplicate purchase do concurrent webhook hoặc retry; dừng xử lý ngay.
+          return;
+        }
         console.error("Lỗi khi lưu UserEvent:", saveErr.message);
       }
 
@@ -598,7 +710,7 @@ class TrackingService {
     // 2. Bảo vệ: Nếu anonymous_id này đã từng gắn với một user khác, không gộp để tránh rò rỉ dữ liệu
     const otherUserEvent = await UserEvent.findOne({
       anonymous_id: anonymousId,
-      user_id: { $ne: null, $ne: userObjectId },
+      user_id: { $exists: true, $nin: [null, userObjectId] },
     }).select("_id user_id");
 
     if (otherUserEvent) {
@@ -753,37 +865,84 @@ class TrackingService {
 
   /**
    * Cập nhật trạng thái đồng ý theo dõi (Privacy & Consent)
+   * Single Source of Truth: MongoDB UserInterestProfile
+   * Redis cache layer: consent:denied:{identity} (TTL 1 năm)
    */
   async updateConsent({ userId, anonymousId, consent }) {
-    const filter = userId
-      ? { user_id: new mongoose.Types.ObjectId(userId) }
-      : { anonymous_id: anonymousId };
-
-    if (!filter.user_id && !filter.anonymous_id) {
+    if (!userId && !anonymousId) {
       throw new AppError("Cần cung cấp định danh người dùng để cập nhật consent", 400);
     }
 
+    const userObjectId =
+      userId && mongoose.Types.ObjectId.isValid(userId)
+        ? new mongoose.Types.ObjectId(userId)
+        : null;
+
+    // 1. Cập nhật Single Source of Truth trong MongoDB
+    const filter = userObjectId ? { user_id: userObjectId } : { anonymous_id: anonymousId };
+
     await UserInterestProfile.updateOne(
       filter,
-      { $set: { consent_status: consent, updatedAt: new Date() } },
+      {
+        $set: { consent_status: consent, updatedAt: new Date() },
+        $setOnInsert: {
+          user_id: userObjectId,
+          anonymous_id: userObjectId ? null : anonymousId,
+        },
+      },
       { upsert: true }
     );
 
-    if (consent === "denied") {
-      // Nếu từ chối: Xóa sạch dữ liệu hồ sơ sở thích cá nhân
+    if (userObjectId && anonymousId) {
       await UserInterestProfile.updateOne(
-        filter,
-        {
-          $set: {
-            category_scores: new Map(),
-            keyword_scores: new Map(),
-            preferred_colors: new Map(),
-            preferred_sizes: new Map(),
-            brand_scores: new Map(),
-            recent_product_ids: [],
-          },
+        { anonymous_id: anonymousId },
+        { $set: { consent_status: consent, updatedAt: new Date() } }
+      ).catch(() => {});
+    }
+
+    // 2. Đồng bộ Redis cache
+    const redis = getRedisConnection();
+    const identities = [];
+    if (userId) {
+      identities.push(userId.toString());
+      identities.push(`u:${userId}`);
+    }
+    if (anonymousId) {
+      identities.push(anonymousId.toString());
+      identities.push(`a:${anonymousId}`);
+    }
+
+    if (redis && identities.length > 0) {
+      for (const id of identities) {
+        if (consent === "denied") {
+          await redis.set(`consent:denied:${id}`, "1", "EX", 86400 * 365);
+        } else {
+          await redis.del(`consent:denied:${id}`);
         }
-      );
+      }
+    }
+
+    // 3. Nếu từ chối: Xóa sạch dữ liệu hồ sơ sở thích cá nhân và xóa cache đề xuất
+    if (consent === "denied") {
+      const resetOr = [];
+      if (userObjectId) resetOr.push({ user_id: userObjectId });
+      if (anonymousId) resetOr.push({ anonymous_id: anonymousId });
+
+      if (resetOr.length > 0) {
+        await UserInterestProfile.updateMany(
+          { $or: resetOr },
+          {
+            $set: {
+              category_scores: new Map(),
+              keyword_scores: new Map(),
+              preferred_colors: new Map(),
+              preferred_sizes: new Map(),
+              brand_scores: new Map(),
+              recent_product_ids: [],
+            },
+          }
+        );
+      }
       await invalidateUserRecommendationCache(userId, anonymousId);
     }
 
@@ -853,7 +1012,7 @@ class TrackingService {
       for (const item of items) {
         const pId = item.product_id ? (item.product_id._id || item.product_id).toString() : null;
         if (pId) {
-          await addTrackingJob({
+          await this._dispatchJob({
             event_id: new mongoose.Types.ObjectId().toString(),
             user_id: order.user_id.toString(),
             anonymous_id: activeAnonymousId,
@@ -948,7 +1107,7 @@ class TrackingService {
       for (const item of items) {
         const pId = item.product_id ? (item.product_id._id || item.product_id).toString() : null;
         if (pId) {
-          await addTrackingJob({
+          await this._dispatchJob({
             event_id: new mongoose.Types.ObjectId().toString(),
             user_id: order.user_id.toString(),
             anonymous_id: activeAnonymousId,
@@ -991,7 +1150,7 @@ class TrackingService {
       for (const item of items) {
         const pId = item.product_id ? (item.product_id._id || item.product_id).toString() : null;
         if (pId) {
-          await addTrackingJob({
+          await this._dispatchJob({
             event_id: new mongoose.Types.ObjectId().toString(),
             user_id: order.user_id.toString(),
             anonymous_id: null,
@@ -1070,24 +1229,83 @@ class TrackingService {
   }
 
   /**
-   * Xóa toàn bộ dữ liệu lịch sử hành vi + profile của user
+   * Xóa toàn bộ dữ liệu lịch sử hành vi + profile của user hoặc khách ẩn danh (Right to be Forgotten)
+   * - Hỗ trợ cả authenticated user (userId) và anonymous user (anonymousId)
+   * - Đặt Redis tombstone flag user:data_cleared:{id} trong 24h ngăn worker phục hồi dữ liệu từ BullMQ queue
+   * - Xóa UserEvent và UserInterestProfile
+   * - Invalidate recommendation cache
+   * - Bảo toàn 100% dữ liệu đơn hàng (Order/OrderItem) và tài chính
    */
-  async clearUserTrackingData(userId) {
-    const userObjectId = mongoose.Types.ObjectId.isValid(userId)
-      ? new mongoose.Types.ObjectId(userId)
-      : null;
-    if (!userObjectId) return;
+  async clearUserTrackingData(identifier) {
+    let userId = null;
+    let anonymousId = null;
 
-    try {
-      const { getRedisConnection } = await import("../../configs/redis.js");
-      const redis = getRedisConnection();
-      await redis.set(`user:data_cleared:${userId.toString()}`, "1", "EX", 3600);
-    } catch (e) {}
+    if (typeof identifier === "object" && identifier !== null) {
+      userId = identifier.userId || identifier.user_id || null;
+      anonymousId = identifier.anonymousId || identifier.anonymous_id || null;
+    } else {
+      userId = identifier;
+    }
 
-    await UserEvent.deleteMany({ user_id: userObjectId });
-    await UserInterestProfile.deleteOne({ user_id: userObjectId });
+    if (!userId && !anonymousId) {
+      throw new AppError("Cần cung cấp user_id hoặc anonymous_id để xóa dữ liệu tracking", 400);
+    }
 
-    await invalidateUserRecommendationCache(userId, null);
+    const userObjectId =
+      userId && mongoose.Types.ObjectId.isValid(userId)
+        ? new mongoose.Types.ObjectId(userId)
+        : null;
+
+    const redis = getRedisConnection();
+
+    // 1. Đặt Tombstone Flag trong Redis (ngăn BullMQ worker tạo lại profile từ queue còn sót)
+    if (redis) {
+      try {
+        if (userId) {
+          await redis.set(`user:data_cleared:${userId.toString()}`, "1", "EX", 86400);
+        }
+        if (anonymousId) {
+          await redis.set(`user:data_cleared:${anonymousId}`, "1", "EX", 86400);
+        }
+      } catch (err) {
+        console.warn("[Tracking] Lỗi đặt tombstone Redis:", err.message);
+      }
+    }
+
+    // 2. Xóa UserEvent (chỉ xóa event hành vi, tuyệt đối KHÔNG xóa bảng Order hay OrderItem)
+    const eventDeleteFilter = {};
+    if (userObjectId && anonymousId) {
+      eventDeleteFilter.$or = [{ user_id: userObjectId }, { anonymous_id: anonymousId }];
+    } else if (userObjectId) {
+      eventDeleteFilter.user_id = userObjectId;
+    } else {
+      eventDeleteFilter.anonymous_id = anonymousId;
+    }
+
+    const deleteEventsResult = await UserEvent.deleteMany(eventDeleteFilter);
+
+    // 3. Xóa UserInterestProfile
+    const profileDeleteFilter = {};
+    if (userObjectId && anonymousId) {
+      profileDeleteFilter.$or = [{ user_id: userObjectId }, { anonymous_id: anonymousId }];
+    } else if (userObjectId) {
+      profileDeleteFilter.user_id = userObjectId;
+    } else {
+      profileDeleteFilter.anonymous_id = anonymousId;
+    }
+
+    const deleteProfileResult = await UserInterestProfile.deleteMany(profileDeleteFilter);
+
+    // 4. Invalidate cache đề xuất
+    await invalidateUserRecommendationCache(userId, anonymousId);
+
+    return {
+      success: true,
+      deletedEventsCount: deleteEventsResult.deletedCount || 0,
+      deletedProfile: (deleteProfileResult.deletedCount || 0) > 0,
+      invalidatedCache: true,
+      preservedOrders: true,
+    };
   }
 
   /**
@@ -1340,9 +1558,10 @@ class TrackingService {
     });
 
     return {
-      funnel: unifiedFunnel, // Backward-compatible output
+      funnel: sessionFunnel, // Standardized cohort-consistent funnel for UI and backward compatibility
       sessionFunnel,
       userFunnel,
+      unifiedFunnel,
       rawStages: results,
       period: { startDate, endDate },
     };

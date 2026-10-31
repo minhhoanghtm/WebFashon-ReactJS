@@ -604,38 +604,16 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
       console.error("Failed to emit order socket notification:", err.message),
     );
 
-  // Ghi nhận sự kiện order_placed (có quy kết A/B Testing)
+  // Ghi nhận sự kiện order_placed an toàn phía máy chủ (Server-only guard có quy kết A/B Testing)
   if (Array.isArray(orderItems) && orderItems.length > 0) {
-    Promise.all([
-      import("../../../queues/tracking.queue.js"),
-      import("../../recommendations/experiments/experiment.service.js"),
-    ])
-      .then(([{ addTrackingJob }, { default: expService }]) => {
-        expService.resolveOrderAttribution(order.user_id, orderItems).then((attribution) => {
-          orderItems.forEach((item) => {
-            addTrackingJob({
-              event_id: new mongoose.Types.ObjectId().toString(),
-              user_id: order.user_id ? order.user_id.toString() : null,
-              anonymous_id: null,
-              event_type: "order_placed",
-              product_id: item.product_id ? item.product_id.toString() : null,
-              category_id: null,
-              query: null,
-              meta: {
-                price: item.price || 0,
-                quantity: item.quantity || 1,
-                order_id: order._id.toString(),
-                payment_method: order.payment_method,
-                experiment_id: attribution?.experiment_id || null,
-                variant: attribution?.variant || null,
-                rec_attributed: attribution?.is_direct_rec_assisted || false,
-              },
-              timestamp: new Date().toISOString(),
-            }).catch(() => {});
-          });
-        }).catch(() => {});
+    import("../../tracking/tracking.service.js")
+      .then(({ default: trackingService }) => {
+        trackingService.trackOrderPlaced({
+          ...(order.toObject ? order.toObject() : order),
+          items: orderItems,
+        });
       })
-      .catch((err) => console.warn("[Tracking] Lỗi import trackingQueue/expService:", err.message));
+      .catch((err) => console.warn("[Tracking] Lỗi ghi nhận order_placed:", err.message));
   }
 
   return order;

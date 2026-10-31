@@ -24,6 +24,7 @@ export const EVENT_TYPES = {
 
   // Cart & Checkout
   ADD_TO_CART: "add_to_cart",
+  ADD_TO_CART_ATTEMPT: "add_to_cart_attempt",
   REMOVE_FROM_CART: "remove_from_cart",
   CART_QUANTITY_CHANGE: "cart_quantity_change",
   CHECKOUT_STARTED: "checkout_started",
@@ -73,6 +74,7 @@ export const EVENT_WEIGHTS = {
   [EVENT_TYPES.PURCHASE_DONE]: 5,
   [EVENT_TYPES.ORDER_PLACED]: 4,
   [EVENT_TYPES.ADD_TO_CART]: 3,
+  [EVENT_TYPES.ADD_TO_CART_ATTEMPT]: 0,
   [EVENT_TYPES.PRODUCT_FAVORITE]: 3,
   [EVENT_TYPES.FAVORITE]: 3,
   [EVENT_TYPES.CHECKOUT_STARTED]: 2.5,

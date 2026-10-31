@@ -100,17 +100,20 @@ export const paymentCallback = async (orderId, status, transactionId) => {
   }
 
   if (status === "success") {
+    const isFirstTimePaid = order.payment_status !== "paid";
     order.payment_status = "paid";
     order.transaction_id = transactionId;
     order.paid_at = new Date();
     order.status = "confirmed";
 
-    // Ghi nhận sự kiện purchase_completed khi thanh toán online được xác minh thành công
-    import("../../tracking/tracking.service.js")
-      .then(({ default: trackingService }) => {
-        trackingService.trackPurchaseCompleted(order);
-      })
-      .catch((err) => console.warn("[Tracking] Lỗi ghi nhận purchase_completed qua payment callback:", err.message));
+    // Ghi nhận sự kiện purchase_completed khi thanh toán online được xác minh thành công (chống trùng webhook)
+    if (isFirstTimePaid) {
+      import("../../tracking/tracking.service.js")
+        .then(({ default: trackingService }) => {
+          trackingService.trackPurchaseCompleted(order);
+        })
+        .catch((err) => console.warn("[Tracking] Lỗi ghi nhận purchase_completed qua payment callback:", err.message));
+    }
   } else {
     order.payment_status = "failed";
   }

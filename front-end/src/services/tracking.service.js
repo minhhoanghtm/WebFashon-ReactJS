@@ -339,6 +339,21 @@ export const trackingService = {
     });
   },
 
+  trackAddToCartAttempt(product, quantity = 1, variant = {}, extraMeta = {}) {
+    if (!product?._id && !product?.id) return;
+    this.track("add_to_cart_attempt", {
+      product_id: product._id || product.id,
+      category_id: product.category_id || product.categoryId,
+      meta: {
+        quantity,
+        price: product.new_price || product.price,
+        color: variant?.color,
+        size: variant?.size,
+        ...extraMeta,
+      },
+    });
+  },
+
   trackRemoveFromCart(product, quantity = 1) {
     if (!product?._id && !product?.id) return;
     this.track("remove_from_cart", {
@@ -437,5 +452,9 @@ export const trackingService = {
     });
   },
 };
+
+if (typeof window !== "undefined") {
+  window.trackingService = trackingService;
+}
 
 export default trackingService;

@@ -68,11 +68,10 @@ const userEventSchema = new mongoose.Schema(
 );
 
 // Bắt buộc có ít nhất user_id hoặc anonymous_id
-userEventSchema.pre("validate", function (next) {
+userEventSchema.pre("validate", function () {
   if (!this.user_id && !this.anonymous_id) {
-    return next(new Error("Phải có ít nhất user_id hoặc anonymous_id"));
+    throw new Error("Phải có ít nhất user_id hoặc anonymous_id");
   }
-  next();
 });
 
 // Compound indexes phục vụ truy vấn analytics & profile nhanh chóng
@@ -83,6 +82,18 @@ userEventSchema.index({ product_id: 1, event_type: 1 });
 userEventSchema.index({ event_type: 1, createdAt: -1 });
 userEventSchema.index({ "meta.experiment_id": 1, event_type: 1, createdAt: -1 });
 userEventSchema.index({ "meta.experiment_id": 1, "meta.variant": 1, event_type: 1 });
+
+// Idempotency Index: Đảm bảo một đơn hàng và sản phẩm không bao giờ bị ghi nhận duplicate purchase_completed
+userEventSchema.index(
+  { "meta.order_id": 1, product_id: 1, event_type: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      event_type: "purchase_completed",
+      "meta.order_id": { $exists: true, $type: "string" },
+    },
+  }
+);
 
 // TTL Index: Mặc định 90 ngày (đọc từ biến môi trường USER_EVENTS_TTL_DAYS)
 const ttlDays = parseInt(process.env.USER_EVENTS_TTL_DAYS || "90", 10);

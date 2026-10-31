@@ -19,6 +19,7 @@ import "./checkout.css";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { shippingApi } from "@/api/shipping.api";
+import trackingService from "@/services/tracking.service";
 
 const getInitialShippingAddress = (routeState) => {
   const possibleAddress = [
@@ -123,6 +124,12 @@ const Checkout = () => {
       navigate("/");
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (normalizedCheckoutItems && normalizedCheckoutItems.length > 0) {
+      trackingService.trackCheckoutStarted(normalizedCheckoutItems, calculateFinalTotal());
+    }
+  }, []);
 
   const [shippingFee, setShippingFee] = useState(30000); //mặc định 30k, sẽ được cập nhật nếu có voucher vận chuyển hoặc đơn hàng đủ điều kiện freeship
   const [loadingFee, setLoadingFee] = useState(false);

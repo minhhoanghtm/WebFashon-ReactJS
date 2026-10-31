@@ -45,8 +45,8 @@ trackingRouter.post(
   trackingController.updateConsent
 );
 
-// DELETE /api/events/me - Xóa toàn bộ lịch sử hành vi & profile người dùng (Quyền riêng tư)
-trackingRouter.delete("/me", protectedRoute, trackingController.clearUserTrackingData);
+// DELETE /api/events/me - Xóa toàn bộ lịch sử hành vi & profile người dùng (Quyền riêng tư - hỗ trợ cả User và Guest)
+trackingRouter.delete("/me", optionalProtectedRoute, trackingController.clearUserTrackingData);
 
 // Analytics endpoints dành riêng cho Quản trị viên
 trackingRouter.get(

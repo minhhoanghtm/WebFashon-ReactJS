@@ -78,14 +78,9 @@ const ProductDetail = () => {
     const pId = String(rawProduct?._id || product?.id || "");
     if (pId && lastTrackedProductIdRef.current !== pId) {
       lastTrackedProductIdRef.current = pId;
-      trackingService.trackEvent({
-        event_type: "view_product",
-        product_id: pId,
-        category_id: rawProduct?.category_id || product?.category_id,
-        meta: {
-          price: product?.price || rawProduct?.new_price || 0,
-          source: "product_detail",
-        },
+      trackingService.trackProductView(product || rawProduct, {
+        source: "product_detail",
+        price: product?.price || rawProduct?.new_price || 0,
       });
     }
   }, [rawProduct?._id, product?.id, rawProduct?.category_id, product?.category_id, product?.price, rawProduct?.new_price]);
