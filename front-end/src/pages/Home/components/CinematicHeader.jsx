@@ -105,27 +105,27 @@ const MENU_ITEMS = [
   },
   {
     num: "02",
-    label: "BỘ SƯU TẬP",
+    label: "TẤT CẢ THIẾT KẾ",
     path: "/products",
-    desc: "Các thiết kế may đo đương đại",
+    desc: "Khám phá danh mục may đo đương đại",
   },
   {
     num: "03",
-    label: "LOOKBOOK",
-    path: "/products",
-    desc: "Ấn bản hình ảnh điện ảnh",
+    label: "MỤC YÊU THÍCH",
+    path: "/favorites",
+    desc: "Bộ sưu tập các thiết kế bạn đã lưu",
   },
   {
     num: "04",
     label: "ƯU ĐÃI VOUCHER",
     path: "/vouchers",
-    desc: "Đặc quyền dành riêng cho khách hàng",
+    desc: "Đặc quyền mua sắm dành riêng cho bạn",
   },
   {
     num: "05",
-    label: "VỀ CHÚNG TÔI",
-    path: "/products",
-    desc: "Triết lý cấu trúc & nghệ thuật thủ công",
+    label: "GIỎ HÀNG CỦA BẠN",
+    path: "/cart",
+    desc: "Xem lại và tiến hành thanh toán đơn hàng",
   },
 ];
 

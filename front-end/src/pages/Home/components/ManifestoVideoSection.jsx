@@ -9,15 +9,17 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-export const ManifestoVideoSection = () => {
+export const ManifestoVideoSection = ({ videoUrl = "" }) => {
   const sectionRef = useRef(null);
   const textContainerRef = useRef(null);
   const videoWrapperRef = useRef(null);
+  const videoElementRef = useRef(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const { manifesto } = HOME_CONTENT;
+  const hasRealVideo = Boolean(videoUrl && videoUrl.trim());
 
   useEffect(() => {
     if (prefersReducedMotion || !sectionRef.current) return undefined;
@@ -71,7 +73,14 @@ export const ManifestoVideoSection = () => {
   }, [prefersReducedMotion]);
 
   const togglePlay = () => {
-    setIsPlaying((prev) => !prev);
+    if (!videoElementRef.current) return;
+    if (isPlaying) {
+      videoElementRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      videoElementRef.current.play().catch(() => {});
+      setIsPlaying(true);
+    }
   };
 
   return (
@@ -131,28 +140,54 @@ export const ManifestoVideoSection = () => {
             />
           </div>
 
-          {/* Central Interactive State Canvas */}
+          {/* Video element if real video source provided */}
+          {hasRealVideo && (
+            <video
+              ref={videoElementRef}
+              src={videoUrl}
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+
+          {/* Central Interactive / Architectural Canvas State */}
           <div className="relative z-10 flex flex-col items-center justify-center text-center p-6 space-y-4">
             <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-white/40">
               {manifesto.videoSubtitle}
             </span>
 
-            <button
-              type="button"
-              onClick={togglePlay}
-              aria-label={isPlaying ? "Tạm dừng hiển thị" : "Bật trải nghiệm tư liệu Atelier"}
-              className="group relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full border border-white/40 bg-black/50 backdrop-blur-md text-white transition-all duration-500 hover:scale-110 hover:border-white hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-            >
-              {isPlaying ? (
-                <Pause size={24} className="fill-current" />
-              ) : (
-                <Play size={24} className="ml-1 fill-current" />
-              )}
-            </button>
+            {/* Play button: ONLY shown if real video source exists */}
+            {hasRealVideo ? (
+              <>
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  aria-label={isPlaying ? "Tạm dừng video" : "Phát video tư liệu Atelier"}
+                  className="group relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full border border-white/40 bg-black/50 backdrop-blur-md text-white transition-all duration-500 hover:scale-110 hover:border-white hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                >
+                  {isPlaying ? (
+                    <Pause size={24} className="fill-current" />
+                  ) : (
+                    <Play size={24} className="ml-1 fill-current" />
+                  )}
+                </button>
 
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-white/60">
-              {isPlaying ? "ĐANG HOẠT ĐỘNG" : "KHỞI CHẠY TƯ LIỆU"}
-            </span>
+                <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-white/60">
+                  {isPlaying ? "ĐANG PHÁT" : "PHÁT PHIM TƯ LIỆU"}
+                </span>
+              </>
+            ) : (
+              <div className="space-y-2 py-4">
+                <span className="font-condensed text-3xl sm:text-5xl font-extrabold uppercase tracking-widest text-white/20 block select-none">
+                  ATELIER ARCHIVE
+                </span>
+                <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-white/30 block">
+                  MONOCHROME VISUAL RECORD
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Bottom Video Metadata */}

@@ -39,10 +39,18 @@ export const useLenis = () => {
     gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
 
+    // Initial scroll reset & refresh
+    lenis.scrollTo(0, { immediate: true });
+    const rafId = requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+    });
+
     return () => {
+      cancelAnimationFrame(rafId);
       gsap.ticker.remove(tickerCallback);
       lenis.destroy();
       lenisRef.current = null;
+      ScrollTrigger.refresh();
     };
   }, [prefersReducedMotion]);
 

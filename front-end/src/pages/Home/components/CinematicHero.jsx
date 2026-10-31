@@ -214,12 +214,12 @@ export const CinematicHero = ({ onExploreClick }) => {
               </p>
             </div>
 
-            {/* Responsive title keeps Vietnamese diacritics clear at every viewport size. */}
-            <h1 className="mx-auto mt-4 font-condensed text-[clamp(2.5rem,min(8vw,14svh),7.5rem)] font-extrabold leading-[1.15] tracking-[-0.015em] text-white uppercase sm:mt-5">
-              <span className="mx-auto block max-w-[16ch] text-balance py-[0.12em]">
+            {/* Responsive title keeps Vietnamese diacritics clear at every viewport size (390px, 1366px, 1920px). */}
+            <h1 className="mx-auto mt-4 font-condensed text-[clamp(1.85rem,min(7.2vw,12.5svh),7.2rem)] font-extrabold leading-[1.14] tracking-[-0.015em] text-white uppercase sm:mt-5">
+              <span className="mx-auto block max-w-[16ch] text-balance py-[0.14em]">
                 {activeSlide.titleLine1}
               </span>
-              <span className="mx-auto block max-w-[16ch] text-balance py-[0.12em] text-white/90">
+              <span className="mx-auto block max-w-[16ch] text-balance py-[0.14em] text-white/90">
                 {activeSlide.titleLine2}
               </span>
             </h1>
