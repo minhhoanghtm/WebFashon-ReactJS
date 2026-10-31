@@ -101,3 +101,15 @@ export const validateUpdateUser = (req, res, next) => {
 export const validateUpdatePassword = validate(updatePasswordSchema);
 export const validateUpdateProfile  = validate(updateProfileSchema);
 export const validateUserIdParam    = validate(userIdParamSchema, "params");
+
+const sendPhoneOtpSchema = z.object({
+  phone: z.string({ required_error: "Số điện thoại là bắt buộc" }).trim().min(9, "Số điện thoại không hợp lệ"),
+});
+
+const verifyPhoneOtpSchema = z.object({
+  phone: z.string({ required_error: "Số điện thoại là bắt buộc" }).trim().min(9, "Số điện thoại không hợp lệ"),
+  otp: z.string({ required_error: "Mã OTP là bắt buộc" }).trim().length(6, "Mã OTP phải gồm 6 chữ số"),
+});
+
+export const validateSendPhoneOtp = validate(sendPhoneOtpSchema);
+export const validateVerifyPhoneOtp = validate(verifyPhoneOtpSchema);

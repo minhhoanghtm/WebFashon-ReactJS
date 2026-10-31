@@ -27,10 +27,19 @@ const addressSchema = new mongoose.Schema(
 
 const userSchema = new mongoose.Schema(
   {
+    phone: {
+      type: String,
+      default: null,
+      unique: true,
+      sparse: true,
+      trim: true,
+      index: true,
+    },
     email: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
+      sparse: true,
       trim: true,
       lowercase: true,
     },

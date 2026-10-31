@@ -10,6 +10,13 @@ import {
   refreshAccessToken,
   signOutAllDevices,
   signInWithGoogle,
+  sendRegisterOtpController,
+  verifyRegisterController,
+  sendLoginOtpController,
+  verifyLoginOtpController,
+  sendForgotPasswordOtpController,
+  resetPasswordWithOtpController,
+  resendOtpController,
 } from "./auth.controller.js";
 import { protectedRoute, optionalProtectedRoute } from "../../middlewares/auth.middleware.js";
 import {
@@ -18,6 +25,13 @@ import {
   validateSendOTP,
   validateVerifyOTP,
   validateResetPassword,
+  validateSendRegisterOtp,
+  validateVerifyRegister,
+  validateSendLoginOtp,
+  validateVerifyLoginOtp,
+  validateForgotPassword,
+  validateResetPasswordWithOtp,
+  validateResendOtp,
 } from "./auth.validator.js";
 import {
   signInLimiter,
@@ -29,6 +43,19 @@ import {
 
 const router = express.Router();
 
+// ── SMS & Modern Auth Routes ────────────────────────────────────────────────
+router.post("/register/send-otp", sendOtpLimiter, validateSendRegisterOtp, sendRegisterOtpController);
+router.post("/register/verify", signUpLimiter, validateVerifyRegister, verifyRegisterController);
+
+router.post("/login", signInLimiter, validateSignIn, signIn);
+router.post("/login/otp/send", sendOtpLimiter, validateSendLoginOtp, sendLoginOtpController);
+router.post("/login/otp/verify", signInLimiter, validateVerifyLoginOtp, verifyLoginOtpController);
+
+router.post("/password/forgot", sendOtpLimiter, validateForgotPassword, sendForgotPasswordOtpController);
+router.post("/password/reset", resetPasswordLimiter, validateResetPasswordWithOtp, resetPasswordWithOtpController);
+router.post("/otp/resend", sendOtpLimiter, validateResendOtp, resendOtpController);
+
+// ── Legacy Auth Routes (Backwards Compatibility) ────────────────────────────
 router.post("/signUp", signUpLimiter, validateSignUp, signUp);
 router.post("/signIn", signInLimiter, validateSignIn, signIn);
 router.post("/signOut", optionalProtectedRoute, signOut);

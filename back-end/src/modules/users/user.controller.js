@@ -1,4 +1,5 @@
 import userService from "./user.service.js";
+import authService from "../auth/auth.service.js";
 import { successResponse } from "../../common/responses/index.js";
 
 export const authMe = async (req, res, next) => {
@@ -65,6 +66,32 @@ export const updateProfile = async (req, res, next) => {
     const userId = req.user.userId;
     const updatedUser = await userService.updateProfile(userId, req.body);
     return successResponse(res, updatedUser, "Cập nhật thông tin thành công");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const sendUpdatePhoneOtpController = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { phone } = req.body;
+    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const result = await authService.sendUpdatePhoneOtp(userId, phone, ip);
+    return successResponse(res, result, result.message);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyAndUpdatePhoneController = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const { phone, otp } = req.body;
+    const result = await authService.verifyAndUpdatePhone(userId, phone, otp);
+    return successResponse(res, result.user, result.message);
+  } catch (error) {
+    next(error);
+  }
   } catch (error) {
     next(error);
   }

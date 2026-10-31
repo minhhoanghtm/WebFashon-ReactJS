@@ -9,6 +9,22 @@ class UserRepository {
     return await User.findById(id).select("-passWord");
   }
 
+  async findByPhone(phone) {
+    if (!phone) return null;
+    return await User.findOne({ phone });
+  }
+
+  async findByIdentifier(identifier) {
+    if (!identifier) return null;
+    const clean = identifier.trim();
+    return await User.findOne({
+      $or: [
+        { email: clean.toLowerCase() },
+        { phone: clean },
+      ],
+    });
+  }
+
   async findByEmail(email) {
     return await User.findOne({ email });
   }
