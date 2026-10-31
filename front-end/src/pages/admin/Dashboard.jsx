@@ -18,9 +18,13 @@ import {
   Eye,
   Bot,
 } from "lucide-react";
-import * as orderApi from "@/api/orderApi";
-import * as productApi from "@/api/productApi";
-import * as voucherApi from "@/api/voucherApi";
+import {
+  DashboardApi,
+  getRevenueOverviewApi,
+  getAdminOrdersApi,
+} from "@/api/orderApi";
+import { getAllProductApi } from "@/api/productApi";
+import voucherApi from "@/api/voucher.api";
 import trackingApi from "@/api/trackingApi";
 import { formatCurrency } from "@/utils/format";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
@@ -69,26 +73,36 @@ const Dashboard = () => {
       setLoadingSales(true);
       setSalesError(null);
 
-      const [revenueRes, recentRes, productsRes] = await Promise.all([
-        orderApi.getRevenueSummary(range),
-        orderApi.getRecentOrders(5),
-        productApi.getAllProducts({ limit: 1 }),
+      const typeMap = {
+        last7days: "week",
+        last30days: "month",
+        last1year: "year",
+      };
+      const type = typeMap[range] || "week";
+
+      const [kpiRes, revenueRes, ordersRes, productsRes] = await Promise.all([
+        DashboardApi().catch(() => null),
+        getRevenueOverviewApi(type).catch(() => null),
+        getAdminOrdersApi({ limit: 5 }).catch(() => null),
+        getAllProductApi().catch(() => null),
       ]);
 
-      const summary = revenueRes?.summary || {};
-      const chart = revenueRes?.revenueOverview || [];
+      const kpiData = kpiRes?.data?.data || kpiRes?.data || {};
+      const revenueData = revenueRes?.data?.data || revenueRes?.data || [];
+      const ordersData = ordersRes?.data?.data || ordersRes?.data || {};
+      const productsData = productsRes?.data?.data || productsRes?.data || [];
 
       setKpis({
-        totalRevenue: summary.totalRevenue || 0,
-        totalOrders: summary.totalOrders || 0,
-        avgOrderValue: summary.avgOrderValue || 0,
-        totalCustomers: summary.totalCustomers || 0,
-        totalSoldProducts: summary.totalSoldProducts || 0,
+        totalRevenue: kpiData.totalRevenue || 0,
+        totalOrders: kpiData.totalOrders || 0,
+        avgOrderValue: kpiData.avgOrderValue || 0,
+        totalCustomers: kpiData.totalCustomers || 0,
+        totalSoldProducts: kpiData.totalSoldProducts || 0,
       });
 
-      setRevenueOverview(chart);
-      setRecentOrdersList(recentRes?.orders || []);
-      setTotalProducts(productsRes?.total || 0);
+      setRevenueOverview(Array.isArray(revenueData) ? revenueData : []);
+      setRecentOrdersList(Array.isArray(ordersData?.items) ? ordersData.items : Array.isArray(ordersData) ? ordersData : []);
+      setTotalProducts(Array.isArray(productsData) ? productsData.length : 0);
     } catch (err) {
       setSalesError(
         err?.response?.data?.message ||
@@ -112,11 +126,11 @@ const Dashboard = () => {
       setLoadingTracking(true);
       setTrackingError(null);
       const [overviewRes, funnelRes] = await Promise.all([
-        trackingApi.getOverview(range),
-        trackingApi.getFunnel(range),
+        trackingApi.getAnalyticsOverview({ range }).catch(() => null),
+        trackingApi.getFunnelAnalytics({ range }).catch(() => null),
       ]);
-      setTrackingOverview(overviewRes?.data || null);
-      setFunnelData(funnelRes?.data || null);
+      setTrackingOverview(overviewRes?.data?.data || overviewRes?.data || null);
+      setFunnelData(funnelRes?.data?.data || funnelRes?.data || null);
     } catch (err) {
       setTrackingError(
         err?.response?.data?.message || "Không thể tải dữ liệu phân tích hành vi."
@@ -136,9 +150,9 @@ const Dashboard = () => {
     await Promise.resolve();
     try {
       setVoucherLoading(true);
-      const res = await voucherApi.getVoucherAnalytics();
-      if (res?.success) {
-        setVoucherStats(res.data);
+      const res = await voucherApi.getAdminVouchersStats().catch(() => null);
+      if (res?.success || res?.data) {
+        setVoucherStats(res?.data || res);
       }
     } catch {
       // silent fallback

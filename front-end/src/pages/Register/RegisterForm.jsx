@@ -179,26 +179,26 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center px-4 py-10 sm:px-8 lg:col-span-7 lg:px-12 xl:px-16">
-      <div className="mx-auto w-full max-w-lg space-y-6">
+    <div className="flex flex-col justify-center px-4 py-12 sm:px-8 lg:col-span-7 lg:px-12 xl:px-16 bg-background text-foreground">
+      <div className="mx-auto w-full max-w-lg space-y-8">
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="touch-target -ml-2 inline-flex items-center gap-2 px-2 text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground transition-colors hover:text-foreground"
+          className="group inline-flex min-h-[44px] items-center gap-2 text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
         >
-          <ArrowLeft size={15} aria-hidden="true" />
-          <span>Quay lại trang chủ</span>
+          <ArrowLeft size={14} aria-hidden="true" className="transition-transform group-hover:-translate-x-1" />
+          <span>Về trang chủ</span>
         </button>
 
-        <header className="space-y-2 border-b border-border pb-5">
-          <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
-            {siteName} · Hồ sơ mới
+        <header className="space-y-2 border-b border-border pb-6">
+          <p className="text-[11px] font-mono tracking-[0.28em] uppercase text-muted-foreground">
+            {siteName} · HỒ SƠ THÀNH VIÊN
           </p>
-          <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground uppercase sm:text-5xl">
             Đăng ký tài khoản
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Điền thông tin cá nhân để nhận mã xác thực OTP qua email.
+          <p className="text-xs text-muted-foreground font-sans">
+            Hoàn thiện thông tin để nhận mã xác thực một lần (OTP) bảo mật.
           </p>
         </header>
 
@@ -206,7 +206,7 @@ const RegisterForm = () => {
           {errors.general && (
             <div
               role="alert"
-              className="flex items-start gap-2.5 border border-destructive/50 bg-destructive/10 p-3.5 text-xs text-destructive"
+              className="flex items-start gap-2.5 border border-destructive bg-destructive/10 p-3.5 text-xs text-destructive"
             >
               <AlertCircle size={15} className="mt-0.5 shrink-0" />
               <span>{errors.general}</span>
@@ -214,15 +214,15 @@ const RegisterForm = () => {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {/* Full Name */}
             <div className="sm:col-span-2">
               <label
                 htmlFor="reg-fullName"
-                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Họ và tên *
+                Họ và tên <span aria-hidden="true">*</span>
               </label>
               <input
                 id="reg-fullName"
@@ -237,7 +237,7 @@ const RegisterForm = () => {
                 aria-describedby={
                   errors.fullName ? "reg-fullName-error" : undefined
                 }
-                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
                   errors.fullName ? "border-destructive" : "border-border"
                 }`}
               />
@@ -245,7 +245,7 @@ const RegisterForm = () => {
                 <p
                   id="reg-fullName-error"
                   role="alert"
-                  className="mt-1 text-[11px] font-medium text-destructive"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.fullName}
                 </p>
@@ -256,9 +256,9 @@ const RegisterForm = () => {
             <div className="sm:col-span-2">
               <label
                 htmlFor="reg-email"
-                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Địa chỉ Email *
+                Địa chỉ Email <span aria-hidden="true">*</span>
               </label>
               <input
                 id="reg-email"
@@ -271,7 +271,7 @@ const RegisterForm = () => {
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "reg-email-error" : undefined}
-                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
                   errors.email ? "border-destructive" : "border-border"
                 }`}
               />
@@ -279,7 +279,7 @@ const RegisterForm = () => {
                 <p
                   id="reg-email-error"
                   role="alert"
-                  className="mt-1 text-[11px] font-medium text-destructive"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.email}
                 </p>
@@ -290,9 +290,9 @@ const RegisterForm = () => {
             <div>
               <label
                 htmlFor="reg-dateOfBirth"
-                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Ngày sinh *
+                Ngày sinh <span aria-hidden="true">*</span>
               </label>
               <input
                 id="reg-dateOfBirth"
@@ -306,7 +306,7 @@ const RegisterForm = () => {
                 aria-describedby={
                   errors.dateOfBirth ? "reg-dob-error" : undefined
                 }
-                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
                   errors.dateOfBirth ? "border-destructive" : "border-border"
                 }`}
               />
@@ -314,7 +314,7 @@ const RegisterForm = () => {
                 <p
                   id="reg-dob-error"
                   role="alert"
-                  className="mt-1 text-[11px] font-medium text-destructive"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.dateOfBirth}
                 </p>
@@ -325,9 +325,9 @@ const RegisterForm = () => {
             <div>
               <label
                 htmlFor="reg-gender"
-                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Giới tính *
+                Giới tính <span aria-hidden="true">*</span>
               </label>
               <select
                 id="reg-gender"
@@ -339,7 +339,7 @@ const RegisterForm = () => {
                 aria-describedby={
                   errors.gender ? "reg-gender-error" : undefined
                 }
-                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
                   errors.gender ? "border-destructive" : "border-border"
                 }`}
               >
@@ -351,7 +351,7 @@ const RegisterForm = () => {
                 <p
                   id="reg-gender-error"
                   role="alert"
-                  className="mt-1 text-[11px] font-medium text-destructive"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.gender}
                 </p>
@@ -362,9 +362,9 @@ const RegisterForm = () => {
             <div>
               <label
                 htmlFor="reg-passWord"
-                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Mật khẩu *
+                Mật khẩu <span aria-hidden="true">*</span>
               </label>
               <div className="relative">
                 <input
@@ -380,7 +380,7 @@ const RegisterForm = () => {
                   aria-describedby={
                     errors.passWord ? "reg-password-error" : undefined
                   }
-                  className={`min-h-[44px] w-full border bg-background pl-3.5 pr-11 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                  className={`min-h-[44px] w-full border bg-background pl-3.5 pr-12 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
                     errors.passWord ? "border-destructive" : "border-border"
                   }`}
                 />
@@ -388,7 +388,7 @@ const RegisterForm = () => {
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   disabled={isSubmitting}
-                  className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center p-2 text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
                   aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -398,7 +398,7 @@ const RegisterForm = () => {
                 <p
                   id="reg-password-error"
                   role="alert"
-                  className="mt-1 text-[11px] font-medium text-destructive"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.passWord}
                 </p>
@@ -409,9 +409,9 @@ const RegisterForm = () => {
             <div>
               <label
                 htmlFor="reg-confirmPassword"
-                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Xác nhận mật khẩu *
+                Xác nhận mật khẩu <span aria-hidden="true">*</span>
               </label>
               <div className="relative">
                 <input
@@ -429,7 +429,7 @@ const RegisterForm = () => {
                       ? "reg-confirm-password-error"
                       : undefined
                   }
-                  className={`min-h-[44px] w-full border bg-background pl-3.5 pr-11 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                  className={`min-h-[44px] w-full border bg-background pl-3.5 pr-12 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
                     errors.confirmPassword
                       ? "border-destructive"
                       : "border-border"
@@ -439,7 +439,7 @@ const RegisterForm = () => {
                   type="button"
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
                   disabled={isSubmitting}
-                  className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center p-2 text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
                   aria-label={
                     showConfirmPassword
                       ? "Ẩn mật khẩu xác nhận"
@@ -457,7 +457,7 @@ const RegisterForm = () => {
                 <p
                   id="reg-confirm-password-error"
                   role="alert"
-                  className="mt-1 text-[11px] font-medium text-destructive"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.confirmPassword}
                 </p>
@@ -467,17 +467,16 @@ const RegisterForm = () => {
 
           {/* Terms Checkbox */}
           <div>
-            <label className="touch-target -my-1 inline-flex cursor-pointer items-center gap-2.5 select-none">
+            <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-2.5 select-none text-xs text-muted-foreground hover:text-foreground">
               <input
                 type="checkbox"
                 checked={acceptedTerms}
                 onChange={handleTermsChange}
                 disabled={isSubmitting}
-                className="h-4 w-4 cursor-pointer border-border accent-foreground"
+                className="h-4 w-4 cursor-pointer rounded-none border border-border accent-foreground"
               />
-              <span className="text-xs text-muted-foreground">
-                Tôi đồng ý với điều khoản dịch vụ và chính sách bảo mật của{" "}
-                {siteName}
+              <span className="font-sans">
+                Tôi đồng ý với điều khoản sử dụng và chính sách bảo mật của {siteName}
               </span>
             </label>
             {errors.terms && (
@@ -494,7 +493,7 @@ const RegisterForm = () => {
             type="submit"
             disabled={isSubmitting}
             aria-busy={isSubmitting}
-            className="touch-target flex w-full items-center justify-center gap-2 bg-primary px-6 py-3.5 text-xs font-semibold tracking-[0.18em] uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="group flex min-h-[46px] w-full items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold tracking-[0.24em] uppercase text-background transition-all hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
           >
             {isSubmitting ? (
               <>
@@ -502,15 +501,15 @@ const RegisterForm = () => {
                 <span>Đang gửi mã xác thực OTP...</span>
               </>
             ) : (
-              <span>Tiếp tục xác thực OTP</span>
+              <span>TIẾP TỤC XÁC THỰC OTP</span>
             )}
           </button>
         </form>
 
-        <div className="relative flex items-center justify-center py-1">
+        <div className="relative flex items-center justify-center py-2">
           <div className="w-full border-t border-border" />
-          <span className="bg-background px-3 text-[10px] tracking-[0.2em] uppercase text-muted-foreground shrink-0">
-            Hoặc tiếp tục với
+          <span className="bg-background px-3 text-[10px] font-mono tracking-[0.24em] uppercase text-muted-foreground shrink-0">
+            HOẶC TIẾP TỤC VỚI
           </span>
           <div className="w-full border-t border-border" />
         </div>
@@ -519,11 +518,11 @@ const RegisterForm = () => {
           <GoogleLoginButton />
         </div>
 
-        <p className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
-          Đã có tài khoản?{" "}
+        <p className="border-t border-border pt-6 text-center text-xs text-muted-foreground font-sans">
+          Đã sở hữu tài khoản?{" "}
           <Link
             to="/login"
-            className="font-semibold text-foreground underline underline-offset-4 hover:opacity-80"
+            className="inline-flex min-h-[44px] items-center font-semibold text-foreground underline underline-offset-4 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
           >
             Đăng nhập ngay
           </Link>

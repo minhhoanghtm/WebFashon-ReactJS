@@ -1,10 +1,11 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 
 const ProtectedRoute = ({ element, isPublic = false, allowedRoles = [] }) => {
   const { isAuthenticated: isLoggedIn, user, isLoading } = useAuthStore();
+  const location = useLocation();
   const userRole = user?.role || user?.data?.role || "";
 
   if (isPublic) {
@@ -27,7 +28,7 @@ const ProtectedRoute = ({ element, isPublic = false, allowedRoles = [] }) => {
   }
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {

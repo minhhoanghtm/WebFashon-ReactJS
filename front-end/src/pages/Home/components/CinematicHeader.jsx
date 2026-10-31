@@ -132,7 +132,16 @@ const MENU_ITEMS = [
 export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
   const navigate = useNavigate();
   const { settings, loading } = useWebsiteSettings();
-  const { isAuthenticated: isLoggedIn } = useAuthStore();
+  const { isAuthenticated: isLoggedIn, user, logout } = useAuthStore();
+  const displayName =
+    user?.fullName || user?.data?.fullName || user?.name || user?.username || "Tài khoản";
+
+  const handleLogout = () => {
+    setIsMenuOpen(false);
+    logout();
+    toast.success("Đã đăng xuất khỏi tài khoản.");
+    navigate("/login");
+  };
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -563,6 +572,49 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
                   />
                 </Link>
               ))}
+
+              {/* Account block (useAuthStore, same rules as legacy Header) */}
+              <div
+                aria-label="Tài khoản"
+                className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-6"
+              >
+                {isLoggedIn ? (
+                  <>
+                    <span className="mr-2 font-mono text-[11px] tracking-[0.2em] text-white/50 uppercase">
+                      {displayName}
+                    </span>
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="inline-flex min-h-[44px] items-center border border-white/25 px-5 text-xs font-semibold tracking-[0.22em] text-white uppercase transition-colors hover:border-white hover:bg-white hover:text-black"
+                    >
+                      Tài khoản
+                    </Link>
+                    <Link
+                      to="/orders"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="inline-flex min-h-[44px] items-center border border-white/25 px-5 text-xs font-semibold tracking-[0.22em] text-white uppercase transition-colors hover:border-white hover:bg-white hover:text-black"
+                    >
+                      Đơn hàng
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="inline-flex min-h-[44px] items-center px-5 text-xs font-semibold tracking-[0.22em] text-white/60 uppercase transition-colors hover:text-white"
+                    >
+                      Đăng xuất
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="inline-flex min-h-[44px] items-center border border-white/40 px-6 text-xs font-semibold tracking-[0.24em] text-white uppercase transition-colors hover:border-white hover:bg-white hover:text-black"
+                  >
+                    Đăng nhập
+                  </Link>
+                )}
+              </div>
             </nav>
 
             {/* Right: Editorial Preview Canvas (Desktop only) */}

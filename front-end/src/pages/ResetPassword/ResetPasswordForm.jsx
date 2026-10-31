@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff, LoaderCircle, RefreshCw } from "lucide-react";
 import {
   sendResetOTPService,
@@ -14,7 +14,7 @@ const RESEND_COOLDOWN = 60; // 60 seconds
 const ResetPasswordForm = () => {
   const navigate = useNavigate();
   const { settings } = useWebsiteSettings();
-  const siteName = settings?.general?.siteName || "WebFashion";
+  const siteName = settings?.general?.siteName || "WEBFASHION";
   const [step, setStep] = useState(1); // 1: Enter email, 2: Enter OTP, 3: Enter New Password
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -51,9 +51,9 @@ const ResetPasswordForm = () => {
   const validateStep1 = () => {
     const nextErrors = {};
     if (!email.trim()) {
-      nextErrors.email = "Vui lòng nhập email.";
+      nextErrors.email = "Vui lòng nhập địa chỉ email.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      nextErrors.email = "Email không đúng định dạng.";
+      nextErrors.email = "Địa chỉ email không đúng định dạng.";
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -181,14 +181,14 @@ const ResetPasswordForm = () => {
   };
 
   return (
-    <div className="p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-[var(--color-surface)] text-[var(--color-text)]">
-      <div className="w-full max-w-md mx-auto">
+    <div className="flex flex-col justify-center px-4 py-12 sm:px-8 lg:col-span-6 lg:px-12 xl:px-16 bg-background text-foreground">
+      <div className="mx-auto w-full max-w-md space-y-8">
         <button
           onClick={handleBack}
-          className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors mb-6 min-h-[44px]"
+          className="group inline-flex min-h-[44px] items-center gap-2 text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
           type="button"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          <ArrowLeft size={14} aria-hidden="true" className="transition-transform group-hover:-translate-x-1" />
           <span>
             {step === 3
               ? "Quay lại nhập OTP"
@@ -198,19 +198,19 @@ const ResetPasswordForm = () => {
           </span>
         </button>
 
-        <header className="mb-8">
-          <span className="atelier-eyebrow block mb-2">
-            {siteName} · Bước {step}/3
-          </span>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight">
-            {step === 3 ? "Đặt mật khẩu mới" : "Khôi phục mật khẩu"}
+        <header className="space-y-2 border-b border-border pb-6">
+          <p className="text-[11px] font-mono tracking-[0.28em] uppercase text-muted-foreground">
+            {siteName} · BƯỚC {step}/3
+          </p>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground uppercase sm:text-5xl">
+            {step === 3 ? "Mật khẩu mới" : "Khôi phục mật khẩu"}
           </h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-2 leading-relaxed">
+          <p className="text-xs text-muted-foreground font-sans">
             {step === 1 &&
-              "Nhập địa chỉ email đã đăng ký để nhận mã xác minh OTP khôi phục tài khoản."}
+              "Nhập địa chỉ email để nhận mã OTP khôi phục tài khoản cá nhân."}
             {step === 2 &&
-              `Mã OTP đã được gửi. Hãy kiểm tra hộp thư email ${email}.`}
-            {step === 3 && `Thiết lập mật khẩu mới cho tài khoản ${email}.`}
+              `Nhập mã OTP vừa được gửi về hộp thư ${email}.`}
+            {step === 3 && `Thiết lập mật khẩu mới an toàn cho tài khoản ${email}.`}
           </p>
         </header>
 
@@ -218,40 +218,36 @@ const ResetPasswordForm = () => {
           {errors.general && (
             <div
               role="alert"
-              className="mb-6 p-3 border border-[var(--color-danger)] text-[var(--color-danger)] text-xs font-medium"
+              className="flex items-start gap-2.5 border border-destructive bg-destructive/10 p-3.5 text-xs text-destructive"
             >
-              {errors.general}
+              <span>{errors.general}</span>
             </div>
           )}
         </div>
 
         {step === 1 && (
-          <form onSubmit={handleSendOTP} noValidate className="space-y-5">
+          <form onSubmit={handleSendOTP} noValidate className="space-y-6">
             <div>
               <label
                 htmlFor="reset-email"
-                className="block text-[11px] uppercase tracking-[0.14em] font-medium mb-2"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Email tài khoản
+                Địa chỉ Email <span aria-hidden="true">*</span>
               </label>
               <input
                 id="reset-email"
                 name="email"
                 type="email"
-                placeholder="example@gmail.com"
+                placeholder="name@example.com"
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "reset-email-error" : undefined}
-                className={`w-full min-h-[44px] px-3.5 py-2.5 text-sm bg-[var(--color-bg)] border transition-colors focus:outline-none ${
-                  errors.email
-                    ? "border-[var(--color-danger)]"
-                    : "border-[var(--color-border)] focus:border-[var(--color-text)]"
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
+                  errors.email ? "border-destructive" : "border-border"
                 }`}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (errors.email) {
-                    setErrors((prev) => ({ ...prev, email: null }));
-                  }
+                  if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
                 }}
                 disabled={isSubmitting}
               />
@@ -259,7 +255,7 @@ const ResetPasswordForm = () => {
                 <p
                   id="reset-email-error"
                   role="alert"
-                  className="mt-1.5 text-xs text-[var(--color-danger)]"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.email}
                 </p>
@@ -268,53 +264,45 @@ const ResetPasswordForm = () => {
 
             <button
               type="submit"
-              className="w-full min-h-[48px] px-6 py-3 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.16em] font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
               disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              className="group flex min-h-[46px] w-full items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold tracking-[0.24em] uppercase text-background transition-all hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               {isSubmitting ? (
                 <>
-                  <LoaderCircle
-                    className="animate-spin h-4 w-4"
-                    aria-hidden="true"
-                  />
+                  <LoaderCircle size={16} className="animate-spin" />
                   <span>Đang gửi mã...</span>
                 </>
               ) : (
-                "Gửi mã xác minh OTP"
+                <span>TIẾP TỤC GỬI MÃ OTP</span>
               )}
             </button>
           </form>
         )}
 
         {step === 2 && (
-          <form onSubmit={handleVerifyOTP} noValidate className="space-y-5">
+          <form onSubmit={handleVerifyOTP} noValidate className="space-y-6">
             <div>
               <label
                 htmlFor="reset-otp"
-                className="block text-[11px] uppercase tracking-[0.14em] font-medium mb-2"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Mã xác minh OTP
+                Mã xác thực OTP <span aria-hidden="true">*</span>
               </label>
               <input
                 id="reset-otp"
                 name="otp"
                 type="text"
-                inputMode="numeric"
-                placeholder="Nhập 6 chữ số OTP"
-                maxLength={6}
+                placeholder="Nhập mã OTP"
                 aria-invalid={Boolean(errors.otp)}
                 aria-describedby={errors.otp ? "reset-otp-error" : undefined}
-                className={`w-full min-h-[44px] px-3.5 py-2.5 text-sm font-mono tracking-widest bg-[var(--color-bg)] border transition-colors focus:outline-none ${
-                  errors.otp
-                    ? "border-[var(--color-danger)]"
-                    : "border-[var(--color-border)] focus:border-[var(--color-text)]"
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-center font-mono text-base font-bold tracking-widest text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
+                  errors.otp ? "border-destructive" : "border-border"
                 }`}
                 value={otp}
                 onChange={(e) => {
-                  setOtp(e.target.value.replace(/\D/g, ""));
-                  if (errors.otp) {
-                    setErrors((prev) => ({ ...prev, otp: null }));
-                  }
+                  setOtp(e.target.value);
+                  if (errors.otp) setErrors((prev) => ({ ...prev, otp: null }));
                 }}
                 disabled={isSubmitting}
               />
@@ -322,166 +310,161 @@ const ResetPasswordForm = () => {
                 <p
                   id="reset-otp-error"
                   role="alert"
-                  className="mt-1.5 text-xs text-[var(--color-danger)]"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.otp}
                 </p>
               )}
             </div>
 
-            <button
-              type="submit"
-              className="w-full min-h-[48px] px-6 py-3 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.16em] font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <LoaderCircle
-                    className="animate-spin h-4 w-4"
-                    aria-hidden="true"
-                  />
-                  <span>Đang xác thực OTP...</span>
-                </>
-              ) : (
-                "Xác nhận mã OTP"
-              )}
-            </button>
-
-            {/* Gửi lại OTP Row */}
-            <div className="flex flex-wrap items-center justify-center gap-2 text-xs pt-2">
-              <span className="text-[var(--color-text-muted)]">
-                Không nhận được mã?
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground font-sans">
+                Chưa nhận được mã?
               </span>
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 font-medium min-h-[44px] px-2 text-[var(--color-text)] underline underline-offset-4 disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
                 onClick={handleResendOTP}
                 disabled={!canResend || isResending}
+                className="inline-flex min-h-[44px] items-center gap-1.5 font-semibold text-foreground underline underline-offset-4 disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
               >
-                <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>{isResending ? "Đang gửi lại…" : "Gửi lại mã"}</span>
+                {isResending ? (
+                  <>
+                    <LoaderCircle size={14} className="animate-spin" />
+                    <span>Đang gửi...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={14} />
+                    <span>Gửi lại mã {!canResend && `(${countdown}s)`}</span>
+                  </>
+                )}
               </button>
-              {!canResend && (
-                <span className="font-mono text-[11px] px-2 py-1 border border-[var(--color-border)] text-[var(--color-text-muted)]">
-                  {countdown}s
-                </span>
-              )}
             </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              className="group flex min-h-[46px] w-full items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold tracking-[0.24em] uppercase text-background transition-all hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+            >
+              {isSubmitting ? (
+                <>
+                  <LoaderCircle size={16} className="animate-spin" />
+                  <span>Đang xác minh...</span>
+                </>
+              ) : (
+                <span>XÁC THỰC MÃ OTP</span>
+              )}
+            </button>
           </form>
         )}
 
         {step === 3 && (
-          <form onSubmit={handleResetPassword} noValidate className="space-y-5">
-            {/* New Password Field */}
+          <form onSubmit={handleResetPassword} noValidate className="space-y-6">
             <div>
               <label
-                htmlFor="reset-new-password"
-                className="block text-[11px] uppercase tracking-[0.14em] font-medium mb-2"
+                htmlFor="new-password"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Mật khẩu mới
+                Mật khẩu mới <span aria-hidden="true">*</span>
               </label>
               <div className="relative">
                 <input
-                  id="reset-new-password"
+                  id="new-password"
                   name="newPassword"
                   type={showPassword ? "text" : "password"}
                   placeholder="Tối thiểu 6 ký tự"
                   aria-invalid={Boolean(errors.newPassword)}
                   aria-describedby={
-                    errors.newPassword ? "reset-new-password-error" : undefined
+                    errors.newPassword ? "new-password-error" : undefined
                   }
-                  className={`w-full min-h-[44px] pl-3.5 pr-11 py-2.5 text-sm bg-[var(--color-bg)] border transition-colors focus:outline-none ${
-                    errors.newPassword
-                      ? "border-[var(--color-danger)]"
-                      : "border-[var(--color-border)] focus:border-[var(--color-text)]"
+                  className={`min-h-[44px] w-full border bg-background pl-3.5 pr-12 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
+                    errors.newPassword ? "border-destructive" : "border-border"
                   }`}
                   value={newPassword}
                   onChange={(e) => {
                     setNewPassword(e.target.value);
-                    if (errors.newPassword) {
+                    if (errors.newPassword)
                       setErrors((prev) => ({ ...prev, newPassword: null }));
-                    }
                   }}
                   disabled={isSubmitting}
                 />
                 <button
                   type="button"
-                  className="absolute right-0 top-0 h-full min-w-[44px] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  disabled={isSubmitting}
+                  className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center p-2 text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
                   aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 >
-                  {showPassword ? (
-                    <EyeOff size={16} aria-hidden="true" />
-                  ) : (
-                    <Eye size={16} aria-hidden="true" />
-                  )}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {errors.newPassword && (
                 <p
-                  id="reset-new-password-error"
+                  id="new-password-error"
                   role="alert"
-                  className="mt-1.5 text-xs text-[var(--color-danger)]"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.newPassword}
                 </p>
               )}
             </div>
 
-            {/* Confirm Password Field */}
             <div>
               <label
-                htmlFor="reset-confirm-password"
-                className="block text-[11px] uppercase tracking-[0.14em] font-medium mb-2"
+                htmlFor="confirm-new-password"
+                className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Xác nhận mật khẩu mới
+                Xác nhận mật khẩu mới <span aria-hidden="true">*</span>
               </label>
               <div className="relative">
                 <input
-                  id="reset-confirm-password"
+                  id="confirm-new-password"
                   name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Nhập lại mật khẩu mới"
                   aria-invalid={Boolean(errors.confirmPassword)}
                   aria-describedby={
                     errors.confirmPassword
-                      ? "reset-confirm-password-error"
+                      ? "confirm-new-password-error"
                       : undefined
                   }
-                  className={`w-full min-h-[44px] pl-3.5 pr-11 py-2.5 text-sm bg-[var(--color-bg)] border transition-colors focus:outline-none ${
+                  className={`min-h-[44px] w-full border bg-background pl-3.5 pr-12 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
                     errors.confirmPassword
-                      ? "border-[var(--color-danger)]"
-                      : "border-[var(--color-border)] focus:border-[var(--color-text)]"
+                      ? "border-destructive"
+                      : "border-border"
                   }`}
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
-                    if (errors.confirmPassword) {
+                    if (errors.confirmPassword)
                       setErrors((prev) => ({ ...prev, confirmPassword: null }));
-                    }
                   }}
                   disabled={isSubmitting}
                 />
                 <button
                   type="button"
-                  className="absolute right-0 top-0 h-full min-w-[44px] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  disabled={isSubmitting}
+                  className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center p-2 text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
                   aria-label={
-                    showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+                    showConfirmPassword
+                      ? "Ẩn mật khẩu xác nhận"
+                      : "Hiện mật khẩu xác nhận"
                   }
                 >
                   {showConfirmPassword ? (
-                    <EyeOff size={16} aria-hidden="true" />
+                    <EyeOff size={16} />
                   ) : (
-                    <Eye size={16} aria-hidden="true" />
+                    <Eye size={16} />
                   )}
                 </button>
               </div>
               {errors.confirmPassword && (
                 <p
-                  id="reset-confirm-password-error"
+                  id="confirm-new-password-error"
                   role="alert"
-                  className="mt-1.5 text-xs text-[var(--color-danger)]"
+                  className="mt-1.5 text-[11px] font-medium text-destructive"
                 >
                   {errors.confirmPassword}
                 </p>
@@ -490,33 +473,21 @@ const ResetPasswordForm = () => {
 
             <button
               type="submit"
-              className="w-full min-h-[48px] px-6 py-3 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.16em] font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
               disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              className="group flex min-h-[46px] w-full items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold tracking-[0.24em] uppercase text-background transition-all hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               {isSubmitting ? (
                 <>
-                  <LoaderCircle
-                    className="animate-spin h-4 w-4"
-                    aria-hidden="true"
-                  />
-                  <span>Đang đặt lại mật khẩu...</span>
+                  <LoaderCircle size={16} className="animate-spin" />
+                  <span>Đang lưu mật khẩu...</span>
                 </>
               ) : (
-                "Khôi phục mật khẩu"
+                <span>LƯU MẬT KHẨU MỚI</span>
               )}
             </button>
           </form>
         )}
-
-        <p className="mt-8 text-center text-xs text-[var(--color-text-muted)]">
-          Nhớ mật khẩu của bạn?{" "}
-          <Link
-            to="/login"
-            className="font-medium text-[var(--color-text)] underline underline-offset-4 ml-1 inline-flex items-center min-h-[44px]"
-          >
-            Đăng nhập ngay
-          </Link>
-        </p>
       </div>
     </div>
   );

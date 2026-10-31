@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff, LoaderCircle, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { GoogleLoginButton } from "@/components/GoogleLoginButton";
@@ -12,9 +12,13 @@ import trackingService from "@/services/tracking.service";
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, setUser } = useAuthStore();
   const { settings } = useWebsiteSettings();
   const siteName = settings?.general?.siteName || "WEBFASHION";
+
+  // Đường dẫn chuyển hướng trước đó hoặc mặc định "/"
+  const fromPath = location.state?.from?.pathname || "/";
 
   const [formData, setFormData] = useState(() => ({
     email: localStorage.getItem("rememberedEmail") || "",
@@ -130,9 +134,9 @@ const LoginForm = () => {
         }
 
         if (userRole === "admin") {
-          navigate("/admin");
+          navigate("/admin", { replace: true });
         } else {
-          navigate("/");
+          navigate(fromPath, { replace: true });
         }
       } else {
         toast.error("Đăng nhập thất bại: Không tìm thấy token xác thực.");
@@ -150,26 +154,26 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center px-4 py-10 sm:px-8 lg:col-span-6 lg:px-12 xl:px-16">
-      <div className="mx-auto w-full max-w-md space-y-7">
+    <div className="flex flex-col justify-center px-4 py-12 sm:px-8 lg:col-span-6 lg:px-12 xl:px-16 bg-background text-foreground">
+      <div className="mx-auto w-full max-w-md space-y-8">
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="touch-target -ml-2 inline-flex items-center gap-2 px-2 text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground transition-colors hover:text-foreground"
+          className="group inline-flex min-h-[44px] items-center gap-2 text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
         >
-          <ArrowLeft size={15} aria-hidden="true" />
-          <span>Quay lại trang chủ</span>
+          <ArrowLeft size={14} aria-hidden="true" className="transition-transform group-hover:-translate-x-1" />
+          <span>Về trang chủ</span>
         </button>
 
-        <header className="space-y-2 border-b border-border pb-5">
-          <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
-            {siteName} · Tài khoản
+        <header className="space-y-2 border-b border-border pb-6">
+          <p className="text-[11px] font-mono tracking-[0.28em] uppercase text-muted-foreground">
+            {siteName} · ĐỊNH DANH
           </p>
-          <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground uppercase sm:text-5xl">
             Đăng nhập
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Nhập thông tin định danh của bạn để truy cập hệ thống.
+          <p className="text-xs text-muted-foreground font-sans">
+            Nhập thông tin xác thực để tiếp cận không gian quản lý đơn hàng.
           </p>
         </header>
 
@@ -177,7 +181,7 @@ const LoginForm = () => {
           {errors.general && (
             <div
               role="alert"
-              className="flex items-start gap-2.5 border border-destructive/50 bg-destructive/10 p-3.5 text-xs text-destructive"
+              className="flex items-start gap-2.5 border border-destructive bg-destructive/10 p-3.5 text-xs text-destructive"
             >
               <AlertCircle size={15} className="mt-0.5 shrink-0" />
               <span>{errors.general}</span>
@@ -185,13 +189,13 @@ const LoginForm = () => {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           <div>
             <label
               htmlFor="login-email"
-              className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+              className="mb-2 block text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
             >
-              Địa chỉ Email
+              Địa chỉ Email <span aria-hidden="true">*</span>
             </label>
             <input
               id="login-email"
@@ -204,7 +208,7 @@ const LoginForm = () => {
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.email)}
               aria-describedby={errors.email ? "login-email-error" : undefined}
-              className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+              className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
                 errors.email ? "border-destructive" : "border-border"
               }`}
             />
@@ -220,16 +224,16 @@ const LoginForm = () => {
           </div>
 
           <div>
-            <div className="mb-1.5 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between">
               <label
                 htmlFor="login-password"
-                className="text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+                className="text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground"
               >
-                Mật khẩu
+                Mật khẩu <span aria-hidden="true">*</span>
               </label>
               <Link
                 to="/reset-password"
-                className="text-[11px] font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                className="inline-flex min-h-[44px] items-center text-[11px] font-mono tracking-wider uppercase text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
               >
                 Quên mật khẩu?
               </Link>
@@ -240,7 +244,7 @@ const LoginForm = () => {
                 name="passWord"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
-                placeholder="Nhập mật khẩu của bạn"
+                placeholder="Nhập mật khẩu"
                 value={formData.passWord}
                 onChange={handleChange}
                 disabled={isSubmitting}
@@ -248,7 +252,7 @@ const LoginForm = () => {
                 aria-describedby={
                   errors.passWord ? "login-password-error" : undefined
                 }
-                className={`min-h-[44px] w-full border bg-background pl-3.5 pr-11 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                className={`min-h-[44px] w-full border bg-background pl-3.5 pr-12 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50 ${
                   errors.passWord ? "border-destructive" : "border-border"
                 }`}
               />
@@ -256,7 +260,7 @@ const LoginForm = () => {
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 disabled={isSubmitting}
-                className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center p-2 text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
                 aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -274,17 +278,15 @@ const LoginForm = () => {
           </div>
 
           <div className="flex items-center justify-between">
-            <label className="touch-target -my-2 inline-flex cursor-pointer items-center gap-2.5 select-none">
+            <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-2.5 select-none text-xs text-muted-foreground hover:text-foreground">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
                 disabled={isSubmitting}
-                className="h-4 w-4 cursor-pointer border-border accent-foreground"
+                className="h-4 w-4 cursor-pointer rounded-none border border-border accent-foreground"
               />
-              <span className="text-xs text-muted-foreground">
-                Ghi nhớ email đăng nhập
-              </span>
+              <span className="font-sans">Ghi nhớ email trên thiết bị này</span>
             </label>
           </div>
 
@@ -292,7 +294,7 @@ const LoginForm = () => {
             type="submit"
             disabled={isSubmitting}
             aria-busy={isSubmitting}
-            className="touch-target flex w-full items-center justify-center gap-2 bg-primary px-6 py-3.5 text-xs font-semibold tracking-[0.18em] uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="group flex min-h-[46px] w-full items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold tracking-[0.24em] uppercase text-background transition-all hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
           >
             {isSubmitting ? (
               <>
@@ -300,15 +302,15 @@ const LoginForm = () => {
                 <span>Đang xác thực...</span>
               </>
             ) : (
-              <span>Đăng nhập</span>
+              <span>ĐĂNG NHẬP</span>
             )}
           </button>
         </form>
 
-        <div className="relative flex items-center justify-center py-1">
+        <div className="relative flex items-center justify-center py-2">
           <div className="w-full border-t border-border" />
-          <span className="bg-background px-3 text-[10px] tracking-[0.2em] uppercase text-muted-foreground shrink-0">
-            Hoặc tiếp tục với
+          <span className="bg-background px-3 text-[10px] font-mono tracking-[0.24em] uppercase text-muted-foreground shrink-0">
+            HOẶC TIẾP TỤC VỚI
           </span>
           <div className="w-full border-t border-border" />
         </div>
@@ -317,13 +319,13 @@ const LoginForm = () => {
           <GoogleLoginButton />
         </div>
 
-        <p className="border-t border-border pt-5 text-center text-xs text-muted-foreground">
-          Chưa có tài khoản tại {siteName}?{" "}
+        <p className="border-t border-border pt-6 text-center text-xs text-muted-foreground font-sans">
+          Chưa có tài khoản thành viên?{" "}
           <Link
             to="/register"
-            className="font-semibold text-foreground underline underline-offset-4 hover:opacity-80"
+            className="inline-flex min-h-[44px] items-center font-semibold text-foreground underline underline-offset-4 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
           >
-            Đăng ký ngay
+            Khởi tạo hồ sơ mới
           </Link>
         </p>
       </div>
