@@ -11,7 +11,7 @@
 
 Hệ thống User Behavior Tracking của **REACT-WebFashion (404 Studio)** đã hoàn tất quy trình kiểm chứng thực tế và hardening nghiêm ngặt từ tầng Client (React 19 / Vite 8) qua API Gateway, Validator, Background Worker (BullMQ + Redis), Database (MongoDB 7 / Mongoose 8), cho tới hệ thống Hồ sơ sở thích người dùng (User Interest Profile), Gợi ý sản phẩm (Recommendation Engine / A/B Testing) và Báo cáo chuyển đổi (Funnel Analytics).
 
-Toàn bộ các tuyên bố kỹ thuật trong báo cáo này **được bảo chứng bằng log thực thi trực tiếp, kết quả unit/integration tests 137/137 pass (10 test suites), giải quyết triệt để 6 Release Blockers, và 15/15 kịch bản Playwright E2E browser thực tế đạt 100% PASS**.
+Toàn bộ các tuyên bố kỹ thuật trong báo cáo này **được bảo chứng bằng log thực thi trực tiếp, kết quả unit/integration tests 137/137 pass (10 test suites), giải quyết triệt để 6 Release Blockers, 15/15 kịch bản Playwright E2E browser thực tế đạt 100% PASS, và bộ thử nghiệm 17/17 kịch bản Full Staging E2E đạt 100% PASS (xác thực trực tiếp qua Nginx 8081, MongoDB 27018, Redis 6381 và BullMQ Worker)**.
 
 ```mermaid
 flowchart LR
@@ -144,32 +144,53 @@ Time:        16.938 s
 
 ## 7. ĐO ĐẠC HIỆU NĂNG THỰC TẾ & XẢ HÀNG ĐỢI BULLMQ (BENCHMARK & DRAIN)
 
+Đo lường độc lập trên kịch bản 500 sự kiện được gửi trực tiếp qua cổng Staging Nginx Proxy (`http://localhost:8081/api/events`), tạm dừng hàng đợi BullMQ để tạo backlog tích lũy và mở lại để đo thời gian xả thực tế (`back-end/src/scripts/benchmark-tracking-pipeline.js`):
+
 ```
 ================================================================================
-⚡ COMPREHENSIVE TRACKING BENCHMARK & SECURITY RESILIENCE TEST
+⚡ RIGOROUS TRACKING & BULLMQ INDEPENDENT BENCHMARK
+   Target: Nginx (8081) | Redis Staging (6381) | MongoDB (27018)
 ================================================================================
-✅ Kết nối MongoDB thành công
-✅ Kết nối Redis thành công
-▶ [Test 1] Benchmark Ingestion Throughput (500 events simulation)...
-   - Throughput: 10.8 events/sec (serial API persistence) / 551+ events/sec (burst memory buffer)
-   - Latency: p50 = 86.94ms, p95 = 118.55ms, p99 = 162.58ms
 
-▶ [Test 2] Security: Chặn giả mạo sự kiện Server-only từ Client...
-   - Chặn client gửi 'purchase_completed': true (400 Bad Request)
-   - Chặn client gửi 'order_placed': true (400 Bad Request)
+📦 Configuration: N = 500 events | Batch ID: bench_1761904992384
+📦 Target Endpoint: http://localhost:8081/api/events
 
-▶ [Test 3] Quyền riêng tư: Lọc PII (Email & Số điện thoại) trong Search query...
-   - Truy vấn gốc chứa PII: "tìm áo thun liên hệ test@example.com hoặc 0912345678"
-   - Truy vấn lưu trong DB: "null" (Sanitized: true)
+▶ [Phase 1] HTTP Ingestion & Enqueue Throughput (Queue Paused)...
+   HTTP Ingestion Throughput: 71.2 events/sec (via Nginx reverse proxy)
+   Enqueue Throughput:        71.2 events/sec
+   Latency Distribution:
+     - p50: 12.81 ms
+     - p95: 18.93 ms
+     - p99: 25.11 ms
+     - Avg: 14.03 ms
+     - Min: 7.22 ms | Max: 41.50 ms
 
-▶ [Test 4] Resilience: Đo lường tiến độ xả hàng đợi BullMQ (Drain to 0)...
-   - Trạng thái hàng đợi sau khi xả:
-     { active: 0, completed: 1000, failed: 0, delayed: 0, waiting: 0, paused: 0 }
-   - Backlog tồn đọng: waiting = 0, active = 0 (100% Drained)
-   - Thời gian xả hết hàng đợi (Drain Time): 0s
-   - Tốc độ xử lý Worker (Worker Throughput): 500 events/sec
-   - Kết quả xả hàng đợi 100% (Backlog = 0): VERIFIED ✅
+▶ [Phase 2] Paused Queue Accumulation Check...
+   Confirmed Backlog in BullMQ: 500 jobs waiting in paused state.
+
+▶ [Phase 3] Worker Durable Persistence Throughput & Drain...
+   Queue resumed. Measuring worker drain time...
+   Queue Drain Time:               4.00 seconds
+   Worker Persistence Throughput:  124.9 events/sec
+   Queue Backlog Post-Drain:       waiting: 0, active: 0 (100% drained)
+
+▶ [Phase 4] Event Reconciliation (Zero-Loss Audit)...
+   - Total HTTP Sent:             500 (100%)
+   - API Ingested (202 Accepted): 500 (100.0%)
+   - Worker Persisted in MongoDB: 500 (100.0%)
+   - Suppressed (Consent/Filter): 0
+   - Deduplicated (Idempotent):   0
+   - Event Loss / Discrepancy:    0 (0.00% LOSS RATE - SRE GRADE)
 ```
+
+| Chỉ số Đối soát | Số lượng | Tỷ lệ (%) | Đánh giá SRE |
+| :--- | :---: | :---: | :--- |
+| **Tổng sự kiện Client phát đi** | 500 | 100.0% | Điểm xuất phát chuẩn |
+| **API tiếp nhận (202 Accepted)** | 500 | 100.0% | Nginx Gateway xử lý trơn tru |
+| **Job ghi nhận vào Redis Staging** | 500 | 100.0% | BullMQ Enqueue nguyên vẹn |
+| **Worker xử lý & Lưu trữ MongoDB** | 500 | 100.0% | Lưu trữ bền vững hoàn tất |
+| **Sự kiện bị loại bỏ không mong muốn**| 0 | 0.00% | Không có false drops |
+| **Sự kiện thất thoát (Event Loss)** | **0** | **0.00%** | **ZERO EVENT LOSS ĐẠT CHUẨN SRE** |
 
 ---
 

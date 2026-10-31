@@ -138,8 +138,14 @@ class TrackingService {
           // Phục hồi lại cache Redis (TTL 1 năm)
           if (redis) {
             try {
-              if (rawUserId) await redis.set(`consent:denied:${rawUserId}`, "1", "EX", 86400 * 365);
-              if (rawAnonId) await redis.set(`consent:denied:${rawAnonId}`, "1", "EX", 86400 * 365);
+              if (rawUserId) {
+                await redis.set(`consent:denied:${rawUserId}`, "1", "EX", 86400 * 365);
+                await redis.set(`consent:denied:u:${rawUserId}`, "1", "EX", 86400 * 365);
+              }
+              if (rawAnonId) {
+                await redis.set(`consent:denied:${rawAnonId}`, "1", "EX", 86400 * 365);
+                await redis.set(`consent:denied:a:${rawAnonId}`, "1", "EX", 86400 * 365);
+              }
             } catch {}
           }
           return true;

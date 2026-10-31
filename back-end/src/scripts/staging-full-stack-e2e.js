@@ -56,7 +56,7 @@ async function runStagingFullStackE2E() {
   const trackingService = (await import("../modules/tracking/tracking.service.js")).default;
 
   // 2. Connect Redis Staging
-  let redis = new Redis(STAGING_REDIS_URL);
+  let redis = (await import("../configs/redis.js")).getRedisConnection();
   const pong = await redis.ping();
   console.log(`✅ Connected directly to Staging Redis (port 6381): ${pong}\n`);
 
@@ -362,8 +362,8 @@ async function runStagingFullStackE2E() {
       product_name: sampleProduct.name,
     });
 
-    testOrder.items = [testOrderItem];
-    await trackingService.trackOrderPlaced(testOrder);
+    const orderPayload = { ...testOrder.toObject(), items: [testOrderItem.toObject ? testOrderItem.toObject() : testOrderItem] };
+    await trackingService.trackOrderPlaced(orderPayload);
 
     const sc10Doc = await waitForMongo({ "meta.order_id": testOrder._id.toString(), event_type: "order_placed" }, UserEvent);
     const sc10Pass = spoofBlocked && !!sc10Doc;
@@ -388,10 +388,10 @@ async function runStagingFullStackE2E() {
     testOrder.payment_status = "paid";
     testOrder.status = "confirmed";
     await testOrder.save();
-    testOrder.items = [testOrderItem];
+    const purchasePayload = { ...testOrder.toObject(), items: [testOrderItem.toObject ? testOrderItem.toObject() : testOrderItem] };
 
-    await trackingService.trackPurchaseCompleted(testOrder);
-    await trackingService.trackPurchaseCompleted(testOrder); // Duplicate retry
+    await trackingService.trackPurchaseCompleted(purchasePayload);
+    await trackingService.trackPurchaseCompleted(purchasePayload); // Duplicate retry
 
     const sc11Doc = await waitForMongo({ "meta.order_id": testOrder._id.toString(), event_type: "purchase_completed" }, UserEvent);
     const purchaseDocs = await UserEvent.find({
@@ -564,12 +564,12 @@ async function runStagingFullStackE2E() {
     console.log("   Stopping worker service...");
     execSync("docker compose -f docker-compose.staging.yml stop worker-staging", { stdio: "ignore" });
 
-    const recoveryAnonId = crypto.randomUUID();
+    const recoveryAnonIds = sampleProducts.map(() => crypto.randomUUID());
     // Use 5 distinct products to ensure dedup does not drop identical views
     for (let i = 0; i < sampleProducts.length; i++) {
       await sendStagingEvent({
         event_id: crypto.randomUUID(),
-        anonymous_id: recoveryAnonId,
+        anonymous_id: recoveryAnonIds[i],
         session_id: sessionId,
         event_type: "product_view",
         product_id: sampleProducts[i]._id.toString(),
@@ -578,9 +578,18 @@ async function runStagingFullStackE2E() {
 
     console.log("   Starting worker service...");
     execSync("docker compose -f docker-compose.staging.yml start worker-staging", { stdio: "ignore" });
-    await delay(6000);
+    let recoveredCount = 0;
+    const startWait = Date.now();
+    while (Date.now() - startWait < 30000) {
+      recoveredCount = await UserEvent.countDocuments({
+        anonymous_id: { $in: recoveryAnonIds },
+        event_type: "product_view",
+      });
+      if (recoveredCount >= sampleProducts.length) break;
+      await delay(1000);
+    }
 
-    const recoveredCount = await UserEvent.countDocuments({ anonymous_id: recoveryAnonId, event_type: "product_view" });
+
     const sc16Pass = recoveredCount >= sampleProducts.length;
     console.log(`   Drained & Persisted: ${recoveredCount}/${sampleProducts.length} events: ${sc16Pass ? "PASS ✅" : "FAIL ❌"}`);
     results.push({ id: 16, name: "Worker downtime & BullMQ Queue Recovery", status: sc16Pass ? "PASS ✅" : "FAIL ❌", docId: `RECOVERED_${recoveredCount}_DOCS` });
@@ -630,7 +639,7 @@ async function runStagingFullStackE2E() {
 
   const allPassed = results.every((r) => r.status.includes("PASS"));
   console.log(`\nOVERALL VERDICT: ${allPassed ? "100% PASS ✅ - PRODUCTION READINESS GATE MET" : "FAIL ❌"}`);
-  if (!allPassed) process.exit(1);
+  process.exit(allPassed ? 0 : 1);
 }
 
 runStagingFullStackE2E().catch((err) => {
