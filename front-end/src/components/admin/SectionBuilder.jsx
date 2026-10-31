@@ -251,7 +251,7 @@ export const SectionBuilder = ({ sections, setSections, selectedProducts, setSel
     <div className="space-y-8 text-left">
       <div className="flex justify-between items-center border-b border-gray-100 pb-4">
         <div>
-          <h4 className="text-sm font-black text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
+          <h4 className="text-sm font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
             <Layout className="h-4.5 w-4.5" />
             Xây dựng bố cục trang Lookbook
           </h4>
@@ -284,7 +284,7 @@ export const SectionBuilder = ({ sections, setSections, selectedProducts, setSel
                     <span className="flex items-center justify-center w-6 h-6 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-lg">
                       {idx + 1}
                     </span>
-                    <span className="text-xs font-black text-gray-700 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
                       {typeLabel}
                     </span>
                   </div>

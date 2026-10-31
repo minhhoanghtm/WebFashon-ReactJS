@@ -150,7 +150,7 @@ const PromotionBannerSection = () => {
                   <span className="inline-block text-[10px] font-extrabold tracking-[0.2em] text-[#F5DD20] uppercase">
                     Ưu đãi đặc quyền
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-black text-white leading-tight drop-shadow-sm font-heading">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white leading-tight drop-shadow-sm font-heading">
                     {banner.title}
                   </h3>
                   {banner.subtitle && (

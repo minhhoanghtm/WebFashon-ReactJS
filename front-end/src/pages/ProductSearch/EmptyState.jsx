@@ -36,7 +36,7 @@ const EmptyState = ({ type, onClear, gridDensity = "compact" }) => {
       <span className="text-[11px] font-mono tracking-widest text-[#6B716E] uppercase mb-1">
         NO PIECES FOUND
       </span>
-      <h2 className="text-xl sm:text-2xl font-black text-[#05251C] tracking-tight mb-2 font-display uppercase">
+      <h2 className="text-xl sm:text-2xl font-bold text-[#05251C] tracking-tight mb-2 font-display uppercase">
         Không tìm thấy sản phẩm phù hợp
       </h2>
       <p className="text-sm text-[#6B716E] max-w-md mb-6 leading-relaxed">

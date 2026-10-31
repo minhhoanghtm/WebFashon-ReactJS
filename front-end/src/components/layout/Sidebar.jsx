@@ -91,7 +91,7 @@ const Sidebar = ({
             </div>
             {expanded && (
               <div className="min-w-0 leading-tight">
-                <span className="block truncate font-serif text-lg font-semibold uppercase tracking-[0.14em] text-[var(--color-text)]">
+                <span className="block truncate font-condensed text-lg font-bold uppercase tracking-[0.14em] text-[var(--color-text)]">
                   {brandName}
                 </span>
                 <span className="block text-[9px] font-semibold uppercase tracking-[0.26em] text-[var(--color-text-muted)]">

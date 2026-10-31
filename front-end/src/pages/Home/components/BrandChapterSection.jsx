@@ -222,7 +222,7 @@ export const BrandChapterSection = () => {
 
             {/* Giant Condensed Heading with mask reveal */}
             <div className="overflow-hidden">
-              <h2 className="font-condensed text-5xl font-extrabold uppercase tracking-tight text-[#05251C] sm:text-6xl lg:text-7xl leading-[0.92]">
+              <h2 className="font-condensed text-5xl font-bold uppercase tracking-tight text-[#05251C] sm:text-6xl lg:text-7xl leading-[1.18] sm:leading-[1.2] py-[0.12em]">
                 {brandChapter.headingLines.map((line, idx) => (
                   <span
                     key={line}

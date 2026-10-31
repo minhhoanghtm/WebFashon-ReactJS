@@ -337,7 +337,7 @@ const UserAccountManagement = ({ isDashboard = false }) => {
                 Đơn hàng
               </span>
             </nav>
-            <h1 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight uppercase">
+            <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight uppercase leading-[1.2]">
               Đơn hàng của bạn
             </h1>
             <p className="text-xs sm:text-sm text-[var(--color-text-muted)] mt-2 font-sans">

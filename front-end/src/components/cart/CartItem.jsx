@@ -80,7 +80,7 @@ const CartItem = ({
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center p-2 text-center select-none">
-            <span className="font-serif text-xs uppercase tracking-[0.16em] text-muted-foreground">
+            <span className="font-sans text-xs uppercase tracking-[0.16em] text-muted-foreground">
               WF
             </span>
           </div>
@@ -96,7 +96,7 @@ const CartItem = ({
             </p>
             <Link
               to={`/product/${encodeURIComponent(productSlugOrId)}`}
-              className={`block font-serif text-base leading-snug text-foreground hover:underline sm:text-lg ${
+              className={`block font-sans font-medium text-base leading-snug text-foreground hover:underline sm:text-lg ${
                 isOutOfStock ? "line-through opacity-60" : ""
               }`}
             >

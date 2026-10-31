@@ -132,7 +132,7 @@ export const HorizontalTimelineSection = ({ categories = [] }) => {
           <span className="font-mono text-xs tracking-[0.3em] uppercase text-white/50">
             {timeline.eyebrow}
           </span>
-          <h2 className="mt-2 font-condensed text-4xl sm:text-6xl font-extrabold uppercase tracking-tight text-white leading-none">
+          <h2 className="mt-2 font-condensed text-4xl sm:text-6xl font-bold uppercase tracking-tight text-white leading-[1.2] py-1">
             {timeline.title}
           </h2>
           <p className="mt-3 max-w-xl font-sans text-xs sm:text-sm text-white/60 leading-relaxed">
@@ -162,7 +162,7 @@ export const HorizontalTimelineSection = ({ categories = [] }) => {
                 {/* Left Column: Big Chapter Number, Heading & Paragraph (~50%) */}
                 <div className="md:col-span-6 space-y-6">
                   <div className="flex items-baseline gap-4">
-                    <span className="font-condensed text-7xl sm:text-9xl font-black text-white/15 tabular-nums leading-none select-none">
+                    <span className="font-condensed text-7xl sm:text-9xl font-bold text-white/15 tabular-nums leading-none select-none">
                       {item.chapterNum}
                     </span>
                     <span className="font-mono text-xs tracking-[0.28em] text-white/50 uppercase">
@@ -170,7 +170,7 @@ export const HorizontalTimelineSection = ({ categories = [] }) => {
                     </span>
                   </div>
 
-                  <h3 className="font-condensed text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-white leading-tight">
+                  <h3 className="font-condensed text-3xl sm:text-5xl font-bold uppercase tracking-tight text-white leading-tight">
                     {item.title}
                   </h3>
 
@@ -209,7 +209,7 @@ export const HorizontalTimelineSection = ({ categories = [] }) => {
                           {item.code}
                         </span>
                         <div className="space-y-2 text-center">
-                          <span className="font-condensed text-3xl font-extrabold tracking-wider uppercase text-white/80 block">
+                          <span className="font-condensed text-3xl font-bold tracking-wider uppercase text-white/80 block">
                             {item.title}
                           </span>
                           <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-white/40 block">

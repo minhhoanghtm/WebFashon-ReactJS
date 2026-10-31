@@ -108,7 +108,7 @@ export const CustomCursor = () => {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.4, opacity: 0 }}
           transition={{ type: "spring", damping: 20, stiffness: 350 }}
-          className="flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#F5DD20] px-4 py-2 font-display text-[10px] font-black tracking-widest text-[#05251C] shadow-[0_8px_30px_rgba(245,221,32,0.45)] uppercase border border-[#05251C]/10"
+          className="flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#F5DD20] px-4 py-2 font-display text-[10px] font-bold tracking-widest text-[#05251C] shadow-[0_8px_30px_rgba(245,221,32,0.45)] uppercase border border-[#05251C]/10"
         >
           {cursorState.label || cursorState.type.toUpperCase()}
         </motion.div>

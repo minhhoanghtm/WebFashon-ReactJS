@@ -84,7 +84,7 @@ const LookbookBannerSection = () => {
               <span className="inline-block text-[10px] font-bold tracking-widest text-amber-500 bg-amber-950/45 px-2.5 py-0.5 rounded-full uppercase">
                 Bộ sưu tập mới
               </span>
-              <h2 className="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-sm font-sans">
+              <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight drop-shadow-sm font-sans">
                 {banner.title}
               </h2>
               {banner.subtitle && (

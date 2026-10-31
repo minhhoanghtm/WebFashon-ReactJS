@@ -145,6 +145,7 @@ export const CinematicHeader = ({
 }) => {
   const navigate = useNavigate();
   const { settings, loading } = useWebsiteSettings();
+  const contactEmail = settings?.general?.email || "";
   const { isAuthenticated: isLoggedIn, user, logout } = useAuthStore();
   const displayName =
     user?.fullName ||
@@ -603,10 +604,10 @@ export const CinematicHeader = ({
           role="dialog"
           aria-modal="true"
           aria-label="Menu điều hướng toàn màn hình"
-          className="fixed inset-0 z-[100] flex flex-col justify-between bg-[#08090b] text-white p-6 sm:p-10 lg:p-14 animate-in fade-in duration-300"
+          className="fixed inset-0 z-[100] flex flex-col justify-between bg-[#08090b] text-white p-4 sm:p-7 lg:p-9 animate-in fade-in duration-300"
         >
           {/* Top Bar: Brand & Close Button */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-6">
+          <div className="shrink-0 flex items-center justify-between border-b border-white/10 pb-3 sm:pb-4">
             <div className="flex items-center gap-3">
               <span className="font-condensed text-xl font-bold tracking-[0.2em] text-white uppercase">
                 {brandName}
@@ -628,11 +629,11 @@ export const CinematicHeader = ({
           </div>
 
           {/* Center: Navigation Links (Left) + Editorial Preview Canvas (Right) */}
-          <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-12 lg:gap-14 overflow-y-auto no-scrollbar">
+          <div className="grid flex-1 items-center gap-6 py-3 sm:py-4 lg:grid-cols-12 lg:gap-10 overflow-y-auto no-scrollbar min-h-0">
             {/* Left: Nav list */}
             <nav
               aria-label="Các trang chính"
-              className="flex flex-col space-y-2 sm:space-y-3 lg:col-span-7"
+              className="flex flex-col space-y-1 sm:space-y-1.5 lg:space-y-1.5 lg:col-span-7"
             >
               {MENU_ITEMS.map((item, idx) => (
                 <Link
@@ -640,82 +641,40 @@ export const CinematicHeader = ({
                   to={item.path}
                   onClick={() => setIsMenuOpen(false)}
                   onMouseEnter={() => setActiveMenuIndex(idx)}
-                  className="group relative flex items-baseline gap-4 py-1.5 text-left transition-transform duration-300 hover:translate-x-3 focus-visible:outline-none"
+                  className="group relative flex items-baseline gap-3 sm:gap-4 py-1 sm:py-1.5 text-left transition-transform duration-200 hover:translate-x-2 focus-visible:outline focus-visible:outline-1 focus-visible:outline-white/50"
                 >
-                  <span className="font-mono text-xs tracking-widest text-white/40 transition-colors group-hover:text-white">
+                  <span className="font-mono text-[11px] sm:text-xs tracking-widest text-white/35 transition-colors group-hover:text-white shrink-0">
                     {item.num}
                   </span>
-                  <div className="flex flex-col">
-                    <span className="font-condensed text-2xl font-extrabold tracking-tight text-white/80 transition-colors group-hover:text-white sm:text-4xl lg:text-5xl">
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-condensed text-xl sm:text-2xl md:text-3xl lg:text-[min(3.6vw,4.2svh)] font-bold tracking-tight text-white/85 transition-colors group-hover:text-white leading-none">
                       {item.label}
                     </span>
-                    <span className="text-[10px] font-sans tracking-[0.16em] text-white/40 uppercase transition-colors group-hover:text-white/70">
+                    <span className="text-[9px] sm:text-[10px] font-sans tracking-[0.14em] text-white/40 uppercase transition-colors group-hover:text-white/70 truncate mt-0.5">
                       {item.desc}
                     </span>
                   </div>
                   <ArrowUpRight
-                    size={20}
-                    className="ml-auto opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1"
+                    size={18}
+                    className="ml-auto opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-1 shrink-0 text-white/60"
+                    aria-hidden="true"
                   />
                 </Link>
               ))}
-
-              {/* Account block */}
-              <div
-                aria-label="Tài khoản"
-                className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-5"
-              >
-                {isLoggedIn ? (
-                  <>
-                    <span className="mr-2 font-mono text-[11px] tracking-[0.2em] text-white/50 uppercase">
-                      {displayName}
-                    </span>
-                    <Link
-                      to="/profile"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="inline-flex min-h-[44px] items-center border border-white/25 px-5 text-xs font-semibold tracking-[0.22em] text-white uppercase transition-colors hover:border-white hover:bg-white hover:text-black"
-                    >
-                      Hồ sơ
-                    </Link>
-                    <Link
-                      to="/orders"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="inline-flex min-h-[44px] items-center border border-white/25 px-5 text-xs font-semibold tracking-[0.22em] text-white uppercase transition-colors hover:border-white hover:bg-white hover:text-black"
-                    >
-                      Đơn hàng
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="inline-flex min-h-[44px] items-center px-5 text-xs font-semibold tracking-[0.22em] text-white/60 uppercase transition-colors hover:text-white"
-                    >
-                      Đăng xuất
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    to="/login"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="inline-flex min-h-[44px] items-center border border-white/40 px-6 text-xs font-semibold tracking-[0.24em] text-white uppercase transition-colors hover:border-white hover:bg-white hover:text-black"
-                  >
-                    Đăng nhập / Đăng ký
-                  </Link>
-                )}
-              </div>
             </nav>
 
             {/* Right: Editorial Preview Canvas (Desktop only) */}
-            <div className="hidden lg:col-span-5 lg:flex lg:flex-col lg:items-end">
-              <div className="relative aspect-[3/4] w-full max-w-sm overflow-hidden border border-white/10 bg-neutral-900 flex flex-col items-center justify-center p-8 text-center">
+            <div className="hidden lg:col-span-5 lg:flex lg:flex-col lg:items-end justify-center">
+              <div className="relative aspect-[4/5] w-full max-w-xs xl:max-w-sm max-h-[50svh] overflow-hidden border border-white/10 bg-neutral-900 flex flex-col items-center justify-center p-6 text-center">
                 <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-black/80" />
-                <div className="relative z-10 space-y-4">
-                  <p className="text-[10px] font-mono tracking-[0.3em] text-white/50 uppercase">
+                <div className="relative z-10 space-y-3">
+                  <p className="text-[9px] font-mono tracking-[0.3em] text-white/50 uppercase">
                     ATELIER ARCHIVE · 2026
                   </p>
-                  <h3 className="font-condensed text-3xl font-extrabold tracking-wider text-white uppercase">
+                  <h3 className="font-condensed text-2xl xl:text-3xl font-bold tracking-wider text-white uppercase">
                     {MENU_ITEMS[activeMenuIndex]?.label}
                   </h3>
-                  <div className="mx-auto h-[1px] w-12 bg-white/30" />
+                  <div className="mx-auto h-[1px] w-10 bg-white/30" />
                   <p className="text-xs text-white/60 leading-relaxed max-w-[200px] mx-auto font-sans">
                     {MENU_ITEMS[activeMenuIndex]?.desc}
                   </p>
@@ -724,16 +683,54 @@ export const CinematicHeader = ({
             </div>
           </div>
 
-          {/* Bottom Bar: Social + Contact */}
-          <div className="flex flex-col justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-6 text-[11px] tracking-[0.2em] text-white/60 uppercase">
-              <span className="text-white/40">NOIR / BONE / SLATE</span>
-              <span className="text-white/20">/</span>
-              <span className="text-white/40">VIETNAM ATELIER</span>
+          {/* Bottom Bar: Tagline + Contact (Left) & Account block (Right) */}
+          <div className="shrink-0 border-t border-white/10 pt-3 sm:pt-4 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Left: Tagline & Optional Contact Email */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] sm:text-[11px] tracking-[0.18em] text-white/50 uppercase">
+              <div className="flex items-center gap-2">
+                <span className="text-white/40">NOIR / BONE / SLATE</span>
+                <span className="text-white/20">/</span>
+                <span className="text-white/40">VIETNAM ATELIER</span>
+              </div>
+              {contactEmail && (
+                <>
+                  <span className="hidden sm:inline text-white/20">·</span>
+                  <a
+                    href={`mailto:${contactEmail}`}
+                    className="text-white/40 hover:text-white transition-colors lowercase font-mono tracking-normal"
+                  >
+                    {contactEmail}
+                  </a>
+                </>
+              )}
             </div>
 
-            <div className="text-[11px] tracking-[0.16em] text-white/40 uppercase sm:text-right">
-              <span>atelier@webfashion.vn</span>
+            {/* Right: Account Block */}
+            <div className="w-full sm:w-auto">
+              {isLoggedIn ? (
+                <div className="flex items-center justify-between sm:justify-end gap-3 w-full">
+                  <span className="font-mono text-xs tracking-wider text-white/60 truncate max-w-[150px] sm:max-w-[200px]">
+                    {displayName}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    data-menu-action="logout-button"
+                    className="inline-flex min-h-[44px] items-center justify-center border border-white/30 bg-transparent px-5 text-xs font-semibold tracking-[0.2em] text-white/80 uppercase transition-all hover:border-white hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-white shrink-0"
+                  >
+                    ĐĂNG XUẤT
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  data-menu-action="login-button"
+                  className="w-full sm:w-auto inline-flex min-h-[44px] items-center justify-center border border-white/60 bg-white/5 px-6 text-xs font-semibold tracking-[0.22em] text-white uppercase transition-all hover:border-white hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                >
+                  ĐĂNG NHẬP / ĐĂNG KÝ
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -777,7 +774,7 @@ export const CinematicHeader = ({
                   <p className="font-mono text-[10px] tracking-[0.3em] text-white/40 uppercase">
                     ATELIER · TRỐNG
                   </p>
-                  <h3 className="mt-4 font-condensed text-4xl font-extrabold tracking-tight text-white uppercase sm:text-5xl">
+                  <h3 className="mt-4 font-condensed text-4xl font-bold tracking-tight text-white uppercase sm:text-5xl">
                     GIỎ HÀNG ĐANG TRỐNG
                   </h3>
                   <p className="mt-4 max-w-xs text-xs text-white/50 leading-relaxed font-sans">

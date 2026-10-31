@@ -110,12 +110,12 @@ export const FAQ = () => {
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Header Breadcrumb & Eyebrow */}
         <div className="text-center mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-black tracking-[0.25em] text-[#05251C] uppercase mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-bold tracking-[0.25em] text-[#05251C] uppercase mb-4">
             <Sparkles size={12} className="text-[#05251C]" />
             <span>CENTRAL HELP DESK & SUPPORT</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black text-[#05251C] uppercase font-display leading-[0.92] tracking-tighter">
+          <h1 className="text-4xl sm:text-6xl font-bold text-[#05251C] uppercase font-display leading-[1.2] tracking-tighter">
             CÂU HỎI THƯỜNG GẶP.
           </h1>
 
@@ -167,7 +167,7 @@ export const FAQ = () => {
                   <div className="w-9 h-9 rounded-xl bg-[#05251C] text-[#F5DD20] flex items-center justify-center">
                     <Icon size={18} />
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-black font-display text-[#05251C] uppercase tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-bold font-display text-[#05251C] uppercase tracking-tight">
                     {cat.title}
                   </h2>
                 </div>
@@ -223,7 +223,7 @@ export const FAQ = () => {
         {/* Support Help Banner */}
         <div className="mt-14 rounded-3xl bg-[#05251C] text-white p-8 text-center sm:flex sm:items-center sm:justify-between sm:text-left gap-6">
           <div>
-            <h3 className="text-xl font-black font-display text-[#F1D8CA] uppercase">
+            <h3 className="text-xl font-bold font-display text-[#F1D8CA] uppercase">
               VẪN CẦN THÊM SỰ HỖ TRỢ?
             </h3>
             <p className="text-xs text-[#D1D9CF] mt-1 max-w-md">

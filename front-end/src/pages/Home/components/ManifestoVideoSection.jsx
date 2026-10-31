@@ -102,7 +102,7 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
           </div>
 
           {/* Slogan Words that light up on scroll */}
-          <h3 className="font-condensed text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight leading-[1.08] select-none">
+          <h3 className="font-condensed text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold uppercase tracking-tight leading-[1.2] select-none">
             {manifesto.words.map((word, idx) => (
               <span
                 key={`${word}-${idx}`}
@@ -180,7 +180,7 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
               </>
             ) : (
               <div className="space-y-2 py-4">
-                <span className="font-condensed text-3xl sm:text-5xl font-extrabold uppercase tracking-widest text-white/20 block select-none">
+                <span className="font-condensed text-3xl sm:text-5xl font-bold uppercase tracking-widest text-white/20 block select-none">
                   ATELIER ARCHIVE
                 </span>
                 <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-white/30 block">

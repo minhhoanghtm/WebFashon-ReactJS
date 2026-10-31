@@ -18,7 +18,7 @@ export function AdminCard({
         <div className="flex flex-col gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             {title && (
-              <h3 className="font-serif text-lg font-medium tracking-tight text-[var(--color-text)]">
+              <h3 className="font-sans text-lg font-medium tracking-tight text-[var(--color-text)]">
                 {title}
               </h3>
             )}

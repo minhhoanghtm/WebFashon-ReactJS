@@ -5,7 +5,7 @@ export function AdminPageHeader({ title, description, actions }) {
     <div className="mb-6 flex flex-col gap-4 border-b border-[var(--color-border)] pb-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p className="atelier-eyebrow mb-1">Quản trị hệ thống · Atelier Portal</p>
-        <h1 className="font-serif text-2xl font-normal tracking-tight text-[var(--color-text)] sm:text-3xl">
+        <h1 className="font-sans text-2xl font-normal tracking-tight text-[var(--color-text)] sm:text-3xl">
           {title}
         </h1>
         {description && (

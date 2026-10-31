@@ -438,7 +438,7 @@ const Checkout = () => {
           <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
             {siteName} · Thanh toán
           </p>
-          <h1 className="mt-2 font-display text-2xl uppercase tracking-wider text-foreground sm:text-3xl">
+          <h1 className="mt-2 font-display text-2xl uppercase tracking-wider text-foreground sm:text-3xl leading-[1.25]">
             Chưa có thiết kế nào để thanh toán
           </h1>
           <p className="mt-3 text-xs leading-relaxed text-muted-foreground sm:text-sm">
@@ -510,7 +510,7 @@ const Checkout = () => {
           <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
             {siteName} · Giao dịch bảo mật
           </p>
-          <h1 className="mt-1 font-display text-3xl font-bold uppercase tracking-wider text-foreground sm:text-4xl">
+          <h1 className="mt-1 font-display text-3xl font-bold uppercase tracking-wider text-foreground sm:text-4xl leading-[1.25]">
             Xác nhận đơn hàng
           </h1>
         </div>

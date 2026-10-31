@@ -84,12 +84,12 @@ export const Policy = () => {
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-black tracking-[0.25em] text-[#05251C] uppercase mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-bold tracking-[0.25em] text-[#05251C] uppercase mb-4">
             <Sparkles size={12} className="text-[#05251C]" />
             <span>TRANSPARENCY & TRUST</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black text-[#05251C] uppercase font-display leading-[0.92] tracking-tighter">
+          <h1 className="text-4xl sm:text-6xl font-bold text-[#05251C] uppercase font-display leading-[1.2] tracking-tighter">
             CHÍNH SÁCH ATELIER.
           </h1>
 
@@ -132,7 +132,7 @@ export const Policy = () => {
                   <div className="w-10 h-10 rounded-xl bg-[#05251C] text-[#F5DD20] flex items-center justify-center shrink-0">
                     <Icon size={20} />
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-black font-display text-[#05251C] uppercase tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-bold font-display text-[#05251C] uppercase tracking-tight">
                     {pol.title}
                   </h2>
                 </div>

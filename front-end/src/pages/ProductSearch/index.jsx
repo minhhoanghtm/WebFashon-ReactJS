@@ -634,7 +634,7 @@ const ProductSearch = () => {
 
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <h1 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground sm:text-4xl">
+              <h1 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground sm:text-4xl leading-[1.25]">
                 {activeChildCategory
                   ? `${activeParentGroup?.name} · ${activeChildCategory.name}`
                   : activeParentGroup

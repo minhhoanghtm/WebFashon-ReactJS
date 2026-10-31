@@ -130,7 +130,7 @@ export const AnnouncementMarquee = () => {
         <div className="mx-auto flex items-center gap-2 text-[11px] truncate">
           <Icon size={12} className="text-[#F5DD20] flex-shrink-0" />
           <span>{featured.text}</span>
-          <span className="text-[#F5DD20] font-black">[{featured.highlight}]</span>
+          <span className="text-[#F5DD20] font-bold">[{featured.highlight}]</span>
           {featured.link && (
             <Link
               to={featured.link}
@@ -171,7 +171,7 @@ export const AnnouncementMarquee = () => {
               >
                 <Icon size={12} className="text-[#F5DD20] flex-shrink-0" />
                 <span>{item.text}</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#F5DD20] text-[#062D22] text-[9px] font-black tracking-widest">
+                <span className="px-2 py-0.5 rounded-full bg-[#F5DD20] text-[#062D22] text-[9px] font-bold tracking-widest">
                   {item.highlight}
                 </span>
                 <span className="text-[#F5DD20]/40 font-mono text-xs">✦</span>
@@ -194,7 +194,7 @@ export const AnnouncementMarquee = () => {
               >
                 <Icon size={12} className="text-[#F5DD20] flex-shrink-0" />
                 <span>{item.text}</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#F5DD20] text-[#062D22] text-[9px] font-black tracking-widest">
+                <span className="px-2 py-0.5 rounded-full bg-[#F5DD20] text-[#062D22] text-[9px] font-bold tracking-widest">
                   {item.highlight}
                 </span>
                 <span className="text-[#F5DD20]/40 font-mono text-xs">✦</span>

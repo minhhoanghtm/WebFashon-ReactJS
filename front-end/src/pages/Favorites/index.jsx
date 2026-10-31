@@ -122,7 +122,7 @@ const Favorites = ({ isDashboard = false }) => {
                 Bộ sưu tập cá nhân
               </span>
             )}
-            <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight uppercase">
+            <h1 className="font-display text-3xl sm:text-5xl font-bold tracking-tight uppercase leading-[1.2]">
               Danh sách yêu thích ({favoriteItems.length})
             </h1>
             {!isDashboard && (
@@ -150,7 +150,7 @@ const Favorites = ({ isDashboard = false }) => {
             <div className="flex h-14 w-14 items-center justify-center border border-[var(--color-border)] text-[var(--color-text)]">
               <Heart size={24} className="stroke-[1.5]" aria-hidden="true" />
             </div>
-            <h2 className="mt-5 font-display text-2xl font-extrabold uppercase tracking-tight">
+            <h2 className="mt-5 font-display text-2xl font-bold uppercase tracking-tight">
               Chưa có sản phẩm yêu thích
             </h2>
             <p className="mt-2 max-w-sm text-xs text-[var(--color-text-muted)] leading-relaxed font-sans">

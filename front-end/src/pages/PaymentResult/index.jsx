@@ -29,7 +29,7 @@ const PaymentResult = () => {
                   {siteName} · ĐƠN HÀNG ĐÃ XÁC NHẬN
                 </span>
               </div>
-              <h1 className="pt-2 font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
+              <h1 className="pt-2 font-sans text-3xl font-semibold tracking-tight text-foreground sm:text-4xl leading-tight">
                 Đặt hàng thành công
               </h1>
               <p className="mx-auto max-w-md text-xs leading-relaxed text-muted-foreground sm:text-sm">
@@ -48,7 +48,7 @@ const PaymentResult = () => {
               <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-destructive">
                 Giao dịch chưa hoàn tất
               </p>
-              <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
+              <h1 className="font-sans text-3xl font-semibold tracking-tight text-foreground sm:text-4xl leading-tight">
                 Thanh toán thất bại
               </h1>
               <p className="mx-auto max-w-md text-xs leading-relaxed text-muted-foreground sm:text-sm">

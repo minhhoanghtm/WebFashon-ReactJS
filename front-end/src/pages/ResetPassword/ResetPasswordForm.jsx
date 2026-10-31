@@ -202,7 +202,7 @@ const ResetPasswordForm = () => {
           <p className="text-[11px] font-mono tracking-[0.28em] uppercase text-muted-foreground">
             {siteName} · BƯỚC {step}/3
           </p>
-          <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground uppercase sm:text-5xl">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground uppercase sm:text-5xl leading-[1.2]">
             {step === 3 ? "Mật khẩu mới" : "Khôi phục mật khẩu"}
           </h1>
           <p className="text-xs text-muted-foreground font-sans">

@@ -181,7 +181,7 @@ const VoucherHunting = ({ isDashboard = false }) => {
               )}
               <div className="relative z-10 p-8 md:p-12 max-w-2xl space-y-3">
                 <span className="atelier-seal">Đặc quyền {siteName}</span>
-                <h1 className="font-display text-2xl md:text-4xl font-semibold text-white">
+                <h1 className="font-display text-2xl md:text-4xl font-semibold text-white leading-[1.2]">
                   {promoBanners[0].title}
                 </h1>
                 {promoBanners[0].subtitle && (
@@ -208,7 +208,7 @@ const VoucherHunting = ({ isDashboard = false }) => {
                     {siteName} · Voucher Archive
                   </span>
                 </div>
-                <h1 className="font-display text-3xl md:text-5xl font-extrabold tracking-tight uppercase">
+                <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight uppercase leading-[1.2]">
                   Đặc quyền ưu đãi Atelier
                 </h1>
                 <p className="text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed font-sans">
@@ -224,7 +224,7 @@ const VoucherHunting = ({ isDashboard = false }) => {
         {/* List Section */}
         <div className="space-y-6">
           <div className="flex items-baseline justify-between border-b border-[var(--color-border)] pb-4">
-            <h2 className="font-display text-xl sm:text-3xl font-extrabold uppercase tracking-tight flex items-center gap-2.5">
+            <h2 className="font-display text-xl sm:text-3xl font-bold uppercase tracking-tight flex items-center gap-2.5">
               <Ticket className="h-5 w-5" aria-hidden="true" />
               <span>Voucher đang áp dụng</span>
             </h2>

@@ -111,10 +111,7 @@ const ProductDetail = () => {
         price: product?.price || rawProduct?.new_price || 0,
       });
     }
-  }, [
-    rawProduct,
-    product,
-  ]);
+  }, [rawProduct, product]);
 
   useEffect(() => {
     let isMounted = true;
@@ -245,7 +242,7 @@ const ProductDetail = () => {
         <div className="mb-4 flex h-14 w-14 items-center justify-center border border-border bg-secondary text-foreground">
           <AlertCircle size={26} strokeWidth={1.5} aria-hidden="true" />
         </div>
-        <h1 className="font-serif text-2xl text-foreground sm:text-3xl">
+        <h1 className="font-sans font-semibold text-2xl text-foreground sm:text-3xl leading-snug">
           {error || "Thiết kế không tồn tại"}
         </h1>
         <p className="mt-2 mb-6 max-w-md text-xs leading-relaxed text-muted-foreground">
@@ -270,130 +267,140 @@ const ProductDetail = () => {
       : 0;
 
   return (
-    <div className="min-h-screen bg-background py-8 text-foreground sm:py-12">
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
-        {/* Breadcrumb */}
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-8 flex flex-wrap items-center gap-2 border-b border-border pb-4 text-[11px] tracking-[0.18em] uppercase text-muted-foreground"
-        >
-          <Link to="/" className="hover:text-foreground">
-            Trang chủ
-          </Link>
-          <span>/</span>
-          <Link to="/products" className="hover:text-foreground">
-            Bộ sưu tập
-          </Link>
-          {product.category && (
-            <>
-              <span>/</span>
-              <Link
-                to={`/products?category=${encodeURIComponent(
-                  product.category_id || product.category
-                )}`}
-                className="hover:text-foreground"
-              >
-                {product.category}
-              </Link>
-            </>
-          )}
-          <span>/</span>
-          <span className="truncate font-semibold text-foreground">
-            {product.name}
-          </span>
-        </nav>
-
-        {/* Main 2-Column Product Showcase */}
+    <div className="min-h-screen bg-background text-foreground py-2 lg:py-0 pb-24 lg:pb-16">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10 h-full">
+        {/* Main 2-Column Product Showcase (Fits in 1st screen on desktop) */}
         <section
           aria-label="Thông tin và hình ảnh thiết kế"
-          className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-14"
+          className="lg:h-[calc(100svh-5rem)] lg:min-h-[calc(100svh-5rem)] lg:max-h-[calc(100svh-5rem)] flex flex-col pt-1 sm:pt-2 lg:pt-2.5 pb-2 lg:pb-3 overflow-hidden"
         >
-          {/* Left Column: Gallery */}
-          <div className="lg:col-span-6">
-            <ProductGallery
-              key={`${product.id}-${selectedVariant?._id || "base"}`}
-              images={galleryImages}
-              productName={product.name}
-            />
-          </div>
-
-          {/* Right Column: Specification & Actions */}
-          <div className="space-y-6 lg:sticky lg:top-24 lg:col-span-6">
-            <div className="space-y-3 border-b border-border pb-6">
-              {product.category && (
-                <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
+          {/* Breadcrumb */}
+          <nav
+            aria-label="Breadcrumb"
+            className="shrink-0 mb-2 flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] tracking-[0.16em] uppercase text-muted-foreground border-b border-border/40 pb-2"
+          >
+            <Link to="/" className="hover:text-foreground">
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <Link to="/products" className="hover:text-foreground">
+              Bộ sưu tập
+            </Link>
+            {product.category && (
+              <>
+                <span>/</span>
+                <Link
+                  to={`/products?category=${encodeURIComponent(
+                    product.category_id || product.category
+                  )}`}
+                  className="hover:text-foreground"
+                >
                   {product.category}
-                </p>
-              )}
+                </Link>
+              </>
+            )}
+            <span>/</span>
+            <span className="inline-block truncate font-semibold text-foreground max-w-[180px] sm:max-w-xs align-bottom">
+              {product.name}
+            </span>
+          </nav>
 
-              <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
-                {product.name}
-              </h1>
-
-              {/* Price & Discount Row */}
-              <div className="flex flex-wrap items-baseline gap-3 pt-1">
-                <strong className="text-2xl font-semibold tabular-nums text-foreground">
-                  {product.price > 0
-                    ? formatCurrency(product.price)
-                    : "Liên hệ"}
-                </strong>
-                {product.oldPrice > product.price && product.price > 0 && (
-                  <del className="text-sm tabular-nums text-muted-foreground line-through">
-                    {formatCurrency(product.oldPrice)}
-                  </del>
-                )}
-                {discountPercent > 0 && (
-                  <span className="border border-border bg-secondary px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] uppercase text-foreground">
-                    -{discountPercent}%
-                  </span>
-                )}
-              </div>
-
-              {/* Real Rating & Sold Metadata (only when real values > 0) */}
-              {(product.rating > 0 ||
-                product.reviewCount > 0 ||
-                product.sold > 0) && (
-                <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-muted-foreground">
-                  {product.rating > 0 && (
-                    <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                      <Star
-                        size={13}
-                        fill="currentColor"
-                        className="text-foreground"
-                      />
-                      <span>{product.rating.toFixed(1)}</span>
-                    </span>
-                  )}
-                  {product.reviewCount > 0 && (
-                    <span>{product.reviewCount} đánh giá thực tế</span>
-                  )}
-                  {product.sold > 0 && (
-                    <span>Đã bán {product.sold} sản phẩm</span>
-                  )}
-                </div>
-              )}
+          {/* 2-Column Showcase */}
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-stretch">
+            {/* Left Column: Gallery */}
+            <div className="lg:col-span-6 xl:col-span-7 h-full min-h-0">
+              <ProductGallery
+                key={`${product.id}-${selectedVariant?._id || "base"}`}
+                images={galleryImages}
+                productName={product.name}
+              />
             </div>
 
-            {/* Interactive Variant Selection & Cart Actions */}
-            <ProductActions
-              product={product}
-              variants={variants}
-              onVariantChange={setSelectedVariant}
-            />
+            {/* Right Column: Specification & Actions */}
+            <div className="lg:col-span-6 xl:col-span-5 h-full min-h-0 flex flex-col justify-between overflow-y-auto pr-1">
+              <div className="space-y-3">
+                {/* Header Info */}
+                <div className="space-y-1.5 border-b border-border/40 pb-2.5">
+                  {product.category && (
+                    <p className="text-[10px] font-medium tracking-[0.22em] uppercase text-muted-foreground">
+                      {product.category}
+                    </p>
+                  )}
 
-            {/* Description & Real Specifications */}
-            {product.description && (
-              <div className="space-y-3 border-t border-border pt-6">
-                <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground">
-                  Mô tả thiết kế
-                </h2>
-                <p className="whitespace-pre-line text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                  {product.description}
-                </p>
+                  <h1 className="font-display text-xl sm:text-2xl lg:text-[clamp(1.25rem,1.7vw,1.75rem)] font-medium uppercase tracking-tight text-foreground leading-snug">
+                    {product.name}
+                  </h1>
+
+                  {/* Price, Discount & Rating on 1-2 compact lines */}
+                  <div className="flex flex-wrap items-center gap-3 pt-0.5">
+                    <strong className="text-xl sm:text-2xl font-semibold tabular-nums text-foreground">
+                      {product.price > 0
+                        ? formatCurrency(product.price)
+                        : "Liên hệ"}
+                    </strong>
+                    {product.oldPrice > product.price && product.price > 0 && (
+                      <del className="text-xs sm:text-sm tabular-nums text-muted-foreground line-through">
+                        {formatCurrency(product.oldPrice)}
+                      </del>
+                    )}
+                    {discountPercent > 0 && (
+                      <span className="border border-border bg-secondary px-1.5 py-0.5 text-[9px] font-semibold tracking-wider uppercase text-foreground">
+                        -{discountPercent}%
+                      </span>
+                    )}
+                    {(product.rating > 0 || product.sold > 0) && (
+                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground ml-auto">
+                        {product.rating > 0 && (
+                          <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                            <Star
+                              size={12}
+                              fill="currentColor"
+                              className="text-foreground"
+                            />
+                            <span>{product.rating.toFixed(1)}</span>
+                          </span>
+                        )}
+                        {product.sold > 0 && (
+                          <span>Đã bán {product.sold}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Interactive Variant Selection & Cart Actions */}
+                <ProductActions
+                  product={product}
+                  variants={variants}
+                  onVariantChange={setSelectedVariant}
+                />
               </div>
-            )}
+            </div>
           </div>
         </section>
+
+        {/* Description Section (Below first screen) */}
+        {product.description && (
+          <section
+            aria-labelledby="product-description-heading"
+            className="mt-12 sm:mt-16 border-t border-border pt-8 sm:pt-12"
+          >
+            <div className="max-w-3xl">
+              <p className="text-[10px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
+                Chi tiết thiết kế
+              </p>
+              <h2
+                id="product-description-heading"
+                className="mt-1 font-display text-2xl font-normal uppercase text-foreground sm:text-3xl"
+              >
+                Câu chuyện & Chất liệu
+              </h2>
+              <p className="mt-4 whitespace-pre-line text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                {product.description}
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* Real Customer Reviews Section */}
         <section
@@ -407,7 +414,7 @@ const ProductDetail = () => {
               </p>
               <h2
                 id="product-reviews-heading"
-                className="mt-1 font-serif text-2xl font-normal text-foreground sm:text-3xl"
+                className="mt-1 font-display text-2xl font-normal uppercase text-foreground sm:text-3xl"
               >
                 Đánh giá thực tế ({normalizedReviews.length})
               </h2>
@@ -470,7 +477,7 @@ const ProductDetail = () => {
                 </p>
                 <h2
                   id="related-products-heading"
-                  className="mt-1 font-serif text-2xl font-normal text-foreground sm:text-3xl"
+                  className="mt-1 font-display text-2xl font-normal uppercase text-foreground sm:text-3xl"
                 >
                   Thiết kế cùng danh mục
                 </h2>

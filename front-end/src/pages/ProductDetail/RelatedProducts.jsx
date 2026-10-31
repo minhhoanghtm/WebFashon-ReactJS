@@ -23,7 +23,7 @@ const RelatedProducts = ({ products = [], relatedProducts = [] }) => {
           <span className="text-[11px] font-bold text-[#05251C] uppercase tracking-widest block mb-1">
             Gợi ý thời trang
           </span>
-          <h2 id="related-products-title" className="text-xl sm:text-2xl font-black text-[#05251C] tracking-tight font-display uppercase">
+          <h2 id="related-products-title" className="text-xl sm:text-2xl font-bold text-[#05251C] tracking-tight font-display uppercase">
             Có thể bạn cũng thích
           </h2>
         </div>

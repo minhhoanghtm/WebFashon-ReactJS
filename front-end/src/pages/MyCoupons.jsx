@@ -60,7 +60,7 @@ const MyCoupons = ({ isDashboard = false, onNavigateToHunt }) => {
         {/* Title */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="space-y-1">
-            <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight uppercase flex items-center gap-2.5">
+            <h1 className="font-display text-3xl sm:text-5xl font-bold tracking-tight uppercase flex items-center gap-2.5 leading-[1.2]">
               <Ticket className="h-6 w-6" aria-hidden="true" />
               <span>Ví voucher của tôi</span>
             </h1>

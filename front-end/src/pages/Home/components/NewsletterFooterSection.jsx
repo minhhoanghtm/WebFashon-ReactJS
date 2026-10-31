@@ -52,7 +52,7 @@ export const NewsletterFooterSection = () => {
             <span className="font-mono text-xs tracking-[0.32em] text-white/50 uppercase">
               {newsletter.eyebrow}
             </span>
-            <h2 className="font-condensed text-4xl sm:text-6xl md:text-7xl font-extrabold uppercase tracking-tight text-white leading-none">
+            <h2 className="font-condensed text-4xl sm:text-6xl md:text-7xl font-bold uppercase tracking-tight text-white leading-none">
               {newsletter.title}
             </h2>
             <p className="mx-auto max-w-lg font-sans text-xs sm:text-sm text-white/65 leading-relaxed pt-2">
@@ -116,7 +116,7 @@ export const NewsletterFooterSection = () => {
                     to={item.path}
                     className="group flex items-center justify-between border-b border-[#05251C]/10 py-3 transition-colors hover:border-[#05251C]"
                   >
-                    <span className="font-condensed text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-[#05251C] transition-transform duration-300 group-hover:translate-x-2">
+                    <span className="font-condensed text-3xl sm:text-5xl font-bold uppercase tracking-tight text-[#05251C] transition-transform duration-300 group-hover:translate-x-2">
                       {item.label}
                     </span>
                     <ArrowUpRight
@@ -131,7 +131,7 @@ export const NewsletterFooterSection = () => {
             {/* Atelier Contact & Address Information (~40%) */}
             <div className="lg:col-span-5 space-y-8 font-sans">
               <div className="space-y-2">
-                <span className="font-condensed text-3xl font-extrabold uppercase tracking-wider text-[#05251C]">
+                <span className="font-condensed text-3xl font-bold uppercase tracking-wider text-[#05251C]">
                   {siteName}
                 </span>
                 <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-[#05251C]/60">

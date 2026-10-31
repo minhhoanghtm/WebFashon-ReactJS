@@ -263,7 +263,7 @@ const ProductCard = ({
             aria-label="Khung chờ hình ảnh sản phẩm"
           >
             <div className="mb-3 flex h-14 w-10 items-center justify-center border border-border/80">
-              <span className="font-serif text-xs tracking-[0.2em] uppercase text-muted-foreground">
+              <span className="font-sans text-xs tracking-[0.16em] font-medium uppercase text-muted-foreground">
                 WF
               </span>
             </div>

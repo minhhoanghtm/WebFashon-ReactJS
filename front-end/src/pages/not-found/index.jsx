@@ -9,7 +9,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-[80vh] bg-[#FBF9F5] flex flex-col items-center justify-center text-center px-4 py-20 select-none">
-      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C] text-[#F5DD20] text-[10px] font-black tracking-[0.25em] uppercase mb-6 shadow-sm">
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C] text-[#F5DD20] text-[10px] font-bold tracking-[0.25em] uppercase mb-6 shadow-sm">
         <Sparkles size={12} />
         <span>404STUDIO · SYSTEM STATE</span>
       </div>
@@ -20,20 +20,20 @@ const NotFound = () => {
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="relative"
       >
-        <h1 className="text-7xl sm:text-9xl lg:text-[14rem] font-black tracking-tighter text-[#05251C] font-display leading-[0.82]">
+        <h1 className="text-7xl sm:text-9xl lg:text-[14rem] font-bold tracking-tighter text-[#05251C] font-display leading-[1.2]">
           404.
         </h1>
         {/* Floating playful badge */}
         <motion.div
           animate={{ y: [-4, 4, -4], rotate: [-2, 2, -2] }}
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-          className="absolute -top-4 -right-2 sm:-right-8 px-4 py-1.5 rounded-full bg-[#F5DD20] text-[#05251C] font-display text-xs font-black uppercase tracking-wider shadow-lg border border-[#05251C]"
+          className="absolute -top-4 -right-2 sm:-right-8 px-4 py-1.5 rounded-full bg-[#F5DD20] text-[#05251C] font-display text-xs font-bold uppercase tracking-wider shadow-lg border border-[#05251C]"
         >
           LOST IN STYLE
         </motion.div>
       </motion.div>
 
-      <p className="mt-6 text-xl sm:text-2xl font-black text-[#05251C] uppercase tracking-tight font-display">
+      <p className="mt-6 text-xl sm:text-2xl font-bold text-[#05251C] uppercase tracking-tight font-display">
         BẠN ĐANG LẠC BƯỚC KHỎI BẢN ĐỒ THỜI TRANG.
       </p>
 

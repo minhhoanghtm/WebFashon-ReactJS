@@ -303,7 +303,7 @@ const Header = ({ searchTerm, onSearchTermChange }) => {
                 />
               ) : null}
               <div className="flex flex-col">
-                <span className="font-serif text-2xl font-semibold tracking-[0.14em] uppercase text-foreground sm:text-[26px]">
+                <span className="font-condensed text-2xl font-bold tracking-[0.14em] uppercase text-foreground sm:text-[26px]">
                   {brandName}
                 </span>
                 <span className="-mt-1 text-[9px] font-medium tracking-[0.32em] uppercase text-muted-foreground">
@@ -700,7 +700,7 @@ const Header = ({ searchTerm, onSearchTermChange }) => {
               {/* Drawer Header */}
               <div className="flex items-center justify-between border-b border-border pb-4">
                 <div>
-                  <span className="font-serif text-xl font-semibold tracking-[0.14em] uppercase text-foreground">
+                  <span className="font-condensed text-xl font-bold tracking-[0.14em] uppercase text-foreground">
                     {brandName}
                   </span>
                   <p className="text-[9px] tracking-[0.28em] uppercase text-muted-foreground">

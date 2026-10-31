@@ -209,7 +209,7 @@ const CheckoutVoucherSelector = ({
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-2 text-foreground">
                 <Ticket size={17} strokeWidth={1.5} />
-                <h3 className="font-serif text-xl">{modalTitle}</h3>
+                <h3 className="font-sans font-semibold text-xl">{modalTitle}</h3>
               </div>
               <button
                 type="button"

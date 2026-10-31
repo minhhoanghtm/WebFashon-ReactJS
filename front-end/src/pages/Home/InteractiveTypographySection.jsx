@@ -50,7 +50,7 @@ export const InteractiveTypographySection = () => {
                 exit={{ opacity: 0, y: -16 }}
                 transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               >
-                <h2 className="text-3xl sm:text-5xl lg:text-6xl text-[#062D22] uppercase font-display font-black leading-[0.94] tracking-tight">
+                <h2 className="text-3xl sm:text-5xl lg:text-6xl text-[#062D22] uppercase font-display font-bold leading-[0.94] tracking-tight">
                   {currentMsg.title}
                 </h2>
                 <p className="mt-6 text-sm sm:text-base text-[#747974] max-w-xl font-medium leading-relaxed">
@@ -80,7 +80,7 @@ export const InteractiveTypographySection = () => {
               {/* Central Brand Seal */}
               <div className="w-24 h-24 rounded-full bg-[#062D22] text-[#F7F6F1] flex flex-col items-center justify-center p-2 text-center shadow-md group-hover:bg-[#F5DD20] group-hover:text-[#062D22] transition-colors duration-300">
                 <Compass size={22} className="mb-1 text-[#F5DD20] group-hover:text-[#062D22] transition-colors" />
-                <span className="text-[9px] font-black tracking-widest uppercase font-display leading-tight">
+                <span className="text-[9px] font-bold tracking-widest uppercase font-display leading-tight">
                   404 ATELIER
                 </span>
                 <span className="text-[8px] font-mono tracking-wider opacity-70">

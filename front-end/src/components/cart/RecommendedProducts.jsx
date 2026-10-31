@@ -34,7 +34,7 @@ const RecommendedCard = ({ prod, isAdding, onAdd }) => {
             />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center p-4 text-center select-none">
-              <span className="font-serif text-lg uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="font-sans text-lg uppercase tracking-[0.16em] text-muted-foreground">
                 WF
               </span>
               <span className="mt-1 text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
@@ -45,7 +45,7 @@ const RecommendedCard = ({ prod, isAdding, onAdd }) => {
         </div>
 
         <div className="space-y-1.5 p-4">
-          <h4 className="line-clamp-1 font-serif text-base text-foreground">
+          <h4 className="line-clamp-1 font-sans font-medium text-base text-foreground">
             {prod.name}
           </h4>
           <div className="flex items-baseline gap-2">
@@ -147,7 +147,7 @@ const RecommendedProducts = ({ onAddToCart }) => {
           <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
             Giám tuyển bổ sung
           </p>
-          <h3 className="mt-1 font-serif text-2xl font-normal text-foreground sm:text-3xl">
+          <h3 className="mt-1 font-sans text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Có thể bạn sẽ thích
           </h3>
         </div>

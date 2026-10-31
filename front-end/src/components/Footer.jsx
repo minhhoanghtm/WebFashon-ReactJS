@@ -49,7 +49,7 @@ const Footer = () => {
               <span>Con dấu Chứng nhận Chế tác · Atelier Seal</span>
             </div>
 
-            <h2 className="font-serif text-3xl font-normal tracking-tight text-[#F5F4F0] sm:text-5xl">
+            <h2 className="font-sans text-3xl font-light tracking-tight text-[#F5F4F0] sm:text-5xl leading-snug">
               Tinh thần tối giản đơn sắc.
               <br />
               <span className="italic text-[#9E9EA8]">
@@ -301,7 +301,7 @@ const Footer = () => {
           className="overflow-hidden py-8 text-center select-none"
           aria-hidden="true"
         >
-          <span className="block font-serif text-[13vw] leading-[0.82] font-normal tracking-[0.08em] uppercase text-white/[0.06]">
+          <span className="block font-condensed text-[13vw] leading-[1.05] font-bold tracking-[0.08em] uppercase text-white/[0.06] py-3">
             {siteName}
           </span>
         </div>

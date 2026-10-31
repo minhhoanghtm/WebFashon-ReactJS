@@ -172,7 +172,7 @@ const LoginForm = () => {
           <p className="text-[11px] font-mono tracking-[0.28em] uppercase text-muted-foreground">
             {siteName} · ĐỊNH DANH
           </p>
-          <h1 className="font-display text-4xl font-extrabold tracking-tight text-foreground uppercase sm:text-5xl">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground uppercase sm:text-5xl leading-[1.2]">
             Đăng nhập
           </h1>
           <p className="text-xs text-muted-foreground font-sans">

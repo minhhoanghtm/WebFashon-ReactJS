@@ -12,7 +12,7 @@ export function AdminEmptyState({
       <div className="mb-4 flex h-14 w-14 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-muted)]">
         <Icon className="h-6 w-6" strokeWidth={1.5} />
       </div>
-      <h4 className="font-serif text-lg font-medium text-[var(--color-text)]">
+      <h4 className="font-sans text-lg font-medium text-[var(--color-text)]">
         {title}
       </h4>
       {description && (

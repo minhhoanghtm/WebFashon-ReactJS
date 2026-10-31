@@ -100,7 +100,7 @@ export const BoutiqueSection = ({
 
             <h2
               id="boutique-section-heading"
-              className="font-condensed text-4xl sm:text-6xl font-extrabold uppercase tracking-tight text-[#05251C] leading-none"
+              className="font-condensed text-4xl sm:text-6xl font-bold uppercase tracking-tight text-[#05251C] leading-none"
             >
               {boutique.title}
             </h2>

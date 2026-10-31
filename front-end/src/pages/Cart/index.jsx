@@ -519,7 +519,7 @@ const Cart = () => {
           </nav>
 
           <div className="flex flex-wrap items-baseline justify-between gap-4">
-            <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-5xl">
+            <h1 className="font-sans text-3xl font-normal tracking-tight text-foreground sm:text-5xl leading-tight sm:leading-[1.25]">
               Giỏ hàng của bạn
             </h1>
             <span className="border border-border bg-card px-3.5 py-1 text-xs font-medium tabular-nums tracking-[0.16em] uppercase text-foreground">
@@ -638,7 +638,7 @@ const Cart = () => {
                 <div>
                   <h3
                     id="delete-cart-item-title"
-                    className="font-serif text-xl text-foreground"
+                    className="font-sans font-medium text-xl text-foreground"
                   >
                     Xác nhận xóa thiết kế
                   </h3>

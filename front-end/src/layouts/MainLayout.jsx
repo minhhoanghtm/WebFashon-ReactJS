@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import CinematicHeader from "@/pages/Home/components/CinematicHeader";
 import Footer from "@/components/Footer";
+import CustomerChatWidget from "@/components/CustomerChatWidget";
 import useTracking from "@/hooks/useTracking";
 
 const MainLayout = () => {
@@ -64,6 +65,8 @@ const MainLayout = () => {
       </main>
 
       {!isHomePage && <Footer />}
+
+      <CustomerChatWidget />
     </div>
   );
 };

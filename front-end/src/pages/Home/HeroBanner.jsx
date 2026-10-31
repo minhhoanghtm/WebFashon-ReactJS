@@ -110,7 +110,7 @@ const HeroBanner = () => {
             {activeSlide.isApi ? `${siteName} · ATELIER` : defaultHero.eyebrow}
           </p>
 
-          <h1 className="whitespace-pre-line font-serif text-4xl leading-[1.06] font-normal tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+          <h1 className="whitespace-pre-line font-sans text-4xl leading-[1.2] font-normal tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             {activeSlide.title}
           </h1>
 
@@ -192,11 +192,11 @@ const HeroBanner = () => {
                 <div className="my-auto flex flex-col items-center justify-center py-8 text-center">
                   <div className="relative flex h-44 w-32 items-center justify-center border border-foreground/25 bg-background/60 sm:h-56 sm:w-40">
                     <div className="absolute inset-2 border border-border" />
-                    <span className="font-serif text-2xl tracking-[0.18em] uppercase text-foreground/80">
+                    <span className="font-sans text-2xl tracking-[0.18em] uppercase text-foreground/80">
                       {siteName.slice(0, 3)}
                     </span>
                   </div>
-                  <p className="mt-5 font-serif text-lg italic text-foreground">
+                  <p className="mt-5 font-sans text-lg italic text-foreground">
                     {siteName} Monochrome Collection
                   </p>
                   <p className="mt-1 text-[11px] tracking-[0.2em] uppercase text-muted-foreground">

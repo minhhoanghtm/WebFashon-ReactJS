@@ -114,7 +114,7 @@ const LookbookSection = () => {
             </span>
           </div>
 
-          <TextReveal as="h2" className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight uppercase leading-[1.08] font-serif">
+          <TextReveal as="h2" className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight uppercase leading-[1.08] font-sans">
             BEYOND THE ORDINARY.
           </TextReveal>
 
@@ -167,7 +167,7 @@ const LookbookSection = () => {
                   <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#F5DD20] block mb-2">
                     {primaryLook.seoTitle || "Summer Resort 2026"}
                   </span>
-                  <h3 className="text-2xl sm:text-4xl font-black text-white font-serif leading-tight drop-shadow-md">
+                  <h3 className="text-2xl sm:text-4xl font-bold text-white font-sans leading-tight drop-shadow-md">
                     {primaryLook.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-neutral-300 mt-3 line-clamp-3 max-w-lg font-medium leading-relaxed">
@@ -204,7 +204,7 @@ const LookbookSection = () => {
                   </span>
                   <Sparkles size={14} className="text-[#F5DD20]" />
                 </div>
-                <p className="font-serif italic text-base sm:text-lg text-neutral-200 leading-relaxed my-2">
+                <p className="font-sans italic text-base sm:text-lg text-neutral-200 leading-relaxed my-2">
                   “Phong thái bắt đầu khi bạn dám từ bỏ những quy chuẩn rập khuôn. Thời trang streetwear may đo là tuyên ngôn không lời của cái tôi khác biệt.”
                 </p>
                 <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-neutral-400 font-mono tracking-wider">
@@ -253,7 +253,7 @@ const LookbookSection = () => {
                     <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#F5DD20] block mb-1.5">
                       {secondaryLook.seoTitle || "Evening Edition"}
                     </span>
-                    <h3 className="text-xl sm:text-2xl font-bold text-white font-serif leading-tight">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white font-sans leading-tight">
                       {secondaryLook.title}
                     </h3>
                     <p className="text-xs text-neutral-300 mt-2 line-clamp-2 max-w-sm font-medium">

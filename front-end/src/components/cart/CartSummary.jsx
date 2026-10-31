@@ -26,7 +26,7 @@ const CartSummary = ({
         <p className="text-[10px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
           WebFashion · Thanh toán
         </p>
-        <h2 className="mt-1 font-serif text-2xl font-normal text-foreground">
+        <h2 className="mt-1 font-sans text-2xl font-semibold tracking-tight text-foreground">
           Tóm tắt đơn hàng
         </h2>
       </div>
@@ -94,7 +94,7 @@ const CartSummary = ({
           <dt className="text-xs font-semibold tracking-[0.16em] uppercase text-foreground">
             Tổng thanh toán
           </dt>
-          <dd className="font-serif text-2xl font-medium tabular-nums text-foreground">
+          <dd className="font-sans text-2xl font-bold tabular-nums text-foreground">
             {formatCurrency(total)}
           </dd>
         </div>

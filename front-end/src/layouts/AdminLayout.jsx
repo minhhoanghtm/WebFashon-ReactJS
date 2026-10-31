@@ -12,11 +12,21 @@ import { getAdminConversationsService } from "@/services/chat.service";
 import { useAuthStore } from "@/store/auth.store";
 
 const getSocketBaseUrl = (apiUrl) => {
+  const baseUrl =
+    typeof apiUrl === "string" && apiUrl.trim() ? apiUrl : ENV.API_BASE_URL;
+
+  if (typeof baseUrl !== "string" || !baseUrl.trim()) {
+    return typeof window !== "undefined" ? window.location.origin : "";
+  }
+
   try {
-    const parsed = new URL(apiUrl);
+    const parsed = new URL(
+      baseUrl,
+      typeof window !== "undefined" ? window.location.origin : undefined
+    );
     return `${parsed.protocol}//${parsed.host}`;
   } catch {
-    return apiUrl.replace(/\/api\/v\d+\/?$/, "");
+    return typeof window !== "undefined" ? window.location.origin : "";
   }
 };
 
@@ -78,6 +88,8 @@ const AdminLayout = () => {
   }, [isAuthenticated, user]);
 
   useEffect(() => {
+    // The async request only updates state after its network work completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUnreadChats();
   }, [fetchUnreadChats, pathname]);
 
@@ -85,7 +97,7 @@ const AdminLayout = () => {
     const token = localStorage.getItem("accessToken");
     if (!isAuthenticated || user?.role !== "admin" || !token) return undefined;
 
-    const socket = io(getSocketBaseUrl(ENV.API_URL), {
+    const socket = io(getSocketBaseUrl(ENV.API_BASE_URL), {
       auth: { token },
       transports: ["websocket", "polling"],
     });
@@ -100,7 +112,7 @@ const AdminLayout = () => {
   }, [isAuthenticated, user, fetchUnreadChats]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] font-sans text-[var(--color-text)] transition-colors duration-200">
+    <div className="h-dvh min-h-0 overflow-hidden bg-[var(--color-bg)] font-sans text-[var(--color-text)] transition-colors duration-200">
       {/* Sidebar (Desktop Collapsible + Mobile Drawer) */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -111,7 +123,7 @@ const AdminLayout = () => {
 
       {/* Main Content Shell */}
       <div
-        className={`flex min-h-screen flex-col transition-all duration-300 ${
+        className={`flex h-dvh min-h-0 flex-col transition-all duration-300 ${
           sidebarOpen ? "lg:pl-64" : "lg:pl-20"
         }`}
       >
@@ -125,8 +137,8 @@ const AdminLayout = () => {
           onOpenPasswordModal={() => setPasswordModalOpen(true)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-[1600px]">
+        <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto h-full max-w-[1600px]">
             <Outlet />
           </div>
         </main>

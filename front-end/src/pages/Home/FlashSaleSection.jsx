@@ -74,12 +74,12 @@ const FlashSaleSection = ({ favoriteIds, onToggleFavorite }) => {
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-black tracking-widest bg-[#F5DD20] text-[#05251C] px-2.5 py-0.5 rounded-full">
+                <span className="text-[10px] uppercase font-bold tracking-widest bg-[#F5DD20] text-[#05251C] px-2.5 py-0.5 rounded-full">
                   ATELIER LIMITED
                 </span>
                 <span className="text-xs text-[#FBF9F5]/70 font-medium">Giờ Vàng Số Lượng Giới Hạn</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-1 font-heading">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-1 font-heading">
                 {activeFlashSale.name}
               </h2>
             </div>

@@ -152,7 +152,7 @@ const LookbookDetail = () => {
           /* Fallback Typographic layout if no blocks exist */
           <div className="max-w-4xl mx-auto px-6 py-32 text-center select-none">
             <h2 
-              className="text-[#05251C] text-3xl md:text-5xl font-black font-display tracking-tight uppercase mb-6"
+              className="text-[#05251C] text-3xl md:text-5xl font-bold font-display tracking-tight uppercase mb-6"
             >
               {page.title ? page.title.normalize("NFC") : ""}
             </h2>
@@ -174,7 +174,7 @@ const LookbookDetail = () => {
             <div className="flex flex-col items-center justify-center text-center gap-2 mb-16 rounded-none select-none">
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#F5DD20]">Discover More</span>
               <h2 
-                className="text-2xl md:text-3xl font-display font-black text-[#F1D8CA] tracking-wide uppercase"
+                className="text-2xl md:text-3xl font-display font-bold text-[#F1D8CA] tracking-wide uppercase"
               >
                 Khám phá thêm bộ sưu tập
               </h2>

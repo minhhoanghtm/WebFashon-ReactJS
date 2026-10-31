@@ -6,6 +6,7 @@ import trackingService from "@/services/tracking.service";
 import { addCartItemService } from "@/services/cartItem.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useFavoriteStore } from "@/store/favorite.store";
+import { formatCurrency } from "@/utils/format";
 import { getColorHex } from "../ProductSearch/productAdapter";
 
 const uniqueValues = (values) => [...new Set(values.filter(Boolean))];
@@ -158,9 +159,9 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
     if (isAllOutOfStock || (selectedVariant && stockLimit <= 0))
       return "Thiết kế này hiện đã hết hàng.";
     if (colorOptions.length > 0 && !selectedColor)
-      return "Vui lòng chọn màu sắc trước khi thêm vào giỏ.";
+      return "Vui lòng chọn màu sắc.";
     if (sizeOptions.length > 0 && !selectedSize)
-      return "Vui lòng chọn kích cỡ trước khi thêm vào giỏ.";
+      return "Vui lòng chọn kích cỡ.";
     return "";
   })();
 
@@ -226,6 +227,10 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
 
     if (!canAdd) {
       toast.error(warningText || "Vui lòng chọn đầy đủ màu sắc và kích cỡ.");
+      const optionsEl = document.getElementById("product-variant-options");
+      if (optionsEl) {
+        optionsEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return false;
     }
 
@@ -311,6 +316,10 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
 
     if (!canAdd) {
       toast.error(warningText || "Vui lòng chọn đầy đủ màu sắc và kích cỡ.");
+      const optionsEl = document.getElementById("product-variant-options");
+      if (optionsEl) {
+        optionsEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
 
@@ -353,19 +362,19 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div id="product-variant-options" className="space-y-3">
       {/* 1. Color Selector */}
       {colorOptions.length > 0 && (
-        <fieldset className="space-y-2.5">
-          <legend className="flex w-full items-center justify-between text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground">
+        <fieldset className="space-y-1.5">
+          <legend className="flex w-full items-center justify-between text-[10px] font-semibold tracking-[0.2em] uppercase text-foreground">
             <span>Màu sắc</span>
             {selectedColor && (
-              <span className="font-normal text-muted-foreground">
-                Đang chọn: <strong className="text-foreground">{selectedColor}</strong>
+              <span className="font-normal text-muted-foreground lowercase">
+                chọn: <strong className="text-foreground capitalize">{selectedColor}</strong>
               </span>
             )}
           </legend>
-          <div className="flex flex-wrap gap-2.5">
+          <div className="flex flex-wrap gap-2">
             {colorOptions.map((color) => {
               const disabled = isColorDisabled(color);
               const selected = selectedColor === color;
@@ -375,7 +384,7 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
                   type="button"
                   disabled={disabled}
                   onClick={() => handleColorClick(color)}
-                  className={`touch-target inline-flex items-center gap-2.5 border px-4 text-xs transition-colors ${
+                  className={`touch-target h-8 inline-flex items-center gap-1.5 border px-3 text-xs transition-colors ${
                     disabled
                       ? "cursor-not-allowed border-dashed border-border opacity-35 line-through"
                       : selected
@@ -384,11 +393,11 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
                   }`}
                 >
                   <span
-                    className="h-3.5 w-3.5 rounded-full border border-black/20"
+                    className="h-2.5 w-2.5 rounded-full border border-black/20 shrink-0"
                     style={{ backgroundColor: getColorHex(color) }}
                     aria-hidden="true"
                   />
-                  <span>{color}</span>
+                  <span className="truncate">{color}</span>
                 </button>
               );
             })}
@@ -398,16 +407,16 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
 
       {/* 2. Size Selector */}
       {sizeOptions.length > 0 && (
-        <fieldset className="space-y-2.5">
-          <legend className="flex w-full items-center justify-between text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground">
+        <fieldset className="space-y-1.5">
+          <legend className="flex w-full items-center justify-between text-[10px] font-semibold tracking-[0.2em] uppercase text-foreground">
             <span>Kích cỡ</span>
             {selectedSize && (
-              <span className="font-normal text-muted-foreground">
-                Đang chọn: <strong className="text-foreground">{selectedSize}</strong>
+              <span className="font-normal text-muted-foreground lowercase">
+                chọn: <strong className="text-foreground uppercase">{selectedSize}</strong>
               </span>
             )}
           </legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {sizeOptions.map((size) => {
               const disabled = isSizeDisabled(size);
               const selected = selectedSize === size;
@@ -417,7 +426,7 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
                   type="button"
                   disabled={disabled}
                   onClick={() => handleSizeClick(size)}
-                  className={`touch-target min-w-[48px] border px-4 text-xs font-medium uppercase transition-colors ${
+                  className={`touch-target h-8 min-w-[36px] border px-2.5 text-xs font-medium uppercase transition-colors ${
                     disabled
                       ? "cursor-not-allowed border-dashed border-border opacity-35 line-through"
                       : selected
@@ -433,23 +442,23 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
         </fieldset>
       )}
 
-      {/* 3. Quantity & Stock Status */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-y border-border py-4">
-        <div className="flex items-center gap-4">
-          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground">
+      {/* 3. Quantity & Stock Status - ON SAME LINE */}
+      <div className="flex items-center justify-between gap-3 border-y border-border/40 py-2">
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-foreground">
             Số lượng
           </span>
-          <div className="inline-flex items-center border border-border bg-card">
+          <div className="inline-flex items-center border border-border bg-card h-8">
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               disabled={quantity <= 1 || isAllOutOfStock}
-              className="touch-target inline-flex items-center justify-center text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-35"
+              className="w-7 h-full inline-flex items-center justify-center text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-35"
               aria-label="Giảm số lượng"
             >
               −
             </button>
-            <strong className="w-10 text-center text-xs font-semibold tabular-nums text-foreground">
+            <strong className="w-8 text-center text-xs font-semibold tabular-nums text-foreground">
               {isAllOutOfStock ? 0 : quantity}
             </strong>
             <button
@@ -458,7 +467,7 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
                 setQuantity((q) => Math.min(stockLimit || 99, q + 1))
               }
               disabled={quantity >= (stockLimit || 99) || isAllOutOfStock}
-              className="touch-target inline-flex items-center justify-center text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-35"
+              className="w-7 h-full inline-flex items-center justify-center text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-35"
               aria-label="Tăng số lượng"
             >
               +
@@ -467,63 +476,102 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
         </div>
 
         {stockLimit !== null && stockLimit !== undefined && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground tabular-nums">
             {stockLimit > 0 ? `Còn ${stockLimit} sản phẩm` : "Hết hàng"}
           </span>
         )}
       </div>
 
-      {/* Selection Notice */}
+      {/* Selection Notice (Compact 1-line) */}
       {warningText && (
-        <p className="border-l-2 border-foreground bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+        <p className="border-l-2 border-foreground bg-secondary/50 px-2.5 py-1 text-[11px] text-muted-foreground truncate">
           {warningText}
         </p>
       )}
 
-      {/* 4. Primary Purchase & Favorite CTAs */}
-      <div className="flex flex-col gap-3 sm:flex-row">
+      {/* 4. Desktop/Primary Purchase Actions (Sticky at bottom of right column) */}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-xs pt-2.5 pb-1 border-t border-border/40 z-10 flex gap-2">
         <button
           type="button"
+          data-buy-action="add-to-cart"
           onClick={handleAddToCart}
           disabled={isAdding || !canAdd || isAdmin}
-          className="touch-target flex-1 inline-flex items-center justify-center gap-2 border border-foreground bg-card px-6 py-3.5 text-xs font-semibold tracking-[0.16em] uppercase text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
+          className="touch-target flex-1 min-h-[42px] inline-flex items-center justify-center gap-1.5 border border-foreground bg-card px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isAdding ? (
-            <LoaderCircle size={16} className="animate-spin" />
+            <LoaderCircle size={15} className="animate-spin" />
           ) : (
-            <ShoppingBag size={16} strokeWidth={1.5} />
+            <ShoppingBag size={15} strokeWidth={1.5} />
           )}
-          <span>
+          <span className="truncate">
             {isAdmin
-              ? "Không dành cho Admin"
+              ? "Admin"
               : isAdding
               ? "Đang xử lý..."
-              : "Thêm vào giỏ hàng"}
+              : "Thêm vào giỏ"}
           </span>
         </button>
 
         <button
           type="button"
+          data-buy-action="buy-now"
           onClick={handleBuyNow}
           disabled={isAdding || !canAdd || isAdmin}
-          className="touch-target flex-1 inline-flex items-center justify-center gap-2 bg-primary px-6 py-3.5 text-xs font-semibold tracking-[0.16em] uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className="touch-target flex-1 min-h-[42px] inline-flex items-center justify-center gap-1.5 bg-primary px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <Zap size={16} strokeWidth={1.5} />
-          <span>{isAdmin ? "Không dành cho Admin" : "Mua ngay"}</span>
+          <Zap size={15} strokeWidth={1.5} />
+          <span className="truncate">{isAdmin ? "Admin" : "Mua ngay"}</span>
         </button>
 
         <button
           type="button"
+          data-buy-action="toggle-favorite"
           onClick={handleToggleFavorite}
-          className="touch-target inline-flex items-center justify-center border border-border bg-card px-4 text-foreground transition-colors hover:border-foreground"
+          className="touch-target min-h-[42px] min-w-[42px] inline-flex items-center justify-center border border-border bg-card px-2.5 text-foreground transition-colors hover:border-foreground shrink-0"
           aria-label={isFavorite ? "Bỏ yêu thích" : "Lưu vào yêu thích"}
           aria-pressed={isFavorite}
         >
           <Heart
-            size={18}
+            size={16}
             strokeWidth={1.5}
             fill={isFavorite ? "currentColor" : "none"}
           />
+        </button>
+      </div>
+
+      {/* 5. Mobile Fixed Bottom Quick Action Bar (< 1024px) */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border px-4 py-2.5 pb-[max(0.65rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+        <div className="flex flex-col min-w-0 pr-2">
+          <span className="block text-[10px] font-semibold tracking-wider uppercase text-muted-foreground truncate">
+            {selectedVariant
+              ? [selectedColor, selectedSize].filter(Boolean).join(" / ") || product.name
+              : product.name}
+          </span>
+          <div className="flex items-baseline gap-2">
+            <strong className="text-sm font-bold tabular-nums text-foreground">
+              {product.price > 0 ? formatCurrency(product.price) : "Liên hệ"}
+            </strong>
+            {product.oldPrice > product.price && product.price > 0 && (
+              <del className="text-[11px] tabular-nums text-muted-foreground line-through">
+                {formatCurrency(product.oldPrice)}
+              </del>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          data-buy-action="mobile-add-to-cart"
+          onClick={handleAddToCart}
+          disabled={isAdding || !canAdd || isAdmin}
+          className="touch-target min-h-[44px] px-4 bg-primary text-primary-foreground font-semibold text-xs tracking-[0.06em] sm:tracking-[0.14em] uppercase flex items-center justify-center gap-2 shrink-0 transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          {isAdding ? (
+            <LoaderCircle size={15} className="animate-spin" />
+          ) : (
+            <ShoppingBag size={15} strokeWidth={1.5} />
+          )}
+          <span className="truncate">{isAdmin ? "Admin" : isAdding ? "Đang xử lý..." : "Thêm vào giỏ"}</span>
         </button>
       </div>
     </div>

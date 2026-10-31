@@ -140,7 +140,7 @@ const CategoryShowcase = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent group-hover:from-black/90 transition-all duration-300" />
 
                 {selectedCategoryId === "all" && (
-                  <span className="absolute top-3 right-3 bg-[#073D2A] text-[#F5DD20] text-[9px] font-black px-2.5 py-0.5 rounded-full z-20 shadow-sm uppercase tracking-wider border border-[#F5DD20]/20">
+                  <span className="absolute top-3 right-3 bg-[#073D2A] text-[#F5DD20] text-[9px] font-bold px-2.5 py-0.5 rounded-full z-20 shadow-sm uppercase tracking-wider border border-[#F5DD20]/20">
                     Đang chọn
                   </span>
                 )}
@@ -189,7 +189,7 @@ const CategoryShowcase = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent group-hover:from-black/90 transition-all duration-300" />
 
                     {isSelected && (
-                      <span className="absolute top-3 right-3 bg-[#073D2A] text-[#F5DD20] text-[9px] font-black px-2.5 py-0.5 rounded-full z-20 shadow-sm uppercase tracking-wider border border-[#F5DD20]/20">
+                      <span className="absolute top-3 right-3 bg-[#073D2A] text-[#F5DD20] text-[9px] font-bold px-2.5 py-0.5 rounded-full z-20 shadow-sm uppercase tracking-wider border border-[#F5DD20]/20">
                         Đang chọn
                       </span>
                     )}

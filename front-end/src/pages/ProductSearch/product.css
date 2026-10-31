@@ -1,7 +1,7 @@
 /* 404STUDIO — PRODUCT DISCOVERY EDITORIAL STYLING */
 
 .product-page {
-  font-family: var(--font-sans, "Geist", system-ui, sans-serif);
+  font-family: var(--font-sans);
   background-color: #FBF9F5;
   color: #171717;
 }

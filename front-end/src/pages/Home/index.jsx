@@ -186,7 +186,7 @@ const Home = () => {
               </p>
               <h2
                 id="home-collection-heading"
-                className="mt-2 font-condensed text-4xl font-extrabold tracking-tight text-[#05251C] uppercase sm:text-5xl"
+                className="mt-2 font-condensed text-4xl font-bold tracking-tight text-[#05251C] uppercase sm:text-5xl"
               >
                 {activeCategoryName}
               </h2>

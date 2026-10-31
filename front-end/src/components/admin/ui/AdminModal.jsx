@@ -62,7 +62,7 @@ export function AdminModal({
         <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
           <div>
             {title && (
-              <h3 className="font-serif text-xl font-normal tracking-tight text-[var(--color-text)]">
+              <h3 className="font-sans text-xl font-normal tracking-tight text-[var(--color-text)]">
                 {title}
               </h3>
             )}

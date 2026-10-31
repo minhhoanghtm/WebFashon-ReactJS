@@ -49,12 +49,12 @@ export const Guide = () => {
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-black tracking-[0.25em] text-[#05251C] uppercase mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-bold tracking-[0.25em] text-[#05251C] uppercase mb-4">
             <Sparkles size={12} className="text-[#05251C]" />
             <span>ACCURATE FIT & SIZING ARCHITECTURE</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black text-[#05251C] uppercase font-display leading-[0.92] tracking-tighter">
+          <h1 className="text-4xl sm:text-6xl font-bold text-[#05251C] uppercase font-display leading-[1.2] tracking-tighter">
             BẢNG CHỌN SIZE.
           </h1>
 
@@ -89,7 +89,7 @@ export const Guide = () => {
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#05251C]/10">
             <div className="flex items-center gap-2.5">
               <Ruler size={20} className="text-[#05251C]" />
-              <h2 className="text-xl sm:text-2xl font-black font-display text-[#05251C] uppercase tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold font-display text-[#05251C] uppercase tracking-tight">
                 {currentCategory.name}
               </h2>
             </div>
@@ -101,7 +101,7 @@ export const Guide = () => {
               <thead>
                 <tr className="border-b border-[#05251C]/15 bg-[#FBF9F5]">
                   {currentCategory.headers.map((h, idx) => (
-                    <th key={idx} className="p-4 font-black uppercase tracking-wider text-[#05251C]">
+                    <th key={idx} className="p-4 font-bold uppercase tracking-wider text-[#05251C]">
                       {h}
                     </th>
                   ))}
@@ -111,7 +111,7 @@ export const Guide = () => {
                 {currentCategory.rows.map((row, rIdx) => (
                   <tr key={rIdx} className="hover:bg-[#FBF9F5] transition-colors">
                     {row.map((cell, cIdx) => (
-                      <td key={cIdx} className={`p-4 ${cIdx === 0 ? "font-black text-[#05251C]" : "text-[#6B716E]"}`}>
+                      <td key={cIdx} className={`p-4 ${cIdx === 0 ? "font-bold text-[#05251C]" : "text-[#6B716E]"}`}>
                         {cell}
                       </td>
                     ))}

@@ -103,11 +103,11 @@ const CampaignDetail = () => {
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div>
-              <div className="inline-flex items-center gap-2 bg-[#073D2A] border border-[#FBF9F5]/20 px-3.5 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.25em] text-[#F5DD20] mb-4">
+              <div className="inline-flex items-center gap-2 bg-[#073D2A] border border-[#FBF9F5]/20 px-3.5 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[0.25em] text-[#F5DD20] mb-4">
                 {isFlashSale ? <Zap size={14} fill="currentColor" /> : <Sparkles size={14} />}
                 <span>{isFlashSale ? "Flash Sale Giờ Vàng" : "Chiến Dịch Mùa Đặc Biệt"}</span>
               </div>
-              <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-[#FBF9F5] mb-4 font-display uppercase leading-[0.92]">
+              <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-[#FBF9F5] mb-4 font-display uppercase leading-[1.2]">
                 {campaign.name}
               </h1>
               <p className="text-[#D1D9CF] text-xs sm:text-sm max-w-2xl leading-relaxed">
@@ -123,7 +123,7 @@ const CampaignDetail = () => {
               </div>
 
               {!isEnded ? (
-                <div className="grid grid-cols-4 gap-2 text-center font-display font-black text-[#05251C]">
+                <div className="grid grid-cols-4 gap-2 text-center font-display font-bold text-[#05251C]">
                   <div className="bg-white p-3 rounded-2xl shadow-sm">
                     <span className="text-xl sm:text-2xl">{formatNumber(countdown.days)}</span>
                     <span className="block text-[9px] text-[#6B716E] font-sans font-bold uppercase mt-0.5">Ngày</span>

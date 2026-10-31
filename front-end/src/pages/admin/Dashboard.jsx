@@ -470,7 +470,7 @@ const Dashboard = () => {
             className="mx-auto my-12 max-w-md space-y-4 border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 p-8 text-center"
           >
             <AlertCircle className="mx-auto h-10 w-10 text-[var(--color-danger)]" />
-            <h3 className="font-serif text-lg font-medium text-[var(--color-text)]">
+            <h3 className="font-sans text-lg font-medium text-[var(--color-text)]">
               Lỗi nạp dữ liệu thống kê
             </h3>
             <p className="text-xs text-[var(--color-text-muted)]">
@@ -493,7 +493,7 @@ const Dashboard = () => {
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Tổng doanh thu
                   </span>
-                  <div className="font-serif text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
+                  <div className="font-sans text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
                     {formatCurrency(kpis.totalRevenue)}
                   </div>
                   <span className="inline-flex text-[11px] text-[var(--color-text-muted)]">
@@ -510,7 +510,7 @@ const Dashboard = () => {
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Đơn hàng hoàn tất
                   </span>
-                  <div className="font-serif text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
+                  <div className="font-sans text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
                     {kpis.totalOrders}
                   </div>
                   <span className="inline-flex text-[11px] text-[var(--color-text-muted)]">
@@ -527,7 +527,7 @@ const Dashboard = () => {
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Sản phẩm đang bán
                   </span>
-                  <div className="font-serif text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
+                  <div className="font-sans text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
                     {totalProducts}
                   </div>
                   <span className="inline-flex text-[11px] text-[var(--color-text-muted)]">
@@ -544,7 +544,7 @@ const Dashboard = () => {
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Khách hàng mua sắm
                   </span>
-                  <div className="font-serif text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
+                  <div className="font-sans text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
                     {kpis.totalCustomers}
                   </div>
                   <span className="inline-flex text-[11px] text-[var(--color-text-muted)]">
@@ -604,7 +604,7 @@ const Dashboard = () => {
                     <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                       Giá trị đơn hàng trung bình (AOV)
                     </div>
-                    <div className="mt-1 font-serif text-xl font-semibold text-[var(--color-text)] tabular-nums">
+                    <div className="mt-1 font-sans text-xl font-semibold text-[var(--color-text)] tabular-nums">
                       {formatCurrency(kpis.avgOrderValue)}
                     </div>
                   </div>
@@ -613,7 +613,7 @@ const Dashboard = () => {
                     <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                       Tổng sản phẩm đã tiêu thụ
                     </div>
-                    <div className="mt-1 font-serif text-xl font-semibold text-[var(--color-text)] tabular-nums">
+                    <div className="mt-1 font-sans text-xl font-semibold text-[var(--color-text)] tabular-nums">
                       {kpis.totalSoldProducts}{" "}
                       <span className="font-sans text-xs font-normal text-[var(--color-text-muted)]">
                         sản phẩm
@@ -625,7 +625,7 @@ const Dashboard = () => {
                     <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                       Khách hàng hoạt động
                     </div>
-                    <div className="mt-1 font-serif text-xl font-semibold text-[var(--color-text)] tabular-nums">
+                    <div className="mt-1 font-sans text-xl font-semibold text-[var(--color-text)] tabular-nums">
                       {kpis.totalCustomers}{" "}
                       <span className="font-sans text-xs font-normal text-[var(--color-text-muted)]">
                         tài khoản
@@ -737,7 +737,7 @@ const Dashboard = () => {
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Tổng mã giảm giá
                   </span>
-                  <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                  <div className="font-sans text-2xl font-semibold text-[var(--color-text)] tabular-nums">
                     {voucherStats.stats?.totalVouchers || 0}
                   </div>
                 </div>
@@ -751,7 +751,7 @@ const Dashboard = () => {
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Đang kích hoạt
                   </span>
-                  <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                  <div className="font-sans text-2xl font-semibold text-[var(--color-text)] tabular-nums">
                     {voucherStats.stats?.activeVouchers || 0}
                   </div>
                 </div>
@@ -765,7 +765,7 @@ const Dashboard = () => {
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Voucher hết hạn
                   </span>
-                  <div className="font-serif text-2xl font-semibold text-[var(--color-danger)] tabular-nums">
+                  <div className="font-sans text-2xl font-semibold text-[var(--color-danger)] tabular-nums">
                     {voucherStats.stats?.expiredVouchers || 0}
                   </div>
                 </div>
@@ -779,7 +779,7 @@ const Dashboard = () => {
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Đã dùng hết quota
                   </span>
-                  <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                  <div className="font-sans text-2xl font-semibold text-[var(--color-text)] tabular-nums">
                     {voucherStats.stats?.soldOutVouchers || 0}
                   </div>
                 </div>
@@ -888,7 +888,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                <div className="font-sans text-2xl font-semibold text-[var(--color-text)] tabular-nums">
                   {(trackingOverview?.totalEvents || 0).toLocaleString()}
                 </div>
                 <div className="mt-1 text-xs text-[var(--color-text-muted)]">
@@ -908,7 +908,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                <div className="font-sans text-2xl font-semibold text-[var(--color-text)] tabular-nums">
                   {trackingOverview?.recommendationMetrics?.ctrPercentage || 0}%
                 </div>
                 <div className="mt-1 text-xs text-[var(--color-text-muted)]">
@@ -929,7 +929,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                <div className="font-sans text-2xl font-semibold text-[var(--color-text)] tabular-nums">
                   {trackingOverview?.aiMetrics?.ctrPercentage || 0}% CTR
                 </div>
                 <div className="mt-1 text-xs text-[var(--color-text-muted)]">
@@ -949,7 +949,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                <div className="font-sans text-2xl font-semibold text-[var(--color-text)] tabular-nums">
                   {funnelData?.funnel?.[funnelData?.funnel?.length - 1]
                     ?.overallConversionRate || 0}
                   %

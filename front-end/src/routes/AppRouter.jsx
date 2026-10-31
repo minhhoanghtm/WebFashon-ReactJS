@@ -69,7 +69,7 @@ const StagePlaceholder = () => (
     <p className="text-[11px] font-medium tracking-[0.28em] uppercase text-muted-foreground">
       WebFashion · Monochrome Atelier
     </p>
-    <h1 className="mt-3 font-serif text-3xl font-normal tracking-tight text-foreground sm:text-5xl">
+    <h1 className="mt-3 font-sans text-3xl font-normal tracking-tight text-foreground sm:text-5xl leading-tight sm:leading-[1.25]">
       Trang đang được triển khai ở giai đoạn tiếp theo
     </h1>
   </section>

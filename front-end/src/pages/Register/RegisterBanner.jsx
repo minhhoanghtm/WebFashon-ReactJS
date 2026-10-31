@@ -41,7 +41,7 @@ const RegisterBanner = () => {
         <span className="inline-block border border-[#C5A880]/50 bg-[#C5A880]/10 px-2.5 py-1 text-[10px] font-mono tracking-[0.24em] uppercase text-[#D4B892]">
           THÀNH VIÊN ĐỘC QUYỀN
         </span>
-        <h2 className="pt-2 font-display text-4xl leading-[1.05] font-extrabold tracking-tight text-white uppercase sm:text-5xl">
+        <h2 className="pt-2 font-display text-4xl leading-[1.2] font-bold tracking-tight text-white uppercase sm:text-5xl">
           Gia nhập không gian thời trang đơn sắc.
         </h2>
         <p className="text-xs leading-relaxed text-neutral-300 sm:text-sm font-sans">

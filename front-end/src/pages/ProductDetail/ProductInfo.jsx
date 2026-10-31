@@ -44,7 +44,7 @@ const ProductInfo = ({ product, variants = [] }) => {
       {/* Product Title & Badge */}
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl sm:text-3xl lg:text-[2.15rem] font-black text-[#05251C] tracking-tight leading-tight font-display">
+          <h1 className="text-2xl sm:text-3xl lg:text-[2.15rem] font-bold text-[#05251C] tracking-tight leading-tight font-display">
             {product.name}
           </h1>
         </div>

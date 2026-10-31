@@ -318,7 +318,7 @@ export const CollageLookbookSection = () => {
             </span>
           </div>
 
-          <h3 className="font-condensed text-5xl sm:text-7xl lg:text-8xl font-extrabold uppercase tracking-tight text-[#05251C] leading-[0.92]">
+          <h3 className="font-condensed text-5xl sm:text-7xl lg:text-8xl font-bold uppercase tracking-tight text-[#05251C] leading-[0.92]">
             {collage.title}
             <span className="block text-[#05251C]/45">{collage.subtitle}</span>
           </h3>

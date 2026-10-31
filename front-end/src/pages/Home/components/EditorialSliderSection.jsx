@@ -104,7 +104,7 @@ export const EditorialSliderSection = () => {
             </span>
             <h2
               id="editorial-section-heading"
-              className="mt-2 font-condensed text-4xl sm:text-6xl font-extrabold uppercase tracking-tight text-[#05251C] leading-none"
+              className="mt-2 font-condensed text-4xl sm:text-6xl font-bold uppercase tracking-tight text-[#05251C] leading-none"
             >
               {editorialNews.title}
             </h2>
@@ -181,7 +181,7 @@ export const EditorialSliderSection = () => {
 
               {/* Title & Short description */}
               <div className="space-y-1">
-                <h3 className="font-condensed text-2xl font-extrabold uppercase tracking-tight text-[#05251C] transition-colors group-hover:text-[#05251C]/70">
+                <h3 className="font-condensed text-2xl font-bold uppercase tracking-tight text-[#05251C] transition-colors group-hover:text-[#05251C]/70">
                   {article.title}
                 </h3>
                 <p className="font-sans text-xs text-[#05251C]/70 leading-relaxed line-clamp-2">

@@ -117,7 +117,7 @@ const VoucherSection = ({
                       <Ticket className="h-5 w-5" />
                     </MotionDiv>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] font-mono font-black text-[#073D2A] bg-[#073D2A]/10 px-2 py-0.5 rounded w-fit uppercase tracking-wider">
+                      <div className="text-[10px] font-mono font-bold text-[#073D2A] bg-[#073D2A]/10 px-2 py-0.5 rounded w-fit uppercase tracking-wider">
                         {v.code}
                       </div>
                       <h4 className="text-sm font-bold text-neutral-900 truncate mt-1.5 font-heading">

@@ -213,7 +213,7 @@ const VerifyOTP = () => {
           <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center border border-border bg-secondary">
             <CheckCircle2 className="h-7 w-7 text-foreground" />
           </div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight uppercase">
+          <h1 className="font-display text-3xl font-bold tracking-tight uppercase leading-[1.2]">
             Hồ sơ đã kích hoạt
           </h1>
           <p className="mt-3 text-xs leading-relaxed text-muted-foreground font-sans">
@@ -250,7 +250,7 @@ const VerifyOTP = () => {
           >
             <ShieldCheck className="h-6 w-6 stroke-[1.5]" />
           </div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight uppercase sm:text-4xl">
+          <h1 className="font-display text-3xl font-bold tracking-tight uppercase sm:text-4xl leading-[1.2]">
             Nhập mã xác minh
           </h1>
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground font-sans">

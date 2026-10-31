@@ -4,11 +4,6 @@ import {
   RefreshCw,
   Search,
   Send,
-  User,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
   ChevronLeft,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -48,6 +43,16 @@ const formatTime = (value) => {
   }).format(new Date(value));
 };
 
+const formatMessageDay = (value) => {
+  if (!value) return '';
+  return new Intl.DateTimeFormat('vi-VN', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(value));
+};
+
 const getCustomerName = (conversation) => {
   const customer = conversation?.customerId;
   return customer?.fullName || customer?.name || customer?.email || 'Khách vãng lai';
@@ -68,7 +73,8 @@ const AdminChatManagement = () => {
   // Mobile conversation view toggle
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
 
-  const messagesEndRef = useRef(null);
+  const messagesListRef = useRef(null);
+  const shouldStickToBottomRef = useRef(true);
   const socketRef = useRef(null);
   const selectedConversationRef = useRef(null);
 
@@ -226,7 +232,15 @@ const AdminChatManagement = () => {
   }, [selectedConversation?._id]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    shouldStickToBottomRef.current = true;
+  }, [selectedConversation?._id]);
+
+  useEffect(() => {
+    if (!shouldStickToBottomRef.current || !messagesListRef.current) return;
+    messagesListRef.current.scrollTo({
+      top: messagesListRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
   }, [messages, selectedConversation?._id]);
 
   const updateSelectedConversation = (updated) => {
@@ -306,7 +320,7 @@ const AdminChatManagement = () => {
   };
 
   return (
-    <div className="space-y-6 text-left">
+    <div className="space-y-4 text-left lg:flex lg:h-full lg:min-h-[520px] lg:flex-col">
       {/* Header */}
       <AdminPageHeader
         title="Trung tâm hỗ trợ khách hàng"
@@ -316,7 +330,7 @@ const AdminChatManagement = () => {
           <button
             onClick={loadConversations}
             aria-label="Làm mới cuộc trò chuyện"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] transition hover:bg-[var(--color-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
             title="Làm mới danh sách"
           >
             <RefreshCw className="h-4 w-4" />
@@ -325,55 +339,56 @@ const AdminChatManagement = () => {
       />
 
       {/* Stats Counter Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl flex items-center justify-between">
-          <span className="text-xs text-slate-500 font-medium">Tổng hội thoại</span>
-          <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums">
+      <div className="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+          <span className="text-xs font-medium text-[var(--color-text-muted)]">Tổng hội thoại</span>
+          <span className="text-base font-bold tabular-nums text-[var(--color-text)]">
             {stats.total}
           </span>
         </div>
-        <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl flex items-center justify-between">
-          <span className="text-xs text-amber-600 font-medium">Chờ phản hồi</span>
-          <span className="text-base font-extrabold text-amber-600 tabular-nums">
+        <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+          <span className="text-xs font-medium text-[var(--color-text-muted)]">Chờ phản hồi</span>
+          <span className="text-base font-bold tabular-nums text-[var(--color-text)]">
             {stats.waiting_admin}
           </span>
         </div>
-        <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl flex items-center justify-between">
-          <span className="text-xs text-emerald-600 font-medium">Đang mở</span>
-          <span className="text-base font-extrabold text-emerald-600 tabular-nums">
+        <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+          <span className="text-xs font-medium text-[var(--color-text-muted)]">Đang mở</span>
+          <span className="text-base font-bold tabular-nums text-[var(--color-text)]">
             {stats.open}
           </span>
         </div>
-        <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl flex items-center justify-between">
-          <span className="text-xs text-slate-400 font-medium">Đã đóng</span>
-          <span className="text-base font-extrabold text-slate-500 tabular-nums">
+        <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+          <span className="text-xs font-medium text-[var(--color-text-muted)]">Đã đóng</span>
+          <span className="text-base font-bold tabular-nums text-[var(--color-text)]">
             {stats.closed}
           </span>
         </div>
       </div>
 
       {/* Main Two-Column Chat Workspace */}
-      <AdminCard noPadding className="h-[700px] flex overflow-hidden">
+      <AdminCard noPadding className="min-h-[520px] lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+        <div className="flex h-[calc(100dvh-17rem)] min-h-[520px] lg:min-h-0 lg:flex-1">
         {/* Left Column: Conversations List */}
         <div
-          className={`w-full md:w-80 lg:w-96 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shrink-0 bg-white dark:bg-slate-900 ${
-            mobileChatOpen ? 'hidden md:flex' : 'flex'
+          className={`flex min-h-0 w-full flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] lg:w-[23rem] lg:shrink-0 ${
+            mobileChatOpen ? 'hidden lg:flex' : 'flex'
           }`}
         >
           {/* Search & Filter */}
-          <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 space-y-2.5">
+          <div className="shrink-0 space-y-3 border-b border-[var(--color-border)] p-3">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-[var(--color-text-muted)]" />
               <input
                 type="text"
                 placeholder="Tìm khách hàng..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30"
+                className="h-10 w-full border border-[var(--color-border)] bg-[var(--color-bg)] pl-9 pr-3 text-xs text-[var(--color-text)] outline-none transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
               />
             </div>
 
-            <div className="flex gap-1">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
               {[
                 { id: 'all', label: 'Tất cả' },
                 { id: 'waiting_admin', label: 'Cần trả lời' },
@@ -383,10 +398,10 @@ const AdminChatManagement = () => {
                 <button
                   key={f.id}
                   onClick={() => setActiveFilter(f.id)}
-                  className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer ${
+                  className={`min-h-9 border px-1 py-1 text-[10px] font-semibold tracking-wide uppercase transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)] ${
                     activeFilter === f.id
-                      ? 'bg-[#05251C]/10 text-[#05251C] dark:bg-[#F5DD20]/15 dark:text-[#F5DD20]'
-                      : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      ? 'border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]'
+                      : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
                   }`}
                 >
                   {f.label}
@@ -396,7 +411,7 @@ const AdminChatManagement = () => {
           </div>
 
           {/* List items */}
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80 scrollbar-thin">
+          <div role="listbox" aria-label="Danh sách hội thoại hỗ trợ" className="min-h-0 flex-1 divide-y divide-[var(--color-border)] overflow-y-auto overscroll-contain">
             {loadingConversations ? (
               <div className="p-4 text-center text-xs text-slate-400">
                 Đang tải hội thoại...
@@ -419,35 +434,45 @@ const AdminChatManagement = () => {
                     onClick={() => {
                       setSelectedConversation(conv);
                       setMobileChatOpen(true);
+                      requestAnimationFrame(() => {
+                        document.activeElement?.scrollIntoView({ block: 'nearest' });
+                      });
                     }}
-                    className={`w-full p-3.5 flex items-start gap-3 text-left transition cursor-pointer ${
+                    role="option"
+                    aria-selected={isSelected}
+                    className={`flex min-h-[76px] w-full items-start gap-3 border-l-4 p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-text)] ${
                       isSelected
-                        ? 'bg-[#05251C]/10 dark:bg-[#F5DD20]/15 border-l-4 border-[#05251C] dark:border-[#F5DD20]'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                        ? 'border-l-[var(--color-text)] bg-[var(--color-bg)]'
+                        : 'border-l-transparent hover:bg-[var(--color-bg)]'
                     }`}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold shrink-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-xs font-bold text-[var(--color-text)]">
                       {initial}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        <span className="truncate text-xs font-bold text-[var(--color-text)]">
                           {name}
                         </span>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="ml-2 shrink-0 text-[10px] text-[var(--color-text-muted)]">
                           {formatTime(conv.updatedAt)}
                         </span>
                       </div>
 
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      <p className="truncate text-[11px] text-[var(--color-text-muted)]">
                         {conv.lastMessage || 'Bắt đầu cuộc trò chuyện'}
                       </p>
 
-                      <div className="mt-1.5 flex items-center justify-between">
+                      <div className="mt-1.5 flex items-center justify-between gap-2">
                         <AdminBadge variant={statusInfo.variant} dot size="sm">
                           {statusInfo.label}
                         </AdminBadge>
+                        {Number(conv.unreadByAdmin || conv.unreadCount || 0) > 0 && (
+                          <span className="min-w-5 bg-[var(--color-text)] px-1.5 py-0.5 text-center text-[10px] font-bold tabular-nums text-[var(--color-bg)]">
+                            {conv.unreadByAdmin || conv.unreadCount}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </button>
@@ -459,28 +484,33 @@ const AdminChatManagement = () => {
 
         {/* Right Column: Chat Stream & Actions */}
         <div
-          className={`flex-1 flex flex-col bg-slate-50/40 dark:bg-slate-950/40 ${
-            !mobileChatOpen ? 'hidden md:flex' : 'flex'
+          className={`min-h-0 min-w-0 flex-1 flex-col bg-[var(--color-bg)] ${
+            !mobileChatOpen ? 'hidden lg:flex' : 'flex'
           }`}
         >
           {selectedConversation ? (
             <>
               {/* Chat Header */}
-              <div className="p-4 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-3">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:p-4">
                 <div className="flex items-center gap-2.5">
                   <button
                     onClick={() => setMobileChatOpen(false)}
-                    className="md:hidden flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                    aria-label="Quay lại danh sách hội thoại"
+                    className="flex h-11 w-11 items-center justify-center border border-[var(--color-border)] text-[var(--color-text)] lg:hidden"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-xs font-bold text-[var(--color-text)]">
+                    {getCustomerName(selectedConversation).charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="truncate text-xs font-bold text-[var(--color-text)]">
                       {getCustomerName(selectedConversation)}
                     </h3>
-                    <div className="text-[11px] text-slate-400">
+                    <div className="truncate text-[11px] text-[var(--color-text-muted)]">
                       {selectedConversation.customerId?.email || 'Khách hàng'}
                     </div>
+                    <div className="mt-1"><AdminBadge variant={(statusMeta[selectedConversation.status] || statusMeta.open).variant} size="sm">{(statusMeta[selectedConversation.status] || statusMeta.open).label}</AdminBadge></div>
                   </div>
                 </div>
 
@@ -488,7 +518,7 @@ const AdminChatManagement = () => {
                   {selectedConversation.status === 'waiting_admin' && (
                     <button
                       onClick={handleAssign}
-                      className="px-3 py-1.5 bg-[#05251C] hover:bg-[#073D2A] dark:bg-[#F5DD20] dark:text-[#05251C] dark:hover:bg-[#e6cf1d] text-white text-xs font-semibold rounded-xl shadow-xs transition"
+                      className="min-h-11 border border-[var(--color-text)] bg-[var(--color-text)] px-3 text-xs font-semibold text-[var(--color-bg)] transition hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
                     >
                       Tiếp nhận
                     </button>
@@ -496,14 +526,14 @@ const AdminChatManagement = () => {
                   {selectedConversation.status !== 'closed' ? (
                     <button
                       onClick={handleClose}
-                      className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition"
+                      className="min-h-11 border border-[var(--color-border)] px-3 text-xs font-semibold text-[var(--color-text)] transition hover:bg-[var(--color-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
                     >
                       Đóng phiên
                     </button>
                   ) : (
                     <button
                       onClick={handleReopen}
-                      className="px-3 py-1.5 border border-[#05251C] text-[#05251C] dark:border-[#F5DD20] dark:text-[#F5DD20] hover:bg-[#05251C]/10 text-xs font-semibold rounded-xl transition"
+                      className="min-h-11 border border-[var(--color-text)] px-3 text-xs font-semibold text-[var(--color-text)] transition hover:bg-[var(--color-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
                     >
                       Mở lại
                     </button>
@@ -512,7 +542,18 @@ const AdminChatManagement = () => {
               </div>
 
               {/* Message Stream */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin">
+              <div
+                ref={messagesListRef}
+                aria-live="polite"
+                aria-label="Nội dung hội thoại"
+                onScroll={() => {
+                  const element = messagesListRef.current;
+                  if (!element) return;
+                  shouldStickToBottomRef.current =
+                    element.scrollHeight - element.scrollTop - element.clientHeight < 96;
+                }}
+                className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-4"
+              >
                 {loadingMessages ? (
                   <div className="py-12 text-center text-xs text-slate-400">
                     Đang nạp tin nhắn...
@@ -522,43 +563,62 @@ const AdminChatManagement = () => {
                     Chưa có tin nhắn nào trong hội thoại này
                   </div>
                 ) : (
-                  messages.map((msg) => {
+                  messages.map((msg, index) => {
                     const isAdmin =
                       msg.senderType === 'admin' || msg.senderType === 'staff';
+                    const previousMessage = messages[index - 1];
+                    const showDayDivider =
+                      !previousMessage ||
+                      formatMessageDay(previousMessage.createdAt) !==
+                        formatMessageDay(msg.createdAt);
 
                     return (
-                      <div
-                        key={msg._id}
-                        className={`flex flex-col ${
-                          isAdmin ? 'items-end' : 'items-start'
-                        }`}
-                      >
+                      <React.Fragment key={msg._id}>
+                        {showDayDivider && (
+                          <div className="flex items-center gap-3 py-2" aria-label={formatMessageDay(msg.createdAt)}>
+                            <span className="h-px flex-1 bg-[var(--color-border)]" />
+                            <span className="text-[10px] font-medium tracking-wide text-[var(--color-text-muted)] uppercase">
+                              {formatMessageDay(msg.createdAt)}
+                            </span>
+                            <span className="h-px flex-1 bg-[var(--color-border)]" />
+                          </div>
+                        )}
                         <div
-                          className={`max-w-md rounded-2xl p-3 text-xs leading-relaxed ${
-                            isAdmin
-                              ? 'bg-[#05251C] dark:bg-[#F5DD20] text-white dark:text-[#05251C] rounded-br-xs shadow-xs font-medium'
-                              : 'bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-bl-xs shadow-2xs'
+                          className={`flex flex-col ${
+                            isAdmin ? 'items-end' : 'items-start'
                           }`}
                         >
-                          {msg.content}
+                          <div
+                            className={`max-w-[80%] border p-3 text-xs leading-relaxed ${
+                              isAdmin
+                                ? 'border-[var(--color-text)] bg-[var(--color-text)] font-medium text-[var(--color-bg)]'
+                                : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]'
+                            }`}
+                          >
+                            {msg.content}
+                          </div>
+                          <span className="mt-1 px-1 text-[10px] text-[var(--color-text-muted)]">
+                            {formatTime(msg.createdAt)}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-slate-400 mt-1 px-1">
-                          {formatTime(msg.createdAt)}
-                        </span>
-                      </div>
+                      </React.Fragment>
                     );
                   })
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Message Input Form */}
               <form
                 onSubmit={handleSend}
-                className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-2"
+                className="flex shrink-0 items-end gap-2 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-3"
               >
-                <input
-                  type="text"
+                {selectedConversation.status === 'closed' && (
+                  <p className="hidden text-xs text-[var(--color-text-muted)] sm:block">
+                    Phiên chat đã đóng. Mở lại phiên để tiếp tục phản hồi.
+                  </p>
+                )}
+                <textarea
+                  rows={1}
                   placeholder={
                     selectedConversation.status === 'closed'
                       ? 'Phiên chat đã đóng. Hãy mở lại để tiếp tục nhắn.'
@@ -567,7 +627,13 @@ const AdminChatManagement = () => {
                   disabled={selectedConversation.status === 'closed' || sending}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  className="flex-1 h-10 px-3.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30 text-slate-800 dark:text-slate-100 disabled:opacity-50"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault();
+                      handleSend(event);
+                    }
+                  }}
+                  className="[field-sizing:content] max-h-[104px] min-h-11 flex-1 resize-none border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-3 text-xs leading-5 text-[var(--color-text)] outline-none transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <button
                   type="submit"
@@ -577,19 +643,16 @@ const AdminChatManagement = () => {
                     sending
                   }
                   aria-label="Gửi tin nhắn"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#05251C] hover:bg-[#073D2A] dark:bg-[#F5DD20] dark:text-[#05251C] dark:hover:bg-[#e6cf1d] disabled:opacity-50 text-white transition shadow-xs cursor-pointer"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
                 >
                   <Send className="h-4 w-4" />
                 </button>
               </form>
             </>
           ) : (
-            <AdminEmptyState
-              icon={MessageCircle}
-              title="Chọn hội thoại"
-              description="Chọn một cuộc trò chuyện từ danh sách bên trái để phản hồi khách hàng."
-            />
+            <AdminEmptyState icon={MessageCircle} title="Chọn một hội thoại để bắt đầu" description="Chọn một cuộc trò chuyện từ danh sách để xem và phản hồi khách hàng." />
           )}
+        </div>
         </div>
       </AdminCard>
     </div>

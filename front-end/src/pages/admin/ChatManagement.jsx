@@ -226,7 +226,7 @@ const ChatManagement = () => {
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-300/80">
                 404Studio
               </p>
-              <h1 className="mt-1 text-2xl font-black text-white">Tin nhắn hỗ trợ</h1>
+              <h1 className="mt-1 text-2xl font-bold text-white">Tin nhắn hỗ trợ</h1>
             </div>
             <button
               type="button"
@@ -312,7 +312,7 @@ const ChatManagement = () => {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <span className="flex h-full w-full items-center justify-center text-sm font-black text-white">
+                        <span className="flex h-full w-full items-center justify-center text-sm font-bold text-white">
                           {getConversationTitle(conversation).charAt(0).toUpperCase()}
                         </span>
                       )}
@@ -320,7 +320,7 @@ const ChatManagement = () => {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <h2 className="truncate text-sm font-black text-white">
+                        <h2 className="truncate text-sm font-bold text-white">
                           {getConversationTitle(conversation)}
                         </h2>
                         <span className="shrink-0 text-xs text-blue-100/50">
@@ -367,13 +367,13 @@ const ChatManagement = () => {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="flex h-full w-full items-center justify-center font-black text-white">
+                    <span className="flex h-full w-full items-center justify-center font-bold text-white">
                       {selectedTitle.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h2 className="truncate text-lg font-black text-white">{selectedTitle}</h2>
+                  <h2 className="truncate text-lg font-bold text-white">{selectedTitle}</h2>
                   <p className="mt-0.5 truncate text-xs font-semibold text-blue-100/65">
                     {getCustomerSubtitle(selectedConversation)}
                   </p>
@@ -384,7 +384,7 @@ const ChatManagement = () => {
                 type="button"
                 onClick={handleCloseConversation}
                 disabled={selectedConversation.status === "closed"}
-                className="inline-flex items-center gap-2 rounded-lg border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-xs font-black text-blue-200 transition hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-xs font-bold text-blue-200 transition hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ShieldCheck size={15} aria-hidden="true" />
                 {selectedConversation.status === "closed" ? "Đã đóng" : "Admin kiểm soát"}

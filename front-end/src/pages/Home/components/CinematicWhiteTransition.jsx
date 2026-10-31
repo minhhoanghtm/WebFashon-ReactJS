@@ -17,7 +17,7 @@ export const CinematicWhiteTransition = ({ isVisible, logoText = "404 STUDIO" })
       style={{ animationDuration: "350ms" }}
     >
       <div className="flex flex-col items-center space-y-2 animate-in zoom-in-95 duration-400">
-        <span className="font-condensed text-4xl sm:text-6xl font-extrabold tracking-[0.2em] uppercase text-black">
+        <span className="font-condensed text-4xl sm:text-6xl font-bold tracking-[0.2em] uppercase text-black">
           {brandName}
         </span>
         <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-black/50">
