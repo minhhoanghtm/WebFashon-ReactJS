@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, Star, Zap } from "lucide-react";
 import { toast } from "react-toastify";
+import { gsap } from "gsap";
 import { useFavoriteStore } from "@/store/favorite.store";
 import trackingService from "@/services/tracking.service";
 import useProductImpression from "@/hooks/useProductImpression";
@@ -39,11 +40,62 @@ const ProductCard = ({
   const [primaryIdx, setPrimaryIdx] = useState(0);
   const [hoverIdxError, setHoverIdxError] = useState(false);
 
+  const cardRef = useRef(null);
+  const quickToRef = useRef(null);
+
   const impressionRef = useProductImpression(product, {
     isRecommendation: Boolean(trackingMeta?.isRecommendation),
     algorithm: trackingMeta?.algorithm || "hybrid",
     position: trackingMeta?.position || 0,
   });
+
+  // GSAP quickTo 3D Tilt (Max 6deg) with cleanup & motion queries
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return undefined;
+
+    // Connect impression tracking element if available
+    if (impressionRef) {
+      impressionRef.current = el;
+    }
+
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const canHover = window.matchMedia("(hover: hover)").matches;
+
+    if (prefersReduced || !canHover) {
+      return undefined;
+    }
+
+    const ctx = gsap.context(() => {
+      gsap.set(el, { transformPerspective: 800, transformStyle: "preserve-3d" });
+      const xTo = gsap.quickTo(el, "rotationY", { duration: 0.4, ease: "power2.out" });
+      const yTo = gsap.quickTo(el, "rotationX", { duration: 0.4, ease: "power2.out" });
+      quickToRef.current = { xTo, yTo };
+    }, el);
+
+    return () => {
+      ctx.revert();
+    };
+  }, [impressionRef]);
+
+  const handleMouseMove = (e) => {
+    if (!quickToRef.current || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const xPercent = (x / rect.width) * 2 - 1; // -1 to 1
+    const yPercent = (y / rect.height) * 2 - 1; // -1 to 1
+
+    // Maximum 6 degrees tilt
+    quickToRef.current.xTo(xPercent * 6);
+    quickToRef.current.yTo(-yPercent * 6);
+  };
+
+  const handleMouseLeave = () => {
+    if (!quickToRef.current) return;
+    quickToRef.current.xTo(0);
+    quickToRef.current.yTo(0);
+  };
 
   if (!product) return null;
 
@@ -179,10 +231,12 @@ const ProductCard = ({
 
   return (
     <article
-      ref={impressionRef}
+      ref={cardRef}
       onClick={handleCardClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       data-product-card
-      className="group relative flex w-full cursor-pointer flex-col border border-border bg-card transition-colors hover:border-foreground/40"
+      className="group relative flex w-full cursor-pointer flex-col border border-border bg-card transition-colors hover:border-foreground/40 will-change-transform"
     >
       {/* Aspect 3:4 Portrait Garment Frame */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-secondary">

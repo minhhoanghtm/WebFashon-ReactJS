@@ -5,7 +5,7 @@ import {
   useNavigationType,
   useOutlet,
 } from "react-router-dom";
-import Header from "@/components/Header";
+import CinematicHeader from "@/pages/Home/components/CinematicHeader";
 import Footer from "@/components/Footer";
 import useTracking from "@/hooks/useTracking";
 
@@ -41,16 +41,18 @@ const MainLayout = () => {
       </a>
 
       {!isHomePage && (
-        <Header
+        <CinematicHeader
           searchTerm={homeSearchTerm}
           onSearchTermChange={setHomeSearchTerm}
+          isHomePage={false}
         />
       )}
 
       <main
         id="main-content"
         ref={mainContentRef}
-        className="flex flex-1 flex-col"
+        key={location.pathname}
+        className={`flex flex-1 flex-col page-fade-enter ${!isHomePage ? "pt-20" : ""}`}
       >
         {currentOutlet}
       </main>

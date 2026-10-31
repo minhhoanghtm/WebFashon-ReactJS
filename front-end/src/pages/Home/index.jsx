@@ -152,6 +152,7 @@ const Home = () => {
       <CinematicHeader
         searchTerm={homeSearchTerm}
         onSearchTermChange={setHomeSearchTerm}
+        isHomePage={true}
       />
 
       {/* 1. Cinematic Hero (100svh, dark, sticky, auto-crossfade, condensed 2-line title, thin button) */}

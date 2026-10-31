@@ -8,11 +8,15 @@ import {
   Trash2,
   Loader2,
   Search,
+  Heart,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 import { useAuthStore } from "@/store/auth.store";
 import { useCartStore } from "@/store/cart.store";
+import { useFavoriteStore } from "@/store/favorite.store";
 import { getCartService } from "@/services/cart.service";
 import {
   getCartItemsService,
@@ -48,43 +52,30 @@ const normalizeCartItems = (backendItems = []) => {
       : product.displayProduct
       ? [normalizeImageUrl(product.displayProduct)].filter(Boolean)
       : [];
+    const fallbackImage =
+      normalizeImageUrl(product.image) ||
+      normalizeImageUrl(variant.image_url) ||
+      "";
+    const image = rawImages[0] || fallbackImage;
 
-    const variantImage = normalizeImageUrl(variant.image_url);
-    const productImage = normalizeImageUrl(
-      rawImages[0] ||
-        product.image ||
-        product.imageUrl ||
-        product.image_url ||
-        ""
-    );
+    const variantLabel = [variant.color, variant.size]
+      .filter(Boolean)
+      .join(" / ");
 
     return {
       _id: item._id,
+      id: item._id,
       product_id: product._id || product.id,
-      slug: product.slug || product._id || product.id,
-      name: product.name || "Thiết kế thời trang",
-      category: product.category_id?.name || "Bộ sưu tập",
-      image: variantImage || productImage || "",
-      productImage,
-      images: [variantImage, ...rawImages, productImage].filter(Boolean),
-      new_price: Number(product.new_price ?? item.price ?? 0),
-      old_price: Number(product.old_price ?? 0),
-      price: Number(item.price ?? product.new_price ?? 0),
-      quantity: Number(item.quantity || 1),
+      variant_id: variant._id || variant.id,
+      name: product.name || "Thiết kế Atelier",
+      slug: product.slug || "",
+      price: item.price || product.new_price || product.price || 0,
+      new_price: item.price || product.new_price || product.price || 0,
+      quantity: Number(item.quantity) || 1,
+      variant: variantLabel,
+      image,
+      imageUrl: image,
       stock: variant.stock ?? product.stock ?? 99,
-      campaign: item.campaign || product.campaign || null,
-      price_changed: Boolean(item.price_changed),
-      variants: variant._id
-        ? [
-            {
-              _id: variant._id,
-              color: variant.color,
-              size: variant.size,
-              image_url: variant.image_url,
-              stock: variant.stock,
-            },
-          ]
-        : [],
     };
   });
 };
@@ -101,40 +92,90 @@ const MENU_ITEMS = [
     num: "01",
     label: "TRANG CHỦ",
     path: "/",
-    desc: "Không gian trải nghiệm chủ đạo",
+    desc: "Không gian trải nghiệm điện ảnh chủ đạo",
   },
   {
     num: "02",
     label: "TẤT CẢ THIẾT KẾ",
     path: "/products",
-    desc: "Khám phá danh mục may đo đương đại",
+    desc: "Khám phá toàn bộ danh mục may đo đương đại",
   },
   {
     num: "03",
     label: "MỤC YÊU THÍCH",
     path: "/favorites",
-    desc: "Bộ sưu tập các thiết kế bạn đã lưu",
+    desc: "Bộ sưu tập các thiết kế cá nhân bạn đã lưu",
   },
   {
     num: "04",
-    label: "ƯU ĐÃI VOUCHER",
+    label: "KHO ƯU ĐÃI VOUCHER",
     path: "/vouchers",
-    desc: "Đặc quyền mua sắm dành riêng cho bạn",
+    desc: "Đặc quyền mua sắm & mã giảm giá may đo",
   },
   {
     num: "05",
-    label: "GIỎ HÀNG CỦA BẠN",
+    label: "VÍ VOUCHER CỦA TÔI",
+    path: "/my-coupons",
+    desc: "Quản lý và kích hoạt voucher cá nhân",
+  },
+  {
+    num: "06",
+    label: "LỊCH SỬ ĐƠN HÀNG",
+    path: "/orders",
+    desc: "Theo dõi tiến độ chế tác và vận chuyển",
+  },
+  {
+    num: "07",
+    label: "HỒ SƠ TÀI KHOẢN",
+    path: "/profile",
+    desc: "Quản lý thông tin cá nhân và sổ địa chỉ",
+  },
+  {
+    num: "08",
+    label: "GIỎ HÀNG ATELIER",
     path: "/cart",
-    desc: "Xem lại và tiến hành thanh toán đơn hàng",
+    desc: "Biên nhận thiết kế và tiến hành đặt hàng",
   },
 ];
 
-export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
+export const CinematicHeader = ({
+  searchTerm = "",
+  onSearchTermChange,
+  isHomePage = false,
+}) => {
   const navigate = useNavigate();
   const { settings, loading } = useWebsiteSettings();
   const { isAuthenticated: isLoggedIn, user, logout } = useAuthStore();
   const displayName =
-    user?.fullName || user?.data?.fullName || user?.name || user?.username || "Tài khoản";
+    user?.fullName ||
+    user?.data?.fullName ||
+    user?.name ||
+    user?.username ||
+    "Tài khoản";
+
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("webfashion_theme");
+      if (stored) return stored === "dark";
+      return document.documentElement.classList.contains("dark");
+    }
+    return false;
+  });
+
+  const toggleTheme = () => {
+    setIsDark((prev) => !prev);
+  };
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add("dark");
+      localStorage.setItem("webfashion_theme", "dark");
+    } else {
+      root.classList.remove("dark");
+      localStorage.setItem("webfashion_theme", "light");
+    }
+  }, [isDark]);
 
   const handleLogout = () => {
     setIsMenuOpen(false);
@@ -153,6 +194,8 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
 
   const cartItems = useCartStore((state) => state.items);
   const setCartItems = useCartStore((state) => state.setCartItems);
+  const favoriteItems = useFavoriteStore((state) => state.items);
+  const favoriteCount = favoriteItems.length;
 
   // Sync cart data from API when drawer opens or on login change
   const refreshCartData = useCallback(async () => {
@@ -162,11 +205,12 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
       const cartId = extractCartId(cartRes);
       if (cartId) {
         const itemsRes = await getCartItemsService(cartId);
-        const normalized = normalizeCartItems(itemsRes?.data || []);
-        setCartItems(normalized);
+        if (itemsRes?.success && Array.isArray(itemsRes.data)) {
+          setCartItems(normalizeCartItems(itemsRes.data));
+        }
       }
-    } catch (err) {
-      console.error("Lỗi đồng bộ giỏ hàng:", err);
+    } catch {
+      // Keep store items
     }
   }, [isLoggedIn, setCartItems]);
 
@@ -176,18 +220,6 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
     }
   }, [isCartOpen, refreshCartData]);
 
-  // Calculate cart totals
-  const cartCount = useMemo(() => {
-    return cartItems.reduce((acc, item) => acc + (item.quantity || 0), 0);
-  }, [cartItems]);
-
-  const subtotal = useMemo(() => {
-    return cartItems.reduce(
-      (acc, item) => acc + (Number(item.new_price ?? item.price ?? 0)) * (item.quantity || 0),
-      0
-    );
-  }, [cartItems]);
-
   const brandName =
     !loading && settings?.general?.siteName
       ? settings.general.siteName
@@ -195,8 +227,9 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
   const logoUrl =
     !loading && settings?.general?.logoUrl ? settings.general.logoUrl : null;
 
-  // Track scroll position to adjust header appearance
+  // Track scroll position to adjust header appearance on homepage
   useEffect(() => {
+    if (!isHomePage) return undefined;
     const handleScroll = () => {
       const heroHeight = window.innerHeight * 0.85;
       setScrolledPastHero(window.scrollY > heroHeight);
@@ -204,7 +237,7 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isHomePage]);
 
   // Keyboard accessibility: ESC closes overlay & drawer
   const handleKeyDown = useCallback(
@@ -243,7 +276,9 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
       trackingService.trackSearchDebounced(keyword, 800);
       try {
         const response = await suggestProductsService(keyword);
-        const products = Array.isArray(response) ? response : response?.data ?? [];
+        const products = Array.isArray(response)
+          ? response
+          : response?.data ?? [];
         setSuggestions(Array.isArray(products) ? products.slice(0, 6) : []);
       } catch {
         setSuggestions([]);
@@ -253,134 +288,124 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const handleSearchSubmit = (event) => {
-    event.preventDefault();
-    const keyword = searchTerm.trim();
-    setIsSearchOpen(false);
-    if (keyword) {
-      trackingService.trackSearchImmediate(keyword);
-      navigate(`/products?search=${encodeURIComponent(keyword)}&page=1`);
-      return;
-    }
-    navigate("/products");
-  };
-
   const handleSuggestionSelect = (product) => {
-    const keyword = searchTerm.trim();
-    if (keyword) trackingService.trackSearchImmediate(keyword);
     setIsSearchOpen(false);
-    const slug = product.slug;
-    navigate(slug ? `/product/${slug}` : "/products");
+    navigate(`/product/${product.slug || product._id || product.id}`);
   };
 
-  // Handle quantity change with stock error handling & tracking
-  const handleQuantityChange = async (itemId, newQty) => {
-    const item = cartItems.find((i) => i._id === itemId);
-    if (!item || newQty < 1) return;
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      setIsSearchOpen(false);
+      navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
 
-    // Check inventory stock limit
-    if (item.stock !== undefined && newQty > Number(item.stock)) {
-      toast.error(`Kho chỉ còn tối đa ${item.stock} sản phẩm.`);
+  const cartCount = useMemo(() => {
+    return cartItems.reduce(
+      (sum, item) => sum + (Number(item.quantity) || 1),
+      0
+    );
+  }, [cartItems]);
+
+  const cartSubtotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => {
+      const price = Number(item.price || item.new_price || 0);
+      const qty = Number(item.quantity || 1);
+      return sum + price * qty;
+    }, 0);
+  }, [cartItems]);
+
+  const handleUpdateQuantity = async (itemId, currentQty, delta) => {
+    const newQty = currentQty + delta;
+    if (newQty < 1) {
+      handleRemoveItem(itemId);
       return;
     }
 
-    const oldQty = item.quantity;
+    const itemToUpdate = cartItems.find(
+      (i) => (i._id || i.id) === itemId
+    );
+    if (
+      delta > 0 &&
+      itemToUpdate?.stock !== undefined &&
+      newQty > itemToUpdate.stock
+    ) {
+      toast.error(
+        `Rất tiếc, số lượng trong kho chỉ còn ${itemToUpdate.stock} sản phẩm`
+      );
+      return;
+    }
+
     setUpdatingItemId(itemId);
-
     try {
-      const res = await updateCartItemService(itemId, { quantity: newQty });
-      if (res?.success && res?.data) {
-        const normalized = normalizeCartItems(res.data);
-        setCartItems(normalized);
+      if (isLoggedIn) {
+        await updateCartItemService(itemId, { quantity: newQty });
+      }
+      setCartItems(
+        cartItems.map((item) =>
+          (item._id || item.id) === itemId
+            ? { ...item, quantity: newQty }
+            : item
+        )
+      );
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        "Không thể cập nhật số lượng. Vui lòng thử lại.";
+      toast.error(msg);
+      refreshCartData();
+    } finally {
+      setUpdatingItemId(null);
+    }
+  };
 
-        // Tracking
-        trackingService.trackCartQuantityChange(
+  const handleRemoveItem = async (itemId) => {
+    const itemToRemove = cartItems.find(
+      (i) => (i._id || i.id) === itemId
+    );
+    setUpdatingItemId(itemId);
+    try {
+      if (isLoggedIn) {
+        await deleteCartItemService(itemId);
+      }
+      if (itemToRemove) {
+        trackingService.trackRemoveFromCart(
           {
-            id: item.product_id,
-            _id: item.product_id,
-            price: item.price || item.new_price,
+            _id: itemToRemove.product_id || itemToRemove.id,
+            name: itemToRemove.name,
+            price: itemToRemove.price,
           },
-          oldQty,
-          newQty
-        );
-
-        // Notify other components
-        window.dispatchEvent(
-          new CustomEvent("cartUpdated", {
-            detail: {
-              totalQuantity: normalized.reduce((sum, i) => sum + i.quantity, 0),
-            },
-          })
+          itemToRemove.quantity || 1
         );
       }
+      setCartItems(
+        cartItems.filter((item) => (item._id || item.id) !== itemId)
+      );
+      toast.success("Đã xóa thiết kế khỏi giỏ hàng");
     } catch (err) {
-      console.error("Lỗi cập nhật số lượng:", err);
-      toast.error("Không thể cập nhật số lượng lúc này!");
+      const msg =
+        err?.response?.data?.message ||
+        "Không thể xóa sản phẩm. Vui lòng thử lại.";
+      toast.error(msg);
+      refreshCartData();
     } finally {
       setUpdatingItemId(null);
     }
   };
 
-  // Handle delete cart item with tracking
-  const handleDeleteItem = async (itemId) => {
-    const targetItem = cartItems.find((i) => i._id === itemId);
-    setUpdatingItemId(itemId);
-
-    try {
-      const res = await deleteCartItemService(itemId);
-      if (res?.success && res?.data) {
-        const normalized = normalizeCartItems(res.data);
-        setCartItems(normalized);
-        toast.success("Đã xóa sản phẩm khỏi giỏ hàng.");
-
-        // Tracking
-        if (targetItem) {
-          trackingService.trackRemoveFromCart(
-            {
-              id: targetItem.product_id,
-              _id: targetItem.product_id,
-              price: targetItem.price || targetItem.new_price,
-            },
-            targetItem.quantity
-          );
-        }
-
-        // Notify other components
-        window.dispatchEvent(
-          new CustomEvent("cartUpdated", {
-            detail: {
-              totalQuantity: normalized.reduce((sum, i) => sum + i.quantity, 0),
-            },
-          })
-        );
-      }
-    } catch (err) {
-      console.error("Lỗi khi xóa sản phẩm:", err);
-      toast.error("Xóa sản phẩm thất bại!");
-    } finally {
-      setUpdatingItemId(null);
-    }
-  };
-
-  const handleCheckout = () => {
-    setIsCartOpen(false);
-    navigate("/checkout");
-  };
-
-  const handleViewCart = () => {
-    setIsCartOpen(false);
-    navigate("/cart");
-  };
+  // Determine header background & color based on page type & scroll
+  const isTransparent = isHomePage && !scrolledPastHero;
 
   return (
     <>
-      {/* 1. Transparent Header bar overlaid on Hero */}
+      {/* 1. Main Navigation Bar */}
       <header
         role="banner"
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
-          scrolledPastHero
-            ? "bg-neutral-950/85 backdrop-blur-md border-b border-white/10 py-3.5"
-            : "bg-transparent py-5 sm:py-7"
+        className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ease-out flex items-center ${
+          isTransparent
+            ? "bg-transparent text-white"
+            : "bg-background/95 text-foreground border-b border-border shadow-xs backdrop-blur-md"
         }`}
       >
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 sm:px-8 lg:px-12">
@@ -390,12 +415,26 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
             onClick={() => setIsMenuOpen(true)}
             aria-label="Mở menu điều hướng toàn màn hình"
             aria-expanded={isMenuOpen}
-            className="group flex min-h-[44px] min-w-[44px] items-center gap-2.5 text-xs font-semibold tracking-[0.26em] text-white uppercase transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className={`group flex min-h-[44px] min-w-[44px] items-center gap-2.5 text-xs font-semibold tracking-[0.26em] uppercase transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
+              isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+            }`}
           >
             <span className="relative flex h-3.5 w-4 flex-col justify-between overflow-hidden">
-              <span className="h-[1.5px] w-full bg-white transition-transform duration-300 group-hover:translate-x-0.5" />
-              <span className="h-[1.5px] w-3/4 bg-white transition-transform duration-300 group-hover:w-full" />
-              <span className="h-[1.5px] w-full bg-white transition-transform duration-300 group-hover:translate-x-0.5" />
+              <span
+                className={`h-[1.5px] w-full transition-transform duration-300 group-hover:translate-x-0.5 ${
+                  isTransparent ? "bg-white" : "bg-foreground"
+                }`}
+              />
+              <span
+                className={`h-[1.5px] w-3/4 transition-transform duration-300 group-hover:w-full ${
+                  isTransparent ? "bg-white" : "bg-foreground"
+                }`}
+              />
+              <span
+                className={`h-[1.5px] w-full transition-transform duration-300 group-hover:translate-x-0.5 ${
+                  isTransparent ? "bg-white" : "bg-foreground"
+                }`}
+              />
             </span>
             <span className="font-condensed text-sm tracking-[0.2em] sm:inline">
               MENU
@@ -405,7 +444,9 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
           {/* Center: Brand Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 text-center group focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            className={`flex items-center gap-2 text-center group focus-visible:outline focus-visible:outline-2 ${
+              isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+            }`}
             aria-label={`${brandName} - Trang chủ`}
           >
             {logoUrl ? (
@@ -419,68 +460,114 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
               />
             ) : null}
             <div className="flex flex-col items-center">
-              <span className="font-condensed text-2xl font-bold tracking-[0.16em] text-white uppercase sm:text-3xl">
+              <span className="font-condensed text-2xl font-bold tracking-[0.16em] uppercase sm:text-3xl">
                 {brandName}
               </span>
-              <span className="text-[9px] font-medium tracking-[0.4em] text-white/50 uppercase">
+              <span
+                className={`text-[9px] font-medium tracking-[0.4em] uppercase ${
+                  isTransparent ? "text-white/50" : "text-muted-foreground"
+                }`}
+              >
                 ATELIER
               </span>
             </div>
           </Link>
 
-          {/* Right: Search + Cart */}
-          <div className="flex items-center gap-3 sm:gap-5">
+          {/* Right: Search + Favorites + Theme Toggle + Cart */}
+          <div className="flex items-center gap-1.5 sm:gap-4">
+            {/* Search Button */}
             <button
               type="button"
               onClick={() => setIsSearchOpen((isOpen) => !isOpen)}
               aria-label="Mở tìm kiếm sản phẩm"
               aria-expanded={isSearchOpen}
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center text-white transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              className={`flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
+                isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+              }`}
             >
-              <Search size={19} strokeWidth={1.5} />
+              <Search size={18} strokeWidth={1.5} />
             </button>
+
+            {/* Favorites Icon with Badge */}
+            <Link
+              to="/favorites"
+              aria-label={`Danh sách yêu thích, ${favoriteCount} thiết kế`}
+              className={`relative flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
+                isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+              }`}
+            >
+              <Heart size={18} strokeWidth={1.5} />
+              {favoriteCount > 0 && (
+                <span className="absolute top-2 right-1.5 flex h-4 min-w-[16px] items-center justify-center border border-current bg-background px-1 text-[9px] font-mono font-bold leading-none">
+                  {favoriteCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Dark / Light Mode Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={isDark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+              className={`flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
+                isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+              }`}
+            >
+              {isDark ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
+            </button>
+
+            {/* Cart Drawer Trigger */}
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
               aria-label={`Mở giỏ hàng, hiện có ${cartCount} sản phẩm`}
               aria-expanded={isCartOpen}
-              className="group flex min-h-[44px] min-w-[44px] items-center justify-end gap-2 text-xs font-semibold tracking-[0.22em] text-white uppercase transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              className={`group flex min-h-[44px] min-w-[44px] items-center justify-end gap-2 text-xs font-semibold tracking-[0.22em] uppercase transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
+                isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+              }`}
             >
-              <span className="font-condensed text-sm tracking-[0.2em]">
+              <span className="hidden font-condensed text-sm tracking-[0.2em] sm:inline">
                 GIỎ HÀNG
               </span>
-              <span className="inline-flex h-5 min-w-[20px] items-center justify-center border border-white/40 px-1 text-[11px] font-mono tabular-nums text-white group-hover:border-white">
+              <span
+                className={`inline-flex h-5 min-w-[20px] items-center justify-center border px-1 text-[11px] font-mono tabular-nums ${
+                  isTransparent
+                    ? "border-white/40 text-white group-hover:border-white"
+                    : "border-border text-foreground group-hover:border-foreground"
+                }`}
+              >
                 {cartCount}
               </span>
             </button>
           </div>
         </div>
 
+        {/* Live Search Dropdown */}
         {isSearchOpen && (
-          <div className="absolute right-4 top-full mt-2 w-[calc(100%-2rem)] max-w-md border border-white/15 bg-neutral-950/95 p-3 shadow-2xl backdrop-blur-md sm:right-8 sm:w-96 lg:right-12">
+          <div className="absolute right-4 top-full mt-2 w-[calc(100%-2rem)] max-w-md border border-border bg-popover/95 p-3 shadow-2xl backdrop-blur-md sm:right-8 sm:w-96 lg:right-12">
             <form role="search" onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-              <Search size={17} className="shrink-0 text-white/55" aria-hidden="true" />
+              <Search size={17} className="shrink-0 text-muted-foreground" aria-hidden="true" />
               <input
                 type="search"
                 value={searchTerm}
                 onChange={(event) => onSearchTermChange?.(event.target.value)}
                 autoFocus
-                placeholder="Tìm kiếm thiết kế..."
+                placeholder="Tìm kiếm thiết kế Atelier..."
                 aria-label="Tìm kiếm sản phẩm"
-                className="min-w-0 flex-1 bg-transparent py-2 text-sm text-white outline-none placeholder:text-white/45"
+                className="min-w-0 flex-1 bg-transparent py-2 text-xs text-popover-foreground outline-none placeholder:text-muted-foreground font-sans"
               />
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(false)}
                 aria-label="Đóng tìm kiếm"
-                className="p-2 text-white/65 transition-colors hover:text-white"
+                className="p-2 text-muted-foreground transition-colors hover:text-popover-foreground"
               >
                 <X size={17} />
               </button>
             </form>
 
             {suggestions.length > 0 && (
-              <ul className="mt-2 divide-y divide-white/10 border-t border-white/10">
+              <ul className="mt-2 divide-y divide-border border-t border-border">
                 {suggestions.map((product) => {
                   const id = product._id || product.id || product.slug;
                   const thumbnail =
@@ -490,14 +577,14 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
                       <button
                         type="button"
                         onClick={() => handleSuggestionSelect(product)}
-                        className="flex w-full items-center gap-3 py-2 text-left transition-colors hover:bg-white/10"
+                        className="flex w-full items-center gap-3 py-2 text-left transition-colors hover:bg-muted/50"
                       >
-                        <div className="h-10 w-8 shrink-0 overflow-hidden bg-white/10">
+                        <div className="h-10 w-8 shrink-0 overflow-hidden bg-muted">
                           {thumbnail && (
                             <img src={thumbnail} alt="" className="h-full w-full object-cover" />
                           )}
                         </div>
-                        <span className="truncate text-xs tracking-wide text-white">
+                        <span className="truncate text-xs tracking-wide text-foreground font-sans">
                           {product.name || "Sản phẩm"}
                         </span>
                       </button>
@@ -541,11 +628,11 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
           </div>
 
           {/* Center: Navigation Links (Left) + Editorial Preview Canvas (Right) */}
-          <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-12 lg:gap-14">
+          <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-12 lg:gap-14 overflow-y-auto no-scrollbar">
             {/* Left: Nav list */}
             <nav
               aria-label="Các trang chính"
-              className="flex flex-col space-y-2 sm:space-y-4 lg:col-span-7"
+              className="flex flex-col space-y-2 sm:space-y-3 lg:col-span-7"
             >
               {MENU_ITEMS.map((item, idx) => (
                 <Link
@@ -553,30 +640,30 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
                   to={item.path}
                   onClick={() => setIsMenuOpen(false)}
                   onMouseEnter={() => setActiveMenuIndex(idx)}
-                  className="group relative flex items-baseline gap-4 py-2 text-left transition-transform duration-300 hover:translate-x-3 focus-visible:outline-none"
+                  className="group relative flex items-baseline gap-4 py-1.5 text-left transition-transform duration-300 hover:translate-x-3 focus-visible:outline-none"
                 >
                   <span className="font-mono text-xs tracking-widest text-white/40 transition-colors group-hover:text-white">
                     {item.num}
                   </span>
                   <div className="flex flex-col">
-                    <span className="font-condensed text-3xl font-extrabold tracking-tight text-white/80 transition-colors group-hover:text-white sm:text-5xl lg:text-6xl">
+                    <span className="font-condensed text-2xl font-extrabold tracking-tight text-white/80 transition-colors group-hover:text-white sm:text-4xl lg:text-5xl">
                       {item.label}
                     </span>
-                    <span className="text-[11px] font-sans tracking-[0.18em] text-white/40 uppercase transition-colors group-hover:text-white/70">
+                    <span className="text-[10px] font-sans tracking-[0.16em] text-white/40 uppercase transition-colors group-hover:text-white/70">
                       {item.desc}
                     </span>
                   </div>
                   <ArrowUpRight
-                    size={22}
+                    size={20}
                     className="ml-auto opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1"
                   />
                 </Link>
               ))}
 
-              {/* Account block (useAuthStore, same rules as legacy Header) */}
+              {/* Account block */}
               <div
                 aria-label="Tài khoản"
-                className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-6"
+                className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-5"
               >
                 {isLoggedIn ? (
                   <>
@@ -588,7 +675,7 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
                       onClick={() => setIsMenuOpen(false)}
                       className="inline-flex min-h-[44px] items-center border border-white/25 px-5 text-xs font-semibold tracking-[0.22em] text-white uppercase transition-colors hover:border-white hover:bg-white hover:text-black"
                     >
-                      Tài khoản
+                      Hồ sơ
                     </Link>
                     <Link
                       to="/orders"
@@ -611,7 +698,7 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
                     onClick={() => setIsMenuOpen(false)}
                     className="inline-flex min-h-[44px] items-center border border-white/40 px-6 text-xs font-semibold tracking-[0.24em] text-white uppercase transition-colors hover:border-white hover:bg-white hover:text-black"
                   >
-                    Đăng nhập
+                    Đăng nhập / Đăng ký
                   </Link>
                 )}
               </div>
@@ -623,14 +710,14 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
                 <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-black/80" />
                 <div className="relative z-10 space-y-4">
                   <p className="text-[10px] font-mono tracking-[0.3em] text-white/50 uppercase">
-                    ATELIER EDITION · 2026
+                    ATELIER ARCHIVE · 2026
                   </p>
                   <h3 className="font-condensed text-3xl font-extrabold tracking-wider text-white uppercase">
-                    {MENU_ITEMS[activeMenuIndex].label}
+                    {MENU_ITEMS[activeMenuIndex]?.label}
                   </h3>
                   <div className="mx-auto h-[1px] w-12 bg-white/30" />
                   <p className="text-xs text-white/60 leading-relaxed max-w-[200px] mx-auto font-sans">
-                    {MENU_ITEMS[activeMenuIndex].desc}
+                    {MENU_ITEMS[activeMenuIndex]?.desc}
                   </p>
                 </div>
               </div>
@@ -640,38 +727,13 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
           {/* Bottom Bar: Social + Contact */}
           <div className="flex flex-col justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
             <div className="flex items-center gap-6 text-[11px] tracking-[0.2em] text-white/60 uppercase">
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-white transition-colors"
-              >
-                Instagram
-              </a>
+              <span className="text-white/40">NOIR / BONE / SLATE</span>
               <span className="text-white/20">/</span>
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-white transition-colors"
-              >
-                Facebook
-              </a>
-              <span className="text-white/20">/</span>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-white transition-colors"
-              >
-                TikTok
-              </a>
+              <span className="text-white/40">VIETNAM ATELIER</span>
             </div>
 
             <div className="text-[11px] tracking-[0.16em] text-white/40 uppercase sm:text-right">
-              <span>contact@404studio.vn</span>
-              <span className="mx-2 text-white/20">·</span>
-              <span>104 Đồng Khởi, Q.1, TP.HCM</span>
+              <span>atelier@webfashion.vn</span>
             </div>
           </div>
         </div>
@@ -679,28 +741,20 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
 
       {/* 3. Cart Drawer (Slide-over from right) */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-[110] flex justify-end">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity duration-300"
-            onClick={() => setIsCartOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Drawer Panel */}
-          <aside
-            role="dialog"
-            aria-modal="true"
-            aria-label="Giỏ hàng của bạn"
-            className="relative flex h-full w-full max-w-md flex-col justify-between border-l border-white/10 bg-[#0a0b0e] p-6 text-white shadow-2xl animate-in slide-in-from-right duration-300 sm:p-8"
-          >
-            {/* Header */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Giỏ hàng Atelier"
+          className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-300"
+        >
+          <div className="relative flex h-full w-full max-w-md flex-col justify-between border-l border-white/10 bg-[#0c0d10] text-white p-6 sm:p-8 animate-in slide-in-from-right duration-300">
+            {/* Drawer Header */}
             <div className="flex items-center justify-between border-b border-white/10 pb-5">
-              <div className="flex items-baseline gap-2">
-                <h2 className="font-condensed text-xl font-bold tracking-[0.16em] uppercase">
-                  GIỎ HÀNG
-                </h2>
-                <span className="text-xs text-white/50 font-mono">
+              <div className="flex items-center gap-3">
+                <span className="font-condensed text-lg font-bold tracking-[0.2em] text-white uppercase">
+                  GIỎ HÀNG ATELIER
+                </span>
+                <span className="font-mono text-xs text-white/40 tabular-nums">
                   ({cartCount})
                 </span>
               </div>
@@ -709,24 +763,24 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
                 type="button"
                 onClick={() => setIsCartOpen(false)}
                 aria-label="Đóng giỏ hàng"
-                className="group flex min-h-[44px] min-w-[44px] items-center justify-center border border-white/20 p-2 text-white transition-colors hover:border-white hover:bg-white hover:text-black"
+                className="group flex min-h-[44px] min-w-[44px] items-center justify-center border border-white/20 p-2 text-white transition-colors hover:border-white hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
               >
-                <X size={18} />
+                <X size={16} className="transition-transform group-hover:rotate-90" />
               </button>
             </div>
 
             {/* Cart Body */}
-            <div className="flex-1 overflow-y-auto py-6">
+            <div className="flex-1 overflow-y-auto py-6 no-scrollbar">
               {cartItems.length === 0 ? (
-                /* Empty state: Large text + thin button */
+                /* Empty state: Large text + Explore Button */
                 <div className="flex h-full flex-col items-center justify-center text-center px-4">
-                  <p className="text-[11px] font-medium tracking-[0.3em] text-white/40 uppercase">
-                    ATELIER BAG
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-white/40 uppercase">
+                    ATELIER · TRỐNG
                   </p>
-                  <h3 className="mt-3 font-condensed text-3xl font-extrabold tracking-tight text-white uppercase sm:text-4xl">
+                  <h3 className="mt-4 font-condensed text-4xl font-extrabold tracking-tight text-white uppercase sm:text-5xl">
                     GIỎ HÀNG ĐANG TRỐNG
                   </h3>
-                  <p className="mt-3 max-w-xs text-xs leading-relaxed text-white/60">
+                  <p className="mt-4 max-w-xs text-xs text-white/50 leading-relaxed font-sans">
                     Chưa có thiết kế nào được chọn. Hãy khám phá những tạo tác may
                     đo mới nhất trong bộ sưu tập 2026.
                   </p>
@@ -789,41 +843,47 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
                             )}
                           </div>
 
-                          <div className="flex items-center justify-between mt-2">
-                            {/* Quantity buttons */}
+                          <div className="mt-3 flex items-center justify-between">
+                            {/* Quantity Controls */}
                             <div className="flex items-center border border-white/20">
                               <button
                                 type="button"
                                 disabled={isBusy}
                                 onClick={() =>
-                                  handleQuantityChange(
-                                    item._id,
-                                    (item.quantity || 1) - 1
+                                  handleUpdateQuantity(
+                                    item._id || item.id,
+                                    item.quantity,
+                                    -1
                                   )
                                 }
                                 aria-label="Giảm số lượng"
-                                className="flex h-7 w-7 items-center justify-center text-white/70 hover:text-white disabled:opacity-30"
+                                className="flex h-7 w-7 items-center justify-center text-white/70 transition-colors hover:text-white disabled:opacity-30"
                               >
                                 <Minus size={12} />
                               </button>
-                              <span className="w-8 text-center font-mono text-xs text-white">
+                              <span className="flex h-7 min-w-[28px] items-center justify-center font-mono text-xs font-semibold text-white">
                                 {isBusy ? (
-                                  <Loader2 size={11} className="mx-auto animate-spin" />
+                                  <Loader2 size={11} className="animate-spin" />
                                 ) : (
-                                  item.quantity || 1
+                                  item.quantity
                                 )}
                               </span>
                               <button
                                 type="button"
-                                disabled={isBusy}
+                                disabled={
+                                  isBusy ||
+                                  (item.stock !== undefined &&
+                                    item.quantity >= item.stock)
+                                }
                                 onClick={() =>
-                                  handleQuantityChange(
-                                    item._id,
-                                    (item.quantity || 1) + 1
+                                  handleUpdateQuantity(
+                                    item._id || item.id,
+                                    item.quantity,
+                                    1
                                   )
                                 }
                                 aria-label="Tăng số lượng"
-                                className="flex h-7 w-7 items-center justify-center text-white/70 hover:text-white disabled:opacity-30"
+                                className="flex h-7 w-7 items-center justify-center text-white/70 transition-colors hover:text-white disabled:opacity-30"
                               >
                                 <Plus size={12} />
                               </button>
@@ -833,9 +893,11 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
                             <button
                               type="button"
                               disabled={isBusy}
-                              onClick={() => handleDeleteItem(item._id)}
-                              aria-label={`Xóa ${item.name} khỏi giỏ hàng`}
-                              className="text-white/40 transition-colors hover:text-rose-400 p-1 disabled:opacity-30"
+                              onClick={() =>
+                                handleRemoveItem(item._id || item.id)
+                              }
+                              aria-label={`Xóa ${item.name} khỏi giỏ`}
+                              className="text-white/40 transition-colors hover:text-red-400 p-1"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -848,36 +910,35 @@ export const CinematicHeader = ({ searchTerm = "", onSearchTermChange }) => {
               )}
             </div>
 
-            {/* Cart Footer */}
+            {/* Drawer Footer */}
             {cartItems.length > 0 && (
               <div className="border-t border-white/10 pt-5 space-y-4">
-                <div className="flex items-center justify-between text-xs tracking-wider uppercase">
-                  <span className="text-white/60">TẠM TÍNH</span>
-                  <span className="font-mono text-sm font-bold text-white">
-                    {formatCurrency(subtotal)}
+                <div className="flex items-baseline justify-between text-xs tracking-[0.2em] text-white/60 uppercase">
+                  <span>TẠM TÍNH</span>
+                  <span className="font-mono text-base font-bold text-white">
+                    {formatCurrency(cartSubtotal)}
                   </span>
                 </div>
 
-                <div className="space-y-2.5">
-                  <button
-                    type="button"
-                    onClick={handleCheckout}
-                    className="flex min-h-[44px] w-full items-center justify-center border border-white bg-white py-3 text-xs font-bold tracking-[0.22em] text-black uppercase transition-colors hover:bg-neutral-200"
+                <div className="grid grid-cols-2 gap-3">
+                  <Link
+                    to="/cart"
+                    onClick={() => setIsCartOpen(false)}
+                    className="inline-flex min-h-[46px] items-center justify-center border border-white/30 px-4 text-xs font-semibold tracking-[0.2em] text-white uppercase transition-colors hover:border-white hover:bg-white hover:text-black"
                   >
-                    TIẾN HÀNH THANH TOÁN
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleViewCart}
-                    className="flex min-h-[44px] w-full items-center justify-center border border-white/30 bg-transparent py-3 text-xs font-semibold tracking-[0.22em] text-white uppercase transition-colors hover:border-white hover:bg-white/10"
+                    XEM GIỎ HÀNG
+                  </Link>
+                  <Link
+                    to="/checkout"
+                    onClick={() => setIsCartOpen(false)}
+                    className="inline-flex min-h-[46px] items-center justify-center border border-white bg-white px-4 text-xs font-semibold tracking-[0.2em] text-black uppercase transition-opacity hover:opacity-90"
                   >
-                    XEM CHI TIẾT GIỎ HÀNG
-                  </button>
+                    THANH TOÁN
+                  </Link>
                 </div>
               </div>
             )}
-          </aside>
+          </div>
         </div>
       )}
     </>

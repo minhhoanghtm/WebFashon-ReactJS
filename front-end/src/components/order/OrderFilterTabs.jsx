@@ -13,7 +13,7 @@ const TABS = [
 const OrderFilterTabs = ({ activeTab, onTabChange }) => {
   return (
     <div
-      className="w-full border-b border-[var(--color-border)] bg-[var(--color-surface)] sticky top-16 z-10"
+      className="w-full border-b border-[var(--color-border)] bg-[var(--color-surface)] sticky top-20 z-10"
       role="tablist"
       aria-label="Lọc đơn hàng theo trạng thái"
     >

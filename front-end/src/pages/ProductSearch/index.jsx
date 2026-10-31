@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   Search,
   SlidersHorizontal,
@@ -103,6 +105,8 @@ const ProductSearch = () => {
     () => new Set(favoriteItems.map((item) => String(item.id || item._id))),
     [favoriteItems]
   );
+
+  const productGridRef = useRef(null);
 
   // Load categories
   useEffect(() => {
@@ -301,6 +305,45 @@ const ProductSearch = () => {
     const start = (safePage - 1) * pageSize;
     return filteredProducts.slice(start, start + pageSize);
   }, [filteredProducts, safePage]);
+
+  // Scroll reveal animation for product items (runs once)
+  useEffect(() => {
+    if (isLoading || paginatedProducts.length === 0) return undefined;
+    const gridEl = productGridRef.current;
+    if (!gridEl) return undefined;
+
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return undefined;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const cards = gridEl.querySelectorAll("[data-product-card]");
+    if (!cards.length) return undefined;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        cards,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          ease: "power2.out",
+          stagger: 0.08,
+          clearProps: "transform,opacity",
+          scrollTrigger: {
+            trigger: gridEl,
+            start: "top 85%",
+            once: true,
+          },
+        }
+      );
+    }, gridEl);
+
+    return () => {
+      ctx.revert();
+    };
+  }, [isLoading, paginatedProducts]);
 
   const toggleArrayFilter = (key, value) => {
     setFilters((prev) => {
@@ -734,7 +777,10 @@ const ProductSearch = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3">
+                <div
+                  ref={productGridRef}
+                  className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3"
+                >
                   {paginatedProducts.map((product, index) => (
                     <ProductCard
                       key={product.id}

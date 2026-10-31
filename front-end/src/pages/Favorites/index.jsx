@@ -1,6 +1,8 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ProductCard from "@/components/ProductCard";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useFavoriteStore } from "@/store/favorite.store";
@@ -9,6 +11,7 @@ const Favorites = ({ isDashboard = false }) => {
   const favoriteItems = useFavoriteStore((state) => state.items);
   const toggleFavorite = useFavoriteStore((state) => state.toggleProduct);
   const clearFavorites = useFavoriteStore((state) => state.clearFavorites);
+  const favoriteGridRef = useRef(null);
 
   useDocumentTitle("Danh sách yêu thích");
 
@@ -16,6 +19,45 @@ const Favorites = ({ isDashboard = false }) => {
     () => new Set(favoriteItems.map((item) => String(item.id))),
     [favoriteItems]
   );
+
+  // Scroll reveal animation for favorite items
+  useEffect(() => {
+    if (favoriteItems.length === 0) return undefined;
+    const gridEl = favoriteGridRef.current;
+    if (!gridEl) return undefined;
+
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return undefined;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const cards = gridEl.querySelectorAll("[data-product-card]");
+    if (!cards.length) return undefined;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        cards,
+        { opacity: 0, y: 25 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "power2.out",
+          stagger: 0.06,
+          clearProps: "transform,opacity",
+          scrollTrigger: {
+            trigger: gridEl,
+            start: "top 85%",
+            once: true,
+          },
+        }
+      );
+    }, gridEl);
+
+    return () => {
+      ctx.revert();
+    };
+  }, [favoriteItems]);
 
   return (
     <div
@@ -103,6 +145,7 @@ const Favorites = ({ isDashboard = false }) => {
           </div>
         ) : (
           <div
+            ref={favoriteGridRef}
             className={
               isDashboard
                 ? "mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6"
