@@ -1,94 +1,99 @@
-import RecommendedSection from "./RecommendedSection";
-import { useMemo, useState, useEffect, useLayoutEffect, useRef } from "react";
-import { useOutletContext, useNavigate, useLocation } from "react-router-dom";
-import { useProducts } from "@/hooks/useProducts";
-import HeroBanner from "./HeroBanner";
-import InteractiveTypographySection from "./InteractiveTypographySection";
-import DraggableCollectionsGallery from "./DraggableCollectionsGallery";
-import BrandIntroductionEditorial from "./BrandIntroductionEditorial";
-import FlashSaleSection from "./FlashSaleSection";
-import LookbookSection from "./LookbookSection";
-import TrendingProducts from "./TrendingProducts";
-import PromotionBannerSection from "./PromotionBannerSection";
-import CategoryShowcase from "./CategoryShowcase";
-import VoucherSection from "./VoucherSection";
-import SectionErrorBoundary from "@/components/common/SectionErrorBoundary";
-import { normalizeProduct, normalizeSearchText } from "./productAdapter";
-import { useFavoriteStore } from "@/store/favorite.store";
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import { Link, useOutletContext } from "react-router-dom";
+import { ArrowUpRight, RefreshCw } from "lucide-react";
+import { getAllProductService } from "@/services/product.service";
 import { getAllCategoriesService } from "@/services/category.service";
-import "./home.css";
-
-import { toast } from "react-toastify";
-import voucherApi from "../../api/voucher.api";
-import { useAuthStore } from "../../store/auth.store";
+import { useFavoriteStore } from "@/store/favorite.store";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
+import useLenis from "@/hooks/useLenis";
+import ProductCard from "@/components/ProductCard";
+import CinematicHeader from "./components/CinematicHeader";
+import CinematicHero from "./components/CinematicHero";
+import BrandChapterSection from "./components/BrandChapterSection";
+import ManifestoVideoSection from "./components/ManifestoVideoSection";
+import CollageLookbookSection from "./components/CollageLookbookSection";
+import {
+  buildCategoryHierarchy,
+  normalizeProduct,
+  normalizeSearchText,
+} from "./productAdapter";
 
 const Home = () => {
-  const homeRef = useRef(null);
-  const prefersReduced = usePrefersReducedMotion();
-  useDocumentTitle("Trang chủ");
-  const { products: apiProducts, isLoading, error } = useProducts();
-  const { homeSearchTerm = "" } = useOutletContext() || {};
+  useDocumentTitle("404 STUDIO — Atelier Edition");
+  useLenis(); // Smooth scrolling with Lenis + ScrollTrigger integration
+
+  const exploreRef = useRef(null);
+  const { homeSearchTerm = "", setHomeSearchTerm } = useOutletContext() || {};
+
   const favoriteItems = useFavoriteStore((state) => state.items);
   const toggleFavorite = useFavoriteStore((state) => state.toggleProduct);
 
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { isAuthenticated } = useAuthStore();
-  const [vouchers, setVouchers] = useState([]);
-  const [claimedIds, setClaimedIds] = useState([]);
-  const [vouchersLoading, setVouchersLoading] = useState(true);
+  const [rawProducts, setRawProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const [categories, setCategories] = useState([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [categoriesError, setCategoriesError] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState("all");
+  const [selectedParentKey, setSelectedParentKey] = useState("all");
+  const [selectedChildKey, setSelectedChildKey] = useState("all");
 
   const favoriteIds = useMemo(
-    () => new Set(favoriteItems.map((item) => String(item.id))),
-    [favoriteItems],
+    () => new Set(favoriteItems.map((item) => String(item.id || item._id))),
+    [favoriteItems]
   );
 
-  const fetchCategories = async () => {
-    let timeoutId;
+  const fetchHomeData = async () => {
+    setIsLoading(true);
+    setHasError(false);
     try {
-      setCategoriesLoading(true);
-      setCategoriesError(false);
-      const timeoutPromise = new Promise((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error("Categories timeout")), 8000);
-      });
-      const data = await Promise.race([getAllCategoriesService(), timeoutPromise]);
-      setCategories(data || []);
+      const [productsData, categoriesData] = await Promise.all([
+        getAllProductService(),
+        getAllCategoriesService().catch(() => []),
+      ]);
+      setRawProducts(Array.isArray(productsData) ? productsData : []);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (err) {
-      console.error("Lỗi khi nạp danh mục trang chủ:", err);
-      setCategoriesError(true);
+      console.error("Lỗi khi tải dữ liệu trang chủ:", err);
+      setHasError(true);
     } finally {
-      clearTimeout(timeoutId);
-      setCategoriesLoading(false);
+      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchHomeData();
+  }, []);
 
   const categoryMap = useMemo(() => {
     return Object.fromEntries(
       categories
-        .filter((cat) => cat?._id && cat?.name)
-        .map((cat) => [String(cat._id), cat.name]),
+        .filter((cat) => (cat?._id || cat?.id) && cat?.name)
+        .map((cat) => [String(cat._id || cat.id), cat.name])
     );
   }, [categories]);
 
+  const categoryGroups = useMemo(
+    () => buildCategoryHierarchy(categories),
+    [categories]
+  );
+
+  const activeParentGroup = useMemo(
+    () => categoryGroups.find((g) => g.key === selectedParentKey) || null,
+    [categoryGroups, selectedParentKey]
+  );
+
+  const activeChildItem = useMemo(
+    () =>
+      activeParentGroup?.children?.find((c) => c.key === selectedChildKey) ||
+      null,
+    [activeParentGroup, selectedChildKey]
+  );
+
   const normalizedProducts = useMemo(() => {
-    const hasApiProducts = Array.isArray(apiProducts) && apiProducts.length > 0;
-    if (hasApiProducts) {
-      return apiProducts.map((product, index) =>
-        normalizeProduct(product, index, categoryMap),
-      );
-    }
-    return [];
-  }, [apiProducts, categoryMap]);
+    if (!Array.isArray(rawProducts) || rawProducts.length === 0) return [];
+    return rawProducts.map((product, index) =>
+      normalizeProduct(product, index, categoryMap)
+    );
+  }, [rawProducts, categoryMap]);
 
   const filteredProducts = useMemo(() => {
     let result = normalizedProducts;
@@ -96,226 +101,287 @@ const Home = () => {
     const keyword = normalizeSearchText(homeSearchTerm);
     if (keyword) {
       result = result.filter((product) =>
-        [product.name, product.category, product.description].some((value) =>
-          normalizeSearchText(value).includes(keyword),
-        ),
+        [product.name, product.category, product.description].some((val) =>
+          normalizeSearchText(val).includes(keyword)
+        )
       );
     }
 
-    if (selectedCategoryId && selectedCategoryId !== "all") {
-      result = result.filter((product) => {
-        const prodCatId = String(product.category_id || "");
-        return prodCatId === String(selectedCategoryId);
-      });
+    if (activeChildItem) {
+      const allowedIds = new Set(activeChildItem.ids.map(String));
+      result = result.filter(
+        (product) =>
+          allowedIds.has(String(product.category_id)) ||
+          normalizeSearchText(product.category) === activeChildItem.key
+      );
+    } else if (activeParentGroup) {
+      const allowedIds = new Set(activeParentGroup.ids.map(String));
+      result = result.filter((product) =>
+        allowedIds.has(String(product.category_id))
+      );
     }
 
     return result;
-  }, [normalizedProducts, homeSearchTerm, selectedCategoryId]);
+  }, [
+    normalizedProducts,
+    homeSearchTerm,
+    activeParentGroup,
+    activeChildItem,
+  ]);
 
-  const fetchVouchers = async () => {
-    let timeoutId;
-    try {
-      setVouchersLoading(true);
-      const timeoutPromise = new Promise((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error("Vouchers timeout")), 8000);
-      });
-      const res = await Promise.race([voucherApi.getPublicVouchers(), timeoutPromise]);
-      if (res?.success && Array.isArray(res?.data)) {
-        setVouchers(res.data.slice(0, 3));
-      }
-    } catch (err) {
-      console.error("Lỗi khi tải voucher trang chủ:", err);
-    } finally {
-      clearTimeout(timeoutId);
-      setVouchersLoading(false);
-    }
+  const activeCategoryName = activeChildItem
+    ? `${activeParentGroup?.name} · ${activeChildItem.name}`
+    : activeParentGroup
+    ? activeParentGroup.name
+    : "Tất cả thiết kế";
+
+  const handleSelectParent = (groupKey) => {
+    setSelectedParentKey(groupKey);
+    setSelectedChildKey("all");
   };
 
-  const fetchUserWallet = async () => {
-    if (!isAuthenticated) return;
-    try {
-      const res = await voucherApi.getUserWallet();
-      if (res.success) {
-        const ids = res.data.map((item) => item.voucherId?._id || item.voucherId);
-        setClaimedIds(ids.filter(Boolean));
-      }
-    } catch (err) {
-      console.error("Lỗi khi tải ví voucher:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchVouchers();
-    fetchUserWallet();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  // ScrollTrigger is limited to the home page so route changes cannot leave stale triggers behind.
-  useLayoutEffect(() => {
-    if (prefersReduced || !homeRef.current) return undefined;
-    gsap.registerPlugin(ScrollTrigger);
-    const context = gsap.context(() => {
-      const sections = gsap.utils.toArray(".home-section");
-      sections.forEach((section) => {
-        const heading = section.querySelector(".home-section-header");
-        if (!heading) return;
-        gsap.from(heading, {
-          autoAlpha: 0,
-          y: 22,
-          duration: 0.62,
-          ease: "power3.out",
-          scrollTrigger: { trigger: section, start: "top 82%", toggleActions: "play none none reverse" },
-        });
-      });
-
-      gsap.to(".ambient-blob-terracotta", {
-        yPercent: -10,
-        ease: "none",
-        scrollTrigger: { trigger: homeRef.current, start: "top top", end: "bottom bottom", scrub: 1 },
-      });
-    }, homeRef);
-    return () => context.revert();
-  }, [prefersReduced]);
-
-  const handleClaim = async (voucherId) => {
-    if (!isAuthenticated) {
-      toast.info("Vui lòng đăng nhập để lưu mã giảm giá!");
-      navigate("/login", { state: { from: location.pathname } });
-      return;
-    }
-    try {
-      const res = await voucherApi.claimVoucher(voucherId);
-      if (res.success) {
-        toast.success("Đã lưu voucher vào ví cá nhân! 🎉");
-        setClaimedIds([...claimedIds, voucherId]);
-        fetchVouchers();
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Lưu mã thất bại. Vui lòng thử lại!");
+  const handleScrollToExplore = () => {
+    if (exploreRef.current) {
+      exploreRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 
   return (
-    <div ref={homeRef} className="home-page relative overflow-hidden">
-      {/* Cinematic Ambient Background Blobs */}
-      <div className="ambient-blob-terracotta top-[18%] -left-32" aria-hidden="true" />
-      <div className="ambient-blob-stone top-[45%] -right-40" aria-hidden="true" />
-      <div className="ambient-blob-terracotta top-[72%] -left-20" aria-hidden="true" />
+    <div className="relative flex flex-col bg-neutral-950 text-foreground">
+      {/* 1 & 2. Cinematic Transparent Header + Menu Overlay + Cart Drawer */}
+      <CinematicHeader
+        searchTerm={homeSearchTerm}
+        onSearchTermChange={setHomeSearchTerm}
+      />
 
-      {/* Subtle Film Grain Noise Overlay */}
-      <div className="editorial-grain-overlay absolute inset-0 z-0 pointer-events-none" aria-hidden="true" />
+      {/* 1. Cinematic Hero (100svh, dark, sticky, auto-crossfade, condensed 2-line title, thin button) */}
+      <CinematicHero onExploreClick={handleScrollToExplore} />
 
-      <div className="home-page__container relative z-10">
-        {/* 1. Fashion Editorial Hero 2D */}
-        <SectionErrorBoundary name="Hero Banner">
-          <HeroBanner />
-        </SectionErrorBoundary>
+      {/* Subsequent Content (Slides up over sticky Hero on scroll) */}
+      <div
+        ref={exploreRef}
+        id="home-content"
+        className="relative z-10 min-h-screen bg-[#FBF9F5] text-[#05251C] shadow-[0_-25px_50px_rgba(0,0,0,0.5)] transition-colors duration-500"
+      >
+        {/* Section 3: "CHƯƠNG THƯƠNG HIỆU" (nền trắng, ảnh 3:4 so le, clip-path reveal, parallax) */}
+        <BrandChapterSection />
 
-        {/* 2. Interactive Typography Section */}
-        <SectionErrorBoundary name="Interactive Typography">
-          <InteractiveTypographySection />
-        </SectionErrorBoundary>
+        {/* Section 4: "CÂU KHẨU HIỆU + VIDEO" (nền đen, chữ sáng dần theo cuộn, video mở rộng full-bleed) */}
+        <ManifestoVideoSection />
 
-        {/* 3. Featured Collections: Horizontal Draggable Gallery */}
-        <SectionErrorBoundary name="Bộ sưu tập nổi bật">
-          <DraggableCollectionsGallery />
-        </SectionErrorBoundary>
+        {/* Section 5: "COLLAGE LOOKBOOK" (nền trắng, ảnh rải quanh hội tụ, nút chuyển trang trắng <= 0.6s) */}
+        <CollageLookbookSection />
 
-        {/* 4. Brand Introduction: Editorial Asymmetrical Layout */}
-        <SectionErrorBoundary name="Giới thiệu thương hiệu">
-          <BrandIntroductionEditorial />
-        </SectionErrorBoundary>
+        {/* Curated Product Collection Section */}
+        <section
+          aria-labelledby="home-collection-heading"
+          className="mx-auto w-full max-w-[1440px] px-4 py-16 sm:px-6 sm:py-24 lg:px-10"
+        >
+          {/* Section Header */}
+          <div className="flex flex-col justify-between gap-6 border-b border-[#05251C]/10 pb-8 md:flex-row md:items-end">
+            <div>
+              <p className="text-[11px] font-medium tracking-[0.28em] uppercase text-[#05251C]/60">
+                Chương Mở Đầu · Curated Atelier Edit
+              </p>
+              <h2
+                id="home-collection-heading"
+                className="mt-2 font-condensed text-4xl font-extrabold tracking-tight text-[#05251C] uppercase sm:text-5xl"
+              >
+                {activeCategoryName}
+              </h2>
+            </div>
 
-        {/* 5. Flash Sale Giờ Vàng */}
-        <SectionErrorBoundary name="Flash Sale">
-          <FlashSaleSection
-            favoriteIds={favoriteIds}
-            onToggleFavorite={toggleFavorite}
-          />
-        </SectionErrorBoundary>
-
-        {/* 7. Product Categories */}
-        <SectionErrorBoundary name="Danh mục sản phẩm">
-          <CategoryShowcase
-            categories={categories}
-            loading={categoriesLoading}
-            error={categoriesError}
-            onRetry={fetchCategories}
-            selectedCategoryId={selectedCategoryId}
-            onSelectCategory={setSelectedCategoryId}
-          />
-        </SectionErrorBoundary>
-
-        {/* 8. Featured Products / New Arrivals */}
-        <SectionErrorBoundary name="Sản phẩm nổi bật">
-          <TrendingProducts
-            products={filteredProducts}
-            limit={8}
-            isLoading={isLoading}
-            hasError={Boolean(error)}
-            isUsingFallback={false}
-            favoriteIds={favoriteIds}
-            onToggleFavorite={toggleFavorite}
-            title={
-              selectedCategoryId === "all"
-                ? "Sản phẩm nổi bật"
-                : categoryMap[selectedCategoryId] || "Sản phẩm nổi bật"
-            }
-          />
-        </SectionErrorBoundary>
-
-        {/* 9. Đề xuất Cá nhân hóa: Dành cho bạn */}
-        <SectionErrorBoundary name="Gợi ý dành cho bạn">
-          <RecommendedSection
-            categoryMap={categoryMap}
-            favoriteIds={favoriteIds}
-            onToggleFavorite={toggleFavorite}
-          />
-        </SectionErrorBoundary>
-
-        {/* 10. Voucher / Promotion Banner */}
-        <SectionErrorBoundary name="Banner khuyến mãi">
-          <PromotionBannerSection />
-        </SectionErrorBoundary>
-
-        {/* 11. Voucher Hot Hôm Nay */}
-        <SectionErrorBoundary name="Voucher ưu đãi">
-          <VoucherSection
-            vouchers={vouchers}
-            claimedIds={claimedIds}
-            loading={vouchersLoading}
-            onClaim={handleClaim}
-            homeSearchTerm={homeSearchTerm}
-          />
-        </SectionErrorBoundary>
-
-        {/* 12. Lookbook / Style Stories */}
-        <SectionErrorBoundary name="Lookbook">
-          <LookbookSection />
-        </SectionErrorBoundary>
-
-        {/* 13. Editorial Marquee Ribbon */}
-        <div className="mt-20 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden py-6 border-y border-[#062D22]/15 bg-[#062D22] text-[#F7F6F1] select-none">
-          <div className="editorial-marquee-track flex items-center gap-12 text-xs sm:text-sm font-extrabold uppercase tracking-[0.28em]">
-            <span>404STUDIO · DIGITAL FASHION ATELIER</span>
-            <span className="text-[#F5DD20]">✦</span>
-            <span>CRAFTED FOR THE UNCONVENTIONAL</span>
-            <span className="text-[#F5DD20]">✦</span>
-            <span>BEYOND THE ORDINARY</span>
-            <span className="text-[#F5DD20]">✦</span>
-            <span>CONTEMPORARY VIETNAMESE TAILORING</span>
-            <span className="text-[#F5DD20]">✦</span>
-            <span>EST. 2026 · HANOI / SAIGON</span>
-            <span className="text-[#F5DD20]">✦</span>
-            <span>404STUDIO · DIGITAL FASHION ATELIER</span>
-            <span className="text-[#F5DD20]">✦</span>
-            <span>CRAFTED FOR THE UNCONVENTIONAL</span>
+            <div className="flex items-center gap-4">
+              {!isLoading && !hasError && (
+                <span className="text-xs tabular-nums tracking-[0.14em] uppercase text-[#05251C]/60 font-mono">
+                  {filteredProducts.length} thiết kế
+                </span>
+              )}
+              <Link
+                to="/products"
+                className="touch-target inline-flex items-center gap-1.5 border border-[#05251C]/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] uppercase text-[#05251C] transition-colors hover:border-[#05251C] hover:bg-[#05251C] hover:text-[#FBF9F5]"
+              >
+                <span>Xem tất cả</span>
+                <ArrowUpRight size={14} />
+              </Link>
+            </div>
           </div>
-        </div>
+
+          {/* Grouped & Deduplicated Parent-Child Category Chips */}
+          {categoryGroups.length > 0 && (
+            <div className="mt-8 space-y-3">
+              {/* Level 1: Parent Groups */}
+              <div
+                role="tablist"
+                aria-label="Nhóm danh mục chính"
+                className="flex flex-wrap items-center gap-2"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedParentKey === "all"}
+                  onClick={() => handleSelectParent("all")}
+                  className={`min-h-[44px] px-4 text-xs font-semibold tracking-[0.18em] uppercase transition-colors ${
+                    selectedParentKey === "all"
+                      ? "bg-[#05251C] text-[#FBF9F5]"
+                      : "border border-[#05251C]/15 bg-transparent text-[#05251C]/70 hover:border-[#05251C] hover:text-[#05251C]"
+                  }`}
+                >
+                  Tất cả
+                </button>
+                {categoryGroups.map((group) => {
+                  const isSelected = selectedParentKey === group.key;
+                  return (
+                    <button
+                      key={group.key}
+                      type="button"
+                      role="tab"
+                      aria-selected={isSelected}
+                      onClick={() => handleSelectParent(group.key)}
+                      className={`min-h-[44px] px-4 text-xs font-semibold tracking-[0.18em] uppercase transition-colors ${
+                        isSelected
+                          ? "bg-[#05251C] text-[#FBF9F5]"
+                          : "border border-[#05251C]/15 bg-transparent text-[#05251C]/70 hover:border-[#05251C] hover:text-[#05251C]"
+                      }`}
+                    >
+                      {group.name}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Level 2: Sub-categories for the selected Parent Group */}
+              {activeParentGroup && activeParentGroup.children.length > 0 && (
+                <div
+                  role="tablist"
+                  aria-label={`Danh mục con của ${activeParentGroup.name}`}
+                  className="flex flex-wrap items-center gap-2 border-l-2 border-[#05251C]/30 pl-3 pt-1"
+                >
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={selectedChildKey === "all"}
+                    onClick={() => setSelectedChildKey("all")}
+                    className={`min-h-[38px] px-3.5 text-[11px] font-semibold tracking-[0.14em] uppercase transition-colors ${
+                      selectedChildKey === "all"
+                        ? "border border-[#05251C] bg-[#05251C]/10 text-[#05251C]"
+                        : "border border-[#05251C]/15 text-[#05251C]/60 hover:text-[#05251C]"
+                    }`}
+                  >
+                    Tất cả {activeParentGroup.name}
+                  </button>
+                  {activeParentGroup.children.map((child) => {
+                    const isChildSelected = selectedChildKey === child.key;
+                    return (
+                      <button
+                        key={child.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={isChildSelected}
+                        onClick={() => setSelectedChildKey(child.key)}
+                        className={`min-h-[38px] px-3.5 text-[11px] font-semibold tracking-[0.14em] uppercase transition-colors ${
+                          isChildSelected
+                            ? "border border-[#05251C] bg-[#05251C]/10 text-[#05251C]"
+                            : "border border-[#05251C]/15 text-[#05251C]/60 hover:text-[#05251C]"
+                        }`}
+                      >
+                        {child.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Active Search Filter Chip */}
+          {homeSearchTerm && (
+            <div className="mt-6 flex items-center gap-2 text-xs">
+              <span className="text-[#05251C]/60">Đang lọc theo từ khóa:</span>
+              <span className="bg-[#05251C]/10 px-2.5 py-1 font-semibold text-[#05251C]">
+                &ldquo;{homeSearchTerm}&rdquo;
+              </span>
+              <button
+                type="button"
+                onClick={() => setHomeSearchTerm("")}
+                className="text-[#05251C]/50 underline hover:text-[#05251C] ml-1"
+              >
+                Xóa lọc
+              </button>
+            </div>
+          )}
+
+          {/* Product Grid State */}
+          <div className="mt-10">
+            {isLoading ? (
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <div
+                    key={`skeleton-${index}`}
+                    className="flex flex-col space-y-3"
+                  >
+                    <div className="aspect-[3/4] w-full animate-pulse bg-[#05251C]/5" />
+                    <div className="h-4 w-3/4 animate-pulse bg-[#05251C]/5" />
+                    <div className="h-3 w-1/2 animate-pulse bg-[#05251C]/5" />
+                  </div>
+                ))}
+              </div>
+            ) : hasError ? (
+              <div className="flex flex-col items-center justify-center border border-dashed border-[#05251C]/20 py-20 text-center">
+                <p className="text-sm font-medium text-[#05251C]/70">
+                  Không thể tải danh sách thiết kế lúc này.
+                </p>
+                <button
+                  type="button"
+                  onClick={fetchHomeData}
+                  className="mt-4 inline-flex items-center gap-2 border border-[#05251C]/30 px-5 py-2.5 text-xs font-semibold tracking-[0.16em] uppercase hover:bg-[#05251C] hover:text-[#FBF9F5] transition-colors"
+                >
+                  <RefreshCw size={13} />
+                  <span>Thử lại</span>
+                </button>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center border border-dashed border-[#05251C]/20 py-20 text-center">
+                <p className="font-condensed text-2xl font-bold uppercase tracking-wider text-[#05251C]">
+                  Không tìm thấy thiết kế phù hợp
+                </p>
+                <p className="mt-2 text-xs text-[#05251C]/60">
+                  Vui lòng chọn danh mục khác hoặc đặt lại từ khóa tìm kiếm.
+                </p>
+                {(selectedParentKey !== "all" ||
+                  selectedChildKey !== "all" ||
+                  homeSearchTerm) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedParentKey("all");
+                      setSelectedChildKey("all");
+                      if (setHomeSearchTerm) setHomeSearchTerm("");
+                    }}
+                    className="mt-6 border border-[#05251C]/30 px-5 py-2.5 text-xs font-semibold tracking-[0.16em] uppercase hover:bg-[#05251C] hover:text-[#FBF9F5] transition-colors"
+                  >
+                    Đặt lại bộ lọc
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+                {filteredProducts.slice(0, 12).map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isFavorite={favoriteIds.has(String(product.id))}
+                    onToggleFavorite={toggleFavorite}
+                    trackingMeta={{
+                      position: index + 1,
+                      source: "home_collection",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );

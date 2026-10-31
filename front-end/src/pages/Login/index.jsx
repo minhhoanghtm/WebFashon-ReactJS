@@ -1,19 +1,19 @@
 import React from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 import LoginBanner from "./LoginBanner";
 import LoginForm from "./LoginForm";
-import "./login.css";
 
 const Login = () => {
-  useDocumentTitle("Đăng nhập");
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "WEBFASHION";
+  useDocumentTitle(`Đăng nhập — ${siteName}`);
 
   return (
-    <div className="login-page">
-      <div className="login-wrapper">
-        <div className="login-card">
-          <LoginBanner />
-          <LoginForm />
-        </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto grid min-h-screen max-w-[1440px] grid-cols-1 lg:grid-cols-12">
+        <LoginBanner />
+        <LoginForm />
       </div>
     </div>
   );

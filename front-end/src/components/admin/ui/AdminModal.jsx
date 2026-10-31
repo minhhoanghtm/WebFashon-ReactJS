@@ -1,99 +1,101 @@
-import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import React, { useEffect } from "react";
+import { X } from "lucide-react";
 
-/**
- * Standard Accessible Modal dialog for 404Studio Admin
- */
-export const AdminModal = ({
+const maxWidthMap = {
+  sm: "max-w-md",
+  md: "max-w-lg",
+  lg: "max-w-2xl",
+  xl: "max-w-4xl",
+  "2xl": "max-w-6xl",
+  full: "max-w-[95vw]",
+};
+
+export function AdminModal({
   isOpen,
   onClose,
   title,
-  description,
+  subtitle,
   children,
   footer,
-  size = 'lg',
-  className = '',
-}) => {
+  size = "lg",
+  closeOnOverlay = true,
+}) {
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
+    const handleEsc = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose?.();
       }
     };
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleEsc);
     }
     return () => {
-      document.body.style.overflow = 'unset';
-      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = "unset";
+      window.removeEventListener("keydown", handleEsc);
     };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-3xl',
-    '2xl': 'max-w-4xl',
-    '3xl': 'max-w-5xl',
-    '4xl': 'max-w-6xl',
-    '5xl': 'max-w-7xl',
-  };
-
   return (
     <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      aria-label={typeof title === "string" ? title : "Hộp thoại quản trị"}
     >
       {/* Backdrop */}
       <div
-        onClick={onClose}
-        className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/65 backdrop-blur-xs transition-opacity"
+        onClick={() => closeOnOverlay && onClose?.()}
+        aria-hidden="true"
       />
 
-      {/* Modal Dialog Content */}
+      {/* Modal Panel */}
       <div
-        className={`relative w-full ${sizeClasses[size] || sizeClasses.lg} bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 ${className}`}
+        className={`relative z-10 flex max-h-[90vh] w-full ${
+          maxWidthMap[size] || maxWidthMap.lg
+        } flex-col overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] shadow-2xl`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 px-6 py-4.5 shrink-0 bg-white dark:bg-slate-900">
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              {title}
-            </h2>
-            {description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {description}
+            {title && (
+              <h3 className="font-serif text-xl font-normal tracking-tight text-[var(--color-text)]">
+                {title}
+              </h3>
+            )}
+            {subtitle && (
+              <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                {subtitle}
               </p>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            aria-label="Đóng cửa sổ"
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            aria-label="Đóng hộp thoại"
+            className="touch-target inline-flex items-center justify-center border border-transparent text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-border)] hover:text-[var(--color-text)]"
           >
-            <X className="h-4.5 w-4.5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 text-left">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800/80 px-6 py-4 bg-slate-50/60 dark:bg-slate-900/60 shrink-0">
+          <div className="flex shrink-0 items-center justify-end gap-2.5 border-t border-[var(--color-border)] bg-[var(--color-bg)] px-6 py-4">
             {footer}
           </div>
         )}
       </div>
     </div>
   );
-};
+}
 
 export default AdminModal;

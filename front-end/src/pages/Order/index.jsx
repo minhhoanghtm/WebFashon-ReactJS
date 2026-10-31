@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   getOrdersByUserIdService,
@@ -16,7 +16,6 @@ import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { Search, X, Loader2 } from "lucide-react";
 
-// Sub-components
 import OrderFilterTabs from "../../components/order/OrderFilterTabs";
 import OrderCard from "../../components/order/OrderCard";
 import EmptyOrders from "../../components/order/EmptyOrders";
@@ -24,21 +23,24 @@ import OrderHistorySkeleton from "../../components/order/OrderHistorySkeleton";
 import OrderDetailModal from "../../components/order/OrderDetailModal";
 
 const UserAccountManagement = ({ isDashboard = false }) => {
-  if (!isDashboard) {
-    useDocumentTitle("Lịch sử mua hàng");
-  }
+  useDocumentTitle("Lịch sử mua hàng");
 
   const [searchParams] = useSearchParams();
-  const initialStatus = searchParams.get("status") || "all";
+  const urlStatus = searchParams.get("status") || "all";
   const [orders, setOrders] = useState([]);
-  const [selectedOrderStatus, setSelectedOrderStatus] = useState(initialStatus);
+  const [tabState, setTabState] = useState({
+    urlStatus,
+    active: urlStatus,
+  });
+  const selectedOrderStatus =
+    tabState.urlStatus === urlStatus ? tabState.active : urlStatus;
+
+  const handleTabChange = (nextStatus) => {
+    setTabState({ urlStatus, active: nextStatus });
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    const status = searchParams.get("status") || "all";
-    setSelectedOrderStatus(status);
-  }, [searchParams]);
-  
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isRebuying, setIsRebuying] = useState(false);
@@ -49,36 +51,42 @@ const UserAccountManagement = ({ isDashboard = false }) => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Fetch user orders on mount
-  const fetchOrders = async () => {
-    try {
-      setIsLoading(true);
-      const ordersData = await getOrdersByUserIdService();
-      if (ordersData && ordersData.orders) {
-        setOrders(ordersData.orders);
-      }
-    } catch (err) {
-      console.error("Failed to fetch orders:", err);
-      setError("Lấy dữ liệu đơn hàng thất bại. Vui lòng thử lại sau.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let isMounted = true;
+    const fetchOrders = async () => {
+      try {
+        const ordersData = await getOrdersByUserIdService();
+        if (isMounted && ordersData && ordersData.orders) {
+          setOrders(ordersData.orders);
+        }
+      } catch (err) {
+        console.error("Failed to fetch orders:", err);
+        if (isMounted) {
+          setError("Lấy dữ liệu đơn hàng thất bại. Vui lòng thử lại sau.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
     fetchOrders();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const { user, isAuthenticated } = useAuthStore();
-  const [reviewedProductIds, setReviewedProductIds] = useState(new Set());
+  const [reviewedProductIds, setReviewedProductIds] = useState(() => new Set());
 
   // Fetch which products have already been reviewed by the user
   useEffect(() => {
+    let isMounted = true;
     const fetchReviewStatus = async () => {
       if (orders.length === 0 || !isAuthenticated || !user) {
-        setReviewedProductIds(new Set());
         return;
       }
-      
+
       const userId = user._id || user.id;
       if (!userId) return;
 
@@ -109,34 +117,41 @@ const UserAccountManagement = ({ isDashboard = false }) => {
                 reviewedSet.add(prodId);
               }
             } catch (err) {
-              console.error(`Failed to fetch reviews for product ${prodId}:`, err);
+              console.error(
+                `Failed to fetch reviews for product ${prodId}:`,
+                err
+              );
             }
           })
         );
-        setReviewedProductIds(reviewedSet);
+        if (isMounted) {
+          setReviewedProductIds(reviewedSet);
+        }
       } catch (err) {
         console.error("Error fetching review statuses:", err);
       }
     };
 
     fetchReviewStatus();
+    return () => {
+      isMounted = false;
+    };
   }, [orders, isAuthenticated, user]);
 
   // Filter orders based on status tab and search query
   const filteredOrders = useMemo(() => {
     let result = [...orders];
 
-    // 1. Status Filter
     if (selectedOrderStatus !== "all") {
-      // If active tab is "refunded", map to returned or show empty
       if (selectedOrderStatus === "refunded") {
-        result = result.filter((o) => o.status === "refunded" || o.status === "returned");
+        result = result.filter(
+          (o) => o.status === "refunded" || o.status === "returned"
+        );
       } else {
         result = result.filter((o) => o.status === selectedOrderStatus);
       }
     }
 
-    // 2. Search Query Filter (Order ID or Product Name)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       result = result.filter((o) => {
@@ -148,8 +163,9 @@ const UserAccountManagement = ({ isDashboard = false }) => {
       });
     }
 
-    // 3. Sort by creation date descending
-    return result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return result.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
   }, [orders, selectedOrderStatus, searchQuery]);
 
   // Handle Order Cancellation
@@ -161,8 +177,8 @@ const UserAccountManagement = ({ isDashboard = false }) => {
       showCancelButton: true,
       confirmButtonText: "Hủy đơn hàng",
       cancelButtonText: "Đóng",
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#6b7280",
+      confirmButtonColor: "#111111",
+      cancelButtonColor: "#737373",
     });
 
     if (!result.isConfirmed) return;
@@ -178,8 +194,7 @@ const UserAccountManagement = ({ isDashboard = false }) => {
             o._id === orderId ? { ...o, status: "cancelled" } : o
           )
         );
-        
-        // If the cancelled order is currently viewed in detail modal, update it
+
         if (selectedOrder && selectedOrder._id === orderId) {
           setSelectedOrder((prev) => ({ ...prev, status: "cancelled" }));
         }
@@ -201,8 +216,11 @@ const UserAccountManagement = ({ isDashboard = false }) => {
       if (cartRes.success && cartRes.data?.length > 0) {
         const cartId = cartRes.data[0]._id;
         const itemsRes = await getCartItemsService(cartId);
-        const totalQty = (itemsRes.data || []).reduce((sum, i) => sum + i.quantity, 0);
-        
+        const totalQty = (itemsRes.data || []).reduce(
+          (sum, i) => sum + i.quantity,
+          0
+        );
+
         window.dispatchEvent(
           new CustomEvent("cartUpdated", {
             detail: {
@@ -224,7 +242,7 @@ const UserAccountManagement = ({ isDashboard = false }) => {
       return;
     }
 
-    const itemsToAdd = singleItem ? [singleItem] : (order.items || []);
+    const itemsToAdd = singleItem ? [singleItem] : order.items || [];
     if (itemsToAdd.length === 0) return;
 
     setIsRebuying(true);
@@ -244,13 +262,15 @@ const UserAccountManagement = ({ isDashboard = false }) => {
       }
 
       if (successCount > 0) {
-        toast.success(`Đã thêm thành công ${successCount} sản phẩm vào giỏ hàng!`);
+        toast.success(
+          `Đã thêm thành công ${successCount} sản phẩm vào giỏ hàng!`
+        );
         await syncHeaderCart();
       } else {
         toast.error("Thêm sản phẩm vào giỏ hàng thất bại.");
       }
-    } catch (error) {
-      console.error("Error rebuying items:", error);
+    } catch (err) {
+      console.error("Error rebuying items:", err);
       toast.error("Có lỗi xảy ra khi thực hiện mua lại sản phẩm.");
     } finally {
       setIsRebuying(false);
@@ -267,68 +287,124 @@ const UserAccountManagement = ({ isDashboard = false }) => {
   }
 
   return (
-    <div className={isDashboard ? "relative w-full" : "w-full min-h-screen bg-[#FBF9F5] pb-20 relative select-none"}>
+    <div
+      className={
+        isDashboard
+          ? "relative w-full text-[var(--color-text)]"
+          : "w-full min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] pb-20 relative"
+      }
+    >
       {/* Rebuying overlay blocker */}
       {isRebuying && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center">
-          <div className="bg-white px-6 py-4 rounded-2xl shadow-2xl border border-[#05251C]/15 flex items-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-[#05251C]" />
-            <span className="text-xs font-bold text-[#05251C] uppercase tracking-wider">Đang cập nhật lại vào giỏ hàng...</span>
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="bg-[var(--color-surface)] px-6 py-4 border border-[var(--color-border)] flex items-center gap-3">
+            <Loader2
+              className="w-5 h-5 animate-spin text-[var(--color-text)]"
+              aria-hidden="true"
+            />
+            <span className="text-xs font-medium uppercase tracking-[0.14em]">
+              Đang cập nhật lại vào giỏ hàng...
+            </span>
           </div>
         </div>
       )}
 
       {/* Header and Breadcrumbs */}
       {!isDashboard && (
-        <div className="border-b border-[#05251C]/10 bg-white/70 backdrop-blur-md py-8">
-          <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#6B716E] mb-2">
-              <Link to="/" className="hover:text-[#05251C] transition-colors">404STUDIO</Link>
+        <div className="border-b border-[var(--color-border)] bg-[var(--color-surface)] py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav
+              aria-label="Breadcrumb"
+              className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)] mb-3"
+            >
+              <Link
+                to="/"
+                className="hover:text-[var(--color-text)] transition-colors"
+              >
+                Trang chủ
+              </Link>
               <span>/</span>
-              <span className="text-[#6B716E]">TÀI KHOẢN</span>
+              <Link
+                to="/profile"
+                className="hover:text-[var(--color-text)] transition-colors"
+              >
+                Tài khoản
+              </Link>
               <span>/</span>
-              <span className="text-[#05251C] font-black">LỊCH SỬ ĐƠN HÀNG</span>
+              <span className="text-[var(--color-text)] font-medium">
+                Đơn hàng
+              </span>
             </nav>
-            <h1 className="text-3xl sm:text-5xl font-display font-black text-[#05251C] tracking-tight uppercase leading-[0.95]">
-              ĐƠN HÀNG CỦA BẠN.
+            <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight">
+              Đơn hàng của bạn
             </h1>
-            <p className="text-xs sm:text-sm text-[#6B716E] mt-2 font-medium">Theo dõi hành trình hoàn thiện, may đo và giao nhận sản phẩm của bạn.</p>
+            <p className="text-xs sm:text-sm text-[var(--color-text-muted)] mt-2">
+              Theo dõi trạng thái xử lý, vận chuyển và lịch sử giao nhận đơn
+              hàng.
+            </p>
           </div>
         </div>
       )}
 
       {/* Filter Tabs */}
-      <OrderFilterTabs activeTab={selectedOrderStatus} onTabChange={setSelectedOrderStatus} />
+      <OrderFilterTabs
+        activeTab={selectedOrderStatus}
+        onTabChange={handleTabChange}
+      />
 
       {/* Main Content Area */}
-      <div className={isDashboard ? "w-full mt-4" : "max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 mt-6"}>
+      <div
+        className={
+          isDashboard
+            ? "w-full mt-4"
+            : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6"
+        }
+      >
         {/* Search Bar */}
         <div className="relative mb-6">
+          <label htmlFor="order-search-input" className="sr-only">
+            Tìm kiếm theo mã đơn hàng hoặc tên sản phẩm
+          </label>
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-stone-400" />
+            <Search
+              className="h-4 w-4 text-[var(--color-text-muted)]"
+              aria-hidden="true"
+            />
           </div>
           <input
+            id="order-search-input"
             type="text"
             placeholder="Tìm kiếm theo mã đơn hàng hoặc tên sản phẩm..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-10 pr-10 py-3 border border-stone-200 dark:border-stone-800 rounded-xl bg-white dark:bg-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 text-sm shadow-[0_2px_8px_-2px_rgba(28,25,23,0.03)] transition-all"
+            className="block w-full min-h-[44px] pl-10 pr-11 py-2.5 border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-text)] text-sm transition-colors"
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-stone-400 hover:text-stone-900 transition-colors"
+              aria-label="Xóa từ khóa tìm kiếm"
+              className="absolute inset-y-0 right-0 min-w-[44px] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
 
-        {error && (
-          <div className="p-4 mb-6 text-sm text-red-700 bg-red-50 border border-red-100 rounded-xl">
-            {error}
-          </div>
-        )}
+        <div aria-live="polite" aria-atomic="true">
+          {error && (
+            <div
+              role="alert"
+              className="p-4 mb-6 text-xs font-medium text-[var(--color-danger)] border border-[var(--color-danger)] bg-[var(--color-surface)]"
+            >
+              {error}
+            </div>
+          )}
+        </div>
 
         {/* Order Cards List or Empty State */}
         {filteredOrders.length === 0 ? (

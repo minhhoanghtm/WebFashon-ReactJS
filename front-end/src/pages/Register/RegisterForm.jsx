@@ -1,27 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, LoaderCircle, AlertCircle } from "lucide-react";
 import { sendOTPServive } from "@/services/auth.service";
 import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
-
-const FacebookIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
-      fill="currentColor"
-    />
-  </svg>
-);
-
-const XIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.207-6.807-5.974 6.807H2.882l7.432-8.491L1.227 2.25h6.836l4.713 6.231 5.45-6.231zM17.002 18.807h1.646L6.154 4.556H4.382l12.62 14.251z"
-      fill="currentColor"
-    />
-  </svg>
-);
 
 const initialFormData = {
   fullName: "",
@@ -43,7 +25,9 @@ const splitFullName = (fullName) => {
 
 const normalizeBackendMessage = (error) => {
   const rawMessage = error?.response?.data?.message || error?.message || "";
-  const message = Array.isArray(rawMessage) ? rawMessage.join(" ") : String(rawMessage);
+  const message = Array.isArray(rawMessage)
+    ? rawMessage.join(" ")
+    : String(rawMessage);
   const comparableMessage = message
     .toLowerCase()
     .normalize("NFD")
@@ -60,7 +44,8 @@ const normalizeBackendMessage = (error) => {
   }
 
   if (
-    (comparableMessage.includes("phone") || comparableMessage.includes("so dien thoai")) &&
+    (comparableMessage.includes("phone") ||
+      comparableMessage.includes("so dien thoai")) &&
     (comparableMessage.includes("exist") ||
       comparableMessage.includes("already") ||
       comparableMessage.includes("ton tai") ||
@@ -75,18 +60,10 @@ const normalizeBackendMessage = (error) => {
 const RegisterForm = () => {
   const navigate = useNavigate();
   const { settings } = useWebsiteSettings();
-  const siteName = settings?.general?.siteName || "404Studio";
+  const siteName = settings?.general?.siteName || "WEBFASHION";
+
   const [formData, setFormData] = useState(initialFormData);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-
-  const isFormIncomplete = 
-    !formData.fullName.trim() ||
-    !formData.email.trim() ||
-    !formData.dateOfBirth ||
-    !formData.gender ||
-    !formData.passWord ||
-    !formData.confirmPassword ||
-    !acceptedTerms;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -94,7 +71,6 @@ const RegisterForm = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -120,23 +96,23 @@ const RegisterForm = () => {
     const email = formData.email.trim();
 
     if (!formData.fullName.trim()) {
-      nextErrors.fullName = "Vui lòng nhập họ tên.";
+      nextErrors.fullName = "Vui lòng nhập họ và tên.";
     }
 
     if (!email) {
-      nextErrors.email = "Vui lòng nhập email.";
+      nextErrors.email = "Vui lòng nhập địa chỉ email.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       nextErrors.email = "Email không đúng định dạng.";
     }
 
     if (!formData.dateOfBirth) {
-      nextErrors.dateOfBirth = "Vui lòng nhập ngày sinh.";
+      nextErrors.dateOfBirth = "Vui lòng chọn ngày sinh.";
     } else {
       const dob = new Date(formData.dateOfBirth);
       const minAge = new Date();
       minAge.setFullYear(minAge.getFullYear() - 18);
       if (dob > minAge) {
-        nextErrors.dateOfBirth = "Bạn phải ít nhất 18 tuổi.";
+        nextErrors.dateOfBirth = "Bạn phải từ đủ 18 tuổi trở lên.";
       }
     }
 
@@ -151,13 +127,13 @@ const RegisterForm = () => {
     }
 
     if (!formData.confirmPassword) {
-      nextErrors.confirmPassword = "Vui lòng nhập lại mật khẩu.";
+      nextErrors.confirmPassword = "Vui lòng xác nhận lại mật khẩu.";
     } else if (formData.confirmPassword !== formData.passWord) {
       nextErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
     }
 
     if (!acceptedTerms) {
-      nextErrors.terms = "Vui lòng đồng ý với điều khoản sử dụng.";
+      nextErrors.terms = "Vui lòng đồng ý với điều khoản và chính sách bảo mật.";
     }
 
     setErrors(nextErrors);
@@ -192,8 +168,6 @@ const RegisterForm = () => {
     } catch (error) {
       console.error("Lỗi đăng ký:", error);
       const msg = normalizeBackendMessage(error);
-
-      // Nếu lỗi liên quan đến email đã tồn tại → hiển thị thẳng dưới field email
       if (msg === "Email đã tồn tại.") {
         setErrors({ email: msg });
       } else {
@@ -205,221 +179,354 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="register-form-section">
-      <div className="register-form-container">
+    <div className="flex flex-col justify-center px-4 py-10 sm:px-8 lg:col-span-7 lg:px-12 xl:px-16">
+      <div className="mx-auto w-full max-w-lg space-y-6">
         <button
-          onClick={() => navigate("/")}
-          className="register-back-btn"
           type="button"
+          onClick={() => navigate("/")}
+          className="touch-target -ml-2 inline-flex items-center gap-2 px-2 text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft size={17} aria-hidden="true" />
+          <ArrowLeft size={15} aria-hidden="true" />
           <span>Quay lại trang chủ</span>
         </button>
 
-        <header className="register-header">
-          <span className="register-header__eyebrow">{siteName}</span>
-          <h1 className="register-header__title">Đăng ký</h1>
-          <p className="register-header__desc">
-            Tạo tài khoản để bắt đầu trải nghiệm mua sắm.
+        <header className="space-y-2 border-b border-border pb-5">
+          <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
+            {siteName} · Hồ sơ mới
+          </p>
+          <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
+            Đăng ký tài khoản
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            Điền thông tin cá nhân để nhận mã xác thực OTP qua email.
           </p>
         </header>
 
-        {errors.general && (
-          <div className="register-general-error">{errors.general}</div>
-        )}
+        <div aria-live="polite" aria-atomic="true">
+          {errors.general && (
+            <div
+              role="alert"
+              className="flex items-start gap-2.5 border border-destructive/50 bg-destructive/10 p-3.5 text-xs text-destructive"
+            >
+              <AlertCircle size={15} className="mt-0.5 shrink-0" />
+              <span>{errors.general}</span>
+            </div>
+          )}
+        </div>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="register-field-group">
-            <div className="register-field register-field--full">
-              <label htmlFor="fullName" className="register-field__label">
-                Họ và tên
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Full Name */}
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="reg-fullName"
+                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+              >
+                Họ và tên *
               </label>
               <input
-                id="fullName"
+                id="reg-fullName"
                 name="fullName"
                 type="text"
-                placeholder="Nhập họ và tên"
-                className={`register-input ${errors.fullName ? "register-input--error" : ""}`}
+                autoComplete="name"
+                placeholder="Nguyễn Văn A"
                 value={formData.fullName}
                 onChange={handleChange}
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.fullName)}
+                aria-describedby={
+                  errors.fullName ? "reg-fullName-error" : undefined
+                }
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                  errors.fullName ? "border-destructive" : "border-border"
+                }`}
               />
               {errors.fullName && (
-                <span className="register-error">{errors.fullName}</span>
+                <p
+                  id="reg-fullName-error"
+                  role="alert"
+                  className="mt-1 text-[11px] font-medium text-destructive"
+                >
+                  {errors.fullName}
+                </p>
               )}
             </div>
 
-            <div className="register-field">
-              <label htmlFor="email" className="register-field__label">
-                Email
+            {/* Email */}
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="reg-email"
+                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+              >
+                Địa chỉ Email *
               </label>
               <input
-                id="email"
+                id="reg-email"
                 name="email"
                 type="email"
-                placeholder="Nhập email"
-                className={`register-input ${errors.email ? "register-input--error" : ""}`}
+                autoComplete="email"
+                placeholder="name@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "reg-email-error" : undefined}
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                  errors.email ? "border-destructive" : "border-border"
+                }`}
               />
-              {errors.email && <span className="register-error">{errors.email}</span>}
+              {errors.email && (
+                <p
+                  id="reg-email-error"
+                  role="alert"
+                  className="mt-1 text-[11px] font-medium text-destructive"
+                >
+                  {errors.email}
+                </p>
+              )}
             </div>
 
-
-            <div className="register-field">
-              <label htmlFor="dateOfBirth" className="register-field__label">
-                Ngày sinh
+            {/* Date of Birth */}
+            <div>
+              <label
+                htmlFor="reg-dateOfBirth"
+                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+              >
+                Ngày sinh *
               </label>
               <input
-                id="dateOfBirth"
+                id="reg-dateOfBirth"
                 name="dateOfBirth"
                 type="date"
-                className={`register-input ${errors.dateOfBirth ? "register-input--error" : ""}`}
+                max={new Date().toISOString().split("T")[0]}
                 value={formData.dateOfBirth}
                 onChange={handleChange}
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.dateOfBirth)}
-                max={new Date().toISOString().split("T")[0]}
+                aria-describedby={
+                  errors.dateOfBirth ? "reg-dob-error" : undefined
+                }
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                  errors.dateOfBirth ? "border-destructive" : "border-border"
+                }`}
               />
               {errors.dateOfBirth && (
-                <span className="register-error">{errors.dateOfBirth}</span>
+                <p
+                  id="reg-dob-error"
+                  role="alert"
+                  className="mt-1 text-[11px] font-medium text-destructive"
+                >
+                  {errors.dateOfBirth}
+                </p>
               )}
             </div>
 
-            <div className="register-field">
-              <label htmlFor="gender" className="register-field__label">
-                Giới tính
+            {/* Gender */}
+            <div>
+              <label
+                htmlFor="reg-gender"
+                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+              >
+                Giới tính *
               </label>
               <select
-                id="gender"
+                id="reg-gender"
                 name="gender"
-                className={`register-input register-select ${errors.gender ? "register-input--error" : ""}`}
                 value={formData.gender}
                 onChange={handleChange}
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.gender)}
+                aria-describedby={
+                  errors.gender ? "reg-gender-error" : undefined
+                }
+                className={`min-h-[44px] w-full border bg-background px-3.5 text-xs text-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                  errors.gender ? "border-destructive" : "border-border"
+                }`}
               >
                 <option value="">Chọn giới tính</option>
                 <option value="male">Nam</option>
                 <option value="female">Nữ</option>
               </select>
               {errors.gender && (
-                <span className="register-error">{errors.gender}</span>
+                <p
+                  id="reg-gender-error"
+                  role="alert"
+                  className="mt-1 text-[11px] font-medium text-destructive"
+                >
+                  {errors.gender}
+                </p>
               )}
             </div>
 
-            <div className="register-field">
-              <label htmlFor="passWord" className="register-field__label">
-                Mật khẩu
+            {/* Password */}
+            <div>
+              <label
+                htmlFor="reg-passWord"
+                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+              >
+                Mật khẩu *
               </label>
-              <div className="register-input-wrapper">
+              <div className="relative">
                 <input
-                  id="passWord"
+                  id="reg-passWord"
                   name="passWord"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Nhập mật khẩu"
-                  className={`register-input ${errors.passWord ? "register-input--error" : ""}`}
+                  autoComplete="new-password"
+                  placeholder="Tối thiểu 6 ký tự"
                   value={formData.passWord}
                   onChange={handleChange}
                   disabled={isSubmitting}
                   aria-invalid={Boolean(errors.passWord)}
+                  aria-describedby={
+                    errors.passWord ? "reg-password-error" : undefined
+                  }
+                  className={`min-h-[44px] w-full border bg-background pl-3.5 pr-11 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                    errors.passWord ? "border-destructive" : "border-border"
+                  }`}
                 />
                 <button
                   type="button"
-                  className="register-input-toggle-btn"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                   disabled={isSubmitting}
+                  className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 >
-                  {showPassword ? (
-                    <EyeOff size={18} aria-hidden="true" />
-                  ) : (
-                    <Eye size={18} aria-hidden="true" />
-                  )}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {errors.passWord && (
-                <span className="register-error">{errors.passWord}</span>
+                <p
+                  id="reg-password-error"
+                  role="alert"
+                  className="mt-1 text-[11px] font-medium text-destructive"
+                >
+                  {errors.passWord}
+                </p>
               )}
             </div>
 
-            <div className="register-field">
-              <label htmlFor="confirmPassword" className="register-field__label">
-                Xác nhận mật khẩu
+            {/* Confirm Password */}
+            <div>
+              <label
+                htmlFor="reg-confirmPassword"
+                className="mb-1.5 block text-[11px] font-semibold tracking-[0.16em] uppercase text-foreground"
+              >
+                Xác nhận mật khẩu *
               </label>
-              <div className="register-input-wrapper">
+              <div className="relative">
                 <input
-                  id="confirmPassword"
+                  id="reg-confirmPassword"
                   name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   placeholder="Nhập lại mật khẩu"
-                  className={`register-input ${errors.confirmPassword ? "register-input--error" : ""}`}
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   disabled={isSubmitting}
                   aria-invalid={Boolean(errors.confirmPassword)}
+                  aria-describedby={
+                    errors.confirmPassword
+                      ? "reg-confirm-password-error"
+                      : undefined
+                  }
+                  className={`min-h-[44px] w-full border bg-background pl-3.5 pr-11 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none disabled:opacity-50 ${
+                    errors.confirmPassword
+                      ? "border-destructive"
+                      : "border-border"
+                  }`}
                 />
                 <button
                   type="button"
-                  className="register-input-toggle-btn"
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  aria-label={
-                    showConfirmPassword ? "Ẩn mật khẩu xác nhận" : "Hiện mật khẩu xác nhận"
-                  }
                   disabled={isSubmitting}
+                  className="touch-target absolute top-1/2 right-1 -translate-y-1/2 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label={
+                    showConfirmPassword
+                      ? "Ẩn mật khẩu xác nhận"
+                      : "Hiện mật khẩu xác nhận"
+                  }
                 >
                   {showConfirmPassword ? (
-                    <EyeOff size={18} aria-hidden="true" />
+                    <EyeOff size={16} />
                   ) : (
-                    <Eye size={18} aria-hidden="true" />
+                    <Eye size={16} />
                   )}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <span className="register-error">{errors.confirmPassword}</span>
+                <p
+                  id="reg-confirm-password-error"
+                  role="alert"
+                  className="mt-1 text-[11px] font-medium text-destructive"
+                >
+                  {errors.confirmPassword}
+                </p>
               )}
-            </div>
-
-            <div className="register-field register-field--full">
-              <label className="register-checkbox-row">
-                <input
-                  type="checkbox"
-                  className="register-checkbox"
-                  checked={acceptedTerms}
-                  onChange={handleTermsChange}
-                  disabled={isSubmitting}
-                />
-                <span className="register-checkbox-label">
-                  Tôi đồng ý với điều khoản và chính sách bảo mật
-                </span>
-              </label>
-              {errors.terms && <span className="register-error">{errors.terms}</span>}
             </div>
           </div>
 
-          <button type="submit" className="register-button" disabled={isSubmitting || isFormIncomplete}>
+          {/* Terms Checkbox */}
+          <div>
+            <label className="touch-target -my-1 inline-flex cursor-pointer items-center gap-2.5 select-none">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={handleTermsChange}
+                disabled={isSubmitting}
+                className="h-4 w-4 cursor-pointer border-border accent-foreground"
+              />
+              <span className="text-xs text-muted-foreground">
+                Tôi đồng ý với điều khoản dịch vụ và chính sách bảo mật của{" "}
+                {siteName}
+              </span>
+            </label>
+            {errors.terms && (
+              <p
+                role="alert"
+                className="mt-1 text-[11px] font-medium text-destructive"
+              >
+                {errors.terms}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+            className="touch-target flex w-full items-center justify-center gap-2 bg-primary px-6 py-3.5 text-xs font-semibold tracking-[0.18em] uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
             {isSubmitting ? (
               <>
-                <LoaderCircle className="register-button__spinner" aria-hidden="true" />
-                <span>Đang tạo tài khoản...</span>
+                <LoaderCircle size={16} className="animate-spin" />
+                <span>Đang gửi mã xác thực OTP...</span>
               </>
             ) : (
-              "Đăng ký"
+              <span>Tiếp tục xác thực OTP</span>
             )}
           </button>
         </form>
 
-        <div className="register-divider">Hoặc tiếp tục với</div>
+        <div className="relative flex items-center justify-center py-1">
+          <div className="w-full border-t border-border" />
+          <span className="bg-background px-3 text-[10px] tracking-[0.2em] uppercase text-muted-foreground shrink-0">
+            Hoặc tiếp tục với
+          </span>
+          <div className="w-full border-t border-border" />
+        </div>
 
-        <div className="flex justify-center mb-2">
+        <div className="flex justify-center">
           <GoogleLoginButton />
         </div>
 
-        <p className="register-footer-desc">
-          Đã có tài khoản? <Link to="/login">Đăng nhập ngay</Link>
+        <p className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
+          Đã có tài khoản?{" "}
+          <Link
+            to="/login"
+            className="font-semibold text-foreground underline underline-offset-4 hover:opacity-80"
+          >
+            Đăng nhập ngay
+          </Link>
         </p>
       </div>
     </div>

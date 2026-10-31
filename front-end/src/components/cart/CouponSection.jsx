@@ -1,5 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Ticket, X, Loader2 } from "lucide-react";
+import { formatCurrency } from "@/utils/format";
 
 const CouponSection = ({
   couponCode,
@@ -19,116 +21,128 @@ const CouponSection = ({
   };
 
   return (
-    <div className="bg-white border border-[#E8E5DF] rounded-2xl p-5 shadow-2xs space-y-4 text-left transition-all duration-300">
-      <div className="flex items-center gap-2 text-sm font-bold text-[#05251C]">
-        <Ticket className="h-4.5 w-4.5 text-[#05251C]" />
-        <span>Mã giảm giá (Voucher)</span>
+    <div className="border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] uppercase text-foreground">
+          <Ticket size={15} strokeWidth={1.5} />
+          <span>Mã ưu đãi (Voucher)</span>
+        </div>
+        <Link
+          to="/vouchers"
+          className="text-[11px] text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          Săn mã ưu đãi
+        </Link>
       </div>
 
-      {/* Applied Coupons List */}
+      {/* Applied Coupons */}
       {(appliedCoupon || appliedShippingCoupon) && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {appliedCoupon && (
-            <div className="flex items-center justify-between bg-green-50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-900/50 rounded-xl p-3.5 animate-in fade-in duration-200">
-              <div className="space-y-1">
-                <span className="inline-block bg-green-600 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
-                  SẢN PHẨM: {appliedCoupon.code}
+            <div className="flex items-center justify-between border border-foreground bg-secondary/60 px-3.5 py-2.5">
+              <div className="space-y-0.5">
+                <span className="inline-block bg-primary px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider uppercase text-primary-foreground">
+                  THIẾT KẾ · {appliedCoupon.code}
                 </span>
-                <p className="text-xs text-green-700 dark:text-green-400 font-semibold">
-                  Đã giảm:{" "}
-                  {(appliedCoupon.discountType || appliedCoupon.discount_type) === "percentage"
-                    ? `-${appliedCoupon.discountValue || appliedCoupon.discount_value}% (-${(appliedCoupon.discountAmount || appliedCoupon.discount_amount || 0).toLocaleString()}đ)`
-                    : `-${(appliedCoupon.discountAmount || appliedCoupon.discount_amount || 0).toLocaleString()}đ`}
+                <p className="text-xs font-medium text-foreground tabular-nums">
+                  Giảm:{" "}
+                  {(appliedCoupon.discountType ||
+                    appliedCoupon.discount_type) === "percentage"
+                    ? `-${
+                        appliedCoupon.discountValue ||
+                        appliedCoupon.discount_value
+                      }% (-${formatCurrency(
+                        appliedCoupon.discountAmount ||
+                          appliedCoupon.discount_amount ||
+                          0
+                      )})`
+                    : `-${formatCurrency(
+                        appliedCoupon.discountAmount ||
+                          appliedCoupon.discount_amount ||
+                          0
+                      )}`}
                 </p>
               </div>
               <button
+                type="button"
                 onClick={onCancelCoupon}
-                className="p-1 rounded-lg text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/40 transition cursor-pointer"
+                className="touch-target -mr-2 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                aria-label="Hủy mã giảm giá sản phẩm"
                 title="Hủy áp dụng"
               >
-                <X className="h-4.5 w-4.5" />
+                <X size={15} />
               </button>
             </div>
           )}
 
           {appliedShippingCoupon && (
-            <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/50 rounded-xl p-3.5 animate-in fade-in duration-200">
-              <div className="space-y-1">
-                <span className="inline-block bg-blue-600 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
-                  VẬN CHUYỂN: {appliedShippingCoupon.code}
+            <div className="flex items-center justify-between border border-foreground bg-secondary/60 px-3.5 py-2.5">
+              <div className="space-y-0.5">
+                <span className="inline-block border border-foreground px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider uppercase text-foreground">
+                  VẬN CHUYỂN · {appliedShippingCoupon.code}
                 </span>
-                <p className="text-xs text-blue-700 dark:text-blue-400 font-semibold">
-                  Đã giảm phí ship: -{(appliedShippingCoupon.discountAmount || appliedShippingCoupon.discount_amount || 0).toLocaleString()}đ
+                <p className="text-xs font-medium text-foreground tabular-nums">
+                  Giảm phí vận chuyển: -
+                  {formatCurrency(
+                    appliedShippingCoupon.discountAmount ||
+                      appliedShippingCoupon.discount_amount ||
+                      0
+                  )}
                 </p>
               </div>
               <button
+                type="button"
                 onClick={onCancelShippingCoupon}
-                className="p-1 rounded-lg text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/40 transition cursor-pointer"
+                className="touch-target -mr-2 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                aria-label="Hủy mã miễn phí vận chuyển"
                 title="Hủy áp dụng"
               >
-                <X className="h-4.5 w-4.5" />
+                <X size={15} />
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* Form input state */}
+      {/* Input Form */}
       {!appliedCoupon || !appliedShippingCoupon ? (
         <form onSubmit={handleSubmit} className="space-y-2">
           <div className="flex gap-2">
+            <label htmlFor="cart-coupon-input" className="sr-only">
+              Nhập mã giảm giá
+            </label>
             <input
+              id="cart-coupon-input"
               type="text"
-              placeholder="Nhập mã giảm giá..."
+              placeholder="NHẬP MÃ VOUCHER..."
               value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value)}
-              className="flex-1 min-w-0 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#05251C] text-neutral-900 placeholder-neutral-400 uppercase font-mono tracking-wider"
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
               disabled={isValidating}
+              className="h-11 min-w-0 flex-1 border border-border bg-background px-3.5 font-mono text-xs uppercase tracking-wider text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
             />
             <button
               type="submit"
               disabled={!couponCode.trim() || isValidating}
-              className="bg-[#05251C] hover:bg-[#073D2A] text-[#F5DD20] font-bold text-xs px-5 py-2.5 rounded-xl transition duration-200 disabled:opacity-40 flex items-center justify-center shrink-0 cursor-pointer active:scale-95"
+              className="touch-target shrink-0 border border-foreground bg-primary px-5 text-xs font-semibold tracking-[0.16em] uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isValidating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 size={15} className="animate-spin" />
               ) : (
                 "Áp dụng"
               )}
             </button>
           </div>
           {couponError && (
-            <p className="text-red-500 dark:text-red-400 text-xs font-semibold animate-in slide-in-from-top-1">
+            <p role="alert" className="text-xs font-medium text-destructive">
               {couponError}
             </p>
           )}
         </form>
       ) : (
-        <p className="text-[11px] text-slate-500 text-center font-medium">
-          Bạn đã áp dụng tối đa voucher (1 sản phẩm & 1 vận chuyển).
+        <p className="text-[11px] text-muted-foreground">
+          Đã áp dụng tối đa 2 mã ưu đãi (1 mã sản phẩm & 1 mã vận chuyển).
         </p>
       )}
-
-      {/* Suggested active vouchers list for user convenience */}
-      {/* <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-          Gợi ý mã có sẵn:
-        </span>
-        <div className="flex flex-wrap gap-2 mt-1.5">
-          <button
-            onClick={() => setCouponCode("WELCOME10")}
-            className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/30 px-2 py-0.5 rounded hover:bg-blue-100 transition"
-          >
-            WELCOME10 (giảm 10%)
-          </button>
-          <button
-            onClick={() => setCouponCode("LUSTRA50K")}
-            className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/30 px-2 py-0.5 rounded hover:bg-blue-100 transition"
-          >
-            LUSTRA50K (-50k)
-          </button>
-        </div>
-      </div> */}
     </div>
   );
 };

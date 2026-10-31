@@ -4,24 +4,22 @@ import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { createReviewService } from "@/services/review.service";
 import { uploadImageService } from "@/services/upload.service";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { FiX } from "react-icons/fi";
+import { ArrowLeft, X, ImagePlus, Video } from "lucide-react";
 import { toast } from "react-toastify";
+import { formatCurrency } from "@/utils/format";
 
 const Review = () => {
   useDocumentTitle("Đánh giá sản phẩm");
-  
+
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
 
   const productId = searchParams.get("product_id");
-  const orderId = searchParams.get("order_id");
-  
-  // Lấy item từ state được truyền từ Order page
   const stateItem = location.state?.item;
-  const stateOrder = location.state?.order;
 
   const [item] = useState(stateItem || null);
+  const [imgFailed, setImgFailed] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [images, setImages] = useState([]);
@@ -44,7 +42,7 @@ const Review = () => {
       );
       setImages((prev) => [...prev, ...newImages]);
     } catch {
-      setError("Upload ảnh thất bại");
+      setError("Tải ảnh lên thất bại.");
     } finally {
       setIsUploading(false);
     }
@@ -64,7 +62,7 @@ const Review = () => {
       );
       setVideos((prev) => [...prev, ...newVideos]);
     } catch {
-      setError("Upload video thất bại");
+      setError("Tải video lên thất bại.");
     } finally {
       setIsUploading(false);
     }
@@ -80,14 +78,14 @@ const Review = () => {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    
+
     if (!rating) {
-      setError("Vui lòng chọn số sao");
+      setError("Vui lòng chọn số sao đánh giá.");
       return;
     }
-    
+
     if (!comment.trim()) {
-      setError("Vui lòng nhập đánh giá");
+      setError("Vui lòng nhập nội dung nhận xét.");
       return;
     }
 
@@ -100,14 +98,13 @@ const Review = () => {
         rating,
         content: {
           text: comment.trim(),
-          images: images,
-          videos: videos,
-        }
+          images,
+          videos,
+        },
       };
-      
+
       const res = await createReviewService(reviewData);
       if (res?.success) {
-        // alert("Đánh giá của bạn đã được gửi thành công!");
         toast.success("Đánh giá của bạn đã được gửi thành công!");
         navigate("/orders");
       } else {
@@ -122,86 +119,127 @@ const Review = () => {
     }
   };
 
+  const itemImg = item?.variant?.image_url || item?.product_image || "";
+
   return (
-    <div className="min-h-screen bg-[#F7F7F7] text-[#05251C] py-12 px-4 sm:px-6 select-none">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] py-12 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="mb-6 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#05251C] hover:opacity-75 cursor-pointer"
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mb-6 inline-flex items-center gap-2 min-h-[44px] text-xs uppercase tracking-[0.14em] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
         >
-          ← Quay lại đơn hàng
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+          Quay lại đơn hàng
         </button>
 
-        <h1 className="text-3xl sm:text-5xl font-black font-display uppercase tracking-tight text-[#05251C] mb-8 leading-[0.95]">
-          ĐÁNH GIÁ THIẾT KẾ.
-        </h1>
+        <header className="mb-8">
+          <span className="atelier-eyebrow block mb-2">Phản hồi khách hàng</span>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight">
+            Đánh giá sản phẩm
+          </h1>
+        </header>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs font-semibold">
-            {error}
-          </div>
-        )}
+        <div aria-live="polite" aria-atomic="true">
+          {error && (
+            <div
+              role="alert"
+              className="mb-6 p-4 border border-[var(--color-danger)] text-[var(--color-danger)] bg-[var(--color-surface)] text-xs font-medium"
+            >
+              {error}
+            </div>
+          )}
+        </div>
 
         {/* Sản phẩm */}
         {item ? (
-          <div className="border border-[#05251C]/10 rounded-3xl p-6 mb-8 bg-white shadow-xs">
-            <div className="flex items-start gap-6">
-              <img 
-                src={item.variant?.image_url || item.product_image || "https://via.placeholder.com/100"} 
-                alt={item.product_name} 
-                className="w-24 h-24 object-cover rounded-2xl border border-[#05251C]/10"
-              />
-              <div className="flex-1">
-                <h3 className="text-xl font-bold font-display text-[#05251C] mb-1">{item.product_name}</h3>
-                <p className="text-xs text-[#6B716E] mb-2">
-                  <span className="mr-4">Số lượng: {item.quantity}</span>
+          <div className="border border-[var(--color-border)] p-6 mb-8 bg-[var(--color-surface)]">
+            <div className="flex items-start gap-5">
+              <div className="w-20 h-24 border border-[var(--color-border)] bg-[var(--color-bg)] shrink-0 overflow-hidden flex items-center justify-center">
+                {itemImg && !imgFailed ? (
+                  <img
+                    src={itemImg}
+                    alt={item.product_name}
+                    className="w-full h-full object-cover"
+                    onError={() => setImgFailed(true)}
+                  />
+                ) : (
+                  <span className="font-display text-xs uppercase tracking-widest text-[var(--color-text-muted)]">
+                    WF
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-display text-lg font-semibold mb-1">
+                  {item.product_name}
+                </h2>
+                <p className="text-xs text-[var(--color-text-muted)] mb-1">
+                  Số lượng: {item.quantity}
                 </p>
-                <p className="text-xs text-[#6B716E]">
-                  <span className="mr-4">Màu: {item.variant?.color || "Tiêu chuẩn"}</span>
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  <span className="mr-4">
+                    Màu: {item.variant?.color || "Tiêu chuẩn"}
+                  </span>
                   <span>Size: {item.variant?.size || "Tiêu chuẩn"}</span>
                 </p>
-                <p className="text-base font-extrabold text-[#05251C] mt-2 tabular-nums">
-                  {item.price?.toLocaleString("vi-VN")}đ
+                <p className="text-sm font-mono font-semibold mt-2">
+                  {formatCurrency(item.price || 0)}
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="border border-[#05251C]/10 rounded-3xl p-6 mb-8 bg-white text-center">
-            <p className="text-xs text-[#6B716E]">Không có thông tin sản phẩm. Vui lòng quay lại danh sách đơn hàng.</p>
+          <div className="border border-[var(--color-border)] p-6 mb-8 bg-[var(--color-surface)] text-center">
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Không có thông tin sản phẩm. Vui lòng quay lại danh sách đơn hàng.
+            </p>
           </div>
         )}
 
         {/* Form Đánh giá */}
-        {item && (
-          <form onSubmit={handleSubmitReview} className="border border-[#05251C]/10 rounded-3xl p-6 sm:p-8 bg-white shadow-xs">
-            {/* Đánh giá */}
-            <div className="mb-6">
-              <h3 className="text-lg font-bold font-display text-[#05251C] uppercase mb-4">Mức độ hài lòng của bạn</h3>
-
-              <div className="flex items-center gap-4 mb-6">
-                <span className="text-xs font-bold text-[#6B716E] uppercase tracking-wider">Đánh giá sao:</span>
-              <StarRatingInput value={rating} onChange={setRating} />
+        {(item || productId) && (
+          <form
+            onSubmit={handleSubmitReview}
+            className="border border-[var(--color-border)] p-6 sm:p-8 bg-[var(--color-surface)] space-y-6"
+          >
+            <div>
+              <h3 className="text-xs uppercase tracking-[0.14em] font-semibold mb-4">
+                Mức độ hài lòng của bạn
+              </h3>
+              <div className="flex items-center gap-4">
+                <span className="text-xs text-[var(--color-text-muted)]">
+                  Chọn mức sao:
+                </span>
+                <StarRatingInput value={rating} onChange={setRating} />
+              </div>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Nhận xét của bạn</label>
+            <div>
+              <label
+                htmlFor="review-comment"
+                className="block text-xs uppercase tracking-[0.14em] font-semibold mb-2"
+              >
+                Nhận xét chi tiết
+              </label>
               <textarea
+                id="review-comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Chia sẻ trải nghiệm thực tế của bạn về phom dáng, chất liệu và độ hoàn thiện..."
+                className="w-full p-3.5 text-sm border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-text)]"
                 rows={5}
               />
             </div>
 
             {/* Upload hình ảnh */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Hình ảnh (Tối đa 5)</label>
-              <div className="flex items-center gap-2 mb-3">
+            <div>
+              <span className="block text-xs uppercase tracking-[0.14em] font-semibold mb-2">
+                Hình ảnh thực tế (Tối đa 5)
+              </span>
+              <div className="flex items-center gap-3 mb-3">
                 <input
                   type="file"
-                  id="image-input"
+                  id="review-image-input"
                   multiple
                   accept="image/*"
                   onChange={handleImageUpload}
@@ -209,32 +247,39 @@ const Review = () => {
                   className="hidden"
                 />
                 <label
-                  htmlFor="image-input"
-                  className={`px-4 py-2 rounded-lg cursor-pointer border ${
+                  htmlFor="review-image-input"
+                  className={`inline-flex items-center gap-2 min-h-[44px] px-4 py-2 text-xs uppercase tracking-[0.14em] border transition-colors ${
                     isUploading || images.length >= 5
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                      ? "border-[var(--color-border)] text-[var(--color-text-muted)] opacity-50 cursor-not-allowed"
+                      : "border-[var(--color-text)] text-[var(--color-text)] hover:bg-[var(--color-text)] hover:text-[var(--color-bg)] cursor-pointer"
                   }`}
                 >
-                  {isUploading ? "Đang upload..." : "Chọn hình ảnh"}
+                  <ImagePlus className="w-4 h-4" aria-hidden="true" />
+                  <span>{isUploading ? "Đang tải lên..." : "Thêm hình ảnh"}</span>
                 </label>
-                <span className="text-sm text-gray-500">{images.length}/5</span>
+                <span className="text-xs font-mono text-[var(--color-text-muted)]">
+                  {images.length}/5
+                </span>
               </div>
               {images.length > 0 && (
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                   {images.map((img, i) => (
-                    <div key={i} className="relative group">
+                    <div
+                      key={i}
+                      className="relative border border-[var(--color-border)] aspect-square overflow-hidden"
+                    >
                       <img
                         src={img}
-                        alt={`Review ${i}`}
-                        className="w-full h-24 object-cover rounded border"
+                        alt={`Ảnh đánh giá ${i + 1}`}
+                        className="w-full h-full object-cover"
                       />
                       <button
                         type="button"
                         onClick={() => removeImage(i)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                        aria-label={`Xóa ảnh ${i + 1}`}
+                        className="absolute top-1 right-1 min-w-[32px] min-h-[32px] bg-black/80 text-white flex items-center justify-center"
                       >
-                        <FiX size={16} />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
@@ -243,12 +288,14 @@ const Review = () => {
             </div>
 
             {/* Upload video */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Video (Tối đa 2)</label>
-              <div className="flex items-center gap-2 mb-3">
+            <div>
+              <span className="block text-xs uppercase tracking-[0.14em] font-semibold mb-2">
+                Video ngắn (Tối đa 2)
+              </span>
+              <div className="flex items-center gap-3 mb-3">
                 <input
                   type="file"
-                  id="video-input"
+                  id="review-video-input"
                   multiple
                   accept="video/*"
                   onChange={handleVideoUpload}
@@ -256,57 +303,63 @@ const Review = () => {
                   className="hidden"
                 />
                 <label
-                  htmlFor="video-input"
-                  className={`px-4 py-2 rounded-lg cursor-pointer border ${
+                  htmlFor="review-video-input"
+                  className={`inline-flex items-center gap-2 min-h-[44px] px-4 py-2 text-xs uppercase tracking-[0.14em] border transition-colors ${
                     isUploading || videos.length >= 2
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "bg-green-100 text-green-700 hover:bg-green-200"
+                      ? "border-[var(--color-border)] text-[var(--color-text-muted)] opacity-50 cursor-not-allowed"
+                      : "border-[var(--color-text)] text-[var(--color-text)] hover:bg-[var(--color-text)] hover:text-[var(--color-bg)] cursor-pointer"
                   }`}
                 >
-                  {isUploading ? "Đang upload..." : "Chọn video"}
+                  <Video className="w-4 h-4" aria-hidden="true" />
+                  <span>{isUploading ? "Đang tải lên..." : "Thêm video"}</span>
                 </label>
-                <span className="text-sm text-gray-500">{videos.length}/2</span>
+                <span className="text-xs font-mono text-[var(--color-text-muted)]">
+                  {videos.length}/2
+                </span>
               </div>
               {videos.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                   {videos.map((vid, i) => (
-                    <div key={i} className="relative group">
+                    <div
+                      key={i}
+                      className="relative border border-[var(--color-border)] h-28 overflow-hidden bg-black"
+                    >
                       <video
                         src={vid}
-                        className="w-full h-24 object-cover rounded border bg-black"
+                        className="w-full h-full object-cover"
                       />
                       <button
                         type="button"
                         onClick={() => removeVideo(i)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                        aria-label={`Xóa video ${i + 1}`}
+                        className="absolute top-1 right-1 min-w-[32px] min-h-[32px] bg-black/80 text-white flex items-center justify-center"
                       >
-                        <FiX size={16} />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="flex gap-4 pt-4 border-t border-[#05251C]/10">
-            <button 
-              type="button"
-              onClick={() => navigate(-1)}
-              className="px-6 py-3 border border-[#05251C]/20 rounded-full text-xs font-bold uppercase tracking-wider text-[#05251C] hover:bg-neutral-50 transition cursor-pointer"
-            >
-              Hủy bỏ
-            </button>
-            <button 
-              type="submit"
-              disabled={isSubmitting}
-              className="px-8 py-3 bg-[#05251C] hover:bg-[#F5DD20] hover:text-[#05251C] text-white font-display font-bold text-xs uppercase tracking-wider rounded-full transition shadow-md disabled:opacity-50 cursor-pointer active:scale-95"
-            >
-              {isSubmitting ? "Đang gửi..." : "Gửi đánh giá Atelier"}
-            </button>
-          </div>
-        </form>
-      )}
+            <div className="flex flex-wrap gap-3 pt-4 border-t border-[var(--color-border)]">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="min-h-[48px] px-6 py-3 border border-[var(--color-border)] text-xs uppercase tracking-[0.16em] font-medium hover:border-[var(--color-text)] transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="min-h-[48px] px-8 py-3 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.16em] font-medium hover:opacity-90 disabled:opacity-40 transition-opacity cursor-pointer"
+              >
+                {isSubmitting ? "Đang gửi..." : "Gửi đánh giá"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

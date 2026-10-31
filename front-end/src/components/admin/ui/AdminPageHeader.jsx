@@ -1,68 +1,27 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import React from "react";
 
-/**
- * Page Header component with Breadcrumbs and Action Buttons
- */
-export const AdminPageHeader = ({
-  title,
-  description,
-  breadcrumbs = [],
-  actions,
-  className = '',
-}) => {
+export function AdminPageHeader({ title, description, actions }) {
   return (
-    <div
-      className={`flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8 ${className}`}
-    >
+    <div className="mb-6 flex flex-col gap-4 border-b border-[var(--color-border)] pb-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        {breadcrumbs.length > 0 && (
-          <nav
-            aria-label="Breadcrumb"
-            className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-2 font-medium"
-          >
-            <Link
-              to="/admin"
-              className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-            >
-              Admin
-            </Link>
-            {breadcrumbs.map((crumb, idx) => (
-              <React.Fragment key={idx}>
-                <ChevronRight className="h-3 w-3 shrink-0 text-slate-300 dark:text-slate-600" />
-                {crumb.path ? (
-                  <Link
-                    to={crumb.path}
-                    className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-                  >
-                    {crumb.label}
-                  </Link>
-                ) : (
-                  <span className="text-slate-700 dark:text-slate-200 font-semibold">
-                    {crumb.label}
-                  </span>
-                )}
-              </React.Fragment>
-            ))}
-          </nav>
-        )}
-
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+        <p className="atelier-eyebrow mb-1">Quản trị hệ thống · Atelier Portal</p>
+        <h1 className="font-serif text-2xl font-normal tracking-tight text-[var(--color-text)] sm:text-3xl">
           {title}
         </h1>
         {description && (
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
+          <p className="mt-1 text-xs text-[var(--color-text-muted)] sm:text-sm">
             {description}
           </p>
         )}
       </div>
 
       {actions && (
-        <div className="flex flex-wrap items-center gap-3 shrink-0">{actions}</div>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          {actions}
+        </div>
       )}
     </div>
   );
-};
+}
 
 export default AdminPageHeader;

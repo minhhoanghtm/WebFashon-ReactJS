@@ -1,33 +1,44 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, ArrowRight } from "lucide-react";
+import { ShoppingBag, ArrowRight, LogIn } from "lucide-react";
 
-const EmptyCart = () => {
+const EmptyCart = ({ isLoggedIn = true }) => {
   return (
-    <div className="mx-auto max-w-lg px-6 py-16 text-center flex flex-col items-center bg-white rounded-2xl border border-neutral-200/80 shadow-xs my-8">
-      {/* Icon Container */}
-      <div className="w-20 h-20 rounded-2xl bg-[#05251C]/5 border border-[#05251C]/15 flex items-center justify-center text-[#05251C] mb-5 shadow-2xs">
-        <ShoppingBag className="w-10 h-10" />
+    <div className="mx-auto my-8 flex max-w-xl flex-col items-center border border-border bg-card px-6 py-16 text-center sm:px-10">
+      <div className="mb-6 flex h-16 w-16 items-center justify-center border border-border bg-secondary text-foreground">
+        <ShoppingBag size={28} strokeWidth={1.25} />
       </div>
 
-      {/* Details */}
-      <div className="space-y-2 mb-6">
-        <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[#05251C] font-display uppercase">
-          Giỏ hàng của bạn đang trống
-        </h2>
-        <p className="text-sm text-neutral-500 max-w-sm leading-relaxed mx-auto">
-          Bạn chưa chọn sản phẩm nào. Hãy khám phá những thiết kế mới nhất và bổ sung vào phong cách của bạn.
-        </p>
-      </div>
+      <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
+        WebFashion · Giỏ hàng
+      </p>
+      <h2 className="mt-2 font-serif text-2xl font-normal text-foreground sm:text-3xl">
+        Giỏ hàng của bạn đang trống
+      </h2>
+      <p className="mt-3 max-w-md text-xs leading-relaxed text-muted-foreground sm:text-sm">
+        {isLoggedIn
+          ? "Bạn chưa lưu thiết kế nào vào giỏ hàng. Hãy khám phá danh mục bộ sưu tập mới nhất của chúng tôi."
+          : "Vui lòng đăng nhập để đồng bộ giỏ hàng đã lưu trong tài khoản của bạn hoặc tiếp tục khám phá bộ sưu tập."}
+      </p>
 
-      {/* Shop Link */}
-      <Link
-        to="/products"
-        className="inline-flex items-center gap-2 rounded-full bg-[#05251C] hover:bg-[#073D2A] text-[#F5DD20] px-7 py-3.5 text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
-      >
-        <span>Khám phá bộ sưu tập</span>
-        <ArrowRight size={14} />
-      </Link>
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        {!isLoggedIn && (
+          <Link
+            to="/login"
+            className="touch-target inline-flex items-center gap-2 border border-foreground bg-background px-6 py-3.5 text-xs font-semibold tracking-[0.16em] uppercase text-foreground transition-colors hover:bg-secondary"
+          >
+            <LogIn size={15} />
+            <span>Đăng nhập tài khoản</span>
+          </Link>
+        )}
+        <Link
+          to="/products"
+          className="touch-target inline-flex items-center gap-2 bg-primary px-7 py-3.5 text-xs font-semibold tracking-[0.16em] uppercase text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          <span>Khám phá Bộ sưu tập</span>
+          <ArrowRight size={15} />
+        </Link>
+      </div>
     </div>
   );
 };

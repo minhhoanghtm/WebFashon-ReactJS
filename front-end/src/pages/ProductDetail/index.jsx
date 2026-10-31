@@ -1,28 +1,28 @@
-import trackingService from "@/services/tracking.service";
-import { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { AlertCircle, LoaderCircle } from "lucide-react";
+import { AlertCircle, LoaderCircle, Star } from "lucide-react";
+import trackingService from "@/services/tracking.service";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   getAllProductService,
-  getProductDetailByIdService,
   getProductByCategoryService,
   getProductBySlugService,
+  getProductDetailByIdService,
 } from "@/services/product.service";
 import { getProductVariantByProductIdService } from "@/services/productItem.service";
 import { getReviewsByProductIdService } from "@/services/review.service";
+import { getAllCategoriesService } from "@/services/category.service";
+import { useChatContextStore } from "@/store/chatContext.store";
+import { useFavoriteStore } from "@/store/favorite.store";
+import { formatCurrency } from "@/utils/format";
+import ProductCard from "@/components/ProductCard";
 import ProductGallery from "./ProductGallery";
-import ProductInfo from "./ProductInfo";
-import ProductReview from "./ProductReview";
-import ProductTabs from "./ProductTabs";
-import RelatedProducts from "./RelatedProducts";
+import ProductActions from "./ProductActions";
 import {
   normalizeProductDetail,
   normalizeRelatedProduct,
   normalizeReviews,
 } from "./productDetailAdapter";
-import "./ProductDetail.css";
-import { useChatContextStore } from "@/store/chatContext.store";
 
 const getProductId = (p) => {
   if (!p) return "";
@@ -35,42 +35,70 @@ const ProductDetail = () => {
   const [variants, setVariants] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [categoryMap, setCategoryMap] = useState({});
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const product = useMemo(
-    () => normalizeProductDetail(rawProduct, variants, reviews),
-    [rawProduct, variants, reviews],
-  );
-  const normalizedReviews = useMemo(() => normalizeReviews(reviews), [reviews]);
-  const normalizedRelatedProducts = useMemo(() => {
-    const sourceProducts = relatedProducts.length
-      ? relatedProducts
-      : [];
+  const favoriteItems = useFavoriteStore((state) => state.items);
+  const toggleFavorite = useFavoriteStore((state) => state.toggleProduct);
 
-    return sourceProducts
-      .map((item, index) => normalizeRelatedProduct(item, index))
-      .filter((item) => item.id !== product?.id)
+  const favoriteIds = useMemo(
+    () => new Set(favoriteItems.map((item) => String(item.id || item._id))),
+    [favoriteItems]
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    getAllCategoriesService()
+      .then((cats) => {
+        if (mounted && Array.isArray(cats)) {
+          setCategoryMap(
+            Object.fromEntries(
+              cats
+                .filter((c) => (c?._id || c?.id) && c?.name)
+                .map((c) => [String(c._id || c.id), c.name])
+            )
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const product = useMemo(
+    () => normalizeProductDetail(rawProduct, variants, reviews, categoryMap),
+    [rawProduct, variants, reviews, categoryMap]
+  );
+
+  const normalizedReviews = useMemo(() => normalizeReviews(reviews), [reviews]);
+
+  const normalizedRelatedProducts = useMemo(() => {
+    return (Array.isArray(relatedProducts) ? relatedProducts : [])
+      .map((item, idx) => normalizeRelatedProduct(item, idx, categoryMap))
+      .filter((item) => String(item.id) !== String(product?.id))
       .slice(0, 4);
-  }, [product?.id, relatedProducts]);
+  }, [product?.id, relatedProducts, categoryMap]);
 
   const setContext = useChatContextStore((state) => state.setContext);
+
   useEffect(() => {
-    if(!product) return;
-    // console.log("Product: ", product);
+    if (!product) return;
     setContext({
-      type: 'product',
-      productid: product?.id,
-      slug: product?.slug,
-      productName: product?.name,
-      old_price: product?.oldPrice,
-      new_price: product?.price,
-      rating: product?.rating,
-      image: product?.images?.[0] || null,
+      type: "product",
+      productid: product.id,
+      slug: product.slug,
+      productName: product.name,
+      old_price: product.oldPrice,
+      new_price: product.price,
+      rating: product.rating,
+      image: product.images?.[0] || null,
     });
   }, [product, setContext]);
 
-  useDocumentTitle(product?.name || "Chi tiết sản phẩm");
+  useDocumentTitle(product?.name || "Chi tiết thiết kế");
 
   const lastTrackedProductIdRef = useRef(null);
 
@@ -83,123 +111,96 @@ const ProductDetail = () => {
         price: product?.price || rawProduct?.new_price || 0,
       });
     }
-  }, [rawProduct?._id, product?.id, rawProduct?.category_id, product?.category_id, product?.price, rawProduct?.new_price]);
-
-  useEffect(() => {
-    if (product) {
-      // console.log("Chi tiết sản phẩm:", product);
-    }
-  }, [product]);
+  }, [
+    rawProduct,
+    product,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchProductDetail = async () => {
       if (!slug) return;
-
       setIsLoading(true);
       setError(null);
+      setSelectedVariant(null);
 
       try {
-        let productData;
-        // console.log("ID route (slug param):", slug);
+        let productData = null;
 
-        // Thử tải sản phẩm theo slug
         try {
           productData = await getProductBySlugService(slug);
-          // console.log("Loaded product by slug:", productData);
         } catch {
-          // Nếu lỗi, thử tải theo ID
           try {
             productData = await getProductDetailByIdService(slug);
-            // console.log("Loaded product by ID:", productData);
-          } catch (idError) {
-            console.warn("API chi tiết theo ID thất bại:", idError);
+          } catch {
+            // fallback to list search
           }
         }
 
-        // Nếu vẫn không thấy, thử tìm trong toàn bộ sản phẩm của shop
         if (!productData) {
           try {
-            // console.log("Đang thử fallback tìm trong toàn bộ sản phẩm...");
             const allProducts = await getAllProductService();
-            // console.log("Product list (all products loaded):", allProducts);
-
             if (Array.isArray(allProducts)) {
               productData = allProducts.find(
                 (item) =>
                   String(getProductId(item)) === String(slug) ||
                   item.slug === slug
               );
-              if (productData) {
-                // console.log("Tìm thấy sản phẩm trong danh sách fallback:", productData);
-              }
             }
-          } catch (listError) {
-            console.error("Lỗi khi tải danh sách sản phẩm fallback:", listError);
+          } catch {
+            // ignore
           }
         }
 
-        if (!isMounted) return;
-
         if (!productData) {
-          setRawProduct(null);
-          setError("Sản phẩm không tồn tại");
-          console.error("Không tìm thấy sản phẩm với param:", slug);
-          return;
+          throw new Error("Không tìm thấy sản phẩm");
         }
+
+        const resolvedProductId = getProductId(productData);
+        const categoryId =
+          productData.category_id?._id ||
+          productData.category_id ||
+          productData.categoryId;
+
+        const [variantResult, reviewResult, relatedResult] =
+          await Promise.allSettled([
+            resolvedProductId
+              ? getProductVariantByProductIdService(resolvedProductId)
+              : Promise.resolve([]),
+            resolvedProductId
+              ? getReviewsByProductIdService(resolvedProductId)
+              : Promise.resolve([]),
+            categoryId
+              ? getProductByCategoryService(categoryId)
+              : getAllProductService(),
+          ]);
+
+        if (!isMounted) return;
 
         setRawProduct(productData);
-
-        const productId = getProductId(productData);
-
-        const categoryId =
-          typeof productData.category_id === "object"
-            ? productData.category_id?._id
-            : productData.category_id;
-
-        window.scrollTo({ top: 0, behavior: "smooth" });
-
-        // Tải các dữ liệu phụ trợ (không để lỗi các API này làm sập trang)
-        const [variantData, reviewData, relatedData] = await Promise.all([
-          (productId
-            ? getProductVariantByProductIdService(productId)
-            : Promise.resolve([])
-          ).catch((err) => {
-            console.error("Lỗi khi tải variants:", err);
-            return [];
-          }),
-          (productId
-            ? getReviewsByProductIdService(productId)
-            : Promise.resolve([])
-          ).catch((err) => {
-            console.error("Lỗi khi tải reviews:", err);
-            return [];
-          }),
-          (categoryId
-            ? getProductByCategoryService(categoryId, 12)
-            : getAllProductService()
-          ).catch((err) => {
-            console.error("Lỗi khi tải sản phẩm liên quan:", err);
-            return [];
-          }),
-        ]);
-
+        setVariants(
+          variantResult.status === "fulfilled" &&
+            Array.isArray(variantResult.value)
+            ? variantResult.value
+            : []
+        );
+        setReviews(
+          reviewResult.status === "fulfilled" &&
+            Array.isArray(reviewResult.value)
+            ? reviewResult.value
+            : []
+        );
+        setRelatedProducts(
+          relatedResult.status === "fulfilled" &&
+            Array.isArray(relatedResult.value)
+            ? relatedResult.value
+            : []
+        );
+      } catch (err) {
         if (!isMounted) return;
-
-        // console.log("Variants data loaded:", variantData);
-        setVariants(Array.isArray(variantData) ? variantData : []);
-        setReviews(Array.isArray(reviewData) ? reviewData : []);
-        setRelatedProducts(Array.isArray(relatedData) ? relatedData : []);
-      } catch (fetchError) {
-        console.error("Lỗi nghiêm trọng khi tải chi tiết sản phẩm:", fetchError);
-        if (isMounted) {
-          setRawProduct(null);
-          setError("Sản phẩm không tồn tại");
-          setVariants([]);
-          setReviews([]);
-          setRelatedProducts([]);
-        }
+        setError(err?.message || "Không thể tải thông tin thiết kế.");
+        setRawProduct(null);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -208,120 +209,296 @@ const ProductDetail = () => {
     };
 
     fetchProductDetail();
-
     return () => {
       isMounted = false;
     };
   }, [slug]);
 
+  const galleryImages = useMemo(() => {
+    const base = Array.isArray(product?.images) ? product.images : [];
+    const variantImg = selectedVariant?.image_url || selectedVariant?.image;
+    if (variantImg && typeof variantImg === "string") {
+      return [variantImg, ...base.filter((u) => u !== variantImg)];
+    }
+    return base;
+  }, [product?.images, selectedVariant]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FBF9F5] flex flex-col items-center justify-center p-8 text-neutral-500" role="status">
-        <LoaderCircle className="animate-spin text-[#05251C] mb-3" size={36} aria-hidden="true" />
-        <span className="text-sm font-semibold text-[#05251C]">Đang tải chi tiết thiết kế...</span>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center bg-background p-8 text-center">
+        <LoaderCircle
+          className="mb-3 animate-spin text-foreground"
+          size={32}
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
+        <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground">
+          Đang tải chi tiết thiết kế...
+        </span>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-[#FBF9F5] flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-[#05251C]/5 text-[#05251C] flex items-center justify-center mb-4 border border-[#05251C]/15 shadow-2xs">
-          <AlertCircle size={32} aria-hidden="true" />
+      <div className="flex min-h-[60vh] flex-col items-center justify-center bg-background p-8 text-center">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center border border-border bg-secondary text-foreground">
+          <AlertCircle size={26} strokeWidth={1.5} aria-hidden="true" />
         </div>
-        <h1 className="text-xl sm:text-2xl font-black text-[#05251C] font-display uppercase mb-2">
-          {error || "Sản phẩm không tồn tại"}
+        <h1 className="font-serif text-2xl text-foreground sm:text-3xl">
+          {error || "Thiết kế không tồn tại"}
         </h1>
-        <p className="text-sm text-[#6B716E] max-w-md mb-6 leading-relaxed">
-          Sản phẩm bạn đang tìm kiếm có thể đã hết hàng, đổi tên hoặc đã được cập nhật đường dẫn mới.
+        <p className="mt-2 mb-6 max-w-md text-xs leading-relaxed text-muted-foreground">
+          Thiết kế bạn đang tìm kiếm có thể đã ngừng phát hành hoặc thay đổi
+          đường dẫn.
         </p>
         <Link
           to="/products"
-          className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#05251C] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#073D2A] hover:text-[#F5DD20] transition duration-200 shadow-sm"
+          className="touch-target inline-flex items-center justify-center bg-primary px-6 text-xs font-semibold tracking-[0.16em] uppercase text-primary-foreground"
         >
-          Khám phá sản phẩm khác
+          Quay lại Bộ sưu tập
         </Link>
       </div>
     );
   }
 
+  const discountPercent =
+    product.oldPrice > product.price && product.price > 0
+      ? Math.round(
+          ((product.oldPrice - product.price) / product.oldPrice) * 100
+        )
+      : 0;
+
   return (
-    <div className="product-detail min-h-screen bg-[#FBF9F5] py-6 sm:py-8 lg:py-4 select-none">
-      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb thanh lịch */}
-        <nav className="flex items-center gap-2 text-xs font-medium text-neutral-400 mb-6 lg:mb-3 border-b border-black/[0.05] pb-4 lg:pb-2" aria-label="Điều hướng">
-          <Link to="/" className="hover:text-neutral-700 transition">Trang chủ</Link>
+    <div className="min-h-screen bg-background py-8 text-foreground sm:py-12">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
+        {/* Breadcrumb */}
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-8 flex flex-wrap items-center gap-2 border-b border-border pb-4 text-[11px] tracking-[0.18em] uppercase text-muted-foreground"
+        >
+          <Link to="/" className="hover:text-foreground">
+            Trang chủ
+          </Link>
           <span>/</span>
-          <Link to="/products" className="hover:text-neutral-700 transition">Sản phẩm</Link>
-          <span>/</span>
+          <Link to="/products" className="hover:text-foreground">
+            Bộ sưu tập
+          </Link>
           {product.category && (
             <>
-              <Link to={`/products?category=${encodeURIComponent(product.category)}`} className="hover:text-neutral-700 transition">
+              <span>/</span>
+              <Link
+                to={`/products?category=${encodeURIComponent(
+                  product.category_id || product.category
+                )}`}
+                className="hover:text-foreground"
+              >
                 {product.category}
               </Link>
-              <span>/</span>
             </>
           )}
-          <span className="text-neutral-800 font-semibold truncate max-w-[240px]">
+          <span>/</span>
+          <span className="truncate font-semibold text-foreground">
             {product.name}
           </span>
         </nav>
 
-        {/* Khối chính 2 cột: Gallery bên trái (52%), Information bên phải (48%) */}
-        <section className="flex flex-col lg:flex-row gap-8 lg:gap-10 xl:gap-12 items-start" aria-label="Chi tiết sản phẩm">
-          {/* Cột Trái: Studio Gallery */}
-          <div className="w-full lg:w-[52%] xl:w-[50%] flex-shrink-0">
+        {/* Main 2-Column Product Showcase */}
+        <section
+          aria-label="Thông tin và hình ảnh thiết kế"
+          className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-14"
+        >
+          {/* Left Column: Gallery */}
+          <div className="lg:col-span-6">
             <ProductGallery
-              key={product.slug || product.id}
-              images={product.images}
+              key={`${product.id}-${selectedVariant?._id || "base"}`}
+              images={galleryImages}
               productName={product.name}
             />
           </div>
 
-          {/* Cột Phải: Information & Actions */}
-          <div className="w-full lg:w-[48%] xl:w-[50%] lg:sticky lg:top-24">
-            <ProductInfo product={product} variants={variants} />
+          {/* Right Column: Specification & Actions */}
+          <div className="space-y-6 lg:sticky lg:top-24 lg:col-span-6">
+            <div className="space-y-3 border-b border-border pb-6">
+              {product.category && (
+                <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
+                  {product.category}
+                </p>
+              )}
+
+              <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
+                {product.name}
+              </h1>
+
+              {/* Price & Discount Row */}
+              <div className="flex flex-wrap items-baseline gap-3 pt-1">
+                <strong className="text-2xl font-semibold tabular-nums text-foreground">
+                  {product.price > 0
+                    ? formatCurrency(product.price)
+                    : "Liên hệ"}
+                </strong>
+                {product.oldPrice > product.price && product.price > 0 && (
+                  <del className="text-sm tabular-nums text-muted-foreground line-through">
+                    {formatCurrency(product.oldPrice)}
+                  </del>
+                )}
+                {discountPercent > 0 && (
+                  <span className="border border-border bg-secondary px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] uppercase text-foreground">
+                    -{discountPercent}%
+                  </span>
+                )}
+              </div>
+
+              {/* Real Rating & Sold Metadata (only when real values > 0) */}
+              {(product.rating > 0 ||
+                product.reviewCount > 0 ||
+                product.sold > 0) && (
+                <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-muted-foreground">
+                  {product.rating > 0 && (
+                    <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                      <Star
+                        size={13}
+                        fill="currentColor"
+                        className="text-foreground"
+                      />
+                      <span>{product.rating.toFixed(1)}</span>
+                    </span>
+                  )}
+                  {product.reviewCount > 0 && (
+                    <span>{product.reviewCount} đánh giá thực tế</span>
+                  )}
+                  {product.sold > 0 && (
+                    <span>Đã bán {product.sold} sản phẩm</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Interactive Variant Selection & Cart Actions */}
+            <ProductActions
+              product={product}
+              variants={variants}
+              onVariantChange={setSelectedVariant}
+            />
+
+            {/* Description & Real Specifications */}
+            {product.description && (
+              <div className="space-y-3 border-t border-border pt-6">
+                <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground">
+                  Mô tả thiết kế
+                </h2>
+                <p className="whitespace-pre-line text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                  {product.description}
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
-        {/* Thông tin mô tả & thông số Tabs */}
-        <ProductTabs product={product} variants={variants} />
-
-        {/* Đánh giá từ khách hàng */}
-        <ProductReview
-          reviews={normalizedReviews}
-          productId={product.id}
-          averageRating={product.rating}
-        />
-
-        {/* Sản phẩm liên quan */}
-        <RelatedProducts products={normalizedRelatedProducts} />
-      </div>
-
-      {/* Sticky Buy Bar on Mobile (chỉ hiển thị trên mobile) */}
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-neutral-200 p-3 sm:hidden flex items-center justify-between gap-3 shadow-2xl">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <img
-            src={product.images?.[0] || ""}
-            alt=""
-            className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-neutral-200"
-          />
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs font-bold text-neutral-900 truncate">{product.name}</span>
-            <strong className="text-xs font-extrabold text-neutral-950 tabular-nums">
-              {product.price > 0 ? `${product.price.toLocaleString("vi-VN")} đ` : "Liên hệ"}
-            </strong>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            window.scrollTo({ top: 380, behavior: "smooth" });
-          }}
-          className="px-5 py-2.5 rounded-full bg-[#05251C] text-white font-bold text-xs uppercase tracking-wider flex-shrink-0 shadow-md active:scale-95 hover:bg-[#073D2A] hover:text-[#F5DD20] transition duration-200 cursor-pointer"
+        {/* Real Customer Reviews Section */}
+        <section
+          aria-labelledby="product-reviews-heading"
+          className="mt-16 border-t border-border pt-12"
         >
-          Chọn mua
-        </button>
+          <div className="mb-8 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
+                Phản hồi từ Khách hàng
+              </p>
+              <h2
+                id="product-reviews-heading"
+                className="mt-1 font-serif text-2xl font-normal text-foreground sm:text-3xl"
+              >
+                Đánh giá thực tế ({normalizedReviews.length})
+              </h2>
+            </div>
+          </div>
+
+          {normalizedReviews.length === 0 ? (
+            <div className="border border-border bg-card p-8 text-center">
+              <p className="text-xs text-muted-foreground">
+                Chưa có đánh giá nào cho thiết kế này.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {normalizedReviews.map((rev) => (
+                <article
+                  key={rev.id}
+                  className="space-y-3 border border-border bg-card p-5"
+                >
+                  <div className="flex items-center justify-between">
+                    <strong className="text-xs font-semibold text-foreground">
+                      {rev.author}
+                    </strong>
+                    {rev.date && (
+                      <span className="text-[11px] text-muted-foreground">
+                        {rev.date}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 text-foreground">
+                    {Array.from({ length: 5 }).map((_, idx) => (
+                      <Star
+                        key={idx}
+                        size={12}
+                        fill={idx < rev.rating ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
+                  {rev.content && (
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {rev.content}
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Related Products Section */}
+        {normalizedRelatedProducts.length > 0 && (
+          <section
+            aria-labelledby="related-products-heading"
+            className="mt-16 border-t border-border pt-12"
+          >
+            <div className="mb-8 flex items-end justify-between">
+              <div>
+                <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
+                  Đồng điệu phong cách
+                </p>
+                <h2
+                  id="related-products-heading"
+                  className="mt-1 font-serif text-2xl font-normal text-foreground sm:text-3xl"
+                >
+                  Thiết kế cùng danh mục
+                </h2>
+              </div>
+              <Link
+                to="/products"
+                className="text-xs font-medium tracking-[0.16em] uppercase text-foreground underline"
+              >
+                Xem tất cả
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+              {normalizedRelatedProducts.map((relProduct, idx) => (
+                <ProductCard
+                  key={relProduct.id}
+                  product={relProduct}
+                  isFavorite={favoriteIds.has(String(relProduct.id))}
+                  onToggleFavorite={toggleFavorite}
+                  trackingMeta={{
+                    position: idx + 1,
+                    source: "related_products",
+                  }}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

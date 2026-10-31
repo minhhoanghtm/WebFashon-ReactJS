@@ -1,169 +1,145 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
-import AdminHeader from '../components/admin/ui/AdminHeader';
-import AdminProfileModal from '../components/admin/ui/AdminProfileModal';
-import AdminPasswordModal from '../components/admin/ui/AdminPasswordModal';
-import { useAuthStore } from '@/store/auth.store';
-import { getAdminConversationsService } from '@/services/chat.service';
-import { io } from 'socket.io-client';
-import { ENV } from '@/config/env';
-import { tokenStorage } from '@/utils/token';
+import React, { useState, useEffect, useCallback } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import { io } from "socket.io-client";
+import Sidebar from "@/components/layout/Sidebar";
+import {
+  AdminHeader,
+  AdminProfileModal,
+  AdminPasswordModal,
+} from "@/components/admin/ui";
+import { ENV } from "@/config/env";
+import { getAdminConversationsService } from "@/services/chat.service";
+import { useAuthStore } from "@/store/auth.store";
+
+const getSocketBaseUrl = (apiUrl) => {
+  try {
+    const parsed = new URL(apiUrl);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return apiUrl.replace(/\/api\/v\d+\/?$/, "");
+  }
+};
 
 const AdminLayout = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('admin-theme') || 'light';
+    if (typeof window !== "undefined") {
+      const saved =
+        localStorage.getItem("webfashion_theme") ||
+        localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light") return saved;
+      return document.documentElement.classList.contains("dark")
+        ? "dark"
+        : "light";
+    }
+    return "light";
   });
 
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
-  // Modals state
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-
-  const mainRef = useRef(null);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const { isAuthenticated, user } = useAuthStore();
   const { pathname } = useLocation();
-  const { user } = useAuthStore();
 
-  // Scroll to top on route change
+  // Sync dark mode class on <html>
   useEffect(() => {
-    if (mainRef.current) {
-      mainRef.current.scrollTo(0, 0);
-    }
-    const timer = setTimeout(() => {
-      setMobileOpen(false);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [pathname]);
-
-  // Sync theme with document element
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove("dark");
     }
-    localStorage.setItem('admin-theme', theme);
+    localStorage.setItem("webfashion_theme", theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
-  // Socket for real-time chat alerts
-  const socketUrl = useMemo(() => {
-    return ENV.API_BASE_URL.replace('/api', '');
-  }, []);
-
-  useEffect(() => {
-    let ignore = false;
-    const fetchCount = async () => {
-      const isAuthorized = user?.role === 'admin' || user?.role === 'staff';
-      if (!isAuthorized) return;
-      try {
-        const res = await getAdminConversationsService({
-          status: 'waiting_admin',
-          limit: 100,
-          type: 'support',
-        });
-        if (!ignore) {
-          setUnreadCount(res?.total || res?.items?.length || 0);
-        }
-      } catch (error) {
-        console.error('Error fetching unread chat count:', error);
+  const fetchUnreadChats = useCallback(async () => {
+    await Promise.resolve();
+    if (!isAuthenticated || user?.role !== "admin") return;
+    try {
+      const res = await getAdminConversationsService();
+      if (res?.success && Array.isArray(res.data)) {
+        const total = res.data.reduce(
+          (sum, c) => sum + (c.unreadByAdmin || 0),
+          0
+        );
+        setUnreadChatCount(total);
       }
-    };
-    fetchCount();
-    return () => {
-      ignore = true;
-    };
-  }, [user, pathname]);
+    } catch {
+      // ignore background polling error
+    }
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
-    const isAuthorized = user?.role === 'admin' || user?.role === 'staff';
-    if (!isAuthorized) return;
+    fetchUnreadChats();
+  }, [fetchUnreadChats, pathname]);
 
-    const token = tokenStorage.getToken();
-    if (!token) return;
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!isAuthenticated || user?.role !== "admin" || !token) return undefined;
 
-    const socket = io(socketUrl, {
+    const socket = io(getSocketBaseUrl(ENV.API_URL), {
       auth: { token },
-      transports: ['websocket'],
+      transports: ["websocket", "polling"],
     });
 
-    const refreshUnread = async () => {
-      try {
-        const res = await getAdminConversationsService({
-          status: 'waiting_admin',
-          limit: 100,
-          type: 'support',
-        });
-        setUnreadCount(res?.total || res?.items?.length || 0);
-      } catch (error) {
-        console.error('Error updating unread count:', error);
-      }
-    };
-
-    socket.on('message:new', () => {
-      refreshUnread();
+    socket.on("chat:conversation_updated", () => {
+      fetchUnreadChats();
     });
 
     return () => {
-      if (socket.connected) {
-        socket.disconnect();
-      } else {
-        socket.once('connect', () => {
-          socket.disconnect();
-        });
-      }
+      socket.disconnect();
     };
-  }, [user, socketUrl]);
+  }, [isAuthenticated, user, fetchUnreadChats]);
 
   return (
-    <div className="admin-shell flex min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans antialiased transition-colors duration-200">
-      {/* Sidebar Navigation */}
+    <div className="min-h-screen bg-[var(--color-bg)] font-sans text-[var(--color-text)] transition-colors duration-200">
+      {/* Sidebar (Desktop Collapsible + Mobile Drawer) */}
       <Sidebar
-        collapsed={collapsed}
+        isOpen={sidebarOpen}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
-        unreadCount={unreadCount}
+        unreadChatCount={unreadChatCount}
       />
 
-      {/* Main Wrapper */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Sticky Header */}
+      {/* Main Content Shell */}
+      <div
+        className={`flex min-h-screen flex-col transition-all duration-300 ${
+          sidebarOpen ? "lg:pl-64" : "lg:pl-20"
+        }`}
+      >
         <AdminHeader
-          onToggleSidebar={() => setCollapsed((prev) => !prev)}
-          onToggleMobileSidebar={() => setMobileOpen((prev) => !prev)}
-          collapsed={collapsed}
-          unreadChatsCount={unreadCount}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+          onOpenMobileSidebar={() => setMobileOpen(true)}
           theme={theme}
           onToggleTheme={toggleTheme}
-          onOpenProfileModal={() => setIsProfileModalOpen(true)}
-          onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
+          onOpenProfileModal={() => setProfileModalOpen(true)}
+          onOpenPasswordModal={() => setPasswordModalOpen(true)}
         />
 
-        {/* Content Area */}
-        <main
-          ref={mainRef}
-          className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8"
-        >
-          <div className="mx-auto max-w-[1600px] w-full">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-[1600px]">
             <Outlet />
           </div>
         </main>
       </div>
 
-      {/* Profile & Password Modals */}
+      {/* Modals */}
       <AdminProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
       />
       <AdminPasswordModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
+        isOpen={passwordModalOpen}
+        onClose={() => setPasswordModalOpen(false)}
       />
     </div>
   );

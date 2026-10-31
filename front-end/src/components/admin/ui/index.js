@@ -1,7 +1,10 @@
-export { AdminBadge } from './AdminBadge';
-export { AdminCard } from './AdminCard';
-export { AdminPageHeader } from './AdminPageHeader';
-export { AdminPagination } from './AdminPagination';
-export { AdminEmptyState } from './AdminEmptyState';
-export { TableSkeleton, KPISkeleton, CardSkeleton } from './AdminSkeleton';
-export { AdminModal } from './AdminModal';
+export { AdminPageHeader } from "./AdminPageHeader";
+export { AdminCard } from "./AdminCard";
+export { AdminBadge } from "./AdminBadge";
+export { AdminModal } from "./AdminModal";
+export { AdminPagination } from "./AdminPagination";
+export { AdminEmptyState } from "./AdminEmptyState";
+export { TableSkeleton, KPISkeleton, CardSkeleton } from "./AdminSkeleton";
+export { AdminHeader } from "./AdminHeader";
+export { AdminProfileModal } from "./AdminProfileModal";
+export { AdminPasswordModal } from "./AdminPasswordModal";

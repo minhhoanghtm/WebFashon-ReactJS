@@ -1,126 +1,142 @@
-import React, { Suspense, lazy } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import React, { Suspense, lazy } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import MainLayout from "@/layouts/MainLayout";
+import AuthLayout from "@/layouts/AuthLayout";
+import AdminLayout from "@/layouts/AdminLayout";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Home from "@/pages/Home";
+import ProductSearch from "@/pages/ProductSearch";
+import ProductDetail from "@/pages/ProductDetail";
+import Cart from "@/pages/Cart";
+import Checkout from "@/pages/Checkout";
+import PaymentResult from "@/pages/PaymentResult";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import VerifyOTP from "@/pages/VerifyOTP";
+import ResetPassword from "@/pages/ResetPassword";
+import Profile from "@/pages/profile";
+import Order from "@/pages/Order";
+import Review from "@/pages/Review";
+import Favorites from "@/pages/Favorites";
+import MyCoupons from "@/pages/MyCoupons";
+import VoucherHunting from "@/pages/VoucherHunting";
+import Dashboard from "@/pages/admin/Dashboard";
 
-import MainLayout from '../layouts/MainLayout';
-import AuthLayout from '../layouts/AuthLayout';
-import AdminLayout from '../layouts/AdminLayout';
+const CatalogManagement = lazy(() =>
+  import("@/pages/admin/CatalogManagement")
+);
+const ProductManagement = lazy(() =>
+  import("@/pages/admin/ProductManagement")
+);
+const OrderManagement = lazy(() => import("@/pages/admin/OrderManagement"));
+const AdminChatManagement = lazy(() =>
+  import("@/pages/admin/AdminChatManagement")
+);
+const UserManagement = lazy(() => import("@/pages/admin/UserManagement"));
+const CouponManagement = lazy(() => import("@/pages/admin/CouponManagement"));
+const CampaignManagement = lazy(() =>
+  import("@/pages/admin/CampaignManagement")
+);
+const BannerManagement = lazy(() => import("@/pages/admin/BannerManagement"));
+const LookbookManagement = lazy(() =>
+  import("@/pages/admin/LookbookManagement")
+);
+const ABTestingManagement = lazy(() =>
+  import("@/pages/admin/ABTestingManagement")
+);
+const PageManagement = lazy(() => import("@/pages/admin/PageManagement"));
+const WebsiteSettingsManagement = lazy(() =>
+  import("@/pages/admin/WebsiteSettingsManagement")
+);
 
-import Home from '../pages/Home';
-import About from '../pages/About';
-import ProductSearch from '../pages/ProductSearch';
-import ProductDetail from '../pages/ProductDetail';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import ResetPassword from '../pages/ResetPassword';
-import VerifyOTP from '../pages/VerifyOTP';
-import Cart from '../pages/Cart';
-import Checkout from '../pages/Checkout';
-import PaymentResult from '../pages/PaymentResult';
-import Profile from '../pages/profile';
-import Order from '../pages/Order';
-import Review from '../pages/Review';
-import NotFound from '../pages/not-found';
-import VoucherHunting from '../pages/VoucherHunting';
-import MyCoupons from '../pages/MyCoupons';
-import Favorites from '../pages/Favorites';
-import Policy from '../pages/Policy';
-import FAQ from '../pages/FAQ';
-import Guide from '../pages/Guide';
-import Landing from '../pages/Landing';
-import Blog from '../pages/Blog';
-import LookbookList from '../pages/LookbookList';
-import LookbookDetail from '../pages/LookbookDetail';
-import CampaignDetail from '../pages/CampaignDetail';
-import ProtectedRoute from '@/components/ProtectedRoute';
-
-// Admin tooling is only needed behind a protected route. Loading it on the
-// storefront was also pulling ECharts into the initial JavaScript graph.
-const CatalogManagement = lazy(() => import('@/pages/admin/CatalogManagement'));
-const ProductManagement = lazy(() => import('@/pages/admin/ProductManagement'));
-const OrderManagement = lazy(() => import('@/pages/admin/OrderManagement'));
-const UserManagement = lazy(() => import('@/pages/admin/UserManagement'));
-const CouponManagement = lazy(() => import('@/pages/admin/CouponManagement'));
-const Dashboard = lazy(() => import('@/pages/admin/Dashboard'));
-const AdminChatManagement = lazy(() => import('@/pages/admin/AdminChatManagement'));
-const WebsiteSettingsManagement = lazy(() => import('@/pages/admin/WebsiteSettingsManagement'));
-const BannerManagement = lazy(() => import('@/pages/admin/BannerManagement'));
-const PageManagement = lazy(() => import('@/pages/admin/PageManagement'));
-const LookbookManagement = lazy(() => import('@/pages/admin/LookbookManagement'));
-const CampaignManagement = lazy(() => import('@/pages/admin/CampaignManagement'));
-const ABTestingManagement = lazy(() => import('@/pages/admin/ABTestingManagement'));
-
-const AdminRoute = ({ Component }) => (
-  <Suspense fallback={null}>
+const withSuspense = (Component) => (
+  <Suspense
+    fallback={
+      <div
+        className="flex min-h-[45vh] items-center justify-center text-xs uppercase tracking-[0.2em] text-[var(--color-text-muted)]"
+        aria-live="polite"
+      >
+        Đang tải mô-đun quản trị...
+      </div>
+    }
+  >
     <Component />
   </Suspense>
 );
 
+const StagePlaceholder = () => (
+  <section className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col items-center justify-center px-4 py-24 text-center sm:px-6 lg:px-10">
+    <p className="text-[11px] font-medium tracking-[0.28em] uppercase text-muted-foreground">
+      WebFashion · Monochrome Atelier
+    </p>
+    <h1 className="mt-3 font-serif text-3xl font-normal tracking-tight text-foreground sm:text-5xl">
+      Trang đang được triển khai ở giai đoạn tiếp theo
+    </h1>
+  </section>
+);
+
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <MainLayout />,
     children: [
       { index: true, element: <Home /> },
-      { path: 'about', element: <About /> },
-      { path: 'policy', element: <Policy /> },
-      { path: 'faq', element: <FAQ /> },
-      { path: 'guide', element: <Guide /> },
-      { path: 'landing', element: <Landing /> },
-      { path: 'blog', element: <Blog /> },
-      { path: 'products', element: <ProductSearch /> },
-      { path: 'product/:slug', element: <ProductDetail /> },
-      { path: 'cart', element: <Cart /> },
-      { path: 'checkout', element: <Checkout /> },
-      { path: 'payment-result', element: <PaymentResult /> },
-      { path: 'profile', element: <Profile /> },
-      { path: 'vouchers', element: <VoucherHunting /> },
-      { path: 'campaigns/:slug', element: <CampaignDetail /> },
-      { path: 'my-coupons', element: <MyCoupons /> },
-      { path: 'favorites', element: <Favorites /> },
+      { path: "products", element: <ProductSearch /> },
+      { path: "product/:slug", element: <ProductDetail /> },
+      { path: "cart", element: <Cart /> },
+      { path: "checkout", element: <Checkout /> },
+      { path: "payment-result", element: <PaymentResult /> },
+      { path: "favorites", element: <Favorites /> },
+      { path: "vouchers", element: <VoucherHunting /> },
       {
-        path: 'lookbooks',
-        element: <LookbookList />,
+        path: "my-coupons",
+        element: <ProtectedRoute element={<MyCoupons />} />,
       },
       {
-        path: 'lookbooks/:slug',
-        element: <LookbookDetail />,
+        path: "profile",
+        element: <ProtectedRoute element={<Profile />} />,
       },
       {
-        path: 'user/dashboard',
-        element: <Profile />,
+        path: "user/dashboard",
+        element: <ProtectedRoute element={<Profile />} />,
       },
-      { path: 'orders', element: <Order /> },
-      { path: 'reviews/create', element: <Review /> },
-      { path: '*', element: <NotFound /> },
+      {
+        path: "orders",
+        element: <ProtectedRoute element={<Order />} />,
+      },
+      {
+        path: "reviews/create",
+        element: <ProtectedRoute element={<Review />} />,
+      },
+      { path: "*", element: <StagePlaceholder /> },
     ],
   },
   {
-    path: '/',
     element: <AuthLayout />,
     children: [
-      { path: 'login', element: <Login /> },
-      { path: 'register', element: <Register /> },
-      { path: 'reset-password', element: <ResetPassword /> },
-      { path: 'verify-otp', element: <VerifyOTP /> },
+      { path: "login", element: <Login /> },
+      { path: "register", element: <Register /> },
+      { path: "verify-otp", element: <VerifyOTP /> },
+      { path: "reset-password", element: <ResetPassword /> },
     ],
   },
   {
-    path: '/admin',
-    element: <ProtectedRoute allowedRoles={['admin']} element={<AdminLayout />} />,
+    path: "/admin",
+    element: <ProtectedRoute allowedRoles={["admin"]} element={<AdminLayout />} />,
     children: [
-      { index: true, element: <AdminRoute Component={Dashboard} /> },
-      { path: 'categories', element: <AdminRoute Component={CatalogManagement} /> },
-      { path: 'products', element: <AdminRoute Component={ProductManagement} /> },
-      { path: 'orders', element: <AdminRoute Component={OrderManagement} /> },
-      { path: 'chats', element: <AdminRoute Component={AdminChatManagement} /> },
-      { path: 'customers', element: <AdminRoute Component={UserManagement} /> },
-      { path: 'coupons', element: <AdminRoute Component={CouponManagement} /> },
-      { path: 'campaigns', element: <AdminRoute Component={CampaignManagement} /> },
-      { path: 'banners', element: <AdminRoute Component={BannerManagement} /> },
-      { path: 'lookbooks', element: <AdminRoute Component={LookbookManagement} /> },
-      { path: 'ab-testing', element: <AdminRoute Component={ABTestingManagement} /> },
-      { path: 'pages', element: <AdminRoute Component={PageManagement} /> },
-      { path: 'settings', element: <AdminRoute Component={WebsiteSettingsManagement} /> },
+      { index: true, element: <Dashboard /> },
+      { path: "categories", element: withSuspense(CatalogManagement) },
+      { path: "products", element: withSuspense(ProductManagement) },
+      { path: "orders", element: withSuspense(OrderManagement) },
+      { path: "chats", element: withSuspense(AdminChatManagement) },
+      { path: "customers", element: withSuspense(UserManagement) },
+      { path: "coupons", element: withSuspense(CouponManagement) },
+      { path: "campaigns", element: withSuspense(CampaignManagement) },
+      { path: "banners", element: withSuspense(BannerManagement) },
+      { path: "lookbooks", element: withSuspense(LookbookManagement) },
+      { path: "ab-testing", element: withSuspense(ABTestingManagement) },
+      { path: "pages", element: withSuspense(PageManagement) },
+      { path: "settings", element: withSuspense(WebsiteSettingsManagement) },
     ],
   },
 ]);

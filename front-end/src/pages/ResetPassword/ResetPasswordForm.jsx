@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff, LoaderCircle } from "lucide-react";
-import { sendResetOTPService, verifyOTPService, resetPasswordService } from "@/services/auth.service";
+import { ArrowLeft, Eye, EyeOff, LoaderCircle, RefreshCw } from "lucide-react";
+import {
+  sendResetOTPService,
+  verifyOTPService,
+  resetPasswordService,
+} from "@/services/auth.service";
 import { toast } from "react-toastify";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
@@ -10,35 +14,31 @@ const RESEND_COOLDOWN = 60; // 60 seconds
 const ResetPasswordForm = () => {
   const navigate = useNavigate();
   const { settings } = useWebsiteSettings();
-  const siteName = settings?.general?.siteName || "404Studio";
+  const siteName = settings?.general?.siteName || "WebFashion";
   const [step, setStep] = useState(1); // 1: Enter email, 2: Enter OTP, 3: Enter New Password
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // States for Resend OTP
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
-  const [canResend, setCanResend] = useState(false);
   const [isResending, setIsResending] = useState(false);
+
+  const canResend = countdown <= 0;
 
   // Countdown timer effect
   useEffect(() => {
-    if (step !== 2) return;
-    if (countdown <= 0) {
-      setCanResend(true);
-      return;
-    }
+    if (step !== 2 || countdown <= 0) return undefined;
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          setCanResend(true);
           clearInterval(timer);
           return 0;
         }
@@ -50,9 +50,9 @@ const ResetPasswordForm = () => {
 
   const validateStep1 = () => {
     const nextErrors = {};
-    if (!email) {
+    if (!email.trim()) {
       nextErrors.email = "Vui lòng nhập email.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       nextErrors.email = "Email không đúng định dạng.";
     }
     setErrors(nextErrors);
@@ -61,9 +61,9 @@ const ResetPasswordForm = () => {
 
   const validateStep2 = () => {
     const nextErrors = {};
-    if (!otp) {
+    if (!otp.trim()) {
       nextErrors.otp = "Vui lòng nhập mã OTP.";
-    } else if (otp.length < 4) {
+    } else if (otp.trim().length < 4) {
       nextErrors.otp = "Mã OTP phải có ít nhất 4 ký tự.";
     }
     setErrors(nextErrors);
@@ -93,18 +93,14 @@ const ResetPasswordForm = () => {
 
     try {
       setIsSubmitting(true);
-      const res = await sendResetOTPService({ email: email.trim() });
-      const receivedOtp = res?.otp || res?.data?.otp;
-      // console.log(`🔑 [OTP Debug] Mã OTP nhận được: ${receivedOtp}`);
+      await sendResetOTPService({ email: email.trim() });
       toast.success("Mã OTP đã được gửi đến email của bạn!");
       setCountdown(RESEND_COOLDOWN);
-      setCanResend(false);
       setStep(2);
     } catch (err) {
-      console.error(err);
-      setErrors({
-        email: err.response?.data?.message || "Không thể gửi OTP. Vui lòng thử lại.",
-      });
+      const msg =
+        err.response?.data?.message || "Không thể gửi OTP. Vui lòng thử lại.";
+      setErrors({ email: msg });
       toast.error(err.response?.data?.message || "Gửi OTP thất bại");
     } finally {
       setIsSubmitting(false);
@@ -118,14 +114,13 @@ const ResetPasswordForm = () => {
 
     try {
       setIsSubmitting(true);
-      await verifyOTPService({ email: email.trim(), otp });
+      await verifyOTPService({ email: email.trim(), otp: otp.trim() });
       toast.success("Xác thực OTP thành công!");
       setStep(3);
     } catch (err) {
-      console.error(err);
-      setErrors({
-        otp: err.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn.",
-      });
+      const msg =
+        err.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn.";
+      setErrors({ otp: msg });
       toast.error(err.response?.data?.message || "Xác thực OTP thất bại");
     } finally {
       setIsSubmitting(false);
@@ -137,15 +132,11 @@ const ResetPasswordForm = () => {
     try {
       setIsResending(true);
       setErrors({});
-      const res = await sendResetOTPService({ email: email.trim() });
-      const receivedOtp = res?.otp || res?.data?.otp;
-      // console.log(`🔑 [OTP Debug] Mã OTP gửi lại nhận được: ${receivedOtp}`);
+      await sendResetOTPService({ email: email.trim() });
       toast.success("Mã OTP mới đã được gửi đến email của bạn!");
       setOtp("");
       setCountdown(RESEND_COOLDOWN);
-      setCanResend(false);
     } catch (err) {
-      console.error(err);
       toast.error(err.response?.data?.message || "Gửi lại mã OTP thất bại");
     } finally {
       setIsResending(false);
@@ -161,16 +152,16 @@ const ResetPasswordForm = () => {
       setIsSubmitting(true);
       await resetPasswordService({
         email: email.trim(),
-        otp,
+        otp: otp.trim(),
         newPassword,
       });
       toast.success("Khôi phục mật khẩu thành công!");
       navigate("/login");
     } catch (err) {
-      console.error(err);
-      setErrors({
-        general: err.response?.data?.message || "Khôi phục mật khẩu thất bại. Vui lòng kiểm tra lại.",
-      });
+      const msg =
+        err.response?.data?.message ||
+        "Khôi phục mật khẩu thất bại. Vui lòng kiểm tra lại.";
+      setErrors({ general: msg });
       toast.error(err.response?.data?.message || "Đặt lại mật khẩu thất bại");
     } finally {
       setIsSubmitting(false);
@@ -190,67 +181,102 @@ const ResetPasswordForm = () => {
   };
 
   return (
-    <div className="reset-form-section">
-      <div className="reset-form-container">
+    <div className="p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-[var(--color-surface)] text-[var(--color-text)]">
+      <div className="w-full max-w-md mx-auto">
         <button
           onClick={handleBack}
-          className="reset-back-btn"
+          className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors mb-6 min-h-[44px]"
           type="button"
         >
-          <ArrowLeft size={17} aria-hidden="true" />
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           <span>
-            {step === 3 
-              ? "Quay lại nhập OTP" 
-              : step === 2 
-              ? "Quay lại nhập email" 
+            {step === 3
+              ? "Quay lại nhập OTP"
+              : step === 2
+              ? "Quay lại nhập email"
               : "Quay lại đăng nhập"}
           </span>
         </button>
 
-        <header className="reset-header">
-          <span className="reset-header__eyebrow">{siteName}</span>
-          <h1 className="reset-header__title">
-            {step === 3 ? "Đặt mật khẩu mới" : "Đặt lại mật khẩu"}
+        <header className="mb-8">
+          <span className="atelier-eyebrow block mb-2">
+            {siteName} · Bước {step}/3
+          </span>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight">
+            {step === 3 ? "Đặt mật khẩu mới" : "Khôi phục mật khẩu"}
           </h1>
-          <p className="reset-header__desc">
-            {step === 1 && "Nhập email của bạn để nhận mã xác minh OTP khôi phục tài khoản."}
-            {step === 2 && `Mã OTP đã được gửi. Hãy kiểm tra hộp thư email ${email}.`}
-            {step === 3 && `Tạo mật khẩu mới cho tài khoản ${email}.`}
+          <p className="text-xs text-[var(--color-text-muted)] mt-2 leading-relaxed">
+            {step === 1 &&
+              "Nhập địa chỉ email đã đăng ký để nhận mã xác minh OTP khôi phục tài khoản."}
+            {step === 2 &&
+              `Mã OTP đã được gửi. Hãy kiểm tra hộp thư email ${email}.`}
+            {step === 3 && `Thiết lập mật khẩu mới cho tài khoản ${email}.`}
           </p>
         </header>
 
-        {errors.general && (
-          <div className="reset-general-error">{errors.general}</div>
-        )}
+        <div aria-live="polite" aria-atomic="true">
+          {errors.general && (
+            <div
+              role="alert"
+              className="mb-6 p-3 border border-[var(--color-danger)] text-[var(--color-danger)] text-xs font-medium"
+            >
+              {errors.general}
+            </div>
+          )}
+        </div>
 
         {step === 1 && (
-          <form onSubmit={handleSendOTP}>
-            <div className="reset-field-group">
-              <div className="reset-field">
-                <label htmlFor="email" className="reset-field__label">
-                  Email tài khoản
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="example@gmail.com"
-                  className={`reset-input ${errors.email ? "reset-input--error" : ""}`}
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
-                  }}
-                  disabled={isSubmitting}
-                />
-                {errors.email && <span className="reset-error">{errors.email}</span>}
-              </div>
+          <form onSubmit={handleSendOTP} noValidate className="space-y-5">
+            <div>
+              <label
+                htmlFor="reset-email"
+                className="block text-[11px] uppercase tracking-[0.14em] font-medium mb-2"
+              >
+                Email tài khoản
+              </label>
+              <input
+                id="reset-email"
+                name="email"
+                type="email"
+                placeholder="example@gmail.com"
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "reset-email-error" : undefined}
+                className={`w-full min-h-[44px] px-3.5 py-2.5 text-sm bg-[var(--color-bg)] border transition-colors focus:outline-none ${
+                  errors.email
+                    ? "border-[var(--color-danger)]"
+                    : "border-[var(--color-border)] focus:border-[var(--color-text)]"
+                }`}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) {
+                    setErrors((prev) => ({ ...prev, email: null }));
+                  }
+                }}
+                disabled={isSubmitting}
+              />
+              {errors.email && (
+                <p
+                  id="reset-email-error"
+                  role="alert"
+                  className="mt-1.5 text-xs text-[var(--color-danger)]"
+                >
+                  {errors.email}
+                </p>
+              )}
             </div>
 
-            <button type="submit" className="reset-button" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="w-full min-h-[48px] px-6 py-3 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.16em] font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? (
                 <>
-                  <LoaderCircle className="animate-spin h-5 w-5" aria-hidden="true" />
+                  <LoaderCircle
+                    className="animate-spin h-4 w-4"
+                    aria-hidden="true"
+                  />
                   <span>Đang gửi mã...</span>
                 </>
               ) : (
@@ -261,34 +287,59 @@ const ResetPasswordForm = () => {
         )}
 
         {step === 2 && (
-          <form onSubmit={handleVerifyOTP}>
-            <div className="reset-field-group">
-              <div className="reset-field">
-                <label htmlFor="otp" className="reset-field__label">
-                  Mã xác minh OTP
-                </label>
-                <input
-                  id="otp"
-                  name="otp"
-                  type="text"
-                  placeholder="Nhập 6 chữ số OTP"
-                  maxLength={6}
-                  className={`reset-input ${errors.otp ? "reset-input--error" : ""}`}
-                  value={otp}
-                  onChange={(e) => {
-                    setOtp(e.target.value);
-                    if (errors.otp) setErrors((prev) => ({ ...prev, otp: null }));
-                  }}
-                  disabled={isSubmitting}
-                />
-                {errors.otp && <span className="reset-error">{errors.otp}</span>}
-              </div>
+          <form onSubmit={handleVerifyOTP} noValidate className="space-y-5">
+            <div>
+              <label
+                htmlFor="reset-otp"
+                className="block text-[11px] uppercase tracking-[0.14em] font-medium mb-2"
+              >
+                Mã xác minh OTP
+              </label>
+              <input
+                id="reset-otp"
+                name="otp"
+                type="text"
+                inputMode="numeric"
+                placeholder="Nhập 6 chữ số OTP"
+                maxLength={6}
+                aria-invalid={Boolean(errors.otp)}
+                aria-describedby={errors.otp ? "reset-otp-error" : undefined}
+                className={`w-full min-h-[44px] px-3.5 py-2.5 text-sm font-mono tracking-widest bg-[var(--color-bg)] border transition-colors focus:outline-none ${
+                  errors.otp
+                    ? "border-[var(--color-danger)]"
+                    : "border-[var(--color-border)] focus:border-[var(--color-text)]"
+                }`}
+                value={otp}
+                onChange={(e) => {
+                  setOtp(e.target.value.replace(/\D/g, ""));
+                  if (errors.otp) {
+                    setErrors((prev) => ({ ...prev, otp: null }));
+                  }
+                }}
+                disabled={isSubmitting}
+              />
+              {errors.otp && (
+                <p
+                  id="reset-otp-error"
+                  role="alert"
+                  className="mt-1.5 text-xs text-[var(--color-danger)]"
+                >
+                  {errors.otp}
+                </p>
+              )}
             </div>
 
-            <button type="submit" className="reset-button" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="w-full min-h-[48px] px-6 py-3 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.16em] font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? (
                 <>
-                  <LoaderCircle className="animate-spin h-5 w-5" aria-hidden="true" />
+                  <LoaderCircle
+                    className="animate-spin h-4 w-4"
+                    aria-hidden="true"
+                  />
                   <span>Đang xác thực OTP...</span>
                 </>
               ) : (
@@ -297,18 +348,21 @@ const ResetPasswordForm = () => {
             </button>
 
             {/* Gửi lại OTP Row */}
-            <div className="reset-resend-row">
-              <span className="reset-resend-label">Không nhận được mã?</span>
+            <div className="flex flex-wrap items-center justify-center gap-2 text-xs pt-2">
+              <span className="text-[var(--color-text-muted)]">
+                Không nhận được mã?
+              </span>
               <button
                 type="button"
-                className="reset-resend-btn"
+                className="inline-flex items-center gap-1.5 font-medium min-h-[44px] px-2 text-[var(--color-text)] underline underline-offset-4 disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
                 onClick={handleResendOTP}
                 disabled={!canResend || isResending}
               >
-                {isResending ? "Đang gửi lại…" : "Gửi lại mã"}
+                <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>{isResending ? "Đang gửi lại…" : "Gửi lại mã"}</span>
               </button>
               {!canResend && (
-                <span className="reset-resend-countdown">
+                <span className="font-mono text-[11px] px-2 py-1 border border-[var(--color-border)] text-[var(--color-text-muted)]">
                   {countdown}s
                 </span>
               )}
@@ -317,87 +371,134 @@ const ResetPasswordForm = () => {
         )}
 
         {step === 3 && (
-          <form onSubmit={handleResetPassword}>
-            <div className="reset-field-group">
-              {/* New Password Field */}
-              <div className="reset-field">
-                <label htmlFor="newPassword" className="reset-field__label">
-                  Mật khẩu mới
-                </label>
-                <div className="reset-input-wrapper">
-                  <input
-                    id="newPassword"
-                    name="newPassword"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Tối thiểu 6 ký tự"
-                    className={`reset-input ${errors.newPassword ? "reset-input--error" : ""}`}
-                    value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value);
-                      if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: null }));
-                    }}
-                    disabled={isSubmitting}
-                  />
-                  <button
-                    type="button"
-                    className="reset-input-toggle-btn"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  >
-                    {showPassword ? (
-                      <EyeOff size={18} aria-hidden="true" />
-                    ) : (
-                      <Eye size={18} aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-                {errors.newPassword && (
-                  <span className="reset-error">{errors.newPassword}</span>
-                )}
+          <form onSubmit={handleResetPassword} noValidate className="space-y-5">
+            {/* New Password Field */}
+            <div>
+              <label
+                htmlFor="reset-new-password"
+                className="block text-[11px] uppercase tracking-[0.14em] font-medium mb-2"
+              >
+                Mật khẩu mới
+              </label>
+              <div className="relative">
+                <input
+                  id="reset-new-password"
+                  name="newPassword"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Tối thiểu 6 ký tự"
+                  aria-invalid={Boolean(errors.newPassword)}
+                  aria-describedby={
+                    errors.newPassword ? "reset-new-password-error" : undefined
+                  }
+                  className={`w-full min-h-[44px] pl-3.5 pr-11 py-2.5 text-sm bg-[var(--color-bg)] border transition-colors focus:outline-none ${
+                    errors.newPassword
+                      ? "border-[var(--color-danger)]"
+                      : "border-[var(--color-border)] focus:border-[var(--color-text)]"
+                  }`}
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (errors.newPassword) {
+                      setErrors((prev) => ({ ...prev, newPassword: null }));
+                    }
+                  }}
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  className="absolute right-0 top-0 h-full min-w-[44px] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {showPassword ? (
+                    <EyeOff size={16} aria-hidden="true" />
+                  ) : (
+                    <Eye size={16} aria-hidden="true" />
+                  )}
+                </button>
               </div>
-
-              {/* Confirm Password Field */}
-              <div className="reset-field">
-                <label htmlFor="confirmPassword" className="reset-field__label">
-                  Xác nhận mật khẩu mới
-                </label>
-                <div className="reset-input-wrapper">
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Nhập lại mật khẩu mới"
-                    className={`reset-input ${errors.confirmPassword ? "reset-input--error" : ""}`}
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: null }));
-                    }}
-                    disabled={isSubmitting}
-                  />
-                  <button
-                    type="button"
-                    className="reset-input-toggle-btn"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff size={18} aria-hidden="true" />
-                    ) : (
-                      <Eye size={18} aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-                {errors.confirmPassword && (
-                  <span className="reset-error">{errors.confirmPassword}</span>
-                )}
-              </div>
+              {errors.newPassword && (
+                <p
+                  id="reset-new-password-error"
+                  role="alert"
+                  className="mt-1.5 text-xs text-[var(--color-danger)]"
+                >
+                  {errors.newPassword}
+                </p>
+              )}
             </div>
 
-            <button type="submit" className="reset-button" disabled={isSubmitting}>
+            {/* Confirm Password Field */}
+            <div>
+              <label
+                htmlFor="reset-confirm-password"
+                className="block text-[11px] uppercase tracking-[0.14em] font-medium mb-2"
+              >
+                Xác nhận mật khẩu mới
+              </label>
+              <div className="relative">
+                <input
+                  id="reset-confirm-password"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Nhập lại mật khẩu mới"
+                  aria-invalid={Boolean(errors.confirmPassword)}
+                  aria-describedby={
+                    errors.confirmPassword
+                      ? "reset-confirm-password-error"
+                      : undefined
+                  }
+                  className={`w-full min-h-[44px] pl-3.5 pr-11 py-2.5 text-sm bg-[var(--color-bg)] border transition-colors focus:outline-none ${
+                    errors.confirmPassword
+                      ? "border-[var(--color-danger)]"
+                      : "border-[var(--color-border)] focus:border-[var(--color-text)]"
+                  }`}
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) {
+                      setErrors((prev) => ({ ...prev, confirmPassword: null }));
+                    }
+                  }}
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  className="absolute right-0 top-0 h-full min-w-[44px] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={
+                    showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+                  }
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={16} aria-hidden="true" />
+                  ) : (
+                    <Eye size={16} aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p
+                  id="reset-confirm-password-error"
+                  role="alert"
+                  className="mt-1.5 text-xs text-[var(--color-danger)]"
+                >
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full min-h-[48px] px-6 py-3 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.16em] font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? (
                 <>
-                  <LoaderCircle className="animate-spin h-5 w-5" aria-hidden="true" />
+                  <LoaderCircle
+                    className="animate-spin h-4 w-4"
+                    aria-hidden="true"
+                  />
                   <span>Đang đặt lại mật khẩu...</span>
                 </>
               ) : (
@@ -407,8 +508,14 @@ const ResetPasswordForm = () => {
           </form>
         )}
 
-        <p className="reset-footer-desc">
-          Nhớ mật khẩu của bạn? <Link to="/login">Đăng nhập ngay</Link>
+        <p className="mt-8 text-center text-xs text-[var(--color-text-muted)]">
+          Nhớ mật khẩu của bạn?{" "}
+          <Link
+            to="/login"
+            className="font-medium text-[var(--color-text)] underline underline-offset-4 ml-1 inline-flex items-center min-h-[44px]"
+          >
+            Đăng nhập ngay
+          </Link>
         </p>
       </div>
     </div>

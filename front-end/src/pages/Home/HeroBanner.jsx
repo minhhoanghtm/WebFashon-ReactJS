@@ -1,346 +1,219 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { getActiveBannersService, trackBannerClickService } from "../../services/banner.service";
-import { motionEase } from "../../config/motionTokens";
-import usePrefersReducedMotion from "../../hooks/usePrefersReducedMotion";
-import MagneticCTA from "../../components/motion/MagneticCTA";
-import heroAtelierImage from "./assets/hero-atelier.jpg";
+import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  getActiveBannersService,
+  trackBannerClickService,
+} from "@/services/banner.service";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
-const MotionSection = motion.section;
-const MotionDiv = motion.div;
-const MotionSpan = motion.span;
-const MotionH1 = motion.h1;
-const MotionP = motion.p;
-const MotionButton = motion.button;
+const DEFAULT_HERO_TITLE = "Cấu trúc Tối giản.\nBản sắc Đơn sắc.";
+const DEFAULT_HERO_SUBTITLE =
+  "Khám phá các thiết kế may đo đương đại với đường cắt chuẩn xác và phom dáng tinh gọn.";
 
 const HeroBanner = () => {
   const navigate = useNavigate();
-  const [activeBanners, setActiveBanners] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const heroRef = useRef(null);
-  const editorialRef = useRef(null);
-  const prefersReduced = usePrefersReducedMotion();
+  const { settings, loading: settingsLoading } = useWebsiteSettings();
+  const siteName =
+    !settingsLoading && settings?.general?.siteName
+      ? settings.general.siteName
+      : "WEBFASHION";
 
-  // Scoped GSAP choreography: entrance and scroll depth are cleaned up on every slide change.
-  useLayoutEffect(() => {
-    if (prefersReduced || !editorialRef.current) return undefined;
-    gsap.registerPlugin(ScrollTrigger);
-    const context = gsap.context(() => {
-      const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
-      timeline
-        .fromTo("[data-hero-image]", { scale: 1.06 }, { scale: 1, duration: 1.25 })
-        .fromTo("[data-hero-eyebrow]", { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.45 }, "-=0.82")
-        .fromTo("[data-hero-title]", { autoAlpha: 0, y: 34 }, { autoAlpha: 1, y: 0, duration: 0.7 }, "-=0.25")
-        .fromTo("[data-hero-copy]", { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.5 }, "-=0.4")
-        .fromTo("[data-hero-cta]", { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.42 }, "-=0.28");
-
-      gsap.to("[data-hero-image]", {
-        yPercent: 11,
-        scale: 1.035,
-        ease: "none",
-        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 0.7 },
-      });
-      gsap.to("[data-hero-atmosphere]", {
-        yPercent: -16,
-        opacity: 0.28,
-        ease: "none",
-        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 0.7 },
-      });
-      gsap.to("[data-hero-content]", {
-        yPercent: -8,
-        opacity: 0.78,
-        ease: "none",
-        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 0.7 },
-      });
-    }, editorialRef);
-    return () => context.revert();
-  }, [currentIndex, prefersReduced]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchBanners = async () => {
-      try {
-        const banners = await getActiveBannersService();
-        if (isMounted) {
-          const heroBanners = banners.filter((b) => b.position === "home_hero");
-          setActiveBanners(heroBanners);
-        }
-      } catch (error) {
-        console.error("Lỗi khi tải banner trang chủ:", error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-    fetchBanners();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const defaultFallbackBanner = {
-    id: "default-hero-atelier",
-    title: "Khám phá phong cách của bạn",
-    subtitle: "Dễ dàng tìm những sản phẩm phù hợp trong danh mục thời trang của chúng tôi.",
-    eyebrow: "404 STUDIO · ATELIER 2026",
-    buttonText: "Khám phá bộ sưu tập",
-    imageUrl: heroAtelierImage,
-    mobileImageUrl: heroAtelierImage,
-    targetType: "category",
-    targetId: "",
+  const defaultHero = {
+    id: "default-atelier-hero",
+    eyebrow: `${siteName} · BỘ SƯU TẬP GIÁM TUYỂN`,
+    title: DEFAULT_HERO_TITLE,
+    subtitle: DEFAULT_HERO_SUBTITLE,
+    buttonText: "Khám phá Bộ sưu tập",
     linkUrl: "/products",
+    imageUrl: "",
     isApi: false,
   };
 
-  const bannerList =
-    activeBanners.length > 0
-      ? activeBanners.map((b) => ({
-          id: b._id || b.id,
-          title: b.title ? b.title.replace(/Wellcome/gi, "Welcome") : "",
-          subtitle: b.subtitle ? b.subtitle.replace(/Wellcome/gi, "Welcome") : "",
-          eyebrow: "Thiết kế nổi bật",
-          buttonText: b.buttonText || "Khám phá ngay",
-          imageUrl: b.imageUrl,
-          mobileImageUrl: b.mobileImageUrl,
-          targetType: b.targetType,
-          targetId: b.targetId,
-          linkUrl: b.linkUrl,
-          isApi: true,
-        }))
-      : [defaultFallbackBanner];
+  const [banners, setBanners] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [failedImages, setFailedImages] = useState({});
 
   useEffect(() => {
-    if (bannerList.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % bannerList.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, [bannerList.length]);
+    let isMounted = true;
+    const loadBanners = async () => {
+      try {
+        const res = await getActiveBannersService();
+        if (!isMounted || !Array.isArray(res)) return;
+        const heroList = res
+          .filter((item) => !item.position || item.position === "home_hero")
+          .map((item) => ({
+            id: item._id || item.id,
+            eyebrow: `${siteName} · ATELIER`,
+            title: item.title || DEFAULT_HERO_TITLE,
+            subtitle: item.subtitle || DEFAULT_HERO_SUBTITLE,
+            buttonText: item.buttonText || "Xem Bộ sưu tập",
+            linkUrl: item.linkUrl || "/products",
+            targetType: item.targetType,
+            targetId: item.targetId,
+            imageUrl: item.imageUrl || item.image || "",
+            isApi: true,
+          }));
+        if (heroList.length > 0) {
+          setBanners(heroList);
+        }
+      } catch {
+        // Fallback silently to defaultHero
+      }
+    };
+    loadBanners();
+    return () => {
+      isMounted = false;
+    };
+  }, [siteName]);
 
-  if (loading) {
-    return (
-      <div className="home-hero flex items-center justify-center min-h-[510px] rounded-[22px] bg-[#272522]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-      </div>
-    );
-  }
+  const slides = banners.length > 0 ? banners : [defaultHero];
+  const activeSlide = slides[currentIndex] || defaultHero;
+  const hasImage =
+    Boolean(activeSlide.imageUrl) && !failedImages[activeSlide.id];
 
-  const handlePrev = (e) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev === 0 ? bannerList.length - 1 : prev - 1));
-  };
-
-  const handleNext = (e) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev === bannerList.length - 1 ? 0 : prev + 1));
-  };
-
-  const handleBannerClick = async (banner) => {
-    if (!banner.isApi) {
-      navigate("/products");
+  const handlePrimaryCTA = () => {
+    if (activeSlide.isApi && activeSlide.id) {
+      trackBannerClickService(activeSlide.id);
+    }
+    if (activeSlide.targetType === "category" && activeSlide.targetId) {
+      navigate(`/products?category=${encodeURIComponent(activeSlide.targetId)}`);
       return;
     }
-
-    if (banner.id) {
-      await trackBannerClickService(banner.id);
+    if (activeSlide.targetType === "product" && activeSlide.targetId) {
+      navigate(`/product/${encodeURIComponent(activeSlide.targetId)}`);
+      return;
     }
-
-    if (banner.targetType === "product" && banner.targetId) {
-      navigate(`/product/${banner.targetId}`);
-    } else if (banner.targetType === "category" && banner.targetId) {
-      navigate(`/products?category=${banner.targetId}`);
-    } else if (banner.targetType === "lookbook" && banner.targetId) {
-      navigate(`/lookbooks/${banner.targetId}`);
-    } else if (banner.targetType === "external" && banner.linkUrl && banner.linkUrl.trim() !== "") {
-      if (banner.linkUrl.startsWith("#")) {
-        const element = document.getElementById(banner.linkUrl.substring(1));
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      } else {
-        window.open(banner.linkUrl, "_blank", "noopener,noreferrer");
-      }
-    }
+    navigate(activeSlide.linkUrl || "/products");
   };
 
-  const currentBanner = bannerList[currentIndex] || bannerList[0];
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % slides.length);
+  };
 
   return (
-    <MotionSection
-      ref={heroRef}
-      className="home-hero group min-h-[510px] relative w-full overflow-hidden rounded-[22px] bg-[#272522] will-change-transform shadow-lg"
+    <section
+      aria-label="Giới thiệu bộ sưu tập chủ đạo"
+      className="relative overflow-hidden border-b border-border bg-background"
     >
-      {/* Editorial Frame Expansion Stage */}
-      <AnimatePresence mode="wait">
-        <MotionDiv
-          ref={editorialRef}
-          key={currentBanner.id + "-" + currentIndex}
-          initial={
-            prefersReduced
-              ? { opacity: 0 }
-              : { clipPath: "inset(4% 6% 4% 6% round 24px)", opacity: 0, scale: 1.05 }
-          }
-          animate={
-            prefersReduced
-              ? { opacity: 1 }
-              : { clipPath: "inset(0% 0% 0% 0% round 22px)", opacity: 1, scale: 1 }
-          }
-          exit={
-            prefersReduced
-              ? { opacity: 0 }
-              : { opacity: 0, scale: 1.02 }
-          }
-          transition={{ duration: prefersReduced ? 0.2 : 0.95, ease: motionEase.editorialReveal }}
-          onClick={() => handleBannerClick(currentBanner)}
-          className="absolute inset-0 w-full h-full cursor-pointer flex items-center overflow-hidden"
+      <div className="mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-10 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-12 lg:gap-12 lg:px-10 lg:py-20">
+        {/* Left Column: Editorial Typography & Actions */}
+        <div
+          data-hero-layer="fg"
+          className="flex flex-col items-start justify-center lg:col-span-6"
         >
-          <MotionDiv
-            data-hero-image
-            className="absolute inset-0 w-full h-full select-none"
-          >
-            <picture className="w-full h-full">
-              {currentBanner.mobileImageUrl && (
-                <source media="(max-width: 768px)" srcSet={encodeURI(currentBanner.mobileImageUrl)} />
-              )}
-              <img
-                src={currentBanner.imageUrl ? encodeURI(currentBanner.imageUrl) : ""}
-                alt={currentBanner.title}
-                className="w-full h-full object-cover pointer-events-none"
-              />
-            </picture>
-          </MotionDiv>
+          <p className="mb-4 border-l-2 border-foreground pl-3 text-[11px] font-medium tracking-[0.26em] uppercase text-muted-foreground">
+            {activeSlide.isApi ? `${siteName} · ATELIER` : defaultHero.eyebrow}
+          </p>
 
-          {/* Premium Dark Overlay */}
-          <div className="home-hero__overlay" />
-          <div data-hero-atmosphere className="home-hero__atmosphere" aria-hidden="true" />
+          <h1 className="whitespace-pre-line font-serif text-4xl leading-[1.06] font-normal tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            {activeSlide.title}
+          </h1>
 
-          {/* Animated Slide Text Content */}
-          <MotionDiv
-            data-hero-content
-            className="home-hero__content select-none relative z-10"
-          >
-            {/* Eyebrow */}
-            <MotionSpan
-              initial={{ opacity: 0, y: 14, letterSpacing: "0.15em" }}
-              animate={{ opacity: 1, y: 0, letterSpacing: "0.22em" }}
-              transition={{ duration: 0.6, delay: 0.15, ease: motionEase.editorialReveal }}
-              data-hero-eyebrow
-              className="home-hero__eyebrow text-[#F5DD20] font-bold uppercase tracking-[0.22em]"
+          <p className="mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            {activeSlide.subtitle}
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handlePrimaryCTA}
+              className="touch-target inline-flex items-center gap-2.5 bg-primary px-7 py-3.5 text-xs font-semibold tracking-[0.18em] uppercase text-primary-foreground transition-opacity hover:opacity-90"
             >
-              {currentBanner.eyebrow}
-            </MotionSpan>
+              <span>{activeSlide.buttonText}</span>
+              <ArrowUpRight size={15} strokeWidth={1.75} />
+            </button>
 
-            {/* Title with Mask Reveal */}
-            <div className="overflow-hidden">
-              <MotionH1
-                id="home-hero-title"
-                data-hero-title
-                initial={{ opacity: 0, y: "100%" }}
-                animate={{ opacity: 1, y: "0%" }}
-                transition={{ duration: 0.7, delay: 0.24, ease: motionEase.editorialReveal }}
-                className="drop-shadow-sm font-heading"
-              >
-                {currentBanner.title}
-              </MotionH1>
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/lookbooks")}
+              className="touch-target inline-flex items-center gap-2 border border-border bg-transparent px-6 py-3.5 text-xs font-medium tracking-[0.18em] uppercase text-foreground transition-colors hover:border-foreground hover:bg-secondary"
+            >
+              <span>Hồ sơ Lookbook</span>
+            </button>
+          </div>
 
-            {/* Subtitle */}
-            {currentBanner.subtitle && (
-              <MotionP
-                data-hero-copy
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, delay: 0.38, ease: motionEase.cinematic }}
-              >
-                {currentBanner.subtitle}
-              </MotionP>
-            )}
-
-            {/* Tactile Magnetic CTA Button */}
-            <MagneticCTA strength={0.25} radius={100} className="pt-2">
-              <MotionButton
-                type="button"
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.48, ease: motionEase.cinematic }}
-                whileHover={{ scale: 1.04, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleBannerClick(currentBanner);
-                }}
-                data-hero-cta
-                className="group/btn cursor-pointer shadow-md"
-              >
-                <span>{currentBanner.buttonText}</span>
-                <ArrowDown
-                  size={17}
-                  aria-hidden="true"
-                  className="transition-transform group-hover/btn:translate-y-0.5"
-                />
-              </MotionButton>
-            </MagneticCTA>
-          </MotionDiv>
-        </MotionDiv>
-      </AnimatePresence>
-
-      {/* Slide Navigation Buttons with Tactile Magnetic Feel */}
-      {bannerList.length > 1 && (
-        <>
-          <div className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
-            <MagneticCTA strength={0.3} radius={70}>
+          {slides.length > 1 && (
+            <div className="mt-8 flex items-center gap-3 border-t border-border pt-4">
               <button
                 type="button"
                 onClick={handlePrev}
-                className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-black/50 hover:bg-[#F5DD20] hover:text-[#05251C] text-white transition-all duration-300 border border-white/20 shadow-md cursor-pointer"
-                style={{ margin: 0, padding: 0 }}
-                aria-label="Slide trước"
+                className="touch-target inline-flex items-center justify-center border border-border text-foreground transition-colors hover:bg-secondary"
+                aria-label="Banner trước"
               >
-                <ChevronLeft size={22} />
+                <ChevronLeft size={16} />
               </button>
-            </MagneticCTA>
-          </div>
-          <div className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
-            <MagneticCTA strength={0.3} radius={70}>
+              <span className="text-xs font-medium tabular-nums tracking-[0.2em] text-muted-foreground">
+                {String(currentIndex + 1).padStart(2, "0")} /{" "}
+                {String(slides.length).padStart(2, "0")}
+              </span>
               <button
                 type="button"
                 onClick={handleNext}
-                className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-black/50 hover:bg-[#F5DD20] hover:text-[#05251C] text-white transition-all duration-300 border border-white/20 shadow-md cursor-pointer"
-                style={{ margin: 0, padding: 0 }}
-                aria-label="Slide tiếp theo"
+                className="touch-target inline-flex items-center justify-center border border-border text-foreground transition-colors hover:bg-secondary"
+                aria-label="Banner tiếp theo"
               >
-                <ChevronRight size={22} />
+                <ChevronRight size={16} />
               </button>
-            </MagneticCTA>
-          </div>
-        </>
-      )}
-
-      {/* Slide Indicators Dots */}
-      {bannerList.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-          {bannerList.map((_, index) => (
-            <button
-              key={index}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentIndex(index);
-              }}
-              className={`h-2 rounded-full transition-all duration-300 border-none p-0 cursor-pointer
-                ${index === currentIndex ? "w-6 bg-white" : "w-2 bg-white/40 hover:bg-white/70"}`}
-              style={{ margin: 0 }}
-              aria-label={`Đi tới slide ${index + 1}`}
-            />
-          ))}
+            </div>
+          )}
         </div>
-      )}
-    </MotionSection>
+
+        {/* Right Column: Visual Frame */}
+        <div data-hero-layer="mid" className="relative lg:col-span-6">
+          <div className="relative aspect-[4/5] w-full overflow-hidden border border-border bg-secondary sm:aspect-[16/11] lg:aspect-[4/5]">
+            {hasImage ? (
+              <img
+                src={activeSlide.imageUrl}
+                alt={activeSlide.title}
+                onError={() =>
+                  setFailedImages((prev) => ({
+                    ...prev,
+                    [activeSlide.id]: true,
+                  }))
+                }
+                className="h-full w-full object-cover object-center"
+              />
+            ) : (
+              <div
+                data-hero-layer="bg"
+                className="relative flex h-full w-full flex-col justify-between p-6 sm:p-10 select-none"
+                aria-label="Khung trưng bày Atelier"
+              >
+                <div className="flex items-center justify-between border-b border-border/80 pb-4 text-[10px] tracking-[0.24em] uppercase text-muted-foreground">
+                  <span>{siteName} ARCHIVE</span>
+                  <span>SILHOUETTE STUDY</span>
+                </div>
+
+                <div className="my-auto flex flex-col items-center justify-center py-8 text-center">
+                  <div className="relative flex h-44 w-32 items-center justify-center border border-foreground/25 bg-background/60 sm:h-56 sm:w-40">
+                    <div className="absolute inset-2 border border-border" />
+                    <span className="font-serif text-2xl tracking-[0.18em] uppercase text-foreground/80">
+                      {siteName.slice(0, 3)}
+                    </span>
+                  </div>
+                  <p className="mt-5 font-serif text-lg italic text-foreground">
+                    {siteName} Monochrome Collection
+                  </p>
+                  <p className="mt-1 text-[11px] tracking-[0.2em] uppercase text-muted-foreground">
+                    Noir · Bone · Slate
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-border/80 pt-4 text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
+                  <span>CURATED EDITION</span>
+                  <span>VIETNAM</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 

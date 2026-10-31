@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Trash2, Plus, Minus, AlertTriangle, Zap } from "lucide-react";
+import { formatCurrency } from "@/utils/format";
 
 const CartItem = ({
   item,
@@ -7,168 +9,231 @@ const CartItem = ({
   onToggleSelect,
   onQuantityChange,
   onRemove,
+  isUpdating = false,
 }) => {
-  const hasDiscount = item.old_price > item.new_price;
+  const hasDiscount = Number(item.old_price) > Number(item.new_price);
   const discountPercent = hasDiscount
-    ? Math.round(((item.old_price - item.new_price) / item.old_price) * 100)
+    ? Math.round(
+        ((Number(item.old_price) - Number(item.new_price)) /
+          Number(item.old_price)) *
+          100
+      )
     : 0;
 
-  const formatPrice = (val) => {
-    return (val || 0).toLocaleString("vi-VN") + " đ";
-  };
+  const candidateUrls = useMemo(() => {
+    const raw = [];
+    if (item.image) raw.push(item.image);
+    if (item.productImage) raw.push(item.productImage);
+    if (Array.isArray(item.images)) raw.push(...item.images);
+    return [...new Set(raw.filter((u) => typeof u === "string" && u.trim()))];
+  }, [item.image, item.productImage, item.images]);
 
-  const isLowStock = item.stock !== undefined && item.stock > 0 && item.stock <= 5;
-  const isOutOfStock = item.stock !== undefined && item.stock <= 0;
+  const [imgIdx, setImgIdx] = useState(0);
+  const activeImgUrl = candidateUrls[imgIdx] || "";
+
+  const stock = item.stock !== undefined && item.stock !== null ? Number(item.stock) : 99;
+  const isOutOfStock = stock <= 0;
+  const isExceedingStock = !isOutOfStock && Number(item.quantity) > stock;
+  const isLowStock = !isOutOfStock && stock <= 5;
+
+  const variantColor = item.color || item.variants?.[0]?.color;
+  const variantSize = item.size || item.variants?.[0]?.size;
+  const productSlugOrId = item.slug || item.product_id || item._id;
 
   return (
-    <div className="flex gap-3 sm:gap-4 p-4 border border-neutral-200/80 rounded-2xl bg-white hover:shadow-xs transition-shadow relative text-left">
-      {/* Checkbox Selector */}
-      <div className="flex items-center pt-1 sm:pt-0">
-        <input
-          type="checkbox"
-          checked={selected}
-          disabled={isOutOfStock}
-          onChange={() => onToggleSelect(item._id)}
-          className="h-4.5 w-4.5 rounded border-neutral-300 text-neutral-900 focus:ring-0 accent-[#05251C] cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-        />
+    <article
+      className={`flex gap-3 border bg-card p-4 transition-colors sm:gap-5 sm:p-5 ${
+        isOutOfStock || isExceedingStock
+          ? "border-destructive/50 bg-destructive/5"
+          : selected
+          ? "border-foreground"
+          : "border-border"
+      }`}
+    >
+      {/* Checkbox Selector (>= 44px touch target) */}
+      <div className="flex items-start pt-1">
+        <label className="touch-target -m-2 inline-flex cursor-pointer items-center justify-center">
+          <input
+            type="checkbox"
+            checked={Boolean(selected && !isOutOfStock)}
+            disabled={isOutOfStock}
+            onChange={() => onToggleSelect(item._id)}
+            aria-label={`Chọn ${item.name}`}
+            className="h-4 w-4 cursor-pointer border-border accent-foreground disabled:cursor-not-allowed disabled:opacity-40"
+          />
+        </label>
       </div>
 
-      {/* Image thumbnail */}
-      <div className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-xl border border-neutral-200/60 bg-neutral-100 flex items-center justify-center">
-        <img
-          src={item.image || item.productImage || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=60"}
-          alt={item.name}
-          className={`h-full w-full object-cover object-center transition-all ${isOutOfStock ? "grayscale opacity-50" : ""}`}
-          onError={(e) => {
-            if (item.productImage && e.target.src !== item.productImage) {
-              e.target.src = item.productImage;
-            } else {
-              e.target.src = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&auto=format&fit=crop&q=60";
-            }
-          }}
-        />
-      </div>
+      {/* Image Thumbnail (3:4 Editorial Ratio) */}
+      <Link
+        to={`/product/${encodeURIComponent(productSlugOrId)}`}
+        className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden border border-border bg-secondary sm:w-24"
+      >
+        {activeImgUrl ? (
+          <img
+            src={activeImgUrl}
+            alt={item.name}
+            onError={() => setImgIdx((prev) => prev + 1)}
+            className={`h-full w-full object-cover object-center transition-opacity ${
+              isOutOfStock ? "opacity-40 grayscale" : ""
+            }`}
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center p-2 text-center select-none">
+            <span className="font-serif text-xs uppercase tracking-[0.16em] text-muted-foreground">
+              WF
+            </span>
+          </div>
+        )}
+      </Link>
 
-      {/* Product Details info */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between gap-1.5">
-        <div className="flex justify-between items-start gap-2">
-          <div className="min-w-0">
-            <h4 className={`text-xs sm:text-sm font-bold text-neutral-900 truncate ${isOutOfStock ? "line-through text-neutral-400" : ""}`}>
-              {item.name}
-            </h4>
-            <p className="text-[11px] text-neutral-400 font-medium">
-              {item.category || "Thời trang"}
+      {/* Item Info & Controls */}
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
+              {item.category || "Thiết kế Giám tuyển"}
             </p>
-            
-            {/* Campaign info & Price change warning */}
-            {item.campaign && (
-              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-red-50 text-red-600 border border-red-200/60 px-2 py-0.5 rounded-md">
-                  <Zap size={10} fill="currentColor" /> {item.campaign.name}
-                </span>
-                {item.campaign.isQuotaExhausted && (
-                  <span className="text-[10px] text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded font-medium">
-                    (Hết suất ưu đãi)
+            <Link
+              to={`/product/${encodeURIComponent(productSlugOrId)}`}
+              className={`block font-serif text-base leading-snug text-foreground hover:underline sm:text-lg ${
+                isOutOfStock ? "line-through opacity-60" : ""
+              }`}
+            >
+              {item.name}
+            </Link>
+
+            {/* Variant Attributes */}
+            {(variantColor || variantSize) && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {variantColor && (
+                  <span className="border border-border bg-secondary px-2 py-0.5 text-[11px] font-medium text-foreground">
+                    Màu: {variantColor}
+                  </span>
+                )}
+                {variantSize && (
+                  <span className="border border-border bg-secondary px-2 py-0.5 text-[11px] font-medium uppercase text-foreground">
+                    Size: {variantSize}
                   </span>
                 )}
               </div>
             )}
-            {item.price_changed && (
-              <div className="mt-1">
-                <span className="inline-block text-[10px] text-[#05251C] bg-[#F5DD20]/20 border border-[#F5DD20]/40 px-1.5 py-0.5 rounded font-bold">
-                  Giá đã được cập nhật lại theo thời gian thực
+
+            {/* Campaign & Real-time Price Notice */}
+            {item.campaign && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="inline-flex items-center gap-1 border border-foreground bg-primary px-2 py-0.5 text-[10px] font-semibold tracking-[0.12em] uppercase text-primary-foreground">
+                  <Zap size={10} />
+                  {item.campaign.name}
                 </span>
+                {item.campaign.isQuotaExhausted && (
+                  <span className="border border-border bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    Hết suất ưu đãi
+                  </span>
+                )}
               </div>
             )}
 
-            {/* Color & Size display */}
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {item.variants?.[0]?.color && (
-                <span className="inline-block text-[10px] font-semibold bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-md">
-                  Màu: {item.variants[0].color}
+            {item.price_changed && (
+              <p className="pt-1 text-[11px] font-medium text-foreground">
+                * Giá sản phẩm đã được cập nhật theo thời gian thực.
+              </p>
+            )}
+
+            {/* Stock Error / Warning Messages */}
+            {isOutOfStock && (
+              <p
+                role="alert"
+                className="inline-flex items-center gap-1.5 pt-1 text-xs font-semibold text-destructive"
+              >
+                <AlertTriangle size={13} />
+                <span>Sản phẩm hiện đã hết hàng trong kho.</span>
+              </p>
+            )}
+
+            {isExceedingStock && (
+              <p
+                role="alert"
+                className="inline-flex items-center gap-1.5 pt-1 text-xs font-semibold text-destructive"
+              >
+                <AlertTriangle size={13} />
+                <span>
+                  Vượt quá tồn kho (Kho chỉ còn tối đa {stock} sản phẩm).
                 </span>
-              )}
-              {item.variants?.[0]?.size && (
-                <span className="inline-block text-[10px] font-semibold bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-md">
-                  Size: {item.variants[0].size}
-                </span>
-              )}
-            </div>
+              </p>
+            )}
           </div>
 
-          {/* Delete Button */}
+          {/* Remove Button (>= 44px touch target) */}
           <button
             type="button"
             onClick={() => onRemove(item._id)}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+            className="touch-target -mr-2 -mt-2 inline-flex shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-destructive"
+            aria-label={`Xóa ${item.name} khỏi giỏ hàng`}
             title="Xóa sản phẩm"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 size={16} strokeWidth={1.5} />
           </button>
         </div>
 
-        {/* Price & Quantity adjusting controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-          {/* Price details */}
+        {/* Bottom Row: Price & Quantity Adjuster */}
+        <div className="flex flex-wrap items-end justify-between gap-3 border-t border-border/60 pt-3">
           <div className="flex items-baseline gap-2">
-            <span className="text-sm sm:text-base font-extrabold text-neutral-950 tabular-nums">
-              {formatPrice(item.new_price)}
+            <span className="text-sm font-semibold tabular-nums text-foreground sm:text-base">
+              {formatCurrency(item.new_price)}
             </span>
             {hasDiscount && (
               <>
-                <span className="text-xs line-through text-neutral-400 tabular-nums">
-                  {formatPrice(item.old_price)}
+                <span className="text-xs tabular-nums text-muted-foreground line-through">
+                  {formatCurrency(item.old_price)}
                 </span>
-                <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200/60 px-1.5 py-0.2 rounded">
+                <span className="border border-border px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
                   -{discountPercent}%
                 </span>
               </>
             )}
           </div>
 
-          {/* Quantity selector */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {isLowStock && !isExceedingStock && (
+              <span className="border border-border bg-secondary px-2 py-1 text-[10px] font-medium tracking-[0.12em] uppercase text-foreground">
+                Chỉ còn {stock}
+              </span>
+            )}
+
             {isOutOfStock ? (
-              <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200/60 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" /> Hết hàng
+              <span className="border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase text-destructive">
+                Hết hàng
               </span>
             ) : (
-              <>
-                {/* Quantity select inputs */}
-                <div className="flex items-center border border-neutral-200 rounded-lg overflow-hidden h-7 sm:h-8 bg-white shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => onQuantityChange(item._id, item.quantity - 1)}
-                    disabled={item.quantity <= 1}
-                    className="w-7 sm:w-8 h-full bg-neutral-50 hover:bg-neutral-100 text-neutral-600 flex items-center justify-center disabled:opacity-30 transition cursor-pointer border-none"
-                  >
-                    <Minus className="h-3 w-3" />
-                  </button>
-                  <span className="w-8 sm:w-9 text-center text-xs font-bold text-neutral-900 tabular-nums">
-                    {item.quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onQuantityChange(item._id, item.quantity + 1)}
-                    disabled={item.quantity >= (item.stock ?? 99)}
-                    className="w-7 sm:w-8 h-full bg-neutral-50 hover:bg-neutral-100 text-neutral-600 flex items-center justify-center disabled:opacity-30 transition cursor-pointer border-none"
-                  >
-                    <Plus className="h-3 w-3" />
-                  </button>
-                </div>
-
-                {/* Stock warnings */}
-                {isLowStock && (
-                  <span className="text-[10px] font-bold text-[#05251C] bg-[#F5DD20]/25 border border-[#F5DD20]/50 px-2 py-0.5 rounded-md">
-                    Còn {item.stock}
-                  </span>
-                )}
-              </>
+              <div className="inline-flex items-center border border-border bg-background">
+                <button
+                  type="button"
+                  onClick={() => onQuantityChange(item._id, item.quantity - 1)}
+                  disabled={item.quantity <= 1 || isUpdating}
+                  className="touch-target inline-flex items-center justify-center text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-35"
+                  aria-label="Giảm số lượng"
+                >
+                  <Minus size={13} />
+                </button>
+                <span className="min-w-[36px] px-2 text-center text-xs font-semibold tabular-nums text-foreground">
+                  {item.quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onQuantityChange(item._id, item.quantity + 1)}
+                  disabled={item.quantity >= stock || isUpdating}
+                  className="touch-target inline-flex items-center justify-center text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-35"
+                  aria-label="Tăng số lượng"
+                >
+                  <Plus size={13} />
+                </button>
+              </div>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 

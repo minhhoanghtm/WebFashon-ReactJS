@@ -1,54 +1,80 @@
-import React from 'react';
+import React from "react";
 
-export const TableSkeleton = ({ rows = 5, cols = 4, className = '' }) => {
+const SKELETON_WIDTHS = ["62%", "78%", "54%", "84%", "68%", "72%", "58%"];
+
+export function TableSkeleton({ rows = 5, cols = 5 }) {
   return (
-    <div className={`w-full overflow-hidden animate-pulse ${className}`}>
-      <div className="h-10 bg-slate-100 dark:bg-slate-800/80 rounded-t-xl mb-2" />
-      <div className="space-y-2 p-2">
-        {Array.from({ length: rows }).map((_, rIdx) => (
-          <div key={rIdx} className="flex gap-4 items-center py-3 border-b border-slate-100 dark:border-slate-800/60">
-            {Array.from({ length: cols }).map((_, cIdx) => (
-              <div
-                key={cIdx}
-                className="h-4 bg-slate-100 dark:bg-slate-800 rounded-md flex-1"
-                style={{ width: `${Math.floor(Math.random() * 30 + 50)}%` }}
-              />
-            ))}
+    <div
+      className="w-full overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface)]"
+      aria-busy="true"
+      aria-label="Đang tải bảng dữ liệu"
+    >
+      <div className="flex gap-4 border-b border-[var(--color-border)] bg-[var(--color-bg)] px-6 py-4">
+        {Array.from({ length: cols }).map((_, idx) => (
+          <div
+            key={idx}
+            className="h-3 flex-1 animate-pulse bg-[var(--color-border)]"
+          />
+        ))}
+      </div>
+      <div className="divide-y divide-[var(--color-border)]">
+        {Array.from({ length: rows }).map((_, rowIdx) => (
+          <div key={rowIdx} className="flex items-center gap-4 px-6 py-4">
+            {Array.from({ length: cols }).map((_, colIdx) => {
+              const width =
+                SKELETON_WIDTHS[(rowIdx * cols + colIdx) % SKELETON_WIDTHS.length];
+              return (
+                <div key={colIdx} className="flex-1">
+                  <div
+                    className="h-3.5 animate-pulse bg-[var(--color-border)]"
+                    style={{ width }}
+                  />
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
     </div>
   );
-};
+}
 
-export const KPISkeleton = () => {
+export function KPISkeleton({ count = 4 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 animate-pulse">
-      {Array.from({ length: 4 }).map((_, i) => (
+    <div
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      aria-busy="true"
+      aria-label="Đang tải chỉ số thống kê"
+    >
+      {Array.from({ length: count }).map((_, idx) => (
         <div
-          key={i}
-          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex items-center justify-between"
+          key={idx}
+          className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
         >
-          <div className="space-y-2 w-2/3">
-            <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded-md w-1/2" />
-            <div className="h-7 bg-slate-100 dark:bg-slate-800 rounded-lg w-3/4" />
+          <div className="flex-1 space-y-2.5">
+            <div className="h-3 w-24 animate-pulse bg-[var(--color-border)]" />
+            <div className="h-7 w-32 animate-pulse bg-[var(--color-border)]" />
+            <div className="h-2.5 w-20 animate-pulse bg-[var(--color-border)]" />
           </div>
-          <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 shrink-0" />
+          <div className="h-11 w-11 shrink-0 animate-pulse bg-[var(--color-border)]" />
         </div>
       ))}
     </div>
   );
-};
+}
 
-export const CardSkeleton = ({ height = 'h-48' }) => {
+export function CardSkeleton({ count = 1 }) {
   return (
-    <div
-      className={`bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 animate-pulse ${height}`}
-    >
-      <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-md w-1/4 mb-4" />
-      <div className="h-full bg-slate-50 dark:bg-slate-800/40 rounded-xl" />
+    <div className="space-y-4">
+      {Array.from({ length: count }).map((_, idx) => (
+        <div
+          key={idx}
+          className="border border-[var(--color-border)] bg-[var(--color-surface)] p-6 animate-pulse space-y-4"
+        >
+          <div className="h-4 w-32 bg-[var(--color-border)]" />
+          <div className="h-10 w-full bg-[var(--color-border)]" />
+        </div>
+      ))}
     </div>
   );
-};
-
-export default { TableSkeleton, KPISkeleton, CardSkeleton };
+}

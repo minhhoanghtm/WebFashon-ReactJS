@@ -1,306 +1,280 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
+import ReactECharts from "echarts-for-react";
 import {
-  CreditCard,
   ShoppingCart,
   Package,
   Users,
+  CreditCard,
+  ArrowRight,
+  TrendingUp,
   Ticket,
   Percent,
-  Sparkles,
-  TrendingUp,
   AlertCircle,
+  Sparkles,
   RefreshCw,
-  ExternalLink,
-  ArrowRight,
   Activity,
-  Eye,
-  MousePointerClick,
   Filter,
-  Search,
-  BarChart3,
+  Eye,
   Bot,
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-import ReactECharts from 'echarts-for-react';
-import { toast } from 'react-toastify';
-import voucherApi from '../../api/voucher.api';
-import trackingApi from '@/api/trackingApi';
-import {
-  DashboardService,
-  getRevenueOverviewService,
-  getAdminOrdersService,
-} from '@/services/order.service';
-import { getAllProductService } from '@/services/product.service';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+} from "lucide-react";
+import * as orderApi from "@/api/orderApi";
+import * as productApi from "@/api/productApi";
+import * as voucherApi from "@/api/voucherApi";
+import trackingApi from "@/api/trackingApi";
+import { formatCurrency } from "@/utils/format";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 import {
   AdminPageHeader,
   AdminCard,
   AdminBadge,
   KPISkeleton,
   TableSkeleton,
-} from '@/components/admin/ui';
-
-const formatCurrency = (val) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(val || 0);
-};
-
-const getStatusBadge = (status) => {
-  const map = {
-    pending: { label: 'Chờ xử lý', variant: 'warning' },
-    confirmed: { label: 'Đã xác nhận', variant: 'info' },
-    shipping: { label: 'Đang giao', variant: 'info' },
-    shipped: { label: 'Đang giao', variant: 'info' },
-    delivered: { label: 'Đã giao', variant: 'success' },
-    cancelled: { label: 'Đã hủy', variant: 'danger' },
-  };
-
-  const item = map[status] || { label: status || 'Không rõ', variant: 'neutral' };
-  return (
-    <AdminBadge variant={item.variant} dot size="sm">
-      {item.label}
-    </AdminBadge>
-  );
-};
+} from "@/components/admin/ui";
 
 const Dashboard = () => {
-  useDocumentTitle('Tổng quan — 404Studio Admin');
-  const [activeView, setActiveView] = useState('sales'); // 'sales' | 'vouchers'
-  const [range, setRange] = useState('last7days');
+  const { settings } = useWebsiteSettings();
+  const brandName = settings?.general?.siteName || "WebFashion";
 
-  // Voucher states
-  const [voucherStats, setVoucherStats] = useState(null);
-  const [voucherLoading, setVoucherLoading] = useState(false);
+  const [range, setRange] = useState("last7days");
+  const [activeView, setActiveView] = useState("sales"); // 'sales' | 'vouchers' | 'behavior'
 
-  // Sales states
+  // Sales States
+  const [loadingSales, setLoadingSales] = useState(true);
+  const [salesError, setSalesError] = useState(null);
   const [kpis, setKpis] = useState({
     totalRevenue: 0,
     totalOrders: 0,
+    avgOrderValue: 0,
     totalCustomers: 0,
     totalSoldProducts: 0,
-    avgOrderValue: 0,
   });
   const [totalProducts, setTotalProducts] = useState(0);
   const [revenueOverview, setRevenueOverview] = useState([]);
   const [recentOrdersList, setRecentOrdersList] = useState([]);
-  const [loadingSales, setLoadingSales] = useState(true);
-  const [salesError, setSalesError] = useState(null);
 
-  // Tracking & Behavioral states
+  // Voucher States
+  const [voucherStats, setVoucherStats] = useState(null);
+  const [voucherLoading, setVoucherLoading] = useState(false);
+
+  // Tracking & Funnel States
   const [trackingOverview, setTrackingOverview] = useState(null);
   const [funnelData, setFunnelData] = useState(null);
   const [loadingTracking, setLoadingTracking] = useState(false);
   const [trackingError, setTrackingError] = useState(null);
 
-  const fetchTrackingData = async () => {
-    try {
-      setLoadingTracking(true);
-      setTrackingError(null);
-      const [overviewRes, funnelRes] = await Promise.all([
-        trackingApi.getAnalyticsOverview(),
-        trackingApi.getFunnelAnalytics(),
-      ]);
-      if (overviewRes?.data) setTrackingOverview(overviewRes.data);
-      if (funnelRes?.data) setFunnelData(funnelRes.data);
-    } catch (err) {
-      console.error('Fetch tracking analytics error:', err);
-      setTrackingError('Không thể tải dữ liệu phân tích hành vi từ máy chủ.');
-    } finally {
-      setLoadingTracking(false);
-    }
-  };
-
-  const fetchSalesData = async () => {
+  const fetchSalesData = useCallback(async () => {
+    await Promise.resolve();
     try {
       setLoadingSales(true);
       setSalesError(null);
 
-      const typeMap = {
-        last7days: 'week',
-        last30days: 'month',
-        last1year: 'year',
-      };
-      const type = typeMap[range] || 'week';
-
-      const [kpiData, revenueData, ordersData, productsList] = await Promise.all([
-        DashboardService(),
-        getRevenueOverviewService(type),
-        getAdminOrdersService({ limit: 5 }),
-        getAllProductService(),
+      const [revenueRes, recentRes, productsRes] = await Promise.all([
+        orderApi.getRevenueSummary(range),
+        orderApi.getRecentOrders(5),
+        productApi.getAllProducts({ limit: 1 }),
       ]);
 
-      setKpis(
-        kpiData || {
-          totalRevenue: 0,
-          totalOrders: 0,
-          totalCustomers: 0,
-          totalSoldProducts: 0,
-          avgOrderValue: 0,
-        }
-      );
-      setRevenueOverview(revenueData || []);
-      setRecentOrdersList(ordersData?.items || []);
-      setTotalProducts(productsList?.length || 0);
+      const summary = revenueRes?.summary || {};
+      const chart = revenueRes?.revenueOverview || [];
+
+      setKpis({
+        totalRevenue: summary.totalRevenue || 0,
+        totalOrders: summary.totalOrders || 0,
+        avgOrderValue: summary.avgOrderValue || 0,
+        totalCustomers: summary.totalCustomers || 0,
+        totalSoldProducts: summary.totalSoldProducts || 0,
+      });
+
+      setRevenueOverview(chart);
+      setRecentOrdersList(recentRes?.orders || []);
+      setTotalProducts(productsRes?.total || 0);
     } catch (err) {
-      console.error('Fetch sales dashboard error:', err);
-      setSalesError('Không thể tải báo cáo số liệu bán hàng từ máy chủ.');
+      setSalesError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Không thể tải dữ liệu thống kê."
+      );
     } finally {
       setLoadingSales(false);
     }
-  };
+  }, [range]);
 
   useEffect(() => {
-    if (activeView === 'sales') {
+    if (activeView === "sales") {
       fetchSalesData();
     }
-  }, [activeView, range]);
+  }, [fetchSalesData, activeView]);
 
-  useEffect(() => {
-    if (activeView === 'vouchers') {
-      const fetchVoucherStats = async () => {
-        try {
-          setVoucherLoading(true);
-          const res = await voucherApi.getAdminVouchersStats();
-          if (res.success) {
-            setVoucherStats(res.data);
-          }
-        } catch {
-          toast.error('Không thể tải thống kê voucher');
-        } finally {
-          setVoucherLoading(false);
-        }
-      };
-      fetchVoucherStats();
+  const fetchTrackingData = useCallback(async () => {
+    await Promise.resolve();
+    try {
+      setLoadingTracking(true);
+      setTrackingError(null);
+      const [overviewRes, funnelRes] = await Promise.all([
+        trackingApi.getOverview(range),
+        trackingApi.getFunnel(range),
+      ]);
+      setTrackingOverview(overviewRes?.data || null);
+      setFunnelData(funnelRes?.data || null);
+    } catch (err) {
+      setTrackingError(
+        err?.response?.data?.message || "Không thể tải dữ liệu phân tích hành vi."
+      );
+    } finally {
+      setLoadingTracking(false);
     }
-  }, [activeView]);
+  }, [range]);
 
   useEffect(() => {
-    if (activeView === 'behavior') {
+    if (activeView === "behavior") {
       fetchTrackingData();
     }
-  }, [activeView]);
+  }, [fetchTrackingData, activeView]);
 
-  const funnelChartOptions = {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      formatter: (params) => {
-        const item = params[0];
-        const stages = funnelData?.funnel || [];
-        const reversedStages = [...stages].reverse();
-        const stage = reversedStages[item.dataIndex];
-        return `
-          <div style="font-weight: bold; padding-bottom: 4px;">${stage?.label || item.name}</div>
-          <div>Lượt phiên: <b>${(stage?.uniqueSessions || 0).toLocaleString()}</b></div>
-          <div>Người dùng duy nhất: <b>${(stage?.uniqueUsers || 0).toLocaleString()}</b></div>
-          <div>Chuyển đổi tổng thể: <b style="color: #10B981;">${stage?.overallConversionRate || 0}%</b></div>
-          <div>Chuyển tiếp bước: <b>${stage?.stepConversionRate || 0}%</b></div>
-          <div>Rơi rụng (Drop-off): <b style="color: #F43F5E;">${stage?.dropOffRate || 0}%</b></div>
-        `;
-      },
-    },
-    grid: { left: '3%', right: '6%', top: '6%', bottom: '4%', containLabel: true },
-    xAxis: {
-      type: 'value',
-      axisLabel: { formatter: '{value}%', color: '#64748B', fontSize: 11 },
-      max: 100,
-      splitLine: { lineStyle: { color: '#F1F5F9', type: 'dashed' } },
-    },
-    yAxis: {
-      type: 'category',
-      data: (funnelData?.funnel || []).map((s) => s.label).reverse(),
-      axisLabel: { color: '#64748B', fontSize: 11 },
-      axisLine: { lineStyle: { color: '#E2E8F0' } },
-    },
-    series: [
-      {
-        name: 'Tỷ lệ chuyển đổi phễu',
-        type: 'bar',
-        barWidth: 16,
-        data: (funnelData?.funnel || []).map((s) => s.overallConversionRate).reverse(),
-        itemStyle: {
-          color: (params) => {
-            const colors = ['#10B981', '#059669', '#0D9488', '#0284C7', '#2563EB', '#05251C'];
-            return colors[params.dataIndex % colors.length];
-          },
-          borderRadius: [0, 6, 6, 0],
-        },
-        label: {
-          show: true,
-          position: 'right',
-          formatter: '{c}%',
-          fontSize: 11,
-          fontWeight: 'bold',
-          color: '#05251C',
-        },
-      },
-    ],
+  const fetchVoucherStats = useCallback(async () => {
+    await Promise.resolve();
+    try {
+      setVoucherLoading(true);
+      const res = await voucherApi.getVoucherAnalytics();
+      if (res?.success) {
+        setVoucherStats(res.data);
+      }
+    } catch {
+      // silent fallback
+    } finally {
+      setVoucherLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeView === "vouchers" && !voucherStats) {
+      fetchVoucherStats();
+    }
+  }, [activeView, voucherStats, fetchVoucherStats]);
+
+  const handleRefresh = () => {
+    if (activeView === "sales") {
+      fetchSalesData();
+    } else if (activeView === "vouchers") {
+      fetchVoucherStats();
+    } else {
+      fetchTrackingData();
+    }
   };
 
-  // ECharts Option for Sales Analytics (Terracotta & Slate palette)
+  const getStatusBadge = (status) => {
+    const key = (status || "").toUpperCase();
+    switch (key) {
+      case "PENDING":
+        return (
+          <AdminBadge variant="warning" dot size="sm">
+            Chờ xác nhận
+          </AdminBadge>
+        );
+      case "CONFIRMED":
+        return (
+          <AdminBadge variant="info" dot size="sm">
+            Đã xác nhận
+          </AdminBadge>
+        );
+      case "PACKING":
+      case "PROCESSING":
+        return (
+          <AdminBadge variant="info" dot size="sm">
+            Đang đóng gói
+          </AdminBadge>
+        );
+      case "SHIPPING":
+        return (
+          <AdminBadge variant="brand" dot size="sm">
+            Đang giao
+          </AdminBadge>
+        );
+      case "COMPLETED":
+      case "DELIVERED":
+        return (
+          <AdminBadge variant="success" dot size="sm">
+            Hoàn thành
+          </AdminBadge>
+        );
+      case "CANCELLED":
+        return (
+          <AdminBadge variant="danger" dot size="sm">
+            Đã hủy
+          </AdminBadge>
+        );
+      default:
+        return (
+          <AdminBadge variant="neutral" size="sm">
+            {status || "Khác"}
+          </AdminBadge>
+        );
+    }
+  };
+
+  // Monochrome ECharts Options — Sales
   const salesChartOptions = {
     tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#0F172A',
-      borderColor: '#334155',
-      textStyle: { color: '#F8FAFC', fontSize: 12 },
-      valueFormatter: (value) => formatCurrency(value || 0),
+      trigger: "axis",
+      backgroundColor: "#0C0C0E",
+      borderColor: "#27272A",
+      textStyle: { color: "#F7F6F2", fontSize: 12 },
+      formatter: (params) => {
+        const item = params?.[0];
+        if (!item) return "";
+        return `<div style="font-weight:600;margin-bottom:4px">${item.name}</div>
+                <div>Doanh thu: <b>${formatCurrency(item.value)}</b></div>`;
+      },
     },
     grid: {
-      left: '2%',
-      right: '3%',
-      top: '8%',
-      bottom: '3%',
+      left: "2%",
+      right: "2%",
+      bottom: "4%",
+      top: "8%",
       containLabel: true,
     },
-    xAxis: [
-      {
-        type: 'category',
-        boundaryGap: false,
-        data: revenueOverview.map((item) => item.date),
-        axisLine: { lineStyle: { color: '#E2E8F0' } },
-        axisLabel: { color: '#64748B', fontSize: 11 },
-      },
-    ],
-    yAxis: [
-      {
-        type: 'value',
-        axisLine: { show: false },
-        axisLabel: {
-          color: '#64748B',
-          fontSize: 11,
-          formatter: (value) => {
-            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-            if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
-            return value;
-          },
+    xAxis: {
+      type: "category",
+      boundaryGap: false,
+      data: revenueOverview.map((item) => item.label),
+      axisLine: { lineStyle: { color: "#D4D4D8" } },
+      axisLabel: { color: "#71717A", fontSize: 11 },
+    },
+    yAxis: {
+      type: "value",
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: "#E4E4E7", type: "dashed" } },
+      axisLabel: {
+        color: "#71717A",
+        fontSize: 11,
+        formatter: (val) => {
+          if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
+          if (val >= 1000) return `${(val / 1000).toFixed(0)}K`;
+          return val;
         },
-        splitLine: { lineStyle: { color: '#F1F5F9', type: 'dashed' } },
       },
-    ],
+    },
     series: [
       {
-        name: 'Doanh thu',
-        type: 'line',
-        smooth: true,
-        showSymbol: false,
-        symbolSize: 6,
+        name: "Doanh thu",
         data: revenueOverview.map((item) => item.revenue),
-        itemStyle: { color: '#05251C' },
-        lineStyle: { width: 2.5, color: '#05251C' },
+        type: "line",
+        smooth: true,
+        symbol: "circle",
+        symbolSize: 6,
+        itemStyle: { color: "#18181B" },
+        lineStyle: { width: 2.5, color: "#18181B" },
         areaStyle: {
-          opacity: 0.12,
           color: {
-            type: 'linear',
+            type: "linear",
             x: 0,
             y: 0,
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: '#05251C' },
-              { offset: 1, color: 'rgba(5, 37, 28, 0)' },
+              { offset: 0, color: "rgba(24, 24, 27, 0.22)" },
+              { offset: 1, color: "rgba(24, 24, 27, 0.0)" },
             ],
           },
         },
@@ -308,57 +282,104 @@ const Dashboard = () => {
     ],
   };
 
-  // ECharts Option for Voucher Analytics
-  const voucherChartOptions = {
+  // Monochrome ECharts Options — Conversion Funnel
+  const funnelStages = funnelData?.funnel || [];
+  const funnelChartOptions = {
     tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#0F172A',
-      borderColor: '#334155',
-      textStyle: { color: '#F8FAFC', fontSize: 12 },
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      backgroundColor: "#0C0C0E",
+      borderColor: "#27272A",
+      textStyle: { color: "#F7F6F2", fontSize: 12 },
     },
     legend: {
-      data: ['Lượt Nhận', 'Lượt Sử Dụng'],
+      data: ["Số phiên (Sessions)", "Người dùng (Users)"],
       bottom: 0,
-      textStyle: { color: '#64748B', fontSize: 12 },
+      textStyle: { color: "#71717A", fontSize: 11 },
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      top: '8%',
-      bottom: '12%',
+      left: "3%",
+      right: "4%",
+      bottom: "14%",
+      top: "6%",
       containLabel: true,
     },
-    xAxis: [
-      {
-        type: 'category',
-        data: voucherStats?.charts?.labels || [],
-        axisLine: { lineStyle: { color: '#E2E8F0' } },
-        axisLabel: { color: '#64748B', fontSize: 11 },
-      },
-    ],
-    yAxis: [
-      {
-        type: 'value',
-        axisLine: { show: false },
-        axisLabel: { color: '#64748B', fontSize: 11 },
-        splitLine: { lineStyle: { color: '#F1F5F9', type: 'dashed' } },
-      },
-    ],
+    xAxis: {
+      type: "category",
+      data: funnelStages.map((s) => s.label),
+      axisLabel: { color: "#71717A", fontSize: 11, interval: 0 },
+      axisLine: { lineStyle: { color: "#D4D4D8" } },
+    },
+    yAxis: {
+      type: "value",
+      splitLine: { lineStyle: { color: "#E4E4E7", type: "dashed" } },
+      axisLabel: { color: "#71717A", fontSize: 11 },
+    },
     series: [
       {
-        name: 'Lượt Nhận',
-        type: 'line',
+        name: "Số phiên (Sessions)",
+        type: "bar",
+        barMaxWidth: 34,
+        itemStyle: { color: "#18181B" },
+        data: funnelStages.map((s) => s.uniqueSessions || 0),
+      },
+      {
+        name: "Người dùng (Users)",
+        type: "bar",
+        barMaxWidth: 34,
+        itemStyle: { color: "#71717A" },
+        data: funnelStages.map((s) => s.uniqueUsers || 0),
+      },
+    ],
+  };
+
+  // Monochrome ECharts Options — Vouchers
+  const voucherChartOptions = {
+    tooltip: {
+      trigger: "axis",
+      backgroundColor: "#0C0C0E",
+      borderColor: "#27272A",
+      textStyle: { color: "#F7F6F2", fontSize: 12 },
+    },
+    legend: {
+      data: ["Lượt Nhận (Claim)", "Lượt Sử Dụng"],
+      bottom: 0,
+      textStyle: { color: "#71717A", fontSize: 11 },
+    },
+    grid: {
+      left: "2%",
+      right: "2%",
+      bottom: "12%",
+      top: "8%",
+      containLabel: true,
+    },
+    xAxis: {
+      type: "category",
+      boundaryGap: false,
+      data: voucherStats?.charts?.dates || [],
+      axisLine: { lineStyle: { color: "#D4D4D8" } },
+      axisLabel: { color: "#71717A", fontSize: 11 },
+    },
+    yAxis: {
+      type: "value",
+      splitLine: { lineStyle: { color: "#E4E4E7", type: "dashed" } },
+      axisLabel: { color: "#71717A", fontSize: 11 },
+    },
+    series: [
+      {
+        name: "Lượt Nhận (Claim)",
+        type: "line",
         smooth: true,
-        itemStyle: { color: '#2563EB' },
-        lineStyle: { width: 2, color: '#2563EB' },
+        itemStyle: { color: "#71717A" },
+        lineStyle: { width: 2, color: "#71717A", type: "dashed" },
         data: voucherStats?.charts?.claims || [],
       },
       {
-        name: 'Lượt Sử Dụng',
-        type: 'line',
+        name: "Lượt Sử Dụng",
+        type: "line",
         smooth: true,
-        itemStyle: { color: '#05251C' },
-        lineStyle: { width: 2, color: '#05251C' },
+        itemStyle: { color: "#18181B" },
+        lineStyle: { width: 2.5, color: "#18181B" },
         data: voucherStats?.charts?.usages || [],
       },
     ],
@@ -369,83 +390,82 @@ const Dashboard = () => {
       {/* Page Header */}
       <AdminPageHeader
         title="Tổng quan hoạt động"
-        description="Theo dõi doanh số, đơn hàng và các chỉ số kinh doanh then chốt của 404Studio"
+        description={`Theo dõi doanh số, đơn hàng và các chỉ số kinh doanh thực tế của ${brandName}`}
         actions={
-          <div className="flex items-center gap-2">
-            {/* Tab switch */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-              <button
-                onClick={() => setActiveView('sales')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                  activeView === 'sales'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                Bán hàng
-              </button>
-              <button
-                onClick={() => setActiveView('vouchers')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                  activeView === 'vouchers'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                Khuyến mãi
-              </button>
-              <button
-                onClick={() => setActiveView('behavior')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                  activeView === 'behavior'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                Hành vi & Phễu
-              </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* View Tabs */}
+            <div
+              role="tablist"
+              aria-label="Chế độ xem thống kê"
+              className="inline-flex border border-[var(--color-border)] bg-[var(--color-surface)] p-1"
+            >
+              {[
+                { id: "sales", label: "Bán hàng" },
+                { id: "vouchers", label: "Khuyến mãi" },
+                { id: "behavior", label: "Hành vi & Phễu" },
+              ].map((tab) => {
+                const active = activeView === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setActiveView(tab.id)}
+                    className={`touch-target px-3.5 text-xs font-semibold uppercase tracking-[0.12em] transition-colors ${
+                      active
+                        ? "bg-[var(--color-text)] text-[var(--color-bg)]"
+                        : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Refresh button */}
+            {/* Refresh Button */}
             <button
-              onClick={
-                activeView === 'sales'
-                  ? fetchSalesData
-                  : activeView === 'vouchers'
-                  ? undefined
-                  : fetchTrackingData
-              }
-              aria-label="Làm mới dữ liệu"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+              type="button"
+              onClick={handleRefresh}
+              aria-label="Làm mới dữ liệu thống kê"
               title="Làm mới dữ liệu"
+              className="touch-target inline-flex items-center justify-center border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-[var(--color-text)] transition-colors hover:border-[var(--color-text)]"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4" strokeWidth={1.5} />
             </button>
           </div>
         }
       />
 
       {/* Main Content Area */}
-      {activeView === 'sales' ? (
+      {activeView === "sales" ? (
         loadingSales ? (
           <div className="space-y-6">
             <KPISkeleton />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 h-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 animate-pulse" />
-              <div className="h-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 animate-pulse" />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="h-80 animate-pulse border border-[var(--color-border)] bg-[var(--color-surface)] lg:col-span-2" />
+              <div className="h-80 animate-pulse border border-[var(--color-border)] bg-[var(--color-surface)]" />
             </div>
             <TableSkeleton rows={5} cols={5} />
           </div>
         ) : salesError ? (
-          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-8 text-center max-w-md mx-auto my-12 space-y-4">
-            <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
-            <h3 className="text-base font-bold text-red-800 dark:text-red-400">
+          <div
+            role="alert"
+            aria-live="polite"
+            className="mx-auto my-12 max-w-md space-y-4 border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/5 p-8 text-center"
+          >
+            <AlertCircle className="mx-auto h-10 w-10 text-[var(--color-danger)]" />
+            <h3 className="font-serif text-lg font-medium text-[var(--color-text)]">
               Lỗi nạp dữ liệu thống kê
             </h3>
-            <p className="text-red-600 dark:text-red-300 text-xs">{salesError}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              {salesError}
+            </p>
             <button
+              type="button"
               onClick={fetchSalesData}
-              className="bg-[#05251C] hover:bg-[#073D2A] dark:bg-[#F5DD20] dark:text-[#05251C] dark:hover:bg-[#e6cf1d] text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition cursor-pointer"
+              className="touch-target inline-flex items-center justify-center bg-[var(--color-text)] px-6 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-bg)] transition-opacity hover:opacity-90"
             >
               Thử tải lại
             </button>
@@ -453,107 +473,109 @@ const Dashboard = () => {
         ) : (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {/* Card 1: Revenue */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between transition-all hover:border-[#05251C]/40">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-colors hover:border-[var(--color-text)]">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Tổng doanh thu
                   </span>
-                  <div className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                  <div className="font-serif text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
                     {formatCurrency(kpis.totalRevenue)}
                   </div>
-                  <span className="inline-flex text-[11px] text-slate-400">
+                  <span className="inline-flex text-[11px] text-[var(--color-text-muted)]">
                     Từ các đơn hoàn tất
                   </span>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-[#05251C] text-[#F5DD20] flex items-center justify-center shrink-0 shadow-xs">
-                  <CreditCard className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-[var(--color-text)] text-[var(--color-bg)]">
+                  <CreditCard className="h-5 w-5" strokeWidth={1.5} />
                 </div>
               </div>
 
-              {/* Card 2: Orders */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between transition-all hover:border-slate-300">
+              <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-colors hover:border-[var(--color-text)]">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Đơn hàng hoàn tất
                   </span>
-                  <div className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                  <div className="font-serif text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
                     {kpis.totalOrders}
                   </div>
-                  <span className="inline-flex text-[11px] text-slate-400">
+                  <span className="inline-flex text-[11px] text-[var(--color-text-muted)]">
                     Giao dịch thành công
                   </span>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 border border-sky-200/80 dark:border-sky-800/60">
-                  <ShoppingCart className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)]">
+                  <ShoppingCart className="h-5 w-5" strokeWidth={1.5} />
                 </div>
               </div>
 
-              {/* Card 3: Products */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between transition-all hover:border-slate-300">
+              <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-colors hover:border-[var(--color-text)]">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Sản phẩm đang bán
                   </span>
-                  <div className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                  <div className="font-serif text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
                     {totalProducts}
                   </div>
-                  <span className="inline-flex text-[11px] text-slate-400">
+                  <span className="inline-flex text-[11px] text-[var(--color-text-muted)]">
                     Trong toàn danh mục
                   </span>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/80 dark:border-amber-800/60">
-                  <Package className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)]">
+                  <Package className="h-5 w-5" strokeWidth={1.5} />
                 </div>
               </div>
 
-              {/* Card 4: Customers */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between transition-all hover:border-slate-300">
+              <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-colors hover:border-[var(--color-text)]">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Khách hàng mua sắm
                   </span>
-                  <div className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                  <div className="font-serif text-2xl font-semibold tracking-tight text-[var(--color-text)] tabular-nums">
                     {kpis.totalCustomers}
                   </div>
-                  <span className="inline-flex text-[11px] text-slate-400">
+                  <span className="inline-flex text-[11px] text-[var(--color-text-muted)]">
                     Đã phát sinh đơn
                   </span>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/80 dark:border-emerald-800/60">
-                  <Users className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)]">
+                  <Users className="h-5 w-5" strokeWidth={1.5} />
                 </div>
               </div>
             </div>
 
             {/* Graphs & Quick Analytics */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               {/* Sales Chart */}
               <AdminCard
                 className="lg:col-span-2"
                 title="Biểu đồ doanh thu"
                 subtitle="Số liệu doanh số tích lũy theo chu kỳ thời gian thực"
                 extra={
-                  <select
-                    value={range}
-                    onChange={(e) => setRange(e.target.value)}
-                    className="h-8 px-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#05251C]/20 dark:focus:ring-[#F5DD20]/30 cursor-pointer"
-                  >
-                    <option value="last7days">7 ngày qua</option>
-                    <option value="last30days">30 ngày qua</option>
-                    <option value="last1year">1 năm qua</option>
-                  </select>
+                  <div>
+                    <label htmlFor="dashboard-range-select" className="sr-only">
+                      Chọn khoảng thời gian
+                    </label>
+                    <select
+                      id="dashboard-range-select"
+                      value={range}
+                      onChange={(e) => setRange(e.target.value)}
+                      className="touch-target border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-xs font-semibold text-[var(--color-text)] focus:border-[var(--color-text)] focus:outline-none"
+                    >
+                      <option value="last7days">7 ngày qua</option>
+                      <option value="last30days">30 ngày qua</option>
+                      <option value="last1year">1 năm qua</option>
+                    </select>
+                  </div>
                 }
               >
                 {revenueOverview.length === 0 ? (
-                  <div className="h-[280px] flex items-center justify-center text-xs text-slate-400">
+                  <div className="flex h-[280px] items-center justify-center text-xs text-[var(--color-text-muted)]">
                     Chưa có phát sinh doanh thu trong khoảng thời gian này.
                   </div>
                 ) : (
                   <ReactECharts
                     option={salesChartOptions}
-                    style={{ height: '280px', width: '100%' }}
+                    style={{ height: "280px", width: "100%" }}
                   />
                 )}
               </AdminCard>
@@ -563,41 +585,42 @@ const Dashboard = () => {
                 title="Chỉ số hiệu suất"
                 subtitle="Đo lường trung bình hoạt động bán lẻ"
               >
-                <div className="space-y-5">
-                  {/* AOV */}
-                  <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                <div className="space-y-4">
+                  <div className="border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                       Giá trị đơn hàng trung bình (AOV)
                     </div>
-                    <div className="text-lg font-bold text-slate-900 dark:text-white mt-1 tabular-nums">
+                    <div className="mt-1 font-serif text-xl font-semibold text-[var(--color-text)] tabular-nums">
                       {formatCurrency(kpis.avgOrderValue)}
                     </div>
                   </div>
 
-                  {/* Sold Products */}
-                  <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  <div className="border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                       Tổng sản phẩm đã tiêu thụ
                     </div>
-                    <div className="text-lg font-bold text-slate-900 dark:text-white mt-1 tabular-nums">
-                      {kpis.totalSoldProducts}{' '}
-                      <span className="text-xs font-normal text-slate-500">sản phẩm</span>
+                    <div className="mt-1 font-serif text-xl font-semibold text-[var(--color-text)] tabular-nums">
+                      {kpis.totalSoldProducts}{" "}
+                      <span className="font-sans text-xs font-normal text-[var(--color-text-muted)]">
+                        sản phẩm
+                      </span>
                     </div>
                   </div>
 
-                  {/* Customer Base */}
-                  <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  <div className="border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                       Khách hàng hoạt động
                     </div>
-                    <div className="text-lg font-bold text-slate-900 dark:text-white mt-1 tabular-nums">
-                      {kpis.totalCustomers}{' '}
-                      <span className="text-xs font-normal text-slate-500">tài khoản</span>
+                    <div className="mt-1 font-serif text-xl font-semibold text-[var(--color-text)] tabular-nums">
+                      {kpis.totalCustomers}{" "}
+                      <span className="font-sans text-xs font-normal text-[var(--color-text-muted)]">
+                        tài khoản
+                      </span>
                     </div>
                   </div>
 
-                  <div className="pt-2 flex items-center gap-1.5 text-xs text-[#05251C] dark:text-[#F5DD20] font-semibold">
-                    <TrendingUp className="h-4 w-4" />
+                  <div className="flex items-center gap-2 pt-1 text-xs font-medium text-[var(--color-text-muted)]">
+                    <TrendingUp className="h-4 w-4 text-[var(--color-text)]" />
                     <span>Tự động đồng bộ từ đơn hàng hệ thống</span>
                   </div>
                 </div>
@@ -611,7 +634,7 @@ const Dashboard = () => {
               extra={
                 <Link
                   to="/admin/orders"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-[#05251C] dark:text-[#F5DD20] hover:text-[#073D2A] transition"
+                  className="touch-target inline-flex items-center gap-1.5 border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text)] transition-colors hover:border-[var(--color-text)]"
                 >
                   <span>Xem tất cả</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -620,8 +643,8 @@ const Dashboard = () => {
               noPadding
             >
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left text-xs">
-                  <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <table className="min-w-full divide-y divide-[var(--color-border)] text-left text-xs">
+                  <thead className="bg-[var(--color-bg)] text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                     <tr>
                       <th className="px-6 py-3.5">Mã đơn hàng</th>
                       <th className="px-6 py-3.5">Khách hàng</th>
@@ -630,30 +653,35 @@ const Dashboard = () => {
                       <th className="px-6 py-3.5">Ngày đặt</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 font-medium">
+                  <tbody className="divide-y divide-[var(--color-border)] font-medium">
                     {recentOrdersList.length > 0 ? (
                       recentOrdersList.map((order) => (
                         <tr
                           key={order._id}
-                          className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                          className="transition-colors hover:bg-[var(--color-bg)]/60"
                         >
-                          <td className="px-6 py-3.5 font-mono font-semibold text-slate-700 dark:text-slate-300">
+                          <td className="px-6 py-3.5 font-mono font-semibold text-[var(--color-text)]">
                             <Link
                               to="/admin/orders"
-                              className="hover:text-[#05251C] dark:hover:text-[#F5DD20] transition"
+                              className="underline-offset-4 hover:underline"
                             >
                               #{order._id.slice(-6).toUpperCase()}
                             </Link>
                           </td>
-                          <td className="px-6 py-3.5 text-slate-800 dark:text-slate-200 font-semibold">
-                            {order.shipping_address?.full_name || 'Khách vãng lai'}
+                          <td className="px-6 py-3.5 font-semibold text-[var(--color-text)]">
+                            {order.shipping_address?.full_name ||
+                              "Khách vãng lai"}
                           </td>
-                          <td className="px-6 py-3.5 font-bold text-slate-900 dark:text-white tabular-nums">
+                          <td className="px-6 py-3.5 font-bold text-[var(--color-text)] tabular-nums">
                             {formatCurrency(order.total_price || 0)}
                           </td>
-                          <td className="px-6 py-3.5">{getStatusBadge(order.status)}</td>
-                          <td className="px-6 py-3.5 text-slate-400 dark:text-slate-500">
-                            {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                          <td className="px-6 py-3.5">
+                            {getStatusBadge(order.status)}
+                          </td>
+                          <td className="px-6 py-3.5 text-[var(--color-text-muted)]">
+                            {new Date(order.createdAt).toLocaleDateString(
+                              "vi-VN"
+                            )}
                           </td>
                         </tr>
                       ))
@@ -661,7 +689,7 @@ const Dashboard = () => {
                       <tr>
                         <td
                           colSpan="5"
-                          className="px-6 py-8 text-center text-slate-400"
+                          className="px-6 py-10 text-center text-[var(--color-text-muted)]"
                         >
                           Chưa ghi nhận đơn hàng nào.
                         </td>
@@ -673,83 +701,82 @@ const Dashboard = () => {
             </AdminCard>
           </>
         )
-      ) : activeView === 'vouchers' ? (
-        /* Voucher View */
+      ) : activeView === "vouchers" ? (
         voucherLoading ? (
           <div className="space-y-6">
             <KPISkeleton />
-            <div className="h-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 animate-pulse" />
+            <div className="h-80 animate-pulse border border-[var(--color-border)] bg-[var(--color-surface)]" />
           </div>
         ) : !voucherStats ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-center">
-            <AlertCircle className="h-10 w-10 text-slate-300 dark:text-slate-600 mb-2" />
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col items-center justify-center border border-[var(--color-border)] bg-[var(--color-surface)] py-20 text-center">
+            <AlertCircle className="mb-2 h-10 w-10 text-[var(--color-text-muted)]" />
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
               Chưa có dữ liệu thống kê Voucher
             </p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Voucher KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Tổng mã giảm giá
                   </span>
-                  <div className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-                    {voucherStats.stats.totalVouchers}
+                  <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                    {voucherStats.stats?.totalVouchers || 0}
                   </div>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
-                  <Ticket className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)]">
+                  <Ticket className="h-5 w-5" strokeWidth={1.5} />
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Đang kích hoạt
                   </span>
-                  <div className="text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
-                    {voucherStats.stats.activeVouchers}
+                  <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                    {voucherStats.stats?.activeVouchers || 0}
                   </div>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <Percent className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-[var(--color-text)] text-[var(--color-bg)]">
+                  <Percent className="h-5 w-5" strokeWidth={1.5} />
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Voucher hết hạn
                   </span>
-                  <div className="text-2xl font-extrabold tracking-tight text-red-600 dark:text-red-400 tabular-nums">
-                    {voucherStats.stats.expiredVouchers}
+                  <div className="font-serif text-2xl font-semibold text-[var(--color-danger)] tabular-nums">
+                    {voucherStats.stats?.expiredVouchers || 0}
                   </div>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                  <AlertCircle className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 text-[var(--color-danger)]">
+                  <AlertCircle className="h-5 w-5" strokeWidth={1.5} />
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div className="flex items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
                     Đã dùng hết quota
                   </span>
-                  <div className="text-2xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
-                    {voucherStats.stats.soldOutVouchers}
+                  <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                    {voucherStats.stats?.soldOutVouchers || 0}
                   </div>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                  <Sparkles className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)]">
+                  <Sparkles className="h-5 w-5" strokeWidth={1.5} />
                 </div>
               </div>
             </div>
 
             {/* Voucher Charts & Top Performers */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <AdminCard
                 className="lg:col-span-2"
                 title="Tương tác Voucher"
@@ -757,7 +784,7 @@ const Dashboard = () => {
               >
                 <ReactECharts
                   option={voucherChartOptions}
-                  style={{ height: '280px', width: '100%' }}
+                  style={{ height: "280px", width: "100%" }}
                 />
               </AdminCard>
 
@@ -765,8 +792,9 @@ const Dashboard = () => {
                 title="Top Voucher hiệu quả"
                 subtitle="Theo tỷ lệ sử dụng cao nhất"
               >
-                {voucherStats.topVouchers?.length === 0 ? (
-                  <div className="py-12 text-center text-xs text-slate-400">
+                {!voucherStats.topVouchers ||
+                voucherStats.topVouchers.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-[var(--color-text-muted)]">
                     Chưa có lượt sử dụng nào
                   </div>
                 ) : (
@@ -774,21 +802,23 @@ const Dashboard = () => {
                     {voucherStats.topVouchers.map((v, idx) => {
                       const usageRatio = Math.min(
                         100,
-                        Math.round((v.usedQuantity / (v.totalQuantity || 1)) * 100)
+                        Math.round(
+                          (v.usedQuantity / (v.totalQuantity || 1)) * 100
+                        )
                       );
                       return (
                         <div key={v.code} className="space-y-1.5">
-                          <div className="flex justify-between items-center text-xs font-semibold">
-                            <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">
+                          <div className="flex items-center justify-between text-xs font-semibold">
+                            <span className="font-mono font-bold text-[var(--color-text)]">
                               {idx + 1}. {v.code}
                             </span>
-                            <span className="text-slate-500 tabular-nums">
+                            <span className="text-[var(--color-text-muted)] tabular-nums">
                               {v.usedQuantity}/{v.totalQuantity} ({usageRatio}%)
                             </span>
                           </div>
-                          <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-2 w-full overflow-hidden bg-[var(--color-bg)]">
                             <div
-                              className="h-full bg-[#05251C] dark:bg-[#F5DD20] rounded-full transition-all"
+                              className="h-full bg-[var(--color-text)] transition-all"
                               style={{ width: `${usageRatio}%` }}
                             />
                           </div>
@@ -801,242 +831,251 @@ const Dashboard = () => {
             </div>
           </div>
         )
-      ) : (
-        /* Behavior & Funnel Analytics View */
-        loadingTracking ? (
-          <div className="space-y-6">
-            <KPISkeleton />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 h-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 animate-pulse" />
-              <div className="h-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 animate-pulse" />
-            </div>
-            <TableSkeleton rows={5} cols={5} />
+      ) : loadingTracking ? (
+        <div className="space-y-6">
+          <KPISkeleton />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="h-80 animate-pulse border border-[var(--color-border)] bg-[var(--color-surface)] lg:col-span-2" />
+            <div className="h-80 animate-pulse border border-[var(--color-border)] bg-[var(--color-surface)]" />
           </div>
-        ) : trackingError ? (
-          <AdminCard>
-            <div className="p-8 text-center space-y-3">
-              <AlertCircle className="h-10 w-10 text-rose-500 mx-auto" />
-              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                {trackingError}
-              </h3>
-              <button
-                onClick={fetchTrackingData}
-                className="px-4 py-2 bg-[#05251C] text-white text-xs font-bold rounded-xl hover:bg-[#073D2A] transition cursor-pointer"
-              >
-                Thử lại
-              </button>
-            </div>
-          </AdminCard>
-        ) : (
-          <div className="space-y-6">
-            {/* Behavioral KPIs */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <AdminCard className="relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    Tổng sự kiện ghi nhận
-                  </span>
-                  <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600">
-                    <Activity className="h-5 w-5" />
-                  </div>
+          <TableSkeleton rows={5} cols={5} />
+        </div>
+      ) : trackingError ? (
+        <AdminCard>
+          <div
+            role="alert"
+            aria-live="polite"
+            className="space-y-3 p-8 text-center"
+          >
+            <AlertCircle className="mx-auto h-10 w-10 text-[var(--color-danger)]" />
+            <h3 className="text-sm font-semibold text-[var(--color-text)]">
+              {trackingError}
+            </h3>
+            <button
+              type="button"
+              onClick={fetchTrackingData}
+              className="touch-target inline-flex items-center justify-center bg-[var(--color-text)] px-5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-bg)] transition-opacity hover:opacity-90"
+            >
+              Thử lại
+            </button>
+          </div>
+        </AdminCard>
+      ) : (
+        <div className="space-y-6">
+          {/* Behavioral KPIs */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <AdminCard>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
+                  Tổng sự kiện ghi nhận
+                </span>
+                <div className="flex h-9 w-9 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)]">
+                  <Activity className="h-4 w-4" strokeWidth={1.5} />
                 </div>
-                <div className="mt-4">
-                  <div className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
-                    {(trackingOverview?.totalEvents || 0).toLocaleString()}
-                  </div>
-                  <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                    <span>
-                      {trackingOverview?.activeUsersCount || 0} user · {trackingOverview?.activeSessionsCount || 0} phiên
-                    </span>
-                  </div>
+              </div>
+              <div className="mt-4">
+                <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                  {(trackingOverview?.totalEvents || 0).toLocaleString()}
                 </div>
-              </AdminCard>
+                <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  {trackingOverview?.activeUsersCount || 0} user ·{" "}
+                  {trackingOverview?.activeSessionsCount || 0} phiên
+                </div>
+              </div>
+            </AdminCard>
 
-              <AdminCard className="relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    Gợi ý sản phẩm (CTR)
-                  </span>
-                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600">
-                    <Eye className="h-5 w-5" />
-                  </div>
+            <AdminCard>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
+                  Gợi ý sản phẩm (CTR)
+                </span>
+                <div className="flex h-9 w-9 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)]">
+                  <Eye className="h-4 w-4" strokeWidth={1.5} />
                 </div>
-                <div className="mt-4">
-                  <div className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
-                    {trackingOverview?.recommendationMetrics?.ctrPercentage || 0}%
-                  </div>
-                  <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                    <span>
-                      {trackingOverview?.recommendationMetrics?.clicks || 0} click / {trackingOverview?.recommendationMetrics?.impressions || 0} hiển thị
-                    </span>
-                  </div>
+              </div>
+              <div className="mt-4">
+                <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                  {trackingOverview?.recommendationMetrics?.ctrPercentage || 0}%
                 </div>
-              </AdminCard>
+                <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  {trackingOverview?.recommendationMetrics?.clicks || 0} click /{" "}
+                  {trackingOverview?.recommendationMetrics?.impressions || 0}{" "}
+                  hiển thị
+                </div>
+              </div>
+            </AdminCard>
 
-              <AdminCard className="relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    Tương tác AI Chat
-                  </span>
-                  <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600">
-                    <Bot className="h-5 w-5" />
-                  </div>
+            <AdminCard>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
+                  Tương tác AI Chat
+                </span>
+                <div className="flex h-9 w-9 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)]">
+                  <Bot className="h-4 w-4" strokeWidth={1.5} />
                 </div>
-                <div className="mt-4">
-                  <div className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
-                    {trackingOverview?.aiMetrics?.ctrPercentage || 0}% CTR
-                  </div>
-                  <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                    <span>
-                      {trackingOverview?.aiMetrics?.cartActionConfirmedCount || 0} xác nhận giỏ qua AI
-                    </span>
-                  </div>
+              </div>
+              <div className="mt-4">
+                <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                  {trackingOverview?.aiMetrics?.ctrPercentage || 0}% CTR
                 </div>
-              </AdminCard>
+                <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  {trackingOverview?.aiMetrics?.cartActionConfirmedCount || 0}{" "}
+                  xác nhận giỏ qua AI
+                </div>
+              </div>
+            </AdminCard>
 
-              <AdminCard className="relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    Chuyển đổi mua hàng (Funnel)
-                  </span>
-                  <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600">
-                    <Filter className="h-5 w-5" />
-                  </div>
+            <AdminCard>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
+                  Chuyển đổi mua hàng (Funnel)
+                </span>
+                <div className="flex h-9 w-9 items-center justify-center bg-[var(--color-text)] text-[var(--color-bg)]">
+                  <Filter className="h-4 w-4" strokeWidth={1.5} />
                 </div>
-                <div className="mt-4">
-                  <div className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
-                    {funnelData?.funnel?.[funnelData?.funnel?.length - 1]?.overallConversionRate || 0}%
-                  </div>
-                  <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                    <span>
-                      {funnelData?.funnel?.[funnelData?.funnel?.length - 1]?.uniqueUsers || 0} khách hoàn tất mua
-                    </span>
-                  </div>
+              </div>
+              <div className="mt-4">
+                <div className="font-serif text-2xl font-semibold text-[var(--color-text)] tabular-nums">
+                  {funnelData?.funnel?.[funnelData?.funnel?.length - 1]
+                    ?.overallConversionRate || 0}
+                  %
                 </div>
-              </AdminCard>
-            </div>
+                <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  {funnelData?.funnel?.[funnelData?.funnel?.length - 1]
+                    ?.uniqueUsers || 0}{" "}
+                  khách hoàn tất mua
+                </div>
+              </div>
+            </AdminCard>
+          </div>
 
-            {/* Conversion Funnel Visualization & Stage Breakdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <AdminCard
-                className="lg:col-span-2"
-                title="Phễu chuyển đổi hành vi (Conversion Funnel)"
-                subtitle="Tỷ lệ giữ chân người dùng qua từng giai đoạn mua sắm"
-              >
-                <ReactECharts
-                  option={funnelChartOptions}
-                  style={{ height: '320px', width: '100%' }}
-                />
+          {/* Conversion Funnel Visualization & Stage Breakdown */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <AdminCard
+              className="lg:col-span-2"
+              title="Phễu chuyển đổi hành vi (Conversion Funnel)"
+              subtitle="Tỷ lệ giữ chân người dùng qua từng giai đoạn mua sắm"
+            >
+              <ReactECharts
+                option={funnelChartOptions}
+                style={{ height: "320px", width: "100%" }}
+              />
 
-                {/* Funnel Stage Breakdown Table */}
-                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="text-slate-500 font-bold uppercase text-[10px] border-b border-slate-100 dark:border-slate-800 pb-2">
-                        <th className="py-2">Giai đoạn</th>
-                        <th className="py-2 text-right">Số phiên</th>
-                        <th className="py-2 text-right">Khách duy nhất</th>
-                        <th className="py-2 text-right">Chuyển tiếp bước</th>
-                        <th className="py-2 text-right">Tỷ lệ rớt (Drop)</th>
+              {/* Funnel Stage Breakdown Table */}
+              <div className="mt-4 overflow-x-auto border-t border-[var(--color-border)] pt-4">
+                <table className="w-full border-collapse text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-[var(--color-border)] pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
+                      <th className="py-2">Giai đoạn</th>
+                      <th className="py-2 text-right">Số phiên</th>
+                      <th className="py-2 text-right">Khách duy nhất</th>
+                      <th className="py-2 text-right">Chuyển tiếp bước</th>
+                      <th className="py-2 text-right">Tỷ lệ rớt (Drop)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--color-border)]">
+                    {(funnelData?.funnel || []).map((stg) => (
+                      <tr
+                        key={stg.stage}
+                        className="hover:bg-[var(--color-bg)]/60"
+                      >
+                        <td className="py-2.5 font-semibold text-[var(--color-text)]">
+                          {stg.label}
+                        </td>
+                        <td className="py-2.5 text-right text-[var(--color-text-muted)] tabular-nums">
+                          {(stg.uniqueSessions || 0).toLocaleString()}
+                        </td>
+                        <td className="py-2.5 text-right text-[var(--color-text-muted)] tabular-nums">
+                          {(stg.uniqueUsers || 0).toLocaleString()}
+                        </td>
+                        <td className="py-2.5 text-right font-bold text-[var(--color-text)] tabular-nums">
+                          {stg.stepConversionRate || 0}%
+                        </td>
+                        <td className="py-2.5 text-right font-semibold text-[var(--color-danger)] tabular-nums">
+                          {stg.dropOffRate || 0}%
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {(funnelData?.funnel || []).map((stg) => (
-                        <tr key={stg.stage} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                          <td className="py-2.5 font-semibold text-slate-900 dark:text-white">
-                            {stg.label}
-                          </td>
-                          <td className="py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">
-                            {(stg.uniqueSessions || 0).toLocaleString()}
-                          </td>
-                          <td className="py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">
-                            {(stg.uniqueUsers || 0).toLocaleString()}
-                          </td>
-                          <td className="py-2.5 text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
-                            {stg.stepConversionRate || 0}%
-                          </td>
-                          <td className="py-2.5 text-right tabular-nums font-semibold text-rose-500">
-                            {stg.dropOffRate || 0}%
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </AdminCard>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </AdminCard>
 
-              {/* Side Panels: Top Products & Search Keywords */}
-              <div className="space-y-6">
-                <AdminCard
-                  title="Sản phẩm xem nhiều nhất"
-                  subtitle="Top 5 sản phẩm thu hút chú ý"
-                >
-                  {(!trackingOverview?.topViewedProducts || trackingOverview.topViewedProducts.length === 0) ? (
-                    <div className="py-8 text-center text-xs text-slate-400">
-                      Chưa có lượt xem nào
-                    </div>
-                  ) : (
-                    <div className="space-y-3 pt-1">
-                      {trackingOverview.topViewedProducts.slice(0, 5).map((p, idx) => (
+            {/* Side Panels: Top Products & Search Keywords */}
+            <div className="space-y-6">
+              <AdminCard
+                title="Sản phẩm xem nhiều nhất"
+                subtitle="Top 5 sản phẩm thu hút chú ý"
+              >
+                {!trackingOverview?.topViewedProducts ||
+                trackingOverview.topViewedProducts.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-[var(--color-text-muted)]">
+                    Chưa có lượt xem nào
+                  </div>
+                ) : (
+                  <div className="space-y-3 pt-1">
+                    {trackingOverview.topViewedProducts
+                      .slice(0, 5)
+                      .map((p, idx) => (
                         <div
                           key={p._id}
-                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition"
+                          className="flex items-center gap-3 border border-transparent p-2 transition-colors hover:border-[var(--color-border)] hover:bg-[var(--color-bg)]"
                         >
-                          <span className="w-5 text-xs font-bold text-slate-400 text-center">
+                          <span className="w-5 text-center text-xs font-bold text-[var(--color-text-muted)]">
                             #{idx + 1}
                           </span>
                           {p.image && (
                             <img
                               src={p.image}
                               alt={p.name}
-                              className="w-10 h-10 object-cover rounded-lg border border-slate-200 dark:border-slate-800"
+                              className="h-10 w-10 border border-[var(--color-border)] object-cover"
                             />
                           )}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="truncate text-xs font-semibold text-[var(--color-text)]">
                               {p.name}
                             </h4>
-                            <span className="text-[11px] text-emerald-600 font-bold">
+                            <span className="text-[11px] font-semibold text-[var(--color-text-muted)]">
                               {formatCurrency(p.price)}
                             </span>
                           </div>
-                          <span className="text-xs font-black text-slate-700 dark:text-slate-200 tabular-nums bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                          <span className="border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-0.5 text-xs font-bold text-[var(--color-text)] tabular-nums">
                             {p.views} xem
                           </span>
                         </div>
                       ))}
-                    </div>
-                  )}
-                </AdminCard>
+                  </div>
+                )}
+              </AdminCard>
 
-                <AdminCard
-                  title="Từ khóa tìm kiếm phổ biến"
-                  subtitle="Xu hướng người dùng đang tìm kiếm"
-                >
-                  {(!trackingOverview?.topSearches || trackingOverview.topSearches.length === 0) ? (
-                    <div className="py-8 text-center text-xs text-slate-400">
-                      Chưa có dữ liệu tìm kiếm
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {trackingOverview.topSearches.slice(0, 8).map((s) => (
-                        <span
-                          key={s.query}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium"
-                        >
-                          <span>{s.query}</span>
-                          <span className="text-[10px] font-bold text-slate-400 bg-white dark:bg-slate-700 px-1.5 py-0.2 rounded-full">
-                            {s.count}
-                          </span>
+              <AdminCard
+                title="Từ khóa tìm kiếm phổ biến"
+                subtitle="Xu hướng người dùng đang tìm kiếm"
+              >
+                {!trackingOverview?.topSearches ||
+                trackingOverview.topSearches.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-[var(--color-text-muted)]">
+                    Chưa có dữ liệu tìm kiếm
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {trackingOverview.topSearches.slice(0, 8).map((s) => (
+                      <span
+                        key={s.query}
+                        className="inline-flex items-center gap-1.5 border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1 text-xs font-medium text-[var(--color-text)]"
+                      >
+                        <span>{s.query}</span>
+                        <span className="border-l border-[var(--color-border)] pl-1.5 text-[10px] font-bold text-[var(--color-text-muted)]">
+                          {s.count}
                         </span>
-                      ))}
-                    </div>
-                  )}
-                </AdminCard>
-              </div>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </AdminCard>
             </div>
           </div>
-        )
+        </div>
       )}
     </div>
   );

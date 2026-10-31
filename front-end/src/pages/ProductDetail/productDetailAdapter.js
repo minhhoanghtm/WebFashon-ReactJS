@@ -1,18 +1,3 @@
-import brownBagImage from "../Home/assets/product-brown-bag.jpg";
-import linenShirtImage from "../Home/assets/product-linen-shirt.jpg";
-import navyBlazerImage from "../Home/assets/product-navy-blazer.jpg";
-import whiteSneakersImage from "../Home/assets/product-white-sneakers.jpg";
-
-const fallbackImages = [
-  linenShirtImage,
-  navyBlazerImage,
-  whiteSneakersImage,
-  brownBagImage,
-];
-
-const fallbackDescription =
-  "Thông tin sản phẩm đang được cập nhật. Thiết kế được chọn lọc để phù hợp với phong cách hiện đại, dễ phối đồ và thoải mái khi sử dụng hằng ngày.";
-
 const firstValue = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
 
@@ -24,7 +9,7 @@ const asArray = (value) => {
   return [];
 };
 
-const getCategory = (product) => {
+const getCategory = (product, categoryMap = {}) => {
   const category = firstValue(
     product.category,
     product.categoryName,
@@ -32,29 +17,38 @@ const getCategory = (product) => {
     product.loaiSP,
     product.danhMuc,
     product.tenDanhMuc,
-    product.category_id,
+    product.category_id
   );
 
-  if (typeof category === "object") {
+  if (typeof category === "object" && category !== null) {
     return firstValue(category.name, category.title, category.tenDanhMuc, "");
   }
 
-  if (!category || objectIdPattern.test(String(category))) return "";
-  return String(category);
+  if (!category) return "";
+  const str = String(category);
+  if (categoryMap[str]) return categoryMap[str];
+  if (objectIdPattern.test(str)) return "";
+  return str;
 };
 
 const getImages = (product, variants = []) => {
   const imageSources = [
+    ...asArray(product.displayProduct),
     ...asArray(product.images),
     ...asArray(product.imageList),
-    ...asArray(product.hinhAnhList),
-    ...asArray(product.displayProduct),
-    firstValue(product.image, product.imageUrl, product.thumbnail, product.hinhAnh, ""),
-    ...variants.map((variant) => variant?.image_url),
-  ];
+    firstValue(
+      product.image,
+      product.imageUrl,
+      product.image_url,
+      product.thumbnail,
+      ""
+    ),
+    ...variants.map((variant) => variant?.image_url || variant?.image),
+  ]
+    .filter((u) => typeof u === "string" && u.trim().length > 0)
+    .map((u) => u.trim());
 
-  const uniqueImages = [...new Set(imageSources.filter(Boolean))];
-  return uniqueImages.length ? uniqueImages : fallbackImages;
+  return [...new Set(imageSources)];
 };
 
 const normalizePrice = (product) =>
@@ -65,89 +59,105 @@ const normalizePrice = (product) =>
       product.gia,
       product.giaSP,
       product.unitPrice,
-      0,
-    ),
+      0
+    )
   ) || 0;
-
-const getStockLabel = (stock) => {
-  if (stock === null || stock === undefined) return "";
-  return Number(stock) > 0 ? "Còn hàng" : "Hết hàng";
-};
 
 export const normalizeProduct = (p, variants = []) => {
   if (!p) return { variants: [], colors: [], sizes: [] };
 
   const productVariants =
-    p.variants ||
-    p.productVariants ||
-    (Array.isArray(variants) ? variants : []);
+    Array.isArray(p.variants) && p.variants.length > 0
+      ? p.variants
+      : Array.isArray(variants)
+      ? variants
+      : [];
 
-  const colors =
-    p.colors ||
-    p.mauSac ||
-    [];
+  const colors = Array.isArray(p.colors)
+    ? p.colors
+    : Array.isArray(p.mauSac)
+    ? p.mauSac
+    : [];
 
-  const sizes =
-    p.sizes ||
-    p.kichThuoc ||
-    [];
+  const sizes = Array.isArray(p.sizes)
+    ? p.sizes
+    : Array.isArray(p.kichThuoc)
+    ? p.kichThuoc
+    : [];
 
   return {
-    variants: Array.isArray(productVariants) ? productVariants : [],
-    colors: Array.isArray(colors) ? colors : [],
-    sizes: Array.isArray(sizes) ? sizes : [],
+    variants: productVariants,
+    colors,
+    sizes,
   };
 };
 
-export const normalizeProductDetail = (product, variants = [], reviews = []) => {
+export const normalizeProductDetail = (
+  product,
+  variants = [],
+  reviews = [],
+  categoryMap = {}
+) => {
   if (!product) return null;
 
   const price = normalizePrice(product);
   const oldPrice =
-    Number(firstValue(product.old_price, product.oldPrice, product.giaCu, 0)) || 0;
-  const stockValue = firstValue(product.stock, product.quantity, product.soLuong, null);
+    Number(firstValue(product.old_price, product.oldPrice, product.giaCu, 0)) ||
+    0;
+  const stockValue = firstValue(
+    product.stock,
+    product.quantity,
+    product.soLuong,
+    null
+  );
   const stock = stockValue === null ? null : Number(stockValue) || 0;
   const reviewCount = Number(
-    firstValue(product.reviewCount, product.totalReview, reviews.length, 0),
+    firstValue(product.reviewCount, product.totalReview, reviews.length, 0)
   );
-  const rating = Number(firstValue(product.rating, product.rate, 0)) || 0;
+  const rawRating = Number(firstValue(product.rating, product.rate, 0)) || 0;
   const description = firstValue(
     product.description,
     product.moTa,
     product.ghiChu,
-    fallbackDescription,
+    ""
   );
 
   const normalizedOptions = normalizeProduct(product, variants);
+  const images = getImages(product, normalizedOptions.variants);
 
   return {
+    ...product,
     id: String(firstValue(product.id, product._id, product.productId, "")),
-    sku: firstValue(product.sku, product.code, product.maSP, product.maSanPham, ""),
+    _id: product._id || product.id,
+    sku: firstValue(
+      product.sku,
+      product.code,
+      product.maSP,
+      product.maSanPham,
+      ""
+    ),
     slug: firstValue(product.slug, product.productSlug, ""),
     name: firstValue(
       product.name,
       product.productName,
       product.tenSP,
       product.title,
-      "Sản phẩm chưa có tên",
+      "Thiết kế chưa đặt tên"
     ),
     price,
     oldPrice,
-    images: getImages(product, variants),
-    category: getCategory(product),
+    images,
+    displayProduct: images,
+    category: getCategory(product, categoryMap),
+    category_id: String(product.category_id?._id || product.category_id || ""),
     description,
-    shortDescription:
-      description.length > 190 ? `${description.slice(0, 190).trim()}...` : description,
-    rating: Math.min(Math.max(rating, 0), 5),
+    rating:
+      Number.isFinite(rawRating) && rawRating > 0
+        ? Math.min(Math.max(rawRating, 0), 5)
+        : 0,
     reviewCount,
     stock,
-    stockLabel: getStockLabel(stock),
     isSoldOut: stock !== null && stock <= 0,
-    badge: firstValue(
-      product.badge,
-      product.tag,
-      oldPrice > price && price > 0 ? `-${Math.round(((oldPrice - price) / oldPrice) * 100)}%` : "",
-    ),
     variants: normalizedOptions.variants,
     colors: normalizedOptions.colors,
     sizes: normalizedOptions.sizes,
@@ -161,7 +171,7 @@ export const normalizeReviews = (reviews = []) =>
       review.user_id?.name,
       review.author,
       review.name,
-      "Khách hàng",
+      "Khách hàng"
     );
     const date = review.createdAt || review.date;
 
@@ -172,19 +182,14 @@ export const normalizeReviews = (reviews = []) =>
       rating: Number(firstValue(review.rating, review.rate, 5)) || 5,
       content: firstValue(
         review.content?.text,
-        review.content,
+        typeof review.content === "string" ? review.content : "",
         review.comment,
-        "Sản phẩm đúng mô tả và chất lượng tốt.",
+        ""
       ),
       images: Array.isArray(review.content?.images)
         ? review.content.images
         : Array.isArray(review.images)
         ? review.images
-        : [],
-      videos: Array.isArray(review.content?.videos)
-        ? review.content.videos
-        : Array.isArray(review.videos)
-        ? review.videos
         : [],
       date: date
         ? new Date(date).toLocaleDateString("vi-VN", {
@@ -192,28 +197,45 @@ export const normalizeReviews = (reviews = []) =>
             month: "long",
             year: "numeric",
           })
-        : "Đang cập nhật",
+        : "",
     };
   });
 
-export const normalizeRelatedProduct = (product = {}, index = 0) => {
+export const normalizeRelatedProduct = (
+  product = {},
+  index = 0,
+  categoryMap = {}
+) => {
   const price = normalizePrice(product);
+  const oldPrice =
+    Number(firstValue(product.old_price, product.oldPrice, product.giaCu, 0)) ||
+    0;
   const images = getImages(product, product.variants || []);
-  const rating = Number(firstValue(product.rating, product.rate, 0)) || 0;
+  const rawRating = Number(firstValue(product.rating, product.rate, 0)) || 0;
+  const resolvedId = String(
+    firstValue(product.id, product._id, `related-${index}`)
+  );
 
   return {
-    id: String(firstValue(product.id, product._id, `related-${index}`)),
+    ...product,
+    id: resolvedId,
+    _id: product._id || resolvedId,
     slug: firstValue(product.slug, product.productSlug, ""),
     name: firstValue(
       product.name,
       product.productName,
       product.tenSP,
       product.title,
-      "Sản phẩm chưa có tên",
+      "Thiết kế chưa đặt tên"
     ),
     price,
-    image: firstValue(product.image, product.imageUrl, product.thumbnail, images[0]),
-    category: getCategory(product) || "Thời trang",
-    rating: Math.min(Math.max(rating, 0), 5),
+    oldPrice,
+    image: images[0] || "",
+    displayProduct: images,
+    category: getCategory(product, categoryMap),
+    rating:
+      Number.isFinite(rawRating) && rawRating > 0
+        ? Math.min(Math.max(rawRating, 0), 5)
+        : 0,
   };
 };

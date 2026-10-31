@@ -1,94 +1,97 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-/**
- * Standard Pagination component for Admin Data Tables
- */
-export const AdminPagination = ({
-  page = 1,
-  limit = 10,
-  total = 0,
+export function AdminPagination({
+  currentPage = 1,
   totalPages = 1,
+  totalItems = 0,
+  pageSize = 10,
   onPageChange,
-  className = '',
-}) => {
-  if (total === 0 && totalPages <= 1) return null;
+}) {
+  if (totalPages <= 1 && totalItems <= pageSize) return null;
 
-  const startRecord = Math.min((page - 1) * limit + 1, total);
-  const endRecord = Math.min(page * limit, total);
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
 
-  // Generate page numbers
-  const getPageNumbers = () => {
+  const getPages = () => {
     const pages = [];
-    const maxVisiblePages = 5;
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
 
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      let start = Math.max(1, page - 2);
-      let end = Math.min(totalPages, page + 2);
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
 
-      if (page <= 3) {
-        start = 1;
-        end = maxVisiblePages;
-      } else if (page >= totalPages - 2) {
-        start = totalPages - maxVisiblePages + 1;
-        end = totalPages;
-      }
-
-      for (let i = start; i <= end; i++) pages.push(i);
+    for (let i = start; i <= end; i += 1) {
+      pages.push(i);
     }
     return pages;
   };
 
   return (
-    <div
-      className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 text-xs text-slate-500 dark:text-slate-400 font-medium ${className}`}
-    >
-      <div>
-        Hiển thị <span className="font-semibold text-slate-700 dark:text-slate-200">{startRecord}</span> –{' '}
-        <span className="font-semibold text-slate-700 dark:text-slate-200">{endRecord}</span> trên tổng số{' '}
-        <span className="font-semibold text-slate-700 dark:text-slate-200">{total}</span> bản ghi
+    <div className="flex flex-col items-center justify-between gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3.5 sm:flex-row">
+      <div className="text-xs text-[var(--color-text-muted)]">
+        Hiển thị{" "}
+        <span className="font-semibold text-[var(--color-text)]">
+          {startItem}
+        </span>
+        –
+        <span className="font-semibold text-[var(--color-text)]">
+          {endItem}
+        </span>{" "}
+        trên tổng{" "}
+        <span className="font-semibold text-[var(--color-text)]">
+          {totalItems}
+        </span>{" "}
+        mục
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <nav
+        aria-label="Phân trang bảng dữ liệu"
+        className="flex items-center gap-1.5"
+      >
         <button
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1}
+          type="button"
+          disabled={currentPage <= 1}
+          onClick={() => onPageChange(currentPage - 1)}
           aria-label="Trang trước"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+          className="touch-target inline-flex items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
 
-        {getPageNumbers().map((num) => {
-          const isActive = num === page;
+        {getPages().map((page) => {
+          const active = page === currentPage;
           return (
             <button
-              key={num}
-              onClick={() => onPageChange(num)}
-              className={`flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-xs font-semibold transition cursor-pointer ${
-                isActive
-                  ? 'bg-[#05251C] text-white dark:bg-[#F5DD20] dark:text-[#05251C] shadow-xs font-bold'
-                  : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+              key={page}
+              type="button"
+              onClick={() => onPageChange(page)}
+              aria-current={active ? "page" : undefined}
+              className={`touch-target inline-flex items-center justify-center border px-3.5 text-xs font-semibold transition-colors ${
+                active
+                  ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+                  : "border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] hover:border-[var(--color-text)]"
               }`}
             >
-              {num}
+              {page}
             </button>
           );
         })}
 
         <button
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages}
-          aria-label="Trang sau"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+          type="button"
+          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+          aria-label="Trang tiếp theo"
+          className="touch-target inline-flex items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
-      </div>
+      </nav>
     </div>
   );
-};
+}
 
 export default AdminPagination;

@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../store/auth.store";
-import { useCartStore } from "../../store/cart.store";
+import { toast } from "react-toastify";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
+import { useAuthStore } from "@/store/auth.store";
+import { useCartStore } from "@/store/cart.store";
 import { getCartService } from "@/services/cart.service";
 import {
   getCartItemsService,
@@ -11,54 +15,65 @@ import {
 } from "@/services/cartItem.service";
 import { validateVoucherService } from "@/services/voucher.service";
 import trackingService from "@/services/tracking.service";
-import { toast } from "react-toastify";
-import { AlertCircle, CheckCircle, Trash2, X } from "lucide-react";
 
-// Sub-components
-import CartItem from "../../components/cart/CartItem";
-import CartSummary from "../../components/cart/CartSummary";
-import CouponSection from "../../components/cart/CouponSection";
-import EmptyCart from "../../components/cart/EmptyCart";
-import CartSkeleton from "../../components/cart/CartSkeleton";
-import RecommendedProducts from "../../components/cart/RecommendedProducts";
+import CartItem from "@/components/cart/CartItem";
+import CartSummary from "@/components/cart/CartSummary";
+import CouponSection from "@/components/cart/CouponSection";
+import EmptyCart from "@/components/cart/EmptyCart";
+import CartSkeleton from "@/components/cart/CartSkeleton";
+import RecommendedProducts from "@/components/cart/RecommendedProducts";
 
-// Normalizes backend CartItem schema structures to client-compatible store formats
-const normalizeCartItems = (backendItems) => {
+const normalizeImageUrl = (url) => {
+  if (!url || typeof url !== "string") return "";
+  if (url.includes("example.com")) return "";
+  if (url.includes("webfashon-reactjs.onrender.com")) {
+    return url.replace(
+      /https?:\/\/webfashon-reactjs\.onrender\.com/,
+      "http://localhost:5000"
+    );
+  }
+  return url;
+};
+
+const normalizeCartItems = (backendItems = []) => {
+  if (!Array.isArray(backendItems)) return [];
   return backendItems.map((item) => {
-    if (item.name) return item; // Already mapped
+    if (item.name && item.new_price !== undefined) return item;
 
     const product = item.product_id || {};
     const variant = item.variant_id || {};
 
-    const displayImage = Array.isArray(product.displayProduct)
-      ? product.displayProduct.find(Boolean)
-      : product.displayProduct;
-
-    const normalizeImageUrl = (url) => {
-      if (!url) return "";
-      if (url.includes("example.com")) return "";
-      if (url.includes("webfashon-reactjs.onrender.com")) {
-        const localOrigin = "http://localhost:5000";
-        return url.replace(/https?:\/\/webfashon-reactjs\.onrender\.com/, localOrigin);
-      }
-      return url;
-    };
+    const rawImages = Array.isArray(product.displayProduct)
+      ? product.displayProduct.map(normalizeImageUrl).filter(Boolean)
+      : product.displayProduct
+      ? [normalizeImageUrl(product.displayProduct)].filter(Boolean)
+      : [];
 
     const variantImage = normalizeImageUrl(variant.image_url);
-    const productImage = normalizeImageUrl(displayImage || product.image || product.imageUrl || product.image_url || "");
+    const productImage = normalizeImageUrl(
+      rawImages[0] ||
+        product.image ||
+        product.imageUrl ||
+        product.image_url ||
+        ""
+    );
 
     return {
-      _id: item._id, // cartItem ID
+      _id: item._id,
       product_id: product._id || product.id,
-      name: product.name || "Sản phẩm thời trang",
-      category: product.category_id?.name || "Quần áo",
+      slug: product.slug || product._id || product.id,
+      name: product.name || "Thiết kế thời trang",
+      category: product.category_id?.name || "Bộ sưu tập",
       image: variantImage || productImage || "",
-      productImage: productImage,
-      new_price: product.new_price || item.price || 0,
-      old_price: product.old_price || 0,
-      price: item.price || product.new_price || 0,
-      quantity: item.quantity || 1,
+      productImage,
+      images: [variantImage, ...rawImages, productImage].filter(Boolean),
+      new_price: Number(product.new_price ?? item.price ?? 0),
+      old_price: Number(product.old_price ?? 0),
+      price: Number(item.price ?? product.new_price ?? 0),
+      quantity: Number(item.quantity || 1),
       stock: variant.stock ?? product.stock ?? 99,
+      campaign: item.campaign || product.campaign || null,
+      price_changed: Boolean(item.price_changed),
       variants: variant._id
         ? [
             {
@@ -74,13 +89,36 @@ const normalizeCartItems = (backendItems) => {
   });
 };
 
+const extractCartId = (cartRes) => {
+  if (!cartRes || !cartRes.success) return null;
+  const data = cartRes.data;
+  if (Array.isArray(data)) return data[0]?._id || null;
+  return data?._id || null;
+};
+
 const Cart = () => {
   const navigate = useNavigate();
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "WEBFASHION";
+  useDocumentTitle(`Giỏ hàng — ${siteName}`);
+
   const { isAuthenticated: isLoggedIn, user } = useAuthStore();
   const { items, setCartItems } = useCartStore();
 
   const [loading, setLoading] = useState(false);
+  const [updatingItemId, setUpdatingItemId] = useState(null);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
+
+  // Voucher states
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [appliedShippingCoupon, setAppliedShippingCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+  // Delete modal states
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDeleteId, setItemToDeleteId] = useState(null);
 
   useEffect(() => {
     const role = user?.role || user?.data?.role || "";
@@ -89,20 +127,10 @@ const Cart = () => {
       navigate("/");
     }
   }, [user, navigate]);
-  
-  // Voucher / Coupon states
-  const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [appliedShippingCoupon, setAppliedShippingCoupon] = useState(null);
-  const [couponError, setCouponError] = useState("");
-  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
-  // Deletion modal state
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [itemToDeleteId, setItemToDeleteId] = useState(null);
-
-  // Fetch cart details from backend database on mount
+  // Fetch cart details from backend on mount
   useEffect(() => {
+    let isMounted = true;
     const fetchCartData = async () => {
       if (!isLoggedIn) {
         setCartItems([]);
@@ -112,92 +140,107 @@ const Cart = () => {
       try {
         setLoading(true);
         const cartRes = await getCartService();
-        const cartData = cartRes.data;
-        if (cartRes.success && cartData && cartData._id) {
-          const cartId = cartData._id;
+        const cartId = extractCartId(cartRes);
+        if (cartId) {
           const itemsRes = await getCartItemsService(cartId);
-          const normalized = normalizeCartItems(itemsRes.data || []);
-          
+          const normalized = normalizeCartItems(itemsRes?.data || []);
+          if (!isMounted) return;
           setCartItems(normalized);
-          // By default, select all valid/in-stock items
           setSelectedItemIds(
-            normalized.filter((i) => (i.stock ?? 1) > 0).map((i) => i._id)
+            normalized
+              .filter((i) => Number(i.stock ?? 1) > 0)
+              .map((i) => i._id)
           );
-        } else {
+        } else if (isMounted) {
           setCartItems([]);
           setSelectedItemIds([]);
         }
       } catch (err) {
         console.error("Lỗi khi tải dữ liệu giỏ hàng:", err);
-        setCartItems([]);
-        setSelectedItemIds([]);
+        if (isMounted) {
+          setCartItems([]);
+          setSelectedItemIds([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchCartData();
+    return () => {
+      isMounted = false;
+    };
   }, [isLoggedIn, setCartItems]);
 
-  // Derived check/selection state
-  const checkedItems = items.filter((item) => selectedItemIds.includes(item._id));
+  const checkedItems = items.filter((item) =>
+    selectedItemIds.includes(item._id)
+  );
   const selectedCount = checkedItems.length;
 
-  // Dynamically calculate subtotal fromchecked items
   const subtotal = checkedItems.reduce(
-    (sum, item) => sum + item.new_price * item.quantity,
+    (sum, item) => sum + Number(item.new_price || 0) * Number(item.quantity || 1),
     0
   );
 
-  // Dynamic Shipping Fee (Standard fee is 30,000đ, free if subtotal >= 1,000,000đ)
   const shippingFee = subtotal >= 1000000 || subtotal === 0 ? 0 : 30000;
 
-  // Validate coupon automatically against subtotal when checked items or quantities change
+  const outOfStockItems = items.filter((i) => Number(i.stock ?? 1) <= 0);
+  const hasStockIssue = checkedItems.some(
+    (i) =>
+      Number(i.stock ?? 99) <= 0 ||
+      Number(i.quantity || 1) > Number(i.stock ?? 99)
+  );
+
+  // Revalidate applied vouchers when subtotal changes
   useEffect(() => {
-    if (subtotal === 0) {
-      setAppliedCoupon(null);
-      setAppliedShippingCoupon(null);
-      return;
-    }
+    if (subtotal === 0) return;
 
     if (appliedCoupon) {
-      const revalidateCoupon = async () => {
-        try {
-          const res = await validateVoucherService(appliedCoupon.code, subtotal, checkedItems, shippingFee);
-          if (res.success && res.data) {
+      validateVoucherService(
+        appliedCoupon.code,
+        subtotal,
+        checkedItems,
+        shippingFee
+      )
+        .then((res) => {
+          if (res?.success && res?.data) {
             setAppliedCoupon(res.data);
             setCouponError("");
           } else {
             setAppliedCoupon(null);
-            setCouponError("Mã giảm giá sản phẩm không khả dụng cho giá trị đơn hàng này");
-            toast.warn("Mã giảm giá sản phẩm đã bị gỡ bỏ do thay đổi giá trị đơn hàng.");
+            setCouponError(
+              "Mã giảm giá sản phẩm không còn đủ điều kiện với giá trị đơn hiện tại."
+            );
+            toast.warn(
+              "Mã giảm giá sản phẩm đã được gỡ do thay đổi giá trị đơn hàng."
+            );
           }
-        } catch {
-          setAppliedCoupon(null);
-        }
-      };
-      revalidateCoupon();
+        })
+        .catch(() => setAppliedCoupon(null));
     }
 
     if (appliedShippingCoupon) {
-      const revalidateShippingCoupon = async () => {
-        try {
-          const res = await validateVoucherService(appliedShippingCoupon.code, subtotal, checkedItems, shippingFee);
-          if (res.success && res.data) {
+      validateVoucherService(
+        appliedShippingCoupon.code,
+        subtotal,
+        checkedItems,
+        shippingFee
+      )
+        .then((res) => {
+          if (res?.success && res?.data) {
             setAppliedShippingCoupon(res.data);
           } else {
             setAppliedShippingCoupon(null);
-            toast.warn("Mã miễn phí vận chuyển đã bị gỡ bỏ do thay đổi giá trị đơn hàng.");
+            toast.warn(
+              "Mã miễn phí vận chuyển đã được gỡ do thay đổi giá trị đơn hàng."
+            );
           }
-        } catch {
-          setAppliedShippingCoupon(null);
-        }
-      };
-      revalidateShippingCoupon();
+        })
+        .catch(() => setAppliedShippingCoupon(null));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subtotal]);
 
-  // Checklist Selection Handlers
   const handleToggleSelect = (id) => {
     setSelectedItemIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -205,41 +248,41 @@ const Cart = () => {
   };
 
   const handleToggleSelectAll = () => {
-    const inStockItems = items.filter((i) => (i.stock ?? 1) > 0);
-    if (selectedItemIds.length === inStockItems.length) {
-      setSelectedItemIds([]); // Uncheck all
+    const inStockItems = items.filter((i) => Number(i.stock ?? 1) > 0);
+    if (
+      inStockItems.length > 0 &&
+      selectedItemIds.length === inStockItems.length
+    ) {
+      setSelectedItemIds([]);
     } else {
-      setSelectedItemIds(inStockItems.map((i) => i._id)); // Check all
+      setSelectedItemIds(inStockItems.map((i) => i._id));
     }
   };
 
-  // Quantity updates handler synced with backend
   const handleQuantityChange = async (itemId, newQty) => {
     const item = items.find((i) => i._id === itemId);
-    if (!item) return;
+    if (!item || newQty < 1) return;
 
-    if (newQty < 1) return;
-    if (item.stock !== undefined && newQty > item.stock) {
-      toast.error(`Chỉ còn tối đa ${item.stock} sản phẩm trong kho`);
+    if (item.stock !== undefined && newQty > Number(item.stock)) {
+      toast.error(`Kho chỉ còn tối đa ${item.stock} sản phẩm.`);
       return;
     }
 
     const oldQty = item.quantity;
+    setUpdatingItemId(itemId);
 
     try {
       const res = await updateCartItemService(itemId, { quantity: newQty });
-      if (res.success && res.data) {
+      if (res?.success && res?.data) {
         const normalized = normalizeCartItems(res.data);
         setCartItems(normalized);
 
-        // Ghi nhận sự kiện thay đổi số lượng giỏ hàng
         trackingService.trackCartQuantityChange(
           { id: item.product_id, _id: item.product_id, price: item.price },
           oldQty,
           newQty
         );
-        
-        // Notify other elements (like headers)
+
         window.dispatchEvent(
           new CustomEvent("cartUpdated", {
             detail: {
@@ -251,10 +294,11 @@ const Cart = () => {
     } catch (err) {
       console.error("Lỗi cập nhật số lượng:", err);
       toast.error("Cập nhật số lượng thất bại!");
+    } finally {
+      setUpdatingItemId(null);
     }
   };
 
-  // Remove / Delete handlers
   const handleOpenDeleteModal = (id) => {
     setItemToDeleteId(id);
     setDeleteModalOpen(true);
@@ -262,26 +306,29 @@ const Cart = () => {
 
   const handleConfirmDelete = async () => {
     if (!itemToDeleteId) return;
-
     const targetItem = items.find((i) => i._id === itemToDeleteId);
 
     try {
       const res = await deleteCartItemService(itemToDeleteId);
-      if (res.success && res.data) {
+      if (res?.success && res?.data) {
         const normalized = normalizeCartItems(res.data);
         setCartItems(normalized);
-        setSelectedItemIds((prev) => prev.filter((id) => id !== itemToDeleteId));
-        toast.success("Đã xóa sản phẩm khỏi giỏ hàng!");
+        setSelectedItemIds((prev) =>
+          prev.filter((id) => id !== itemToDeleteId)
+        );
+        toast.success("Đã xóa sản phẩm khỏi giỏ hàng.");
 
-        // Ghi nhận sự kiện xóa sản phẩm khỏi giỏ hàng
         if (targetItem) {
           trackingService.trackRemoveFromCart(
-            { id: targetItem.product_id, _id: targetItem.product_id, price: targetItem.price },
+            {
+              id: targetItem.product_id,
+              _id: targetItem.product_id,
+              price: targetItem.price,
+            },
             targetItem.quantity
           );
         }
 
-        // Notify headers
         window.dispatchEvent(
           new CustomEvent("cartUpdated", {
             detail: {
@@ -299,20 +346,31 @@ const Cart = () => {
     }
   };
 
-  // Apply Coupon code
   const handleApplyCoupon = async (code) => {
     const uppercaseCode = code.trim().toUpperCase();
-    if (appliedCoupon?.code === uppercaseCode || appliedShippingCoupon?.code === uppercaseCode) {
-      setCouponError("Mã giảm giá này đã được áp dụng");
+    if (
+      appliedCoupon?.code === uppercaseCode ||
+      appliedShippingCoupon?.code === uppercaseCode
+    ) {
+      setCouponError("Mã giảm giá này đã được áp dụng.");
       return;
     }
 
     setIsValidatingCoupon(true);
     setCouponError("");
     try {
-      const res = await validateVoucherService(uppercaseCode, subtotal, checkedItems, shippingFee);
-      if (res.success && res.data) {
-        const isShipping = res.data.voucherType === "shipping" || uppercaseCode.includes("SHIP") || res.data.name?.toLowerCase().includes("vận chuyển") || res.data.name?.toLowerCase().includes("ship");
+      const res = await validateVoucherService(
+        uppercaseCode,
+        subtotal,
+        checkedItems,
+        shippingFee
+      );
+      if (res?.success && res?.data) {
+        const isShipping =
+          res.data.voucherType === "shipping" ||
+          uppercaseCode.includes("SHIP") ||
+          res.data.name?.toLowerCase().includes("vận chuyển") ||
+          res.data.name?.toLowerCase().includes("ship");
         if (isShipping) {
           setAppliedShippingCoupon(res.data);
           toast.success("Áp dụng mã miễn phí vận chuyển thành công!");
@@ -322,10 +380,12 @@ const Cart = () => {
         }
         setCouponCode("");
       } else {
-        setCouponError(res.message || "Mã giảm giá không hợp lệ");
+        setCouponError(res?.message || "Mã giảm giá không hợp lệ.");
       }
     } catch (err) {
-      setCouponError(err.response?.data?.message || "Mã giảm giá không hợp lệ");
+      setCouponError(
+        err.response?.data?.message || "Mã giảm giá không hợp lệ."
+      );
     } finally {
       setIsValidatingCoupon(false);
     }
@@ -335,35 +395,56 @@ const Cart = () => {
     setAppliedCoupon(null);
     setCouponCode("");
     setCouponError("");
-    toast.info("Đã hủy áp dụng mã giảm giá sản phẩm");
+    toast.info("Đã hủy áp dụng mã giảm giá sản phẩm.");
   };
 
   const handleCancelShippingCoupon = () => {
     setAppliedShippingCoupon(null);
     setCouponCode("");
     setCouponError("");
-    toast.info("Đã hủy áp dụng mã miễn phí vận chuyển");
+    toast.info("Đã hủy áp dụng mã miễn phí vận chuyển.");
   };
 
-  // Checkout redirect handler
+  const activeCoupon = subtotal > 0 ? appliedCoupon : null;
+  const activeShippingCoupon = subtotal > 0 ? appliedShippingCoupon : null;
+
+  const discountAmount =
+    activeCoupon?.discountAmount || activeCoupon?.discount_amount || 0;
+  const shippingDiscount =
+    activeShippingCoupon?.discountAmount ||
+    activeShippingCoupon?.discount_amount ||
+    0;
+  const actualShippingDiscount = Math.min(shippingFee, shippingDiscount);
+  const finalShippingFee = Math.max(0, shippingFee - actualShippingDiscount);
+  const totalDiscount = discountAmount + actualShippingDiscount;
+  const grandTotal = Math.max(0, subtotal - discountAmount + finalShippingFee);
+
   const handleCheckout = () => {
     if (selectedCount === 0) return;
+    if (hasStockIssue) {
+      toast.error(
+        "Vui lòng điều chỉnh số lượng hoặc bỏ chọn sản phẩm hết hàng."
+      );
+      return;
+    }
 
-    // Ghi nhận sự kiện checkout_started
-    trackingService.trackCheckoutStarted(checkedItems, finalTotal);
-    
-    // Pass checked items and applied vouchers to Checkout state
+    trackingService.trackCheckoutStarted(checkedItems, grandTotal);
+
     navigate("/checkout", {
       state: {
         checkoutItems: checkedItems,
-        appliedCoupon,
-        appliedShippingCoupon
-      }
+        appliedCoupon: activeCoupon,
+        appliedShippingCoupon: activeShippingCoupon,
+      },
     });
   };
 
-  // Add Recommended product to Cart
   const handleAddRecommendedToCart = async (product) => {
+    if (!isLoggedIn) {
+      toast.info("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
+      navigate("/login");
+      return;
+    }
     try {
       const payload = {
         product_id: product._id || product.id,
@@ -373,31 +454,31 @@ const Cart = () => {
       };
 
       const res = await addCartItemService(payload);
-      if (res.success) {
-        // Fetch cart items again to populate the store correctly
+      if (res?.success) {
         const cartRes = await getCartService();
-        if (cartRes.success && cartRes.data?.length > 0) {
-          const cartId = cartRes.data[0]._id;
+        const cartId = extractCartId(cartRes);
+        if (cartId) {
           const itemsRes = await getCartItemsService(cartId);
-          const normalized = normalizeCartItems(itemsRes.data || []);
+          const normalized = normalizeCartItems(itemsRes?.data || []);
           setCartItems(normalized);
-          
-          // Add newly added item to checked selection
-          const addedItem = normalized.find((i) => i.product_id === payload.product_id);
+
+          const addedItem = normalized.find(
+            (i) => String(i.product_id) === String(payload.product_id)
+          );
           if (addedItem && !selectedItemIds.includes(addedItem._id)) {
             setSelectedItemIds((prev) => [...prev, addedItem._id]);
           }
 
           toast.success(`Đã thêm "${product.name}" vào giỏ hàng!`);
-          
-          // Ghi nhận sự kiện add_to_cart khi thêm thành công vào giỏ hàng
           trackingService.trackAddToCart(product, 1);
-          
-          // Notify headers
+
           window.dispatchEvent(
             new CustomEvent("cartUpdated", {
               detail: {
-                totalQuantity: normalized.reduce((sum, i) => sum + i.quantity, 0),
+                totalQuantity: normalized.reduce(
+                  (sum, i) => sum + i.quantity,
+                  0
+                ),
               },
             })
           );
@@ -409,147 +490,183 @@ const Cart = () => {
     }
   };
 
-  const discountAmount = appliedCoupon?.discountAmount || appliedCoupon?.discount_amount || 0;
-  const shippingDiscount = appliedShippingCoupon?.discountAmount || appliedShippingCoupon?.discount_amount || 0;
-  const actualShippingDiscount = Math.min(shippingFee, shippingDiscount);
-  const finalShippingFee = Math.max(0, shippingFee - actualShippingDiscount);
-  const totalDiscount = discountAmount + actualShippingDiscount;
-  const grandTotal = Math.max(0, subtotal - discountAmount + finalShippingFee);
-
   if (loading) {
-    return <CartSkeleton />;
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <CartSkeleton />
+      </div>
+    );
   }
 
+  const inStockItemsCount = items.filter(
+    (i) => Number(i.stock ?? 1) > 0
+  ).length;
+
   return (
-    <div className="min-h-screen bg-[#FBF9F5] py-8 select-none">
-      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Header breadcrumbs */}
-        <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#6B716E] border-b border-[#05251C]/10 pb-4">
-          <Link to="/" className="hover:text-[#05251C] transition">404STUDIO</Link>
-          <span>/</span>
-          <span className="text-[#05251C] font-black">YOUR BAG</span>
+    <div className="min-h-screen bg-background py-8 text-foreground sm:py-12">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
+        {/* Breadcrumb & Page Header */}
+        <div className="mb-8 border-b border-border pb-6">
+          <nav
+            aria-label="Breadcrumb"
+            className="mb-3 flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-muted-foreground"
+          >
+            <Link to="/" className="hover:text-foreground">
+              {siteName}
+            </Link>
+            <span>/</span>
+            <span className="font-semibold text-foreground">Giỏ hàng</span>
+          </nav>
+
+          <div className="flex flex-wrap items-baseline justify-between gap-4">
+            <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-5xl">
+              Giỏ hàng của bạn
+            </h1>
+            <span className="border border-border bg-card px-3.5 py-1 text-xs font-medium tabular-nums tracking-[0.16em] uppercase text-foreground">
+              {items.length} thiết kế
+            </span>
+          </div>
         </div>
 
-        <div className="text-left flex items-baseline justify-between">
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-[#05251C] flex items-baseline gap-3 font-display uppercase leading-[0.95]">
-            <span>YOUR BAG.</span>
-            <span className="text-xs font-bold text-[#05251C] bg-[#F5DD20] px-3 py-1 rounded-full tabular-nums">
-              {items.length} món
-            </span>
-          </h1>
-        </div>
+        {/* Out-of-stock global banner if any cart items are out of stock */}
+        {outOfStockItems.length > 0 && (
+          <div
+            role="alert"
+            className="mb-6 flex items-start gap-3 border border-destructive/50 bg-destructive/10 p-4 text-xs text-destructive"
+          >
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold uppercase tracking-[0.14em]">
+                Thông báo tồn kho
+              </p>
+              <p className="mt-1">
+                Có {outOfStockItems.length} thiết kế trong giỏ hàng hiện đã hết
+                hàng và đã được tự động bỏ chọn khi thanh toán.
+              </p>
+            </div>
+          </div>
+        )}
 
         {items.length === 0 ? (
-          <EmptyCart />
+          <EmptyCart isLoggedIn={isLoggedIn} />
         ) : (
-          <div className="grid lg:grid-cols-12 lg:gap-x-10 items-start mt-6 gap-y-8">
-            {/* Left Column: Selection controls + Cart items list */}
-            <div className="lg:col-span-8 space-y-4">
-              {/* Checked selection header panel */}
-              <div className="flex items-center justify-between bg-white border border-[#E8E5DF] rounded-2xl p-4 text-xs font-semibold text-neutral-700 shadow-2xs">
-                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-10">
+            {/* Left Column: Selection Bar + Cart Items */}
+            <div className="space-y-4 lg:col-span-8">
+              <div className="flex items-center justify-between border border-border bg-card px-4 py-3 text-xs">
+                <label className="touch-target -my-2 inline-flex cursor-pointer items-center gap-3 select-none">
                   <input
                     type="checkbox"
                     checked={
-                      items.filter((i) => (i.stock ?? 1) > 0).length > 0 &&
-                      selectedItemIds.length === items.filter((i) => (i.stock ?? 1) > 0).length
+                      inStockItemsCount > 0 &&
+                      selectedItemIds.length === inStockItemsCount
                     }
                     onChange={handleToggleSelectAll}
-                    className="h-4.5 w-4.5 rounded border-neutral-300 accent-[#05251C] cursor-pointer"
+                    className="h-4 w-4 cursor-pointer border-border accent-foreground"
                   />
-                  <span>Chọn tất cả ({items.length} sản phẩm)</span>
+                  <span className="font-medium tracking-[0.12em] uppercase text-foreground">
+                    Chọn tất cả ({inStockItemsCount} thiết kế khả dụng)
+                  </span>
                 </label>
 
                 {selectedCount > 0 && (
-                  <span className="text-xs font-bold text-[#05251C]">
-                    Đã chọn {selectedCount} sản phẩm
+                  <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                    Đã chọn {selectedCount}
                   </span>
                 )}
               </div>
 
-            {/* List of Cart Items */}
-            <div className="space-y-4">
-              {items.map((item) => (
-                <CartItem
-                  key={item._id}
-                  item={item}
-                  selected={selectedItemIds.includes(item._id)}
-                  onToggleSelect={handleToggleSelect}
-                  onQuantityChange={handleQuantityChange}
-                  onRemove={handleOpenDeleteModal}
-                />
-              ))}
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <CartItem
+                    key={item._id}
+                    item={item}
+                    selected={selectedItemIds.includes(item._id)}
+                    onToggleSelect={handleToggleSelect}
+                    onQuantityChange={handleQuantityChange}
+                    onRemove={handleOpenDeleteModal}
+                    isUpdating={updatingItemId === item._id}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column: Voucher + Order Summary */}
+            <div className="space-y-6 lg:col-span-4">
+              <CouponSection
+                couponCode={couponCode}
+                setCouponCode={setCouponCode}
+                appliedCoupon={activeCoupon}
+                appliedShippingCoupon={activeShippingCoupon}
+                onApplyCoupon={handleApplyCoupon}
+                onCancelCoupon={handleCancelCoupon}
+                onCancelShippingCoupon={handleCancelShippingCoupon}
+                couponError={couponError}
+                isValidating={isValidatingCoupon}
+              />
+
+              <CartSummary
+                subtotal={subtotal}
+                discount={totalDiscount}
+                shippingFee={finalShippingFee}
+                total={grandTotal}
+                onCheckout={handleCheckout}
+                isCheckingOut={false}
+                selectedCount={selectedCount}
+                hasStockIssue={hasStockIssue}
+              />
             </div>
           </div>
+        )}
 
-          {/* Right Column: Vouchers & Cart Summary */}
-          <div className="lg:col-span-4 space-y-6">
-            {/* Coupon Application Block */}
-            <CouponSection
-              couponCode={couponCode}
-              setCouponCode={setCouponCode}
-              appliedCoupon={appliedCoupon}
-              appliedShippingCoupon={appliedShippingCoupon}
-              onApplyCoupon={handleApplyCoupon}
-              onCancelCoupon={handleCancelCoupon}
-              onCancelShippingCoupon={handleCancelShippingCoupon}
-              couponError={couponError}
-              isValidating={isValidatingCoupon}
-            />
+        {/* Recommended Products */}
+        <RecommendedProducts onAddToCart={handleAddRecommendedToCart} />
 
-            {/* Sticky Order Summary Card */}
-            <CartSummary
-              subtotal={subtotal}
-              discount={totalDiscount}
-              shippingFee={finalShippingFee}
-              total={grandTotal}
-              onCheckout={handleCheckout}
-              isCheckingOut={false}
-              selectedCount={selectedCount}
-            />
-          </div>
-        </div>
-      )}
+        {/* Delete Confirmation Modal */}
+        {deleteModalOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-cart-item-title"
+          >
+            <div className="w-full max-w-md border border-border bg-card p-6 shadow-2xl space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-destructive/40 bg-destructive/10 text-destructive">
+                  <Trash2 size={18} />
+                </div>
+                <div>
+                  <h3
+                    id="delete-cart-item-title"
+                    className="font-serif text-xl text-foreground"
+                  >
+                    Xác nhận xóa thiết kế
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Thao tác này sẽ gỡ sản phẩm khỏi giỏ hàng của bạn.
+                  </p>
+                </div>
+              </div>
 
-      {/* Recommended products grid */}
-      <RecommendedProducts onAddToCart={handleAddRecommendedToCart} />
-
-      {/* Deletion Confirmation Custom Modal */}
-      {deleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200 text-center">
-            {/* Warning indicator */}
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30">
-              <Trash2 className="h-6 w-6" />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Xác nhận xóa sản phẩm</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng? Hành động này không thể hoàn tác.
-              </p>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => setDeleteModalOpen(false)}
-                className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
-              >
-                Hủy bỏ
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-xl shadow-md transition cursor-pointer"
-              >
-                Xác nhận xóa
-              </button>
+              <div className="flex gap-3 border-t border-border pt-4">
+                <button
+                  type="button"
+                  onClick={() => setDeleteModalOpen(false)}
+                  className="touch-target flex-1 border border-border bg-background text-xs font-semibold tracking-[0.16em] uppercase text-foreground transition-colors hover:bg-secondary"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="touch-target flex-1 bg-destructive text-xs font-semibold tracking-[0.16em] uppercase text-white transition-opacity hover:opacity-90"
+                >
+                  Xác nhận xóa
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );

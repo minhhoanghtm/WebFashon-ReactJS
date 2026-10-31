@@ -1,8 +1,18 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, ShieldCheck, LoaderCircle, RefreshCw, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ShieldCheck,
+  LoaderCircle,
+  RefreshCw,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "react-toastify";
-import { registerService, sendOTPServive, verifyOTPService } from "@/services/auth.service";
+import {
+  registerService,
+  sendOTPServive,
+  verifyOTPService,
+} from "@/services/auth.service";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
@@ -13,19 +23,23 @@ const VerifyOTP = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings } = useWebsiteSettings();
-  const siteName = settings?.general?.siteName || "404Studio";
+  const siteName = settings?.general?.siteName || "WebFashion";
 
   // Lấy formData được truyền từ trang Register qua navigate state
-  const formData = location.state?.formData || {};
+  const formData = useMemo(
+    () => location.state?.formData || {},
+    [location.state?.formData]
+  );
   const email = formData.email || "";
 
-  const [digits, setDigits] = useState(Array(OTP_LENGTH).fill(""));
+  const [digits, setDigits] = useState(() => Array(OTP_LENGTH).fill(""));
   const [error, setError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
-  const [canResend, setCanResend] = useState(false);
+
+  const canResend = countdown <= 0;
 
   useDocumentTitle("Xác minh OTP");
 
@@ -40,14 +54,10 @@ const VerifyOTP = () => {
 
   // Bộ đếm ngược cho nút gửi lại OTP
   useEffect(() => {
-    if (countdown <= 0) {
-      setCanResend(true);
-      return;
-    }
+    if (countdown <= 0) return undefined;
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          setCanResend(true);
           clearInterval(timer);
           return 0;
         }
@@ -55,7 +65,7 @@ const VerifyOTP = () => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [countdown]); // Đã tối ưu thêm dependency để tránh warning nháy số
+  }, [countdown]);
 
   // Focus ô đầu tiên khi mount
   useEffect(() => {
@@ -65,17 +75,70 @@ const VerifyOTP = () => {
   const formatCountdown = (s) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
-    return m > 0
-      ? `${m}:${String(sec).padStart(2, "0")}`
-      : `${sec}s`;
+    return m > 0 ? `${m}:${String(sec).padStart(2, "0")}` : `${sec}s`;
   };
 
   const otp = digits.join("");
-  const isOtpComplete = otp.length === OTP_LENGTH && digits.every((d) => d !== "");
+  const isOtpComplete =
+    otp.length === OTP_LENGTH && digits.every((d) => d !== "");
+
+  // ── Xác minh OTP ────────────────────────────────────────
+  const handleVerify = useCallback(
+    async (explicitOtp) => {
+      const codeToVerify = explicitOtp ?? otp;
+      if (codeToVerify.length !== OTP_LENGTH || isVerifying) return;
+      setError("");
+      setIsVerifying(true);
+
+      try {
+        // Bước 1: Xác minh mã OTP
+        const verifyRes = await verifyOTPService({
+          email,
+          otp: codeToVerify,
+        });
+        if (!verifyRes?.success) {
+          setError(
+            verifyRes?.data?.message ||
+              "Mã OTP không đúng. Vui lòng kiểm tra lại."
+          );
+          setDigits(Array(OTP_LENGTH).fill(""));
+          inputRefs.current[0]?.focus();
+          return;
+        }
+
+        // Bước 2: Đăng ký tài khoản
+        await registerService({
+          email: formData.email,
+          passWord: formData.passWord,
+          lastName: formData.lastName,
+          firstName: formData.firstName,
+          birthday: formData.dateOfBirth,
+          sex: formData.gender,
+        });
+
+        // Bước 3: Hiển thị màn hình thành công rồi chuyển trang
+        setSuccess(true);
+        toast.success(
+          `Tạo tài khoản thành công! Chào mừng bạn đến với ${siteName}`
+        );
+        setTimeout(() => navigate("/login", { replace: true }), 2200);
+      } catch (err) {
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Xác minh thất bại. Vui lòng thử lại.";
+        setError(msg);
+        setDigits(Array(OTP_LENGTH).fill(""));
+        inputRefs.current[0]?.focus();
+      } finally {
+        setIsVerifying(false);
+      }
+    },
+    [otp, isVerifying, email, formData, siteName, navigate]
+  );
 
   // ── Xử lý nhập từng ký tự ──────────────────────────────
   const handleDigitChange = (index, value) => {
-    // Chỉ nhận số
     const cleaned = value.replace(/\D/g, "");
     if (!cleaned) return;
 
@@ -85,16 +148,22 @@ const VerifyOTP = () => {
     setDigits(next);
     setError("");
 
-    // Tự chuyển sang ô tiếp theo
     if (index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
+    }
+
+    if (next.every((d) => d !== "")) {
+      handleVerify(next.join(""));
     }
   };
 
   // ── Paste toàn bộ mã ────────────────────────────────────
   const handlePaste = (e) => {
     e.preventDefault();
-    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LENGTH);
+    const text = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, OTP_LENGTH);
     if (!text) return;
 
     const next = Array(OTP_LENGTH).fill("");
@@ -102,21 +171,22 @@ const VerifyOTP = () => {
     setDigits(next);
     setError("");
 
-    // Focus vào ô cuối cùng được điền hoặc ô tiếp theo
     const focusIndex = Math.min(text.length, OTP_LENGTH - 1);
     inputRefs.current[focusIndex]?.focus();
+
+    if (next.every((d) => d !== "")) {
+      handleVerify(next.join(""));
+    }
   };
 
-  // ── Backspace ────────────────────────────────────────────
+  // ── Backspace / Arrow keys ───────────────────────────────
   const handleKeyDown = (index, e) => {
     if (e.key === "Backspace") {
       if (digits[index]) {
-        // Xóa ký tự tại ô hiện tại
         const next = [...digits];
         next[index] = "";
         setDigits(next);
       } else if (index > 0) {
-        // Xóa ô trước
         const next = [...digits];
         next[index - 1] = "";
         setDigits(next);
@@ -139,7 +209,6 @@ const VerifyOTP = () => {
       toast.success("Mã OTP mới đã được gửi đến email của bạn!");
       setDigits(Array(OTP_LENGTH).fill(""));
       setCountdown(RESEND_COOLDOWN);
-      setCanResend(false);
       inputRefs.current[0]?.focus();
     } catch (err) {
       const msg =
@@ -152,67 +221,21 @@ const VerifyOTP = () => {
     }
   };
 
-  // ── Xác minh OTP ────────────────────────────────────────
-  const handleVerify = useCallback(async () => {
-    if (!isOtpComplete || isVerifying) return;
-    setError("");
-    setIsVerifying(true);
-
-    try {
-      // Bước 1: Xác minh mã OTP
-      const verifyRes = await verifyOTPService({ email, otp });
-      if (!verifyRes?.success) {
-        setError(verifyRes?.data?.message || "Mã OTP không đúng. Vui lòng kiểm tra lại.");
-        setDigits(Array(OTP_LENGTH).fill(""));
-        inputRefs.current[0]?.focus();
-        return;
-      }
-
-      // Bước 2: Đăng ký tài khoản
-      await registerService({
-        email: formData.email,
-        passWord: formData.passWord,
-        lastName: formData.lastName,
-        firstName: formData.firstName,
-        birthday: formData.dateOfBirth,
-        sex: formData.gender,
-      });
-
-      // Bước 3: Hiển thị màn hình thành công rồi chuyển trang
-      setSuccess(true);
-      toast.success(`Tạo tài khoản thành công! Chào mừng bạn đến với ${siteName} 🎉`);
-      setTimeout(() => navigate("/login", { replace: true }), 2200);
-    } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Xác minh thất bại. Vui lòng thử lại.";
-      setError(msg);
-      setDigits(Array(OTP_LENGTH).fill(""));
-      inputRefs.current[0]?.focus();
-    } finally {
-      setIsVerifying(false);
-    }
-  }, [otp, isOtpComplete, isVerifying, email, formData, navigate]);
-
-  // Tự động submit khi nhập đủ 6 chữ số
-  useEffect(() => {
-    if (isOtpComplete) {
-      handleVerify();
-    }
-  }, [isOtpComplete, handleVerify]);
-
-  // ── MÀN HÌNH THÀNH CÔNG (ĐÃ REDESIGN) ──────────────────────────
+  // ── Màn hình thành công ─────────────────────────────────
   if (success) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4 selection:bg-black selection:text-white">
-        <div className="w-full max-w-md bg-white border border-neutral-200 rounded-2xl p-8 md:p-10 text-center shadow-sm">
-          <div className="mx-auto h-14 w-14 bg-neutral-100 rounded-full flex items-center justify-center text-black mb-6 animate-bounce">
-            <CheckCircle2 className="h-7 w-7" />
+      <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] p-8 md:p-10 text-center">
+          <div className="mx-auto h-14 w-14 border border-[var(--color-border)] flex items-center justify-center mb-6">
+            <CheckCircle2 className="h-7 w-7 text-[var(--color-text)]" />
           </div>
-          <h1 className="text-xl font-bold text-neutral-900 tracking-tight mb-2">Tài khoản đã được tạo!</h1>
-          <p className="text-xs text-neutral-500 leading-relaxed">
-            Chào mừng bạn đến với <strong className="text-neutral-900">{siteName}</strong>.<br />
+          <h1 className="font-display text-2xl font-semibold tracking-tight mb-2">
+            Tài khoản đã được tạo
+          </h1>
+          <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
+            Chào mừng bạn đến với{" "}
+            <strong className="text-[var(--color-text)]">{siteName}</strong>.
+            <br />
             Hệ thống đang chuyển hướng bạn sang trang đăng nhập…
           </p>
         </div>
@@ -220,74 +243,71 @@ const VerifyOTP = () => {
     );
   }
 
-  // ── GIAO DIỆN CHÍNH (ĐÃ REDESIGN QUA TAILWIND) ──────────────────
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col justify-center items-center p-4 selection:bg-black selection:text-white">
-      <div className="w-full max-w-md bg-white border border-neutral-200 rounded-2xl p-8 md:p-10 shadow-sm">
-        
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] flex flex-col justify-center items-center p-4 md:p-8">
+      <div className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] p-6 sm:p-10">
         {/* Nút quay lại */}
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-400 hover:text-black transition-colors mb-8 group"
+          className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors mb-6 min-h-[44px]"
         >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Quay lại
         </button>
 
-        {/* Brand Identity Branding */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-black tracking-tighter text-black uppercase mb-1">
-            {siteName.toUpperCase()}
-          </h2>
-          <p className="text-[10px] tracking-wider uppercase text-neutral-400 font-medium">
-            Discover premium fashion tailored to you.
-          </p>
-        </div>
-
-        {/* Icon wrapper */}
-        <div className="flex justify-center mb-6" aria-hidden="true">
-          <div className="h-12 w-12 bg-neutral-50 border border-neutral-100 rounded-xl flex items-center justify-center text-neutral-800">
-            <ShieldCheck className="h-6 w-6 stroke-[1.5]" />
-          </div>
-        </div>
-
-        {/* Tiêu đề đoạn Text giới thiệu */}
+        {/* Brand Identity */}
         <header className="text-center mb-8">
-          <span className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 block mb-1.5">
-            Xác thực tài khoản
-          </span>
-          <h1 className="text-xl font-bold text-neutral-900 tracking-tight">
+          <span className="atelier-eyebrow block mb-2">{siteName}</span>
+          <div
+            className="mx-auto my-4 h-12 w-12 border border-[var(--color-border)] flex items-center justify-center"
+            aria-hidden="true"
+          >
+            <ShieldCheck className="h-5 w-5 stroke-[1.5]" />
+          </div>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight">
             Nhập mã xác minh
           </h1>
-          <p className="text-xs text-neutral-500 mt-2 leading-relaxed max-w-xs mx-auto">
+          <p className="text-xs text-[var(--color-text-muted)] mt-2 leading-relaxed">
             Chúng tôi đã gửi mã OTP gồm {OTP_LENGTH} chữ số đến{" "}
-            <span className="font-semibold text-neutral-900 break-all">{email}</span>.{" "}
-            Mã có hiệu lực trong <span className="font-medium text-neutral-800">10 phút</span>.
+            <span className="font-medium text-[var(--color-text)] break-all">
+              {email}
+            </span>
+            . Mã có hiệu lực trong{" "}
+            <span className="font-medium text-[var(--color-text)]">
+              10 phút
+            </span>
+            .
           </p>
         </header>
 
         {/* Ô nhập mã OTP */}
         <div
-          className="flex justify-center gap-1.5 sm:gap-2.5 my-8"
+          className="flex justify-center gap-2 sm:gap-2.5 my-8"
           role="group"
-          aria-label="Nhập mã OTP"
+          aria-label="Nhập mã OTP gồm 6 chữ số"
         >
           {digits.map((digit, i) => (
             <input
               key={i}
-              ref={(el) => (inputRefs.current[i] = el)}
+              ref={(el) => {
+                inputRefs.current[i] = el;
+              }}
               id={`otp-digit-${i}`}
               type="text"
               inputMode="numeric"
               maxLength={1}
               value={digit}
               placeholder="·"
-              aria-label={`Chữ số thứ ${i + 1}`}
-              className={`flex-1 max-w-[44px] sm:max-w-[56px] aspect-[5/6] text-center text-lg font-bold font-mono rounded-xl border outline-none transition-all shadow-inner 
-                ${digit ? "border-black bg-white text-black ring-1 ring-black" : "border-neutral-200 bg-neutral-50 text-neutral-400 placeholder-neutral-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black"}
-                ${error ? "border-red-500 bg-red-50/30 text-red-600 focus:border-red-500 focus:ring-red-500" : ""}
-              `}
+              aria-label={`Chữ số OTP thứ ${i + 1}`}
+              aria-invalid={Boolean(error)}
+              className={`flex-1 max-w-[48px] min-h-[52px] text-center text-lg font-mono font-semibold border bg-[var(--color-bg)] text-[var(--color-text)] transition-colors focus:outline-none focus:border-[var(--color-text)] ${
+                error
+                  ? "border-[var(--color-danger)] text-[var(--color-danger)]"
+                  : digit
+                  ? "border-[var(--color-text)]"
+                  : "border-[var(--color-border)]"
+              }`}
               onChange={(e) => handleDigitChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
               onPaste={i === 0 ? handlePaste : undefined}
@@ -299,74 +319,85 @@ const VerifyOTP = () => {
         </div>
 
         {/* Thông báo lỗi */}
-        {error && (
-          <div className="mb-6 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-100 flex items-center justify-center text-center" role="alert">
-            {error}
-          </div>
-        )}
+        <div aria-live="polite" aria-atomic="true">
+          {error && (
+            <div
+              role="alert"
+              className="mb-6 p-3 border border-[var(--color-danger)] text-[var(--color-danger)] text-xs font-medium text-center"
+            >
+              {error}
+            </div>
+          )}
+        </div>
 
         {/* Nút xác minh */}
         <button
           type="button"
-          className={`w-full py-3.5 rounded-xl text-xs font-semibold tracking-wide flex items-center justify-center gap-2 transition-all duration-200 
-            ${isOtpComplete && !isVerifying 
-              ? "bg-black text-white hover:bg-neutral-900 active:scale-[0.99] cursor-pointer" 
-              : "bg-neutral-100 text-neutral-400 cursor-not-allowed"}`}
-          onClick={handleVerify}
+          className="w-full min-h-[48px] px-6 py-3 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.16em] font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          onClick={() => handleVerify(otp)}
           disabled={!isOtpComplete || isVerifying}
           aria-busy={isVerifying}
         >
           {isVerifying ? (
             <>
-              <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+              <LoaderCircle
+                className="h-4 w-4 animate-spin"
+                aria-hidden="true"
+              />
               <span>Đang xác minh…</span>
             </>
           ) : (
             <>
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              <span>Xác minh</span>
+              <span>Xác minh tài khoản</span>
             </>
           )}
         </button>
 
         {/* Gửi lại OTP */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-1.5 text-xs">
-          <span className="text-neutral-400">Không nhận được mã?</span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className={`inline-flex items-center gap-1 font-bold transition-colors
-                ${canResend && !isResending ? "text-black hover:underline cursor-pointer" : "text-neutral-400 cursor-not-allowed"}`}
-              onClick={handleResend}
-              disabled={!canResend || isResending}
-            >
-              {isResending ? (
-                <>
-                  <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                  Đang gửi lại…
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-3 w-3" aria-hidden="true" />
-                  Gửi lại mã
-                </>
-              )}
-            </button>
-            {!canResend && (
-              <span className="text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded font-mono text-[11px]">
-                {formatCountdown(countdown)}
-              </span>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span className="text-[var(--color-text-muted)]">
+            Không nhận được mã?
+          </span>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 font-medium min-h-[44px] px-2 text-[var(--color-text)] underline underline-offset-4 disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+            onClick={handleResend}
+            disabled={!canResend || isResending}
+          >
+            {isResending ? (
+              <>
+                <LoaderCircle
+                  className="h-3.5 w-3.5 animate-spin"
+                  aria-hidden="true"
+                />
+                <span>Đang gửi lại…</span>
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Gửi lại mã</span>
+              </>
             )}
-          </div>
+          </button>
+          {!canResend && (
+            <span
+              className="font-mono text-[11px] px-2 py-1 border border-[var(--color-border)] text-[var(--color-text-muted)]"
+              aria-live="off"
+            >
+              {formatCountdown(countdown)}
+            </span>
+          )}
         </div>
 
-        {/* Divider chân trang */}
-        <hr className="my-6 border-t border-dashed border-neutral-100" />
+        <hr className="my-6 border-t border-[var(--color-border)]" />
 
-        {/* Footer */}
-        <p className="text-center text-xs text-neutral-400">
+        <p className="text-center text-xs text-[var(--color-text-muted)]">
           Nhập sai email?{" "}
-          <Link to="/register" className="font-bold text-neutral-800 hover:text-black underline underline-offset-2 ml-1">
+          <Link
+            to="/register"
+            className="font-medium text-[var(--color-text)] underline underline-offset-4 ml-1 inline-flex items-center min-h-[44px]"
+          >
             Đăng ký lại
           </Link>
         </p>

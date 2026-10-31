@@ -2,31 +2,38 @@ import React from "react";
 
 const CartSkeleton = () => {
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 animate-pulse space-y-8">
-      {/* Title skeleton */}
-      <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+    <div
+      className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-10"
+      aria-busy="true"
+      aria-label="Đang tải dữ liệu giỏ hàng"
+    >
+      <div className="mb-8 space-y-3 border-b border-border pb-6">
+        <div className="h-3 w-36 animate-pulse bg-secondary" />
+        <div className="h-10 w-64 animate-pulse bg-secondary" />
+      </div>
 
-      <div className="grid lg:grid-cols-12 lg:gap-x-12 items-start mt-8">
-        {/* Left Column Items */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
-          
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="flex gap-4 p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/40">
-              <div className="h-24 w-24 bg-slate-200 dark:bg-slate-800 rounded-xl shrink-0"></div>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-8">
+          <div className="h-12 w-full animate-pulse border border-border bg-card" />
+          {[0, 1, 2].map((idx) => (
+            <div
+              key={idx}
+              className="flex gap-4 border border-border bg-card p-5"
+            >
+              <div className="aspect-[3/4] w-24 shrink-0 animate-pulse bg-secondary" />
               <div className="flex-1 space-y-3">
-                <div className="h-4 w-1/3 bg-slate-200 dark:bg-slate-800 rounded"></div>
-                <div className="h-3 w-1/4 bg-slate-200 dark:bg-slate-800 rounded"></div>
-                <div className="h-4 w-1/5 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                <div className="h-3 w-1/4 animate-pulse bg-secondary" />
+                <div className="h-5 w-2/3 animate-pulse bg-secondary" />
+                <div className="h-4 w-1/3 animate-pulse bg-secondary" />
+                <div className="h-8 w-32 animate-pulse bg-secondary" />
               </div>
             </div>
           ))}
         </div>
 
-        {/* Right Column Summary */}
-        <div className="lg:col-span-4 mt-8 lg:mt-0 space-y-6">
-          <div className="h-40 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
-          <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+        <div className="space-y-5 lg:col-span-4">
+          <div className="h-36 animate-pulse border border-border bg-card" />
+          <div className="h-72 animate-pulse border border-border bg-card" />
         </div>
       </div>
     </div>

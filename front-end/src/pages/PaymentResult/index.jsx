@@ -2,66 +2,79 @@ import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle2, XCircle, ShoppingBag, ArrowRight } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const PaymentResult = () => {
-  useDocumentTitle("Kết quả thanh toán");
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "WEBFASHION";
+  useDocumentTitle(`Xác nhận đơn hàng — ${siteName}`);
+
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const success = searchParams.get("success") === "true";
+  const success = searchParams.get("success") !== "false";
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-16 bg-[#F7F7F7] select-none">
-      <div className="w-full max-w-md bg-white rounded-3xl border border-[#05251C]/10 p-8 sm:p-10 shadow-xl text-center space-y-6">
+    <div className="flex min-h-[75vh] items-center justify-center bg-background px-4 py-16 text-foreground">
+      <div className="w-full max-w-lg border border-border bg-card p-8 text-center shadow-xs sm:p-12 space-y-6">
         {success ? (
           <>
-            <div className="mx-auto w-16 h-16 bg-[#073D2A]/10 rounded-2xl flex items-center justify-center text-[#073D2A] border border-[#073D2A]/20">
-              <CheckCircle2 size={36} className="stroke-[2.2]" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center border border-foreground bg-secondary text-foreground">
+              <CheckCircle2 size={32} strokeWidth={1.5} />
             </div>
-            <div className="space-y-2">
-              <span className="micro-label text-[#073D2A]">
-                GIAO DỊCH HOÀN TẤT
-              </span>
-              <h2 className="text-3xl font-display font-black text-[#05251C] uppercase tracking-tight">
-                ĐẶT HÀNG THÀNH CÔNG
-              </h2>
-              <p className="text-xs sm:text-sm text-[#6B716E] leading-relaxed">
-                Cảm ơn bạn đã tin tưởng lựa chọn thiết kế của 404Studio. Đơn hàng đã được tiếp nhận và chuẩn bị may đo đóng gói.
+
+            <div className="space-y-2.5">
+              <div className="flex justify-center">
+                <span className="atelier-seal">
+                  {siteName} · ĐƠN HÀNG ĐÃ XÁC NHẬN
+                </span>
+              </div>
+              <h1 className="pt-2 font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
+                Đặt hàng thành công
+              </h1>
+              <p className="mx-auto max-w-md text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                Cảm ơn bạn đã lựa chọn thiết kế của {siteName}. Đơn hàng của bạn
+                đã được ghi nhận vào hệ thống và đang được chuẩn bị đóng gói.
               </p>
             </div>
           </>
         ) : (
           <>
-            <div className="mx-auto w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 border border-rose-200">
-              <XCircle size={36} className="stroke-[2.2]" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center border border-destructive/50 bg-destructive/10 text-destructive">
+              <XCircle size={32} strokeWidth={1.5} />
             </div>
+
             <div className="space-y-2">
-              <span className="micro-label text-rose-700">
-                GIAO DỊCH CHƯA HOÀN TẤT
-              </span>
-              <h2 className="text-3xl font-display font-black text-[#05251C] uppercase tracking-tight">
-                THANH TOÁN THẤT BẠI
-              </h2>
-              <p className="text-xs sm:text-sm text-[#6B716E] leading-relaxed">
-                Giao dịch đã bị gián đoạn hoặc từ chối bởi cổng thanh toán. Bạn có thể kiểm tra danh sách đơn hàng để tiến hành thanh toán lại.
+              <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-destructive">
+                Giao dịch chưa hoàn tất
+              </p>
+              <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
+                Thanh toán thất bại
+              </h1>
+              <p className="mx-auto max-w-md text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                Giao dịch đã bị gián đoạn hoặc từ chối bởi cổng thanh toán. Bạn
+                có thể kiểm tra danh sách đơn hàng để tiến hành thanh toán lại.
               </p>
             </div>
           </>
         )}
 
-        <div className="pt-2 flex flex-col gap-3">
+        <div className="flex flex-col gap-3 border-t border-border pt-6">
           <button
+            type="button"
             onClick={() => navigate("/orders")}
-            className="w-full flex items-center justify-center gap-2 bg-[#05251C] hover:bg-[#F5DD20] hover:text-[#05251C] text-white font-display font-bold py-3.5 px-6 rounded-full text-xs uppercase tracking-wider transition-all duration-300 shadow-md cursor-pointer active:scale-95"
+            className="touch-target flex w-full items-center justify-center gap-2 bg-primary px-6 py-3.5 text-xs font-semibold tracking-[0.18em] uppercase text-primary-foreground transition-opacity hover:opacity-90"
           >
             <ShoppingBag size={15} />
-            <span>Xem đơn hàng của bạn</span>
+            <span>Theo dõi đơn hàng</span>
           </button>
+
           <button
-            onClick={() => navigate("/")}
-            className="w-full flex items-center justify-center gap-2 border border-[#05251C]/20 hover:bg-neutral-50 text-[#05251C] font-display font-bold py-3.5 px-6 rounded-full text-xs uppercase tracking-wider transition-all duration-300 cursor-pointer active:scale-95"
+            type="button"
+            onClick={() => navigate("/products")}
+            className="touch-target flex w-full items-center justify-center gap-2 border border-border bg-background px-6 py-3.5 text-xs font-semibold tracking-[0.18em] uppercase text-foreground transition-colors hover:border-foreground hover:bg-secondary"
           >
-            <span>Tiếp tục khám phá Atelier</span>
+            <span>Tiếp tục khám phá Bộ sưu tập</span>
             <ArrowRight size={15} />
           </button>
         </div>

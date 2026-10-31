@@ -1,7 +1,86 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Plus, Loader } from "lucide-react";
+import { Plus, Loader2, ArrowUpRight } from "lucide-react";
 import { getAllProductService } from "@/services/product.service";
+import { formatCurrency } from "@/utils/format";
+
+const RecommendedCard = ({ prod, isAdding, onAdd }) => {
+  const candidates = [
+    ...(Array.isArray(prod.displayProduct) ? prod.displayProduct : []),
+    prod.image,
+    prod.imageUrl,
+    ...(Array.isArray(prod.variants)
+      ? prod.variants.map((v) => v?.image_url)
+      : []),
+  ].filter((u) => typeof u === "string" && u.trim());
+
+  const [imgIdx, setImgIdx] = useState(0);
+  const activeUrl = candidates[imgIdx] || "";
+  const hasDiscount = Number(prod.old_price) > Number(prod.new_price);
+
+  return (
+    <article className="group flex flex-col justify-between border border-border bg-card transition-colors hover:border-foreground">
+      <Link
+        to={`/product/${encodeURIComponent(prod.slug || prod._id || prod.id)}`}
+        className="block flex-1"
+      >
+        <div className="relative aspect-[3/4] w-full overflow-hidden border-b border-border bg-secondary">
+          {activeUrl ? (
+            <img
+              src={activeUrl}
+              alt={prod.name}
+              onError={() => setImgIdx((prev) => prev + 1)}
+              className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center p-4 text-center select-none">
+              <span className="font-serif text-lg uppercase tracking-[0.2em] text-muted-foreground">
+                WF
+              </span>
+              <span className="mt-1 text-[10px] tracking-[0.18em] uppercase text-muted-foreground">
+                Atelier Archive
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1.5 p-4">
+          <h4 className="line-clamp-1 font-serif text-base text-foreground">
+            {prod.name}
+          </h4>
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs font-semibold tabular-nums text-foreground sm:text-sm">
+              {formatCurrency(prod.new_price)}
+            </span>
+            {hasDiscount && (
+              <span className="text-[11px] tabular-nums text-muted-foreground line-through">
+                {formatCurrency(prod.old_price)}
+              </span>
+            )}
+          </div>
+        </div>
+      </Link>
+
+      <div className="px-4 pb-4">
+        <button
+          type="button"
+          onClick={(e) => onAdd(e, prod)}
+          disabled={isAdding}
+          className="touch-target flex w-full items-center justify-center gap-1.5 border border-border bg-background text-xs font-semibold tracking-[0.14em] uppercase text-foreground transition-colors hover:border-foreground hover:bg-primary hover:text-primary-foreground disabled:opacity-40"
+        >
+          {isAdding ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <>
+              <Plus size={14} />
+              <span>Thêm vào giỏ</span>
+            </>
+          )}
+        </button>
+      </div>
+    </article>
+  );
+};
 
 const RecommendedProducts = ({ onAddToCart }) => {
   const [products, setProducts] = useState([]);
@@ -9,134 +88,89 @@ const RecommendedProducts = ({ onAddToCart }) => {
   const [addingId, setAddingId] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchProducts = async () => {
       try {
         setLoading(true);
         const data = await getAllProductService();
-        setProducts(data.slice(0, 4)); // Get first 4 products
+        if (isMounted && Array.isArray(data)) {
+          setProducts(data.slice(0, 4));
+        }
       } catch (err) {
-        console.error("Failed to load recommended products:", err);
+        console.error("Không thể tải sản phẩm gợi ý:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
     fetchProducts();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleAdd = async (e, prod) => {
     e.preventDefault();
     e.stopPropagation();
     try {
-      setAddingId(prod._id);
+      setAddingId(prod._id || prod.id);
       await onAddToCart(prod);
     } finally {
       setAddingId(null);
     }
   };
 
-  const formatPrice = (val) => {
-    return val.toLocaleString("vi-VN") + "đ";
-  };
-
   if (loading) {
     return (
-      <div className="space-y-4 pt-10 border-t border-neutral-200/80">
-        <h3 className="text-xl font-extrabold tracking-tight text-neutral-900 text-left">Có thể bạn sẽ thích</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="aspect-[3/4] bg-neutral-100 rounded-2xl animate-pulse"></div>
+      <section className="mt-14 space-y-6 border-t border-border pt-10">
+        <div className="h-6 w-56 animate-pulse bg-secondary" />
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="aspect-[3/4] animate-pulse border border-border bg-secondary"
+            />
           ))}
         </div>
-      </div>
+      </section>
     );
   }
 
-  if (products.length === 0) {
-    return null;
-  }
+  if (products.length === 0) return null;
 
   return (
-    <div className="space-y-6 pt-10 border-t border-neutral-200/80 text-left">
-      <div className="flex items-end justify-between">
+    <section
+      aria-label="Thiết kế gợi ý"
+      className="mt-14 space-y-6 border-t border-border pt-10"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold text-[#05251C] uppercase tracking-widest block mb-1">
-            Gợi ý dành riêng cho bạn
-          </span>
-          <h3 className="text-xl sm:text-2xl font-black tracking-tight text-[#05251C] font-display uppercase">
+          <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
+            Giám tuyển bổ sung
+          </p>
+          <h3 className="mt-1 font-serif text-2xl font-normal text-foreground sm:text-3xl">
             Có thể bạn sẽ thích
           </h3>
         </div>
         <Link
           to="/products"
-          className="text-xs font-bold text-neutral-700 hover:text-neutral-950 hover:underline transition"
+          className="touch-target inline-flex items-center gap-1.5 text-xs font-semibold tracking-[0.16em] uppercase text-foreground hover:underline"
         >
-          Xem thêm →
+          <span>Xem toàn bộ</span>
+          <ArrowUpRight size={14} />
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {products.map((prod) => {
-          const mainImg = prod.image || (prod.displayProduct && prod.displayProduct[0]) || "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&auto=format&fit=crop&q=60";
-          const hasDiscount = prod.old_price > prod.new_price;
-          const isAdding = addingId === prod._id;
-
-          return (
-            <div
-              key={prod._id || prod.id}
-              className="bg-white border border-neutral-200/80 rounded-2xl p-3 shadow-2xs hover:shadow-md transition-all duration-300 group flex flex-col justify-between"
-            >
-              <Link to={`/product/${prod.slug || prod._id || prod.id}`} className="block flex-1">
-                {/* Image */}
-                <div className="aspect-[3/4] rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200/60 relative">
-                  <img
-                    src={mainImg}
-                    alt={prod.name}
-                    className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500"
-                    onError={(e) => {
-                      e.target.src = "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&auto=format&fit=crop&q=60";
-                    }}
-                  />
-                </div>
-
-                {/* Details */}
-                <div className="mt-3 space-y-1">
-                  <h4 className="text-xs sm:text-sm font-bold text-neutral-900 truncate">
-                    {prod.name}
-                  </h4>
-                  <div className="flex items-baseline gap-2 mt-0.5">
-                    <span className="text-xs sm:text-sm font-extrabold text-neutral-950 tabular-nums">
-                      {formatPrice(prod.new_price)}
-                    </span>
-                    {hasDiscount && (
-                      <s className="text-[11px] text-neutral-400 tabular-nums">
-                        {formatPrice(prod.old_price)}
-                      </s>
-                    )}
-                  </div>
-                </div>
-              </Link>
-
-              {/* Add to Cart shortcut button */}
-              <button
-                type="button"
-                onClick={(e) => handleAdd(e, prod)}
-                disabled={isAdding}
-                className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 bg-neutral-50 hover:bg-neutral-900 text-neutral-800 hover:text-white text-xs font-bold rounded-xl transition duration-200 cursor-pointer border border-neutral-200/80 hover:border-neutral-900"
-              >
-                {isAdding ? (
-                  <Loader className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <>
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>Thêm vào giỏ</span>
-                  </>
-                )}
-              </button>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+        {products.map((prod) => (
+          <RecommendedCard
+            key={prod._id || prod.id}
+            prod={prod}
+            isAdding={addingId === (prod._id || prod.id)}
+            onAdd={handleAdd}
+          />
+        ))}
       </div>
-    </div>
+    </section>
   );
 };
 

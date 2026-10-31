@@ -1,18 +1,9 @@
-import fallbackProductImage from "../Home/assets/product-linen-shirt.jpg";
+import {
+  buildCategoryHierarchy,
+  normalizeSearchText,
+} from "../Home/productAdapter";
 
-export const sanitizeImageUrl = (url) => {
-  if (!url || typeof url !== "string") return fallbackProductImage;
-  if (url.includes("550fb60fe8ff")) {
-    return "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80";
-  }
-  if (url.includes("dosi-in.com")) {
-    return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80";
-  }
-  if (url.includes("hoangphucphoto.com")) {
-    return "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80";
-  }
-  return url;
-};
+export { buildCategoryHierarchy, normalizeSearchText };
 
 const firstValue = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
@@ -23,55 +14,50 @@ const toArray = (value) => {
   return [String(value)];
 };
 
-const getCategory = (product, categoryMap) => {
+const getCategory = (product, categoryMap = {}) => {
   const categoryValue = firstValue(
     product.category,
     product.categoryName,
     product.loai,
     product.loaiSP,
-    product.loaiMon,
     product.danhMuc,
     product.tenDanhMuc,
-    product.category_id,
+    product.category_id
   );
 
-  if (typeof categoryValue === "object") {
+  if (typeof categoryValue === "object" && categoryValue !== null) {
     return firstValue(
       categoryValue.name,
       categoryValue.title,
       categoryValue.tenDanhMuc,
-      "",
+      ""
     );
   }
 
   if (!categoryValue) return "";
 
-  return categoryMap[String(categoryValue)] || (
-    /^[a-f\d]{24}$/i.test(String(categoryValue)) ? "" : String(categoryValue)
-  );
+  const str = String(categoryValue);
+  return categoryMap[str] || (/^[a-f\d]{24}$/i.test(str) ? "" : str);
 };
 
-const getImage = (product) => {
-  const displayImage = Array.isArray(product.displayProduct)
-    ? product.displayProduct.find(Boolean)
-    : product.displayProduct;
-  const variantImage = Array.isArray(product.variants)
-    ? product.variants.find((variant) => variant?.image_url)?.image_url
-    : "";
-
-  const chosen = firstValue(
-    displayImage,
-    variantImage,
+const getImages = (product) => {
+  const list = [
+    ...(Array.isArray(product.displayProduct) ? product.displayProduct : []),
+    ...(Array.isArray(product.images) ? product.images : []),
     product.image,
     product.imageUrl,
     product.image_url,
     product.thumbnail,
     product.hinhAnh,
     product.avatar,
-    fallbackProductImage,
-  );
+    ...(Array.isArray(product.variants)
+      ? product.variants.map((variant) => variant?.image_url || variant?.image)
+      : []),
+  ]
+    .filter((u) => typeof u === "string" && u.trim().length > 0)
+    .map((u) => u.trim());
 
-  return sanitizeImageUrl(chosen);
+  return [...new Set(list)];
 };
 
 const getVariantValues = (product, key) => {
@@ -86,24 +72,10 @@ const getVariantValues = (product, key) => {
   return [...new Set([...toArray(directValue), ...variantValues.map(String)])];
 };
 
-const getStatus = (product) => {
-  const status = firstValue(
-    product.status,
-    product.trangThai,
-    product.active,
-    product.isActive,
-    product.is_active,
-  );
-
-  if (status === true) return "Đang hoạt động";
-  if (status === false) return "Tạm ẩn";
-  return status ? String(status) : "";
-};
-
 export const normalizeProduct = (
   product = {},
   index = 0,
-  categoryMap = {},
+  categoryMap = {}
 ) => {
   const price = Number(
     firstValue(
@@ -111,69 +83,65 @@ export const normalizeProduct = (
       product.price,
       product.gia,
       product.giaSP,
-      product.giaMon,
       product.unitPrice,
-      0,
-    ),
+      0
+    )
   );
   const oldPrice = Number(
-    firstValue(product.old_price, product.oldPrice, product.giaCu, 0),
+    firstValue(product.old_price, product.oldPrice, product.giaCu, 0)
   );
-  const rating = Number(firstValue(product.rating, product.rate, 4.6));
+  const rawRating = Number(firstValue(product.rating, product.rate, 0));
   const createdAtTime = new Date(
-    firstValue(product.createdAt, product.created_at, product.ngayTao, 0),
+    firstValue(product.createdAt, product.created_at, product.ngayTao, 0)
   ).getTime();
 
-  const mainImage = getImage(product);
-  const rawDisplayList = Array.isArray(product.displayProduct) && product.displayProduct.length > 0
-    ? product.displayProduct.map(sanitizeImageUrl)
-    : [mainImage];
+  const images = getImages(product);
+  const resolvedId = String(
+    firstValue(
+      product.id,
+      product._id,
+      product.maSP,
+      product.productId,
+      `product-${index}`
+    )
+  );
 
   return {
-    id: String(
-      firstValue(
-        product.id,
-        product._id,
-        product.maSP,
-        product.maMon,
-        product.productId,
-        `san-pham-${index}`,
-      ),
+    ...product,
+    id: resolvedId,
+    _id: product._id || resolvedId,
+    slug: firstValue(product.slug, product.productSlug, ""),
+    sku: firstValue(
+      product.sku,
+      product.code,
+      product.maSP,
+      product.maSanPham,
+      ""
     ),
-    slug: firstValue(
-      product.slug,
-      product.productSlug,
-      "",
-    ),
-    sku: firstValue(product.sku, product.code, product.maSP, product.maSanPham, ""),
     name: firstValue(
       product.name,
       product.productName,
       product.tenSP,
-      product.tenMon,
       product.title,
-      "Sản phẩm chưa có tên",
+      "Thiết kế chưa đặt tên"
     ),
     price: Number.isFinite(price) ? price : 0,
     oldPrice: Number.isFinite(oldPrice) ? oldPrice : 0,
-    image: mainImage,
-    displayProduct: rawDisplayList,
+    image: images[0] || "",
+    displayProduct: images,
     variants: Array.isArray(product.variants) ? product.variants : [],
     category: getCategory(product, categoryMap),
+    category_id: String(product.category_id?._id || product.category_id || ""),
     description: firstValue(
       product.description,
       product.moTa,
       product.ghiChu,
-      "",
+      ""
     ),
-    rating: Number.isFinite(rating) ? Math.min(Math.max(rating, 0), 5) : 4.6,
-    badge: firstValue(
-      product.badge,
-      product.tag,
-      oldPrice > price && price > 0 ? `-${Math.round(((oldPrice - price) / oldPrice) * 100)}%` : "",
-    ),
-    brand: String(firstValue(product.brand, product.thuongHieu, "")),
-    status: getStatus(product),
+    rating:
+      Number.isFinite(rawRating) && rawRating > 0
+        ? Math.min(Math.max(rawRating, 0), 5)
+        : 0,
     sizes: getVariantValues(product, "size"),
     colors: getVariantValues(product, "color"),
     sold: Number(firstValue(product.sold, product.daBan, 0)) || 0,
@@ -183,36 +151,36 @@ export const normalizeProduct = (
 };
 
 export const COLOR_MAP = {
-  "đen": "#18181B",
-  "black": "#18181B",
-  "trắng": "#FFFFFF",
-  "white": "#FFFFFF",
-  "xám": "#9CA3AF",
-  "grey": "#9CA3AF",
-  "gray": "#9CA3AF",
+  đen: "#18181B",
+  black: "#18181B",
+  trắng: "#FFFFFF",
+  white: "#FFFFFF",
+  xám: "#9CA3AF",
+  grey: "#9CA3AF",
+  gray: "#9CA3AF",
   "xanh dương": "#2563EB",
   "xanh navy": "#1E3A8A",
-  "navy": "#1E3A8A",
-  "blue": "#2563EB",
+  navy: "#1E3A8A",
+  blue: "#2563EB",
   "xanh lá": "#16A34A",
-  "green": "#16A34A",
-  "đỏ": "#DC2626",
-  "red": "#DC2626",
-  "vàng": "#EAB308",
-  "yellow": "#EAB308",
-  "hồng": "#EC4899",
-  "pink": "#EC4899",
-  "be": "#E5D9C5",
-  "kem": "#F5EBE1",
-  "beige": "#E5D9C5",
-  "nâu": "#78350F",
-  "brown": "#78350F",
-  "tím": "#9333EA",
-  "purple": "#9333EA",
-  "cam": "#EA580C",
-  "orange": "#EA580C",
-  "bạc": "#E2E8F0",
-  "silver": "#E2E8F0",
+  green: "#16A34A",
+  đỏ: "#DC2626",
+  red: "#DC2626",
+  vàng: "#EAB308",
+  yellow: "#EAB308",
+  hồng: "#EC4899",
+  pink: "#EC4899",
+  be: "#E5D9C5",
+  kem: "#F5EBE1",
+  beige: "#E5D9C5",
+  nâu: "#78350F",
+  brown: "#78350F",
+  tím: "#9333EA",
+  purple: "#9333EA",
+  cam: "#EA580C",
+  orange: "#EA580C",
+  bạc: "#E2E8F0",
+  silver: "#E2E8F0",
 };
 
 export const getColorHex = (colorName = "") => {
@@ -220,13 +188,32 @@ export const getColorHex = (colorName = "") => {
   for (const [key, hex] of Object.entries(COLOR_MAP)) {
     if (normalized.includes(key)) return hex;
   }
-  return "#D1D5DB";
+  return "#A1A1AA";
 };
 
 const SIZE_ORDER = [
-  "XXS", "XS", "S", "M", "L", "XL", "2XL", "XXL", "3XL", "4XL",
-  "28", "29", "30", "31", "32", "33", "34", "35", "36",
-  "FREESIZE", "ONE SIZE", "OVERSIZE"
+  "XXS",
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "2XL",
+  "XXL",
+  "3XL",
+  "4XL",
+  "28",
+  "29",
+  "30",
+  "31",
+  "32",
+  "33",
+  "34",
+  "35",
+  "36",
+  "FREESIZE",
+  "ONE SIZE",
+  "OVERSIZE",
 ];
 
 const sortSizes = (sizes = []) => {
@@ -253,38 +240,24 @@ const uniqueValues = (values) => {
     }
   });
   return Array.from(map.values()).sort((first, second) =>
-    first.localeCompare(second, "vi"),
+    first.localeCompare(second, "vi")
   );
 };
 
-export const buildFilterOptions = (products) => ({
+export const buildFilterOptions = (products = []) => ({
   categories: uniqueValues(products.map((product) => product.category)),
-  brands: uniqueValues(products.map((product) => product.brand)),
-  statuses: uniqueValues(products.map((product) => product.status)),
   sizes: sortSizes(uniqueValues(products.flatMap((product) => product.sizes))),
   colors: uniqueValues(products.flatMap((product) => product.colors)),
 });
 
-export const calculatePriceBounds = (products) => {
+export const calculatePriceBounds = (products = []) => {
   const prices = products
     .map((product) => product.price)
-    .filter((price) => Number.isFinite(price) && price >= 0);
+    .filter((price) => Number.isFinite(price) && price > 0);
 
-  if (!prices.length) return { min: 0, max: 0, step: 1000 };
+  if (!prices.length) return { min: 0, max: 0, step: 10000 };
 
   const min = Math.min(...prices);
   const max = Math.max(...prices);
-  const difference = Math.max(max - min, 1);
-  const step = Math.max(1000, Math.round(difference / 100 / 1000) * 1000);
-
-  return { min, max, step };
+  return { min, max, step: 10000 };
 };
-
-export const normalizeSearchText = (value = "") =>
-  String(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .toLowerCase()
-    .trim();

@@ -10,41 +10,62 @@ const Favorites = ({ isDashboard = false }) => {
   const toggleFavorite = useFavoriteStore((state) => state.toggleProduct);
   const clearFavorites = useFavoriteStore((state) => state.clearFavorites);
 
-  if (!isDashboard) {
-    useDocumentTitle("Yêu thích");
-  }
+  useDocumentTitle("Danh sách yêu thích");
 
   const favoriteIds = useMemo(
     () => new Set(favoriteItems.map((item) => String(item.id))),
-    [favoriteItems],
+    [favoriteItems]
   );
 
   return (
-    <div className={isDashboard ? "w-full space-y-6" : "min-h-screen bg-[#FBF9F5] py-8 sm:py-12 select-none"}>
-      <div className={isDashboard ? "space-y-6" : "mx-auto max-w-[1536px] px-4 sm:px-6 lg:px-8"}>
+    <div
+      className={
+        isDashboard
+          ? "w-full space-y-6 text-[var(--color-text)]"
+          : "min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] py-8 sm:py-12"
+      }
+    >
+      <div
+        className={
+          isDashboard
+            ? "space-y-6"
+            : "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+        }
+      >
         {/* Breadcrumb */}
         {!isDashboard && (
-          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#6B716E] border-b border-[#05251C]/10 pb-4 mb-6">
-            <Link to="/" className="hover:text-[#05251C] transition">404STUDIO</Link>
+          <nav
+            aria-label="Breadcrumb"
+            className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)] border-b border-[var(--color-border)] pb-4 mb-6"
+          >
+            <Link
+              to="/"
+              className="hover:text-[var(--color-text)] transition-colors"
+            >
+              Trang chủ
+            </Link>
             <span>/</span>
-            <span className="text-[#05251C] font-black">CURATED WISHLIST</span>
-          </div>
+            <span className="text-[var(--color-text)] font-medium">
+              Yêu thích
+            </span>
+          </nav>
         )}
 
         {/* Header */}
-        <div className="flex flex-col gap-4 border-b border-[#05251C]/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             {!isDashboard && (
-              <span className="micro-label text-[#05251C]/70">
-                PERSONAL ATELIER VAULT
+              <span className="atelier-eyebrow block mb-1.5">
+                Bộ sưu tập cá nhân
               </span>
             )}
-            <h1 className="mt-1 text-3xl sm:text-5xl font-black tracking-tight text-[#05251C] font-display uppercase leading-[0.95]">
-              Yêu thích cá nhân ({favoriteItems.length})
+            <h1 className="font-display text-2xl sm:text-4xl font-semibold tracking-tight">
+              Danh sách yêu thích ({favoriteItems.length})
             </h1>
             {!isDashboard && (
-              <p className="mt-2 max-w-xl text-xs sm:text-sm text-[#6B716E] font-medium leading-relaxed">
-                Những thiết kế bạn đã lưu vào danh sách sẽ xuất hiện tại đây để bạn có thể xem lại và đặt may bất cứ lúc nào.
+              <p className="mt-2 max-w-xl text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed">
+                Những thiết kế bạn đã lưu lại để dễ dàng theo dõi và đặt hàng
+                bất cứ lúc nào.
               </p>
             )}
           </div>
@@ -53,7 +74,7 @@ const Favorites = ({ isDashboard = false }) => {
             <button
               type="button"
               onClick={clearFavorites}
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#05251C]/20 bg-white px-5 py-2.5 text-xs font-bold text-[#05251C] transition hover:bg-red-50 hover:border-red-200 hover:text-red-600 shadow-xs cursor-pointer active:scale-95"
+              className="inline-flex items-center justify-center gap-2 min-h-[44px] border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-2.5 text-xs uppercase tracking-[0.14em] font-medium text-[var(--color-text)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)] transition-colors cursor-pointer"
             >
               <Trash2 size={14} aria-hidden="true" />
               <span>Xóa tất cả</span>
@@ -63,26 +84,33 @@ const Favorites = ({ isDashboard = false }) => {
 
         {/* Content */}
         {favoriteItems.length === 0 ? (
-          <div className="mt-8 flex min-h-[380px] flex-col items-center justify-center rounded-2xl border border-[#E8E5DF] bg-white px-6 py-12 text-center shadow-xs">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#05251C]/5 text-[#05251C] border border-[#05251C]/15 shadow-2xs">
-              <Heart size={28} aria-hidden="true" />
+          <div className="mt-8 flex min-h-[340px] flex-col items-center justify-center border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-12 text-center">
+            <div className="flex h-14 w-14 items-center justify-center border border-[var(--color-border)] text-[var(--color-text)]">
+              <Heart size={24} className="stroke-[1.5]" aria-hidden="true" />
             </div>
-            <h2 className="mt-5 text-xl font-black text-[#05251C] font-display uppercase">
-              Chưa có sản phẩm yêu thích nào
+            <h2 className="mt-5 font-display text-2xl font-semibold">
+              Chưa có sản phẩm yêu thích
             </h2>
-            <p className="mt-2 max-w-sm text-xs sm:text-sm text-neutral-500 leading-relaxed">
-              Hãy thả tim những sản phẩm bạn ưng ý nhất khi khám phá cửa hàng, chúng sẽ tự động xuất hiện ở đây.
+            <p className="mt-2 max-w-sm text-xs text-[var(--color-text-muted)] leading-relaxed">
+              Hãy nhấn biểu tượng trái tim trên các thiết kế bạn ưng ý khi khám
+              phá cửa hàng, sản phẩm sẽ được lưu tại đây.
             </p>
             <Link
               to="/products"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#05251C] px-6 py-3 text-xs font-bold uppercase tracking-wider text-[#F5DD20] transition hover:bg-[#073D2A] shadow-md hover:shadow-lg active:scale-95"
+              className="mt-6 inline-flex items-center gap-2 min-h-[48px] bg-[var(--color-text)] text-[var(--color-bg)] px-6 py-3 text-xs uppercase tracking-[0.16em] font-medium hover:opacity-90 transition-opacity"
             >
               <ShoppingBag size={14} aria-hidden="true" />
               <span>Khám phá bộ sưu tập</span>
             </Link>
           </div>
         ) : (
-          <div className={isDashboard ? "mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6" : "mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6"}>
+          <div
+            className={
+              isDashboard
+                ? "mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6"
+                : "mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6"
+            }
+          >
             {favoriteItems.map((product) => (
               <ProductCard
                 key={product.id}

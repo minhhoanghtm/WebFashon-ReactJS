@@ -1,26 +1,45 @@
-import React from "react";
+import React, { useState } from "react";
 import registerImage from "@/assets/register.png";
-import useWebsiteSettings from "@/hooks/useWebsiteSettings";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const RegisterBanner = () => {
-  const {settings} = useWebsiteSettings();
-  const general = settings?.general || {};
-  const siteName = general.siteName || "";
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "WEBFASHION";
+  const [imgFailed, setImgFailed] = useState(false);
+
   return (
-    <div className="register-banner">
-      <img
-        src={registerImage}
-        alt="Người mẫu trong bộ sưu tập thời trang cao cấp"
-        className="register-banner__image"
-        loading="eager"
-      />
-      <div className="register-banner__overlay">
-        <span className="register-banner__badge">{siteName}</span>
-        <h2 className="register-banner__title">Gia nhập cùng chúng tôi</h2>
-        <p className="register-banner__desc">
-          Tạo tài khoản để lưu lại sản phẩm yêu thích, theo dõi đơn hàng và khám
-          phá những bộ sưu tập mới nhất.
+    <div className="relative hidden flex-col justify-between overflow-hidden border-r border-border bg-secondary p-10 lg:flex lg:col-span-5 xl:p-14">
+      {!imgFailed && registerImage ? (
+        <img
+          src={registerImage}
+          alt="Bộ sưu tập thời trang đơn sắc cao cấp"
+          onError={() => setImgFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-45 grayscale contrast-110"
+          loading="eager"
+        />
+      ) : null}
+
+      <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/60 to-background/30" />
+
+      <div className="relative z-10 flex items-center justify-between border-b border-border/80 pb-4 text-[10px] tracking-[0.24em] uppercase text-muted-foreground">
+        <span>{siteName} · ATELIER</span>
+        <span>MEMBERSHIP</span>
+      </div>
+
+      <div className="relative z-10 my-auto max-w-md space-y-4 py-12">
+        <span className="atelier-seal">{siteName} · THÀNH VIÊN MỚI</span>
+        <h2 className="pt-2 font-serif text-4xl leading-[1.08] font-normal tracking-tight text-foreground xl:text-5xl">
+          Gia nhập không gian thời trang đơn sắc.
+        </h2>
+        <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
+          Khởi tạo hồ sơ cá nhân để lưu trữ các thiết kế yêu thích, nhận ưu đãi
+          định kỳ và theo dõi đơn hàng theo thời gian thực.
         </p>
+      </div>
+
+      <div className="relative z-10 flex items-center justify-between border-t border-border/80 pt-4 text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
+        <span>TAILORED EXPERIENCE</span>
+        <span>VIETNAM</span>
       </div>
     </div>
   );

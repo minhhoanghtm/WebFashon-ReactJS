@@ -2,18 +2,15 @@ import React from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import ResetPasswordBanner from "./ResetPasswordBanner";
 import ResetPasswordForm from "./ResetPasswordForm";
-import "./resetPassword.css";
 
 const ResetPassword = () => {
   useDocumentTitle("Quên mật khẩu");
 
   return (
-    <div className="reset-page">
-      <div className="reset-wrapper">
-        <div className="reset-card">
-          <ResetPasswordBanner />
-          <ResetPasswordForm />
-        </div>
+    <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-4 md:p-8">
+      <div className="w-full max-w-5xl border border-[var(--color-border)] bg-[var(--color-surface)] grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+        <ResetPasswordBanner />
+        <ResetPasswordForm />
       </div>
     </div>
   );

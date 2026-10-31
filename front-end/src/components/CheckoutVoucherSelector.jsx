@@ -1,48 +1,75 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Ticket, X, Check, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import voucherApi from "../api/voucher.api";
 import { useAuthStore } from "../store/auth.store";
+import { formatCurrency } from "@/utils/format";
 
-const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onApply, appliedVoucher, onRemove, voucherType = "product", label }) => {
+const isShippingVoucher = (v) => {
+  return (
+    v.code?.toUpperCase().includes("SHIP") ||
+    v.name?.toLowerCase().includes("vận chuyển") ||
+    v.name?.toLowerCase().includes("ship")
+  );
+};
+
+const CheckoutVoucherSelector = ({
+  subtotal,
+  items = [],
+  shippingFee = 0,
+  onApply,
+  appliedVoucher,
+  onRemove,
+  voucherType = "product",
+  label,
+}) => {
   const { isAuthenticated } = useAuthStore();
   const token = localStorage.getItem("accessToken");
-  const isUserLoggedIn = isAuthenticated || !!token;
+  const isUserLoggedIn = isAuthenticated || Boolean(token);
+
   const [isOpen, setIsOpen] = useState(false);
   const [wallet, setWallet] = useState([]);
   const [loading, setLoading] = useState(false);
-  
-  // Input code state
   const [inputCode, setInputCode] = useState("");
   const [validating, setValidating] = useState(false);
 
-  const displayLabel = label || (voucherType === "shipping" ? "Voucher vận chuyển" : "Voucher sản phẩm");
-  const displayDesc = voucherType === "shipping" ? "Chọn hoặc nhập mã để giảm phí vận chuyển" : "Chọn hoặc nhập mã giảm giá để nhận chiết khấu";
-  const modalTitle = voucherType === "shipping" ? "Chọn Voucher Vận Chuyển" : "Chọn Voucher Sản Phẩm";
-
-  const fetchWallet = async () => {
-    if (!token || !isOpen) return;
-    try {
-      setLoading(true);
-      const res = await voucherApi.getUserWallet("CLAIMED");
-      if (res.success) {
-        setWallet(res.data);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Không thể tải ví voucher của bạn");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const displayLabel =
+    label ||
+    (voucherType === "shipping"
+      ? "Mã miễn phí vận chuyển"
+      : "Mã giảm giá sản phẩm");
+  const displayDesc =
+    voucherType === "shipping"
+      ? "Chọn từ ví hoặc nhập mã giảm phí vận chuyển"
+      : "Chọn từ ví hoặc nhập mã ưu đãi thiết kế";
+  const modalTitle =
+    voucherType === "shipping"
+      ? "Chọn Voucher Vận Chuyển"
+      : "Chọn Voucher Sản Phẩm";
 
   useEffect(() => {
-    fetchWallet();
-  }, [isOpen, isUserLoggedIn]);
-
-  const isShippingVoucher = (v) => {
-    return v.code?.toUpperCase().includes("SHIP") || v.name?.toLowerCase().includes("vận chuyển") || v.name?.toLowerCase().includes("ship");
-  };
+    if (!token || !isOpen) return;
+    let isMounted = true;
+    const loadWallet = async () => {
+      try {
+        setLoading(true);
+        const res = await voucherApi.getUserWallet("CLAIMED");
+        if (isMounted && res?.success && Array.isArray(res.data)) {
+          setWallet(res.data);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Không thể tải ví voucher của bạn.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    loadWallet();
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, token, isUserLoggedIn]);
 
   const filteredWallet = wallet.filter((item) => {
     const v = item.voucherId;
@@ -54,31 +81,39 @@ const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onAppl
   const handleValidateAndApply = async (code) => {
     const uppercaseCode = code.trim().toUpperCase();
     if (!uppercaseCode) {
-      toast.warn("Vui lòng nhập mã giảm giá");
+      toast.warn("Vui lòng nhập mã giảm giá.");
       return;
     }
 
     const isShipInput = uppercaseCode.includes("SHIP");
     if (voucherType === "shipping" && !isShipInput) {
-      toast.warn("Vui lòng nhập mã miễn phí vận chuyển");
+      toast.warn("Vui lòng nhập mã miễn phí vận chuyển.");
       return;
     }
     if (voucherType === "product" && isShipInput) {
-      toast.warn("Vui lòng nhập mã giảm giá sản phẩm");
+      toast.warn("Vui lòng nhập mã giảm giá sản phẩm.");
       return;
     }
 
     try {
       setValidating(true);
-      const res = await voucherApi.validateVoucher(uppercaseCode, subtotal, items, shippingFee);
-      if (res.success) {
+      const res = await voucherApi.validateVoucher(
+        uppercaseCode,
+        subtotal,
+        items,
+        shippingFee
+      );
+      if (res?.success) {
         onApply(res.data);
-        toast.success(`Đã áp dụng mã giảm giá ${res.data.code}`);
+        toast.success(`Đã áp dụng mã ${res.data.code}`);
         setInputCode("");
         setIsOpen(false);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Mã giảm giá không hợp lệ hoặc không đủ điều kiện");
+      toast.error(
+        err.response?.data?.message ||
+          "Mã giảm giá không hợp lệ hoặc chưa đủ điều kiện."
+      );
     } finally {
       setValidating(false);
     }
@@ -86,139 +121,185 @@ const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onAppl
 
   const handleSelectFromWallet = async (voucherCode) => {
     try {
-      const res = await voucherApi.validateVoucher(voucherCode, subtotal, items, shippingFee);
-      if (res.success) {
+      const res = await voucherApi.validateVoucher(
+        voucherCode,
+        subtotal,
+        items,
+        shippingFee
+      );
+      if (res?.success) {
         onApply(res.data);
-        toast.success(`Đã áp dụng mã giảm giá ${res.data.code}`);
+        toast.success(`Đã áp dụng mã ${res.data.code}`);
         setIsOpen(false);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Voucher không đủ điều kiện áp dụng cho đơn hàng này");
+      toast.error(
+        err.response?.data?.message ||
+          "Voucher chưa đủ điều kiện áp dụng cho đơn hàng này."
+      );
     }
   };
 
   return (
-    <div className="w-full space-y-3 font-sans">
-      <div className="flex justify-between items-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-xl shadow-[0_2px_8px_-2px_rgba(28,25,23,0.04)]">
-        <div className="flex items-center gap-3">
-          <Ticket className="h-5 w-5 text-amber-700 dark:text-amber-500" />
+    <div className="w-full">
+      <div className="flex items-center justify-between gap-3 border border-border bg-background p-3.5">
+        <div className="flex items-center gap-3 min-w-0">
+          <Ticket size={16} strokeWidth={1.5} className="shrink-0 text-foreground" />
           {appliedVoucher ? (
-            <div>
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider ${voucherType === "shipping" ? "text-stone-800 bg-stone-100 dark:bg-stone-800 dark:text-stone-200" : "text-amber-800 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300"}`}>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="bg-primary px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
                   {appliedVoucher.code}
                 </span>
-                <span className="text-xs text-stone-600 dark:text-stone-300 font-semibold tabular-nums">
-                  Giảm: -{(appliedVoucher.discountAmount || appliedVoucher.discount_amount || 0).toLocaleString("vi-VN")}đ
+                <span className="text-xs font-semibold tabular-nums text-foreground">
+                  -
+                  {formatCurrency(
+                    appliedVoucher.discountAmount ||
+                      appliedVoucher.discount_amount ||
+                      0
+                  )}
                 </span>
               </div>
-              <p className="text-[10px] text-stone-400 mt-0.5">{voucherType === "shipping" ? "Voucher vận chuyển" : "Ưu đãi thời trang áp dụng"}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                {voucherType === "shipping"
+                  ? "Ưu đãi phí vận chuyển"
+                  : "Ưu đãi thiết kế thời trang"}
+              </p>
             </div>
           ) : (
-            <div>
-              <span className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground">
                 {displayLabel}
-              </span>
-              <p className="text-xs text-stone-500">{displayDesc}</p>
+              </p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {displayDesc}
+              </p>
             </div>
           )}
         </div>
 
         {appliedVoucher ? (
           <button
+            type="button"
             onClick={onRemove}
-            className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition cursor-pointer"
+            className="touch-target shrink-0 px-2 text-xs font-semibold tracking-[0.12em] uppercase text-destructive hover:underline"
           >
             Gỡ bỏ
           </button>
         ) : (
           <button
+            type="button"
             onClick={() => setIsOpen(true)}
-            className="text-xs font-semibold text-neutral-900 dark:text-white underline underline-offset-4 hover:text-amber-700 transition cursor-pointer"
+            className="touch-target shrink-0 px-2 text-xs font-semibold tracking-[0.12em] uppercase text-foreground underline underline-offset-4 hover:opacity-80"
           >
-            Chọn voucher
+            Chọn mã
           </button>
         )}
       </div>
 
-      {/* Select Voucher Modal */}
+      {/* Voucher Wallet Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-5 max-h-[85vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex justify-between items-center pb-3 border-b border-stone-200 dark:border-stone-800">
-              <div className="flex items-center gap-2 text-stone-900 dark:text-white font-bold tracking-tight">
-                <Ticket className="h-5 w-5 text-amber-700" />
-                <span className="font-serif text-lg">{modalTitle}</span>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-label={modalTitle}
+        >
+          <div className="flex max-h-[85vh] w-full max-w-lg flex-col justify-between overflow-y-auto border border-border bg-card p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-2 text-foreground">
+                <Ticket size={17} strokeWidth={1.5} />
+                <h3 className="font-serif text-xl">{modalTitle}</h3>
               </div>
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors"
+                className="touch-target -mr-2 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
+                aria-label="Đóng hộp thoại voucher"
               >
-                <X className="h-5 w-5" />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Manual Code Input */}
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+            {/* Manual Code Entry */}
+            <div className="space-y-2">
+              <label className="block text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground">
                 Nhập mã giảm giá thủ công
               </label>
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Ví dụ: FASHION10"
+                  placeholder="VÍ DỤ: FASHION10"
                   value={inputCode}
                   onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-                  className="flex-1 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-stone-900 font-mono font-bold"
+                  className="h-11 flex-1 border border-border bg-background px-3.5 font-mono text-xs font-semibold uppercase tracking-wider text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
                 />
                 <button
+                  type="button"
                   onClick={() => handleValidateAndApply(inputCode)}
                   disabled={validating || !inputCode.trim()}
-                  className="px-5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition disabled:opacity-40 flex items-center gap-1.5 cursor-pointer"
+                  className="touch-target inline-flex items-center gap-1.5 bg-primary px-5 text-xs font-semibold tracking-[0.16em] uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
                 >
-                  {validating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  <span>Áp Dụng</span>
+                  {validating && <Loader2 size={14} className="animate-spin" />}
+                  <span>Áp dụng</span>
                 </button>
               </div>
             </div>
 
-            {/* Wallet list */}
+            {/* Saved Wallet Vouchers */}
             <div className="space-y-3">
-              <h4 className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider border-b border-stone-200 dark:border-stone-800 pb-1.5">
-                Ví voucher của bạn
+              <h4 className="border-b border-border pb-2 text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground">
+                Ví voucher đã lưu
               </h4>
 
               {!isUserLoggedIn ? (
-                <div className="text-center py-8 space-y-3">
-                  <AlertCircle className="h-8 w-8 text-stone-400 mx-auto" />
-                  <p className="text-xs font-semibold text-stone-600 dark:text-stone-300">Đăng nhập để xem ví voucher của bạn</p>
-                  <p className="text-[11px] text-stone-500">Bạn có thể thu thập các voucher giảm giá độc quyền vào tài khoản</p>
-                  <a
-                    href="/login"
-                    className="inline-block mt-1 px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+                <div className="border border-border bg-background p-6 text-center space-y-3">
+                  <AlertCircle
+                    size={24}
+                    className="mx-auto text-muted-foreground"
+                  />
+                  <p className="text-xs font-semibold text-foreground">
+                    Đăng nhập để sử dụng ví voucher cá nhân
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Các mã giảm giá bạn thu thập sẽ hiển thị tại đây.
+                  </p>
+                  <Link
+                    to="/login"
+                    className="touch-target inline-flex items-center justify-center bg-primary px-6 text-xs font-semibold tracking-[0.16em] uppercase text-primary-foreground"
                   >
                     Đăng nhập ngay
-                  </a>
+                  </Link>
                 </div>
               ) : loading ? (
-                <div className="flex justify-center items-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-stone-600" />
+                <div className="flex items-center justify-center py-12">
+                  <Loader2
+                    size={22}
+                    className="animate-spin text-muted-foreground"
+                  />
                 </div>
               ) : filteredWallet.length === 0 ? (
-                <div className="text-center py-8 space-y-1.5">
-                  <AlertCircle className="h-8 w-8 text-stone-400 mx-auto" />
-                  <p className="text-xs font-semibold text-stone-600 dark:text-stone-300">Ví voucher của bạn chưa có mã phù hợp</p>
-                  <p className="text-[11px] text-stone-400">Khám phá trang Ưu đãi để thu thập thêm nhiều mã giảm giá!</p>
+                <div className="border border-border bg-background p-6 text-center space-y-2">
+                  <AlertCircle
+                    size={24}
+                    className="mx-auto text-muted-foreground"
+                  />
+                  <p className="text-xs font-semibold text-foreground">
+                    Chưa có voucher phù hợp trong ví
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Bạn có thể săn thêm mã tại trang Ưu đãi của Atelier.
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
+                <div className="max-h-[38vh] space-y-2.5 overflow-y-auto pr-1">
                   {filteredWallet.map((item) => {
                     const v = item.voucherId;
                     if (!v) return null;
-                    
-                    const isApplicable = subtotal >= v.minOrderValue;
-                    const isSelected = appliedVoucher && appliedVoucher.code === v.code;
+
+                    const isApplicable = subtotal >= (v.minOrderValue || 0);
+                    const isSelected =
+                      appliedVoucher && appliedVoucher.code === v.code;
 
                     return (
                       <div
@@ -227,56 +308,60 @@ const CheckoutVoucherSelector = ({ subtotal, items = [], shippingFee = 0, onAppl
                           if (isApplicable) {
                             handleSelectFromWallet(v.code);
                           } else {
-                            toast.warn(`Voucher yêu cầu đơn tối thiểu ${v.minOrderValue.toLocaleString("vi-VN")}đ (Đơn hiện tại: ${subtotal.toLocaleString("vi-VN")}đ)`);
+                            toast.warn(
+                              `Voucher yêu cầu đơn tối thiểu ${formatCurrency(
+                                v.minOrderValue
+                              )} (Hiện tại: ${formatCurrency(subtotal)})`
+                            );
                           }
                         }}
-                        className={`group relative border rounded-xl p-3.5 flex justify-between items-center transition cursor-pointer overflow-hidden ${
+                        className={`flex items-center justify-between gap-3 border p-3.5 transition-colors ${
                           isSelected
-                            ? "border-neutral-900 bg-stone-50 dark:bg-stone-800/80 shadow-sm"
+                            ? "border-foreground bg-secondary"
                             : isApplicable
-                            ? "border-stone-200 hover:border-stone-400 hover:bg-stone-50/50"
-                            : "border-stone-100 opacity-50 bg-stone-50/50 cursor-not-allowed"
+                            ? "cursor-pointer border-border bg-background hover:border-foreground"
+                            : "cursor-not-allowed border-border/60 bg-secondary/30 opacity-50"
                         }`}
                       >
-                        {/* Circle notches */}
-                        <div className="absolute -left-2 h-4 w-4 rounded-full bg-white dark:bg-stone-900 border-r border-stone-200 dark:border-stone-800 z-10"></div>
-                        <div className="absolute -right-2 h-4 w-4 rounded-full bg-white dark:bg-stone-900 border-l border-stone-200 dark:border-stone-800 z-10"></div>
-
-                        <div className="flex gap-3 pl-2 pr-4">
-                          <div className="h-10 w-10 bg-stone-100 dark:bg-stone-800 rounded-lg flex items-center justify-center text-amber-700 dark:text-amber-500 shrink-0">
-                            <Ticket className="h-5 w-5" />
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-foreground">
+                              {v.code}
+                            </span>
+                            <span className="border border-border px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground">
+                              {v.discountType === "percentage"
+                                ? `Giảm ${v.discountValue}%`
+                                : `Giảm ${formatCurrency(v.discountValue)}`}
+                            </span>
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-mono font-bold text-stone-900 dark:text-white">
-                                {v.code}
-                              </span>
-                              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 tabular-nums">
-                                {v.discountType === "percentage" ? `Giảm ${v.discountValue}%` : `Giảm ${v.discountValue.toLocaleString("vi-VN")}đ`}
-                              </span>
-                            </div>
-                            <h5 className="text-xs font-medium text-stone-700 dark:text-stone-300 line-clamp-1 mt-0.5">
-                              {v.name}
-                            </h5>
-                            <p className="text-[10px] text-stone-500 tabular-nums">
-                              Đơn tối thiểu: {v.minOrderValue > 0 ? `${v.minOrderValue.toLocaleString("vi-VN")}đ` : "0đ"}
-                              {v.discountType === "percentage" && v.maxDiscountAmount > 0 && ` | Tối đa: ${v.maxDiscountAmount.toLocaleString("vi-VN")}đ`}
-                            </p>
-                          </div>
+                          <p className="line-clamp-1 text-xs text-muted-foreground">
+                            {v.name}
+                          </p>
+                          <p className="text-[10px] tabular-nums text-muted-foreground">
+                            Đơn tối thiểu:{" "}
+                            {v.minOrderValue > 0
+                              ? formatCurrency(v.minOrderValue)
+                              : "0 ₫"}
+                            {v.discountType === "percentage" &&
+                              v.maxDiscountAmount > 0 &&
+                              ` · Tối đa: ${formatCurrency(
+                                v.maxDiscountAmount
+                              )}`}
+                          </p>
                         </div>
 
-                        <div className="shrink-0 z-10 pr-2">
+                        <div className="shrink-0">
                           {isSelected ? (
-                            <div className="h-6 w-6 rounded-full bg-neutral-900 text-white flex items-center justify-center shadow">
-                              <Check className="h-4 w-4" />
-                            </div>
+                            <span className="inline-flex h-7 w-7 items-center justify-center bg-primary text-primary-foreground">
+                              <Check size={14} />
+                            </span>
                           ) : isApplicable ? (
-                            <button className="px-3 py-1 border border-neutral-900 text-neutral-900 hover:bg-neutral-900 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition">
+                            <span className="inline-block border border-foreground px-3 py-1.5 text-[10px] font-semibold tracking-[0.14em] uppercase text-foreground">
                               Dùng
-                            </button>
+                            </span>
                           ) : (
-                            <span className="text-[9px] font-bold text-stone-400 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded">
-                              Chưa đủ đ/k
+                            <span className="inline-block border border-border px-2 py-1 text-[10px] text-muted-foreground">
+                              Chưa đủ ĐK
                             </span>
                           )}
                         </div>

@@ -1,211 +1,228 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React from "react";
+import { NavLink, Link } from "react-router-dom";
 import {
   LayoutDashboard,
-  LayoutList,
-  Package,
-  ShoppingCart,
-  MessageCircle,
+  ShoppingBag,
+  FolderTree,
+  ClipboardList,
   Users,
-  Tag,
-  Zap,
-  Image as ImageIcon,
+  Ticket,
+  Flame,
+  Image,
   BookOpen,
   FileText,
   Settings,
-  X,
-  Store,
+  MessageSquare,
   FlaskConical,
-} from 'lucide-react';
-import useWebsiteSettings from '@/hooks/useWebsiteSettings';
+  ExternalLink,
+  X,
+  Award,
+} from "lucide-react";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
-const navGroups = [
+const navigationGroups = [
   {
-    title: 'Kinh doanh',
+    title: "Tổng quan",
+    items: [{ name: "Bảng điều khiển", href: "/admin", icon: LayoutDashboard }],
+  },
+  {
+    title: "Sản phẩm & Kho",
     items: [
-      { icon: LayoutDashboard, label: 'Tổng quan', path: '/admin' },
-      { icon: LayoutList, label: 'Danh mục', path: '/admin/categories' },
-      { icon: Package, label: 'Sản phẩm', path: '/admin/products' },
-      { icon: ShoppingCart, label: 'Đơn hàng', path: '/admin/orders' },
+      { name: "Sản phẩm", href: "/admin/products", icon: ShoppingBag },
+      { name: "Danh mục", href: "/admin/categories", icon: FolderTree },
     ],
   },
   {
-    title: 'Khách hàng & Hỗ trợ',
+    title: "Bán hàng & CSKH",
     items: [
-      { icon: MessageCircle, label: 'Chat hỗ trợ', path: '/admin/chats', isChat: true },
-      { icon: Users, label: 'Người dùng', path: '/admin/customers' },
+      { name: "Đơn hàng", href: "/admin/orders", icon: ClipboardList },
+      { name: "Khách hàng", href: "/admin/customers", icon: Users },
+      {
+        name: "Hỗ trợ Chat",
+        href: "/admin/chats",
+        icon: MessageSquare,
+        hasBadge: true,
+      },
     ],
   },
   {
-    title: 'Marketing & Ưu đãi',
+    title: "Marketing & Nội dung",
     items: [
-      { icon: Tag, label: 'Khuyến mãi (Voucher)', path: '/admin/coupons' },
-      { icon: Zap, label: 'Chiến dịch Sale', path: '/admin/campaigns' },
-      { icon: FlaskConical, label: 'A/B Testing AI', path: '/admin/ab-testing' },
-      { icon: ImageIcon, label: 'Quản lý Banner', path: '/admin/banners' },
+      { name: "Mã giảm giá", href: "/admin/coupons", icon: Ticket },
+      { name: "Flash Sale", href: "/admin/campaigns", icon: Flame },
+      { name: "Banner", href: "/admin/banners", icon: Image },
+      { name: "Lookbook", href: "/admin/lookbooks", icon: BookOpen },
+      { name: "A/B Testing (AI)", href: "/admin/ab-testing", icon: FlaskConical },
     ],
   },
   {
-    title: 'Nội dung & Hệ thống',
+    title: "Cấu hình",
     items: [
-      { icon: BookOpen, label: 'Quản lý Lookbook', path: '/admin/lookbooks' },
-      { icon: FileText, label: 'Trang CMS', path: '/admin/pages' },
-      { icon: Settings, label: 'Cài đặt hệ thống', path: '/admin/settings' },
+      { name: "Trang tĩnh (CMS)", href: "/admin/pages", icon: FileText },
+      { name: "Cài đặt hệ thống", href: "/admin/settings", icon: Settings },
     ],
   },
 ];
 
-export const Sidebar = ({
-  collapsed = false,
+const Sidebar = ({
+  isOpen,
   mobileOpen = false,
   onCloseMobile,
-  unreadCount = 0,
+  unreadChatCount = 0,
 }) => {
-  const { pathname } = useLocation();
-  const { settings } = useWebsiteSettings();
-  const general = settings?.general || {};
-  const siteName = general?.siteName || '404Studio';
-  const logoUrl = general?.logoUrl || '';
+  const { settings, loading } = useWebsiteSettings();
+  const brandName =
+    !loading && settings?.general?.siteName
+      ? settings.general.siteName
+      : "WEBFASHION";
 
-  return (
-    <>
-      {/* Mobile Backdrop Overlay */}
-      {mobileOpen && (
-        <div
-          onClick={onCloseMobile}
-          className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-xs md:hidden transition-opacity"
-        />
-      )}
-
-      {/* Sidebar Aside */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-all duration-200 ease-in-out md:static
-          ${collapsed ? 'w-20' : 'w-64'}
-          ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'}
-        `}
-      >
-        {/* Header / Brand Logo */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-slate-100 dark:border-slate-800/80">
+  const renderSidebarContent = (expanded) => (
+    <div className="flex h-full flex-col justify-between bg-[var(--color-surface)] text-[var(--color-text)]">
+      {/* Top Brand Identity */}
+      <div>
+        <div className="flex h-16 items-center justify-between border-b border-[var(--color-border)] px-4">
           <Link
             to="/admin"
-            className="flex items-center gap-3 overflow-hidden text-left"
-            onClick={onCloseMobile}
+            onClick={() => onCloseMobile?.()}
+            className="flex items-center gap-3 overflow-hidden"
           >
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={siteName}
-                className="h-8 w-8 object-contain rounded-lg"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#05251C] text-[#F5DD20] font-black font-display text-xs shadow-xs">
-                404
-              </div>
-            )}
-            {!collapsed && (
-              <div className="flex flex-col truncate">
-                <span className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white truncate font-display">
-                  {siteName}
+            <div className="atelier-seal flex h-9 w-9 shrink-0 items-center justify-center border bg-[var(--color-bg)]">
+              <Award className="h-4 w-4" strokeWidth={1.75} />
+            </div>
+            {expanded && (
+              <div className="min-w-0 leading-tight">
+                <span className="block truncate font-serif text-lg font-semibold uppercase tracking-[0.14em] text-[var(--color-text)]">
+                  {brandName}
                 </span>
-                <span className="text-[10px] font-bold text-[#05251C] dark:text-[#F5DD20] uppercase tracking-wider">
-                  Admin Panel
+                <span className="block text-[9px] font-semibold uppercase tracking-[0.26em] text-[var(--color-text-muted)]">
+                  Admin Portal
                 </span>
               </div>
             )}
           </Link>
 
-          {/* Close button for Mobile Drawer */}
-          <button
-            onClick={onCloseMobile}
-            aria-label="Đóng thanh điều hướng"
-            className="md:hidden flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-          >
-            <X className="h-4.5 w-4.5" />
-          </button>
+          {mobileOpen && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              aria-label="Đóng thanh điều hướng"
+              className="touch-target inline-flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text)] lg:hidden"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
-        {/* Navigation Sections */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
-          {navGroups.map((group, groupIdx) => (
-            <div key={groupIdx} className="space-y-1">
-              {!collapsed && (
-                <h4 className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+        {/* Navigation Groups */}
+        <nav
+          aria-label="Điều hướng quản trị"
+          className="max-h-[calc(100vh-8.5rem)] space-y-5 overflow-y-auto px-3 py-5"
+        >
+          {navigationGroups.map((group) => (
+            <div key={group.title} className="space-y-1">
+              {expanded ? (
+                <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
                   {group.title}
-                </h4>
+                </div>
+              ) : (
+                <div
+                  className="mx-auto my-2 h-px w-6 bg-[var(--color-border)]"
+                  aria-hidden="true"
+                />
               )}
 
               {group.items.map((item) => {
                 const Icon = item.icon;
-                const isActive =
-                  item.path === '/admin'
-                    ? pathname === '/admin'
-                    : pathname.startsWith(item.path);
+                const showBadge = item.hasBadge && unreadChatCount > 0;
 
                 return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={onCloseMobile}
-                    title={collapsed ? item.label : undefined}
-                    className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-150
-                      ${collapsed ? 'justify-center' : ''}
-                      ${
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    end={item.href === "/admin"}
+                    onClick={() => onCloseMobile?.()}
+                    title={!expanded ? item.name : undefined}
+                    className={({ isActive }) =>
+                      `touch-target group relative flex items-center gap-3 border px-3 text-xs font-medium transition-colors ${
                         isActive
-                          ? 'bg-[#05251C]/10 text-[#05251C] dark:bg-[#F5DD20]/15 dark:text-[#F5DD20] shadow-2xs font-bold'
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
-                      }
-                    `}
+                          ? "border-[var(--color-text)] bg-[var(--color-text)] font-semibold text-[var(--color-bg)]"
+                          : "border-transparent text-[var(--color-text-muted)] hover:border-[var(--color-border)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)]"
+                      } ${!expanded ? "justify-center px-0" : ""}`
+                    }
                   >
-                    {/* Active Left Indicator Bar */}
-                    {isActive && (
-                      <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-md bg-[#05251C] dark:bg-[#F5DD20]" />
-                    )}
+                    <Icon className="h-4 w-4 shrink-0" strokeWidth={1.6} />
 
-                    <Icon
-                      className={`h-4.5 w-4.5 shrink-0 transition-transform group-hover:scale-105 ${
-                        isActive
-                          ? 'text-[#05251C] dark:text-[#F5DD20]'
-                          : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
-                      }`}
-                    />
-
-                    {!collapsed && <span className="truncate">{item.label}</span>}
-
-                    {/* Unread badge for Chats */}
-                    {item.isChat && unreadCount > 0 && (
-                      <span
-                        className={`ml-auto flex items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-2xs ${
-                          collapsed
-                            ? 'absolute top-1.5 right-1.5 h-2 w-2'
-                            : 'h-4.5 min-w-[18px] px-1'
-                        }`}
-                      >
-                        {!collapsed && (unreadCount > 99 ? '99+' : unreadCount)}
+                    {expanded && (
+                      <span className="flex-1 truncate text-left tracking-[0.04em]">
+                        {item.name}
                       </span>
                     )}
-                  </Link>
+
+                    {showBadge &&
+                      (expanded ? (
+                        <span className="inline-flex h-5 min-w-5 items-center justify-center bg-[var(--color-danger)] px-1.5 text-[10px] font-bold text-white">
+                          {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                        </span>
+                      ) : (
+                        <span
+                          className="absolute top-2 right-2 h-2 w-2 bg-[var(--color-danger)]"
+                          aria-label={`${unreadChatCount} tin nhắn chưa đọc`}
+                        />
+                      ))}
+                  </NavLink>
                 );
               })}
             </div>
           ))}
         </nav>
+      </div>
 
-        {/* Footer: Quick Storefront link */}
-        <div className="p-3 border-t border-slate-100 dark:border-slate-800/80">
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Xem cửa hàng thời trang"
-            className={`flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition ${
-              collapsed ? 'justify-center p-2' : ''
-            }`}
-          >
-            <Store className="h-4 w-4 text-[#05251C] dark:text-[#F5DD20] shrink-0" />
-            {!collapsed && <span className="truncate">Cửa hàng trực tuyến ↗</span>}
-          </a>
-        </div>
+      {/* Footer Storefront Link */}
+      <div className="border-t border-[var(--color-border)] p-3">
+        <Link
+          to="/"
+          className={`touch-target flex items-center gap-2.5 border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text)] transition-colors hover:border-[var(--color-text)] ${
+            !expanded ? "justify-center px-0" : ""
+          }`}
+          title={!expanded ? "Về trang cửa hàng" : undefined}
+        >
+          <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+          {expanded && <span className="truncate">Về trang cửa hàng</span>}
+        </Link>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Collapsible Sidebar */}
+      <aside
+        aria-label="Thanh bên quản trị"
+        className={`fixed top-0 left-0 z-40 hidden h-screen border-r border-[var(--color-border)] transition-all duration-300 lg:block ${
+          isOpen ? "w-64" : "w-20"
+        }`}
+      >
+        {renderSidebarContent(isOpen)}
       </aside>
+
+      {/* Mobile Drawer Sidebar */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-50 lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu điều hướng quản trị"
+        >
+          <div
+            className="fixed inset-0 bg-black/65 backdrop-blur-xs"
+            onClick={onCloseMobile}
+            aria-hidden="true"
+          />
+          <aside className="fixed top-0 left-0 z-10 h-full w-72 border-r border-[var(--color-border)] shadow-2xl">
+            {renderSidebarContent(true)}
+          </aside>
+        </div>
+      )}
     </>
   );
 };

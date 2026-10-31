@@ -1,35 +1,28 @@
-import React from 'react';
-import { PackageOpen } from 'lucide-react';
+import React from "react";
+import { Inbox } from "lucide-react";
 
-/**
- * Standard Empty State component for Admin Tables and Lists
- */
-export const AdminEmptyState = ({
-  icon,
-  title = 'Không có dữ liệu',
-  description = 'Chưa có bản ghi nào hoặc không tìm thấy kết quả phù hợp với bộ lọc.',
+export function AdminEmptyState({
+  icon: Icon = Inbox,
+  title = "Không có dữ liệu",
+  description = "Chưa có bản ghi nào phù hợp với điều kiện lọc hiện tại.",
   action,
-  className = '',
-}) => {
-  const EmptyIcon = icon || PackageOpen;
+}) {
   return (
-    <div
-      className={`flex flex-col items-center justify-center text-center py-16 px-4 ${className}`}
-    >
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 mb-4 border border-slate-200/60 dark:border-slate-700/60">
-        <EmptyIcon className="h-7 w-7" />
+    <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-muted)]">
+        <Icon className="h-6 w-6" strokeWidth={1.5} />
       </div>
-      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+      <h4 className="font-serif text-lg font-medium text-[var(--color-text)]">
         {title}
-      </h3>
+      </h4>
       {description && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+        <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-[var(--color-text-muted)]">
           {description}
         </p>
       )}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
-};
+}
 
 export default AdminEmptyState;

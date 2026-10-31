@@ -1,26 +1,40 @@
-import trackingService from "@/services/tracking.service";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ShoppingBag, Zap, Check, LoaderCircle } from "lucide-react";
+import { ShoppingBag, Zap, Heart, LoaderCircle } from "lucide-react";
+import trackingService from "@/services/tracking.service";
 import { addCartItemService } from "@/services/cartItem.service";
 import { useAuthStore } from "@/store/auth.store";
+import { useFavoriteStore } from "@/store/favorite.store";
 import { getColorHex } from "../ProductSearch/productAdapter";
 
 const uniqueValues = (values) => [...new Set(values.filter(Boolean))];
 
-const ProductActions = ({ product, variants = [] }) => {
+const ProductActions = ({ product, variants = [], onVariantChange }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
+  const favoriteItems = useFavoriteStore((state) => state.items);
+  const toggleFavorite = useFavoriteStore((state) => state.toggleProduct);
+
   const role = user?.role || user?.data?.role || "";
   const isAdmin = role === "admin";
+
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
 
+  const productId = String(product?.id || product?._id || "");
+  const isFavorite = favoriteItems.some(
+    (item) => String(item.id || item._id) === productId
+  );
+
   const safeVariants = useMemo(() => {
-    if (product && Array.isArray(product.variants) && product.variants.length > 0) {
+    if (
+      product &&
+      Array.isArray(product.variants) &&
+      product.variants.length > 0
+    ) {
       return product.variants;
     }
     return Array.isArray(variants) ? variants : [];
@@ -30,8 +44,8 @@ const ProductActions = ({ product, variants = [] }) => {
     if (safeVariants.length > 0) {
       return uniqueValues(safeVariants.map((variant) => variant.color));
     }
-    return Array.isArray(product.colors) ? product.colors : [];
-  }, [safeVariants, product.colors]);
+    return Array.isArray(product?.colors) ? product.colors : [];
+  }, [safeVariants, product?.colors]);
 
   const sizeOptions = useMemo(() => {
     if (safeVariants.length > 0) {
@@ -41,64 +55,86 @@ const ProductActions = ({ product, variants = [] }) => {
 
       return uniqueValues(variantsByColor.map((variant) => variant.size));
     }
-    return Array.isArray(product.sizes) ? product.sizes : [];
-  }, [safeVariants, selectedColor, product.sizes]);
+    return Array.isArray(product?.sizes) ? product.sizes : [];
+  }, [safeVariants, selectedColor, product?.sizes]);
 
   const isColorDisabled = (color) => {
     if (safeVariants.length === 0) return false;
     const variantsForColor = safeVariants.filter((v) => v.color === color);
     return variantsForColor.every(
-      (v) => v.stock !== undefined && v.stock !== null && Number(v.stock) <= 0
+      (v) =>
+        v.stock !== undefined && v.stock !== null && Number(v.stock) <= 0
     );
   };
 
   const isSizeDisabled = (size) => {
     if (safeVariants.length === 0) return false;
     if (selectedColor) {
-      const variant = safeVariants.find((v) => v.color === selectedColor && v.size === size);
-      return variant
-        ? variant.stock !== undefined && variant.stock !== null && Number(variant.stock) <= 0
-        : true;
-    } else {
-      const variantsForSize = safeVariants.filter((v) => v.size === size);
-      return variantsForSize.every(
-        (v) => v.stock !== undefined && v.stock !== null && Number(v.stock) <= 0
+      const variant = safeVariants.find(
+        (v) => v.color === selectedColor && v.size === size
       );
+      return variant
+        ? variant.stock !== undefined &&
+            variant.stock !== null &&
+            Number(variant.stock) <= 0
+        : true;
     }
+    const variantsForSize = safeVariants.filter((v) => v.size === size);
+    return variantsForSize.every(
+      (v) =>
+        v.stock !== undefined && v.stock !== null && Number(v.stock) <= 0
+    );
   };
 
   const isAllOutOfStock = useMemo(() => {
     if (safeVariants.length > 0) {
       return safeVariants.every(
-        (v) => v.stock !== undefined && v.stock !== null && Number(v.stock) <= 0
+        (v) =>
+          v.stock !== undefined && v.stock !== null && Number(v.stock) <= 0
       );
     }
     return (
-      product.isSoldOut ||
-      (product.stock !== null && product.stock !== undefined && product.stock <= 0)
+      product?.isSoldOut ||
+      (product?.stock !== null &&
+        product?.stock !== undefined &&
+        product.stock <= 0)
     );
   }, [safeVariants, product]);
 
   const selectedVariant = useMemo(() => {
     if (!safeVariants.length) return null;
-
     return (
       safeVariants.find((variant) => {
         const matchesColor = colorOptions.length
           ? variant.color === selectedColor
           : true;
-        const matchesSize = sizeOptions.length ? variant.size === selectedSize : true;
-
+        const matchesSize = sizeOptions.length
+          ? variant.size === selectedSize
+          : true;
         return matchesColor && matchesSize;
       }) || null
     );
-  }, [colorOptions.length, safeVariants, selectedColor, selectedSize, sizeOptions.length]);
+  }, [
+    colorOptions.length,
+    safeVariants,
+    selectedColor,
+    selectedSize,
+    sizeOptions.length,
+  ]);
+
+  useEffect(() => {
+    if (onVariantChange) {
+      onVariantChange(selectedVariant);
+    }
+  }, [selectedVariant, onVariantChange]);
 
   const variantStock =
-    selectedVariant && selectedVariant.stock !== undefined && selectedVariant.stock !== null
+    selectedVariant &&
+    selectedVariant.stock !== undefined &&
+    selectedVariant.stock !== null
       ? Number(selectedVariant.stock) || 0
       : null;
-  const stockLimit = variantStock ?? product.stock ?? 99;
+  const stockLimit = variantStock ?? product?.stock ?? 99;
 
   useEffect(() => {
     if (stockLimit !== null && stockLimit !== undefined) {
@@ -119,26 +155,32 @@ const ProductActions = ({ product, variants = [] }) => {
     (!safeVariants.length || (Boolean(selectedVariant) && stockLimit > 0));
 
   const warningText = (() => {
-    if (isAllOutOfStock || (selectedVariant && stockLimit <= 0)) return "Hết hàng";
-    if (colorOptions.length > 0 && !selectedColor) return "Vui lòng chọn màu sắc";
-    if (sizeOptions.length > 0 && !selectedSize) return "Vui lòng chọn kích thước";
+    if (isAllOutOfStock || (selectedVariant && stockLimit <= 0))
+      return "Thiết kế này hiện đã hết hàng.";
+    if (colorOptions.length > 0 && !selectedColor)
+      return "Vui lòng chọn màu sắc trước khi thêm vào giỏ.";
+    if (sizeOptions.length > 0 && !selectedSize)
+      return "Vui lòng chọn kích cỡ trước khi thêm vào giỏ.";
     return "";
   })();
 
   const handleColorClick = (color) => {
     if (isColorDisabled(color)) return;
     setSelectedColor(color);
-    trackingService.trackVariantSelect(product, { color, size: selectedSize });
+    trackingService.trackVariantSelect(product, {
+      color,
+      size: selectedSize,
+    });
 
-    // size đang chọn phải reset nếu không còn hợp lệ
     if (selectedSize && safeVariants.length > 0) {
       const isSizeValidForNewColor = safeVariants.some(
         (variant) =>
           variant.color === color &&
           variant.size === selectedSize &&
-          (variant.stock === undefined || variant.stock === null || Number(variant.stock) > 0)
+          (variant.stock === undefined ||
+            variant.stock === null ||
+            Number(variant.stock) > 0)
       );
-
       if (!isSizeValidForNewColor) {
         setSelectedSize("");
       }
@@ -148,7 +190,23 @@ const ProductActions = ({ product, variants = [] }) => {
   const handleSizeClick = (size) => {
     if (isSizeDisabled(size)) return;
     setSelectedSize(size);
-    trackingService.trackVariantSelect(product, { color: selectedColor, size });
+    trackingService.trackVariantSelect(product, {
+      color: selectedColor,
+      size,
+    });
+  };
+
+  const handleToggleFavorite = () => {
+    const nextState = !isFavorite;
+    if (productId) {
+      trackingService.trackProductFavorite(productId, nextState);
+    }
+    toggleFavorite(product);
+    toast.success(
+      isFavorite
+        ? `Đã xóa "${product.name}" khỏi danh sách yêu thích.`
+        : `Đã lưu "${product.name}" vào danh sách yêu thích.`
+    );
   };
 
   const buildCartPayload = () => ({
@@ -159,39 +217,34 @@ const ProductActions = ({ product, variants = [] }) => {
   });
 
   const handleAddToCart = async () => {
-    // 1. Chống duplicate do double-click
     if (isAdding) return false;
 
-    console.log("Add to cart:", {
-      productId: product.id,
-      quantity,
-      selectedSize,
-      selectedColor
-    });
-
     if (isAdmin) {
-      toast.error("Quản trị viên không thể mua hàng!");
+      toast.error("Tài khoản Quản trị viên không thể đặt hàng.");
       return false;
     }
 
-    // 2. Không phát sự kiện khi không đủ điều kiện (hết hàng, chưa chọn size/màu)
     if (!canAdd) {
-      toast.error(warningText || "Vui lòng chọn đầy đủ thông tin sản phẩm");
+      toast.error(warningText || "Vui lòng chọn đầy đủ màu sắc và kích cỡ.");
       return false;
     }
 
-    if (stockLimit !== null && stockLimit !== undefined && quantity > stockLimit) {
-      toast.error(`Số lượng trong kho không đủ (chỉ còn lại ${stockLimit} sản phẩm)`);
+    if (
+      stockLimit !== null &&
+      stockLimit !== undefined &&
+      quantity > stockLimit
+    ) {
+      toast.error(`Kho chỉ còn lại ${stockLimit} sản phẩm.`);
       return false;
     }
 
-    // 3. Khách vãng lai: Ghi nhận ý định mua hàng (add_to_cart_attempt), KHÔNG phát add_to_cart thành công
     if (!isAuthenticated) {
-      trackingService.trackAddToCartAttempt(product, quantity, selectedVariant, {
-        reason: "unauthenticated",
-      });
-
-      // Lưu giỏ hàng chờ để khôi phục sau khi đăng nhập thành công
+      trackingService.trackAddToCartAttempt(
+        product,
+        quantity,
+        selectedVariant,
+        { reason: "unauthenticated" }
+      );
       try {
         sessionStorage.setItem(
           "pending_add_to_cart",
@@ -203,9 +256,10 @@ const ProductActions = ({ product, variants = [] }) => {
             variant: selectedVariant,
           })
         );
-      } catch (_) {}
-
-      toast.info("Vui lòng đăng nhập để lưu sản phẩm vào giỏ hàng");
+      } catch {
+        // ignore storage error
+      }
+      toast.info("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
       navigate("/login");
       return false;
     }
@@ -213,11 +267,8 @@ const ProductActions = ({ product, variants = [] }) => {
     try {
       setIsAdding(true);
       const result = await addCartItemService(buildCartPayload());
-
-      // 4. CHỈ phát add_to_cart khi API trả về kết quả thành công thực sự
       if (result && result.success !== false) {
         trackingService.trackAddToCart(product, quantity, selectedVariant);
-
         window.dispatchEvent(
           new CustomEvent("cartUpdated", {
             detail: {
@@ -225,18 +276,21 @@ const ProductActions = ({ product, variants = [] }) => {
               totalQuantity: result?.cart?.total_items ?? 0,
               total: result?.cart?.total_price ?? 0,
             },
-          }),
+          })
         );
-
-        toast.success("Đã thêm sản phẩm vào giỏ hàng");
+        window.dispatchEvent(
+          new CustomEvent("flyToCart", {
+            detail: { src: product.images?.[0] || "" },
+          })
+        );
+        toast.success("Đã thêm thiết kế vào giỏ hàng.");
         return true;
-      } else {
-        toast.error(result?.message || "Thêm vào giỏ hàng thất bại");
-        return false;
       }
+      toast.error(result?.message || "Thêm vào giỏ hàng thất bại.");
+      return false;
     } catch (error) {
-      console.error("Không thể thêm sản phẩm vào giỏ hàng:", error);
-      toast.error("Thêm vào giỏ hàng thất bại");
+      console.error("Lỗi khi thêm vào giỏ hàng:", error);
+      toast.error("Thêm vào giỏ hàng thất bại.");
       return false;
     } finally {
       setIsAdding(false);
@@ -245,22 +299,27 @@ const ProductActions = ({ product, variants = [] }) => {
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
+      toast.info("Vui lòng đăng nhập để tiến hành mua hàng.");
       navigate("/login");
       return;
     }
 
     if (isAdmin) {
-      toast.error("Quản trị viên không thể mua hàng!");
+      toast.error("Tài khoản Quản trị viên không thể đặt hàng.");
       return;
     }
 
     if (!canAdd) {
-      toast.error(warningText || "Vui lòng chọn đầy đủ thông tin sản phẩm");
+      toast.error(warningText || "Vui lòng chọn đầy đủ màu sắc và kích cỡ.");
       return;
     }
 
-    if (stockLimit !== null && stockLimit !== undefined && quantity > stockLimit) {
-      toast.error(`Số lượng trong kho không đủ (chỉ còn lại ${stockLimit} sản phẩm)`);
+    if (
+      stockLimit !== null &&
+      stockLimit !== undefined &&
+      quantity > stockLimit
+    ) {
+      toast.error(`Kho chỉ còn lại ${stockLimit} sản phẩm.`);
       return;
     }
 
@@ -272,11 +331,21 @@ const ProductActions = ({ product, variants = [] }) => {
             product_id: product.id,
             variant_id: selectedVariant?._id || null,
             product_name: product.name,
-            product_image: selectedVariant?.image_url || product.images[0],
+            name: product.name,
+            product_image:
+              selectedVariant?.image_url || product.images?.[0] || "",
+            image: selectedVariant?.image_url || product.images?.[0] || "",
             price: Number(product.price) || 0,
+            new_price: Number(product.price) || 0,
             oldPrice: Number(product.oldPrice) || 0,
+            old_price: Number(product.oldPrice) || 0,
             quantity: Number(quantity) || 1,
-            variant: [selectedColor, selectedSize].filter(Boolean).join(" - ") || "Mặc định",
+            stock: stockLimit,
+            color: selectedColor || selectedVariant?.color || "",
+            size: selectedSize || selectedVariant?.size || "",
+            variant:
+              [selectedColor, selectedSize].filter(Boolean).join(" - ") ||
+              "Mặc định",
           },
         ],
       },
@@ -284,49 +353,42 @@ const ProductActions = ({ product, variants = [] }) => {
   };
 
   return (
-    <div className="product-actions flex flex-col gap-6 lg:gap-3 pt-2 lg:pt-1">
-      {/* 1. Nhóm chọn Màu sắc (Color Swatches) */}
+    <div className="space-y-6">
+      {/* 1. Color Selector */}
       {colorOptions.length > 0 && (
-        <fieldset className="product-actions__group flex flex-col gap-2.5 lg:gap-1.5">
-          <legend className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center justify-between w-full">
+        <fieldset className="space-y-2.5">
+          <legend className="flex w-full items-center justify-between text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground">
             <span>Màu sắc</span>
             {selectedColor && (
-              <span className="text-xs font-semibold text-[#05251C] capitalize">
-                : {selectedColor}
+              <span className="font-normal text-muted-foreground">
+                Đang chọn: <strong className="text-foreground">{selectedColor}</strong>
               </span>
             )}
           </legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {colorOptions.map((color) => {
-              const isDisabled = isColorDisabled(color);
-              const isSelected = selectedColor === color;
-              const hex = getColorHex(color);
-              const isLightColor = ["#ffffff", "#f5ebe1", "#e5d9c5", "#e2e8f0"].includes(
-                hex.toLowerCase(),
-              );
-
+              const disabled = isColorDisabled(color);
+              const selected = selectedColor === color;
               return (
                 <button
-                  type="button"
                   key={color}
-                  disabled={isDisabled}
+                  type="button"
+                  disabled={disabled}
                   onClick={() => handleColorClick(color)}
-                  className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all cursor-pointer ${
-                    isDisabled
-                      ? "opacity-35 cursor-not-allowed border-dashed border-neutral-300 bg-neutral-50 text-neutral-400 line-through"
-                      : isSelected
-                      ? "border-neutral-900 bg-neutral-900 text-white shadow-xs"
-                      : "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-400 hover:bg-neutral-50"
+                  className={`touch-target inline-flex items-center gap-2.5 border px-4 text-xs transition-colors ${
+                    disabled
+                      ? "cursor-not-allowed border-dashed border-border opacity-35 line-through"
+                      : selected
+                      ? "border-foreground bg-primary font-semibold text-primary-foreground"
+                      : "border-border bg-card text-foreground hover:border-foreground"
                   }`}
                 >
                   <span
-                    className={`w-3.5 h-3.5 rounded-full flex-shrink-0 border ${
-                      isLightColor ? "border-neutral-300" : "border-black/10"
-                    }`}
-                    style={{ backgroundColor: hex }}
+                    className="h-3.5 w-3.5 rounded-full border border-black/20"
+                    style={{ backgroundColor: getColorHex(color) }}
+                    aria-hidden="true"
                   />
-                  <span className="capitalize">{color}</span>
-                  {isSelected && <Check size={12} className="text-white ml-0.5" />}
+                  <span>{color}</span>
                 </button>
               );
             })}
@@ -334,34 +396,33 @@ const ProductActions = ({ product, variants = [] }) => {
         </fieldset>
       )}
 
-      {/* 2. Nhóm chọn Kích thước (Size Box Pills) */}
+      {/* 2. Size Selector */}
       {sizeOptions.length > 0 && (
-        <fieldset className="product-actions__group flex flex-col gap-2.5 lg:gap-1.5">
-          <legend className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center justify-between w-full">
-            <span>Kích thước</span>
+        <fieldset className="space-y-2.5">
+          <legend className="flex w-full items-center justify-between text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground">
+            <span>Kích cỡ</span>
             {selectedSize && (
-              <span className="text-xs font-semibold text-[#05251C]">
-                : {selectedSize}
+              <span className="font-normal text-muted-foreground">
+                Đang chọn: <strong className="text-foreground">{selectedSize}</strong>
               </span>
             )}
           </legend>
           <div className="flex flex-wrap gap-2">
             {sizeOptions.map((size) => {
-              const isDisabled = isSizeDisabled(size);
-              const isSelected = selectedSize === size;
-
+              const disabled = isSizeDisabled(size);
+              const selected = selectedSize === size;
               return (
                 <button
-                  type="button"
                   key={size}
-                  disabled={isDisabled}
+                  type="button"
+                  disabled={disabled}
                   onClick={() => handleSizeClick(size)}
-                  className={`min-w-[44px] h-10 lg:h-9 px-3 flex items-center justify-center rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                    isDisabled
-                      ? "opacity-35 cursor-not-allowed border-dashed border-neutral-300 bg-neutral-50 text-neutral-400 line-through"
-                      : isSelected
-                      ? "border-[#05251C] bg-[#05251C] text-[#F5DD20] shadow-xs"
-                      : "border-neutral-200 bg-white text-neutral-800 hover:border-[#05251C] hover:bg-neutral-50"
+                  className={`touch-target min-w-[48px] border px-4 text-xs font-medium uppercase transition-colors ${
+                    disabled
+                      ? "cursor-not-allowed border-dashed border-border opacity-35 line-through"
+                      : selected
+                      ? "border-foreground bg-primary font-semibold text-primary-foreground"
+                      : "border-border bg-card text-foreground hover:border-foreground"
                   }`}
                 >
                   {size}
@@ -372,64 +433,72 @@ const ProductActions = ({ product, variants = [] }) => {
         </fieldset>
       )}
 
-      {/* 3. Điều khiển Số lượng */}
-      <div className="flex items-center gap-4 pt-1">
-        <span className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-          Số lượng
-        </span>
-        <div className="flex items-center border border-neutral-200 rounded-xl bg-white p-1 shadow-2xs">
-          <button
-            type="button"
-            onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-            disabled={quantity <= 1 || isAllOutOfStock}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-600 hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed transition font-bold text-base cursor-pointer"
-            aria-label="Giảm số lượng"
-          >
-            -
-          </button>
-          <strong className="w-10 text-center font-bold text-sm text-neutral-900 tabular-nums">
-            {isAllOutOfStock ? 0 : quantity}
-          </strong>
-          <button
-            type="button"
-            onClick={() =>
-              setQuantity((current) => Math.min(stockLimit || 99, current + 1))
-            }
-            disabled={quantity >= (stockLimit || 99) || isAllOutOfStock}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-600 hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-not-allowed transition font-bold text-base cursor-pointer"
-            aria-label="Tăng số lượng"
-          >
-            +
-          </button>
+      {/* 3. Quantity & Stock Status */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-y border-border py-4">
+        <div className="flex items-center gap-4">
+          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-foreground">
+            Số lượng
+          </span>
+          <div className="inline-flex items-center border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              disabled={quantity <= 1 || isAllOutOfStock}
+              className="touch-target inline-flex items-center justify-center text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-35"
+              aria-label="Giảm số lượng"
+            >
+              −
+            </button>
+            <strong className="w-10 text-center text-xs font-semibold tabular-nums text-foreground">
+              {isAllOutOfStock ? 0 : quantity}
+            </strong>
+            <button
+              type="button"
+              onClick={() =>
+                setQuantity((q) => Math.min(stockLimit || 99, q + 1))
+              }
+              disabled={quantity >= (stockLimit || 99) || isAllOutOfStock}
+              className="touch-target inline-flex items-center justify-center text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-35"
+              aria-label="Tăng số lượng"
+            >
+              +
+            </button>
+          </div>
         </div>
-        {stockLimit !== null && stockLimit < 10 && stockLimit > 0 && (
-          <span className="text-[11px] font-bold text-[#05251C] bg-[#F5DD20]/25 border border-[#F5DD20]/60 px-2 py-0.5 rounded-md">
-            Chỉ còn {stockLimit} sản phẩm
+
+        {stockLimit !== null && stockLimit !== undefined && (
+          <span className="text-xs text-muted-foreground">
+            {stockLimit > 0 ? `Còn ${stockLimit} sản phẩm` : "Hết hàng"}
           </span>
         )}
       </div>
 
+      {/* Selection Notice */}
       {warningText && (
-        <p className="text-xs font-semibold text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">
+        <p className="border-l-2 border-foreground bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
           {warningText}
         </p>
       )}
 
-      {/* 4. Nút Hành động Mua hàng */}
-      <div className="flex flex-col sm:flex-row gap-3 lg:gap-2 pt-2 lg:pt-1">
+      {/* 4. Primary Purchase & Favorite CTAs */}
+      <div className="flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
           onClick={handleAddToCart}
           disabled={isAdding || !canAdd || isAdmin}
-          className="flex-1 h-12 lg:h-10 rounded-xl border-2 border-[#05251C] bg-white text-[#05251C] hover:bg-[#05251C] hover:text-[#F5DD20] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition duration-200 shadow-2xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          className="touch-target flex-1 inline-flex items-center justify-center gap-2 border border-foreground bg-card px-6 py-3.5 text-xs font-semibold tracking-[0.16em] uppercase text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isAdding ? (
             <LoaderCircle size={16} className="animate-spin" />
           ) : (
-            <ShoppingBag size={16} />
+            <ShoppingBag size={16} strokeWidth={1.5} />
           )}
           <span>
-            {isAdmin ? "Không dành cho Admin" : (isAdding ? "Đang xử lý..." : "Thêm vào giỏ hàng")}
+            {isAdmin
+              ? "Không dành cho Admin"
+              : isAdding
+              ? "Đang xử lý..."
+              : "Thêm vào giỏ hàng"}
           </span>
         </button>
 
@@ -437,10 +506,24 @@ const ProductActions = ({ product, variants = [] }) => {
           type="button"
           onClick={handleBuyNow}
           disabled={isAdding || !canAdd || isAdmin}
-          className="flex-1 h-12 lg:h-10 rounded-xl bg-[#05251C] text-[#F5DD20] hover:bg-[#073D2A] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition duration-200 shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+          className="touch-target flex-1 inline-flex items-center justify-center gap-2 bg-primary px-6 py-3.5 text-xs font-semibold tracking-[0.16em] uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <Zap size={16} />
+          <Zap size={16} strokeWidth={1.5} />
           <span>{isAdmin ? "Không dành cho Admin" : "Mua ngay"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleToggleFavorite}
+          className="touch-target inline-flex items-center justify-center border border-border bg-card px-4 text-foreground transition-colors hover:border-foreground"
+          aria-label={isFavorite ? "Bỏ yêu thích" : "Lưu vào yêu thích"}
+          aria-pressed={isFavorite}
+        >
+          <Heart
+            size={18}
+            strokeWidth={1.5}
+            fill={isFavorite ? "currentColor" : "none"}
+          />
         </button>
       </div>
     </div>

@@ -1,412 +1,192 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
-/* arrow trái + phải */
-.ant-carousel .slick-prev,
-.ant-carousel .slick-next {
-  color: #fff !important;
-  background: rgb(25 24 23 / 74%);
-  border-radius: 999px;
-  height: 36px !important;
-  padding: 6px !important;
-  width: 36px !important;
-}
-
-/* icon bên trong */
-.ant-carousel .slick-prev::before,
-.ant-carousel .slick-next::before {
-  color: currentColor !important;
-}
-.ant-carousel {
-  max-height: 450px;
-}
-
-/* 404Studio Atelier Badges - Replaced harsh flashing with calm, luxury accents */
-.sale-badge {
-  background: #05251C;
-  color: #F5DD20;
-  display: inline-flex;
-  align-items: center;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  box-shadow: 0 4px 14px rgba(5, 37, 28, 0.22);
-}
-
-@keyframes subtleBreathing {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.88;
-    transform: scale(0.985);
-  }
-}
-
-.atelier-pulse {
-  animation: subtleBreathing 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
 @theme inline {
-  --font-display: "Syne", "Outfit", "Plus Jakarta Sans", sans-serif;
-  --font-heading: "Outfit", "Plus Jakarta Sans", "Geist Variable", sans-serif;
-  --font-editorial: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-  --font-sans: "Plus Jakarta Sans", "Outfit", "Geist Variable", system-ui, sans-serif;
-  --font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-foreground: var(--foreground);
-  --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Strict 2-Font Architecture: Oswald (Condensed Display) + Plus Jakarta Sans (Clean Body Sans) */
+  --font-condensed: "Oswald", sans-serif;
+  --font-display: "Oswald", sans-serif;
+  --font-heading: "Oswald", sans-serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-editorial: "Oswald", sans-serif;
 
-  --color-indigo-50: var(--indigo-50);
-  --color-indigo-100: var(--indigo-100);
-  --color-indigo-200: var(--indigo-200);
-  --color-indigo-300: var(--indigo-300);
-  --color-indigo-400: var(--indigo-400);
-  --color-indigo-500: var(--indigo-500);
-  --color-indigo-600: var(--indigo-600);
-  --color-indigo-650: var(--indigo-650);
-  --color-indigo-700: var(--indigo-700);
-  --color-indigo-800: var(--indigo-800);
-  --color-indigo-900: var(--indigo-900);
-  --color-indigo-950: var(--indigo-950);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
 }
 
 :root {
-  /* 404Studio Core Brand Tokens */
-  --studio-forest-dark: #05251C;
-  --studio-forest: #073D2A;
-  --studio-forest-light: #0E5A3E;
-  --studio-ivory: #FBF9F5;
-  --studio-ivory-surface: #FFFFFF;
-  --studio-ivory-muted: #F2EFE9;
-  --studio-charcoal: #121212;
-  --studio-charcoal-muted: #5A5E5B;
-  --studio-lime: #F5DD20;
-  --studio-lime-hover: #D8C314;
-  --studio-border: rgba(5, 37, 28, 0.08);
-  --studio-border-strong: rgba(5, 37, 28, 0.18);
+  /* WebFashion Monochrome Atelier Tokens — Light Mode (Bone / Noir / Slate) */
+  --wf-bone: #F7F6F2;
+  --wf-bone-elevated: #FFFFFF;
+  --wf-bone-muted: #EFECE6;
+  --wf-noir: #0C0C0E;
+  --wf-noir-soft: #1C1C21;
+  --wf-slate: #64646C;
+  --wf-slate-muted: #8E8E96;
+  --wf-border: rgba(12, 12, 14, 0.1);
+  --wf-border-strong: rgba(12, 12, 14, 0.22);
 
-  /* Theme System Variables */
-  --background: #FBF9F5;
-  --foreground: #121212;
+  /* Exclusive Gold Token ONLY for Atelier Authenticity Seal */
+  --wf-seal-gold: #C5A880;
+  --wf-seal-gold-border: rgba(197, 168, 128, 0.45);
+
+  /* Direct Monochrome Tokens */
+  --color-bg: #F7F6F2;
+  --color-surface: #FFFFFF;
+  --color-text: #0C0C0E;
+  --color-text-muted: #64646C;
+  --color-border: rgba(12, 12, 14, 0.12);
+  --color-danger: #B91C1C;
+
+  /* Semantic Theme Variables */
+  --background: #F7F6F2;
+  --foreground: #0C0C0E;
   --card: #FFFFFF;
-  --card-foreground: #121212;
+  --card-foreground: #0C0C0E;
   --popover: #FFFFFF;
-  --popover-foreground: #121212;
-  --primary: #073D2A;
-  --primary-foreground: #FBF9F5;
-  --secondary: #F2EFE9;
-  --secondary-foreground: #05251C;
-  --muted: #F2EFE9;
-  --muted-foreground: #5A5E5B;
-  --accent: #F5DD20;
-  --accent-foreground: #05251C;
-  --destructive: #DC2626;
-  --border: rgba(5, 37, 28, 0.08);
-  --input: rgba(5, 37, 28, 0.16);
-  --ring: #073D2A;
-  --chart-1: #073D2A;
-  --chart-2: #0E5A3E;
-  --chart-3: #10B981;
-  --chart-4: #F5DD20;
-  --chart-5: #121212;
-  --radius: 0.625rem;
-  --sidebar: #F8FAFC;
-  --sidebar-foreground: #0F172A;
-  --sidebar-primary: #073D2A;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F1F5F9;
-  --sidebar-accent-foreground: #0F172A;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #073D2A;
-
-  --indigo-50: oklch(0.975 0 0);
-  --indigo-100: oklch(0.95 0 0);
-  --indigo-200: oklch(0.89 0 0);
-  --indigo-300: oklch(0.8 0 0);
-  --indigo-400: oklch(0.65 0 0);
-  --indigo-500: oklch(0.45 0 0);
-  --indigo-600: oklch(0.205 0 0);
-  --indigo-650: oklch(0.145 0 0);
-  --indigo-700: oklch(0.09 0 0);
-  --indigo-800: oklch(0.05 0 0);
-  --indigo-900: oklch(0.02 0 0);
-  --indigo-950: oklch(0.01 0 0);
+  --popover-foreground: #0C0C0E;
+  --primary: #0C0C0E;
+  --primary-foreground: #F7F6F2;
+  --secondary: #EFECE6;
+  --secondary-foreground: #0C0C0E;
+  --muted: #EFECE6;
+  --muted-foreground: #64646C;
+  --accent: #1C1C21;
+  --accent-foreground: #F7F6F2;
+  --destructive: #B91C1C;
+  --border: rgba(12, 12, 14, 0.1);
+  --input: rgba(12, 12, 14, 0.16);
+  --ring: #0C0C0E;
+  --radius: 0.125rem;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* WebFashion Monochrome Atelier Tokens — Dark Mode (Noir / Bone / Slate) */
+  --wf-bone: #0B0B0D;
+  --wf-bone-elevated: #131317;
+  --wf-bone-muted: #1B1B21;
+  --wf-noir: #F5F4F0;
+  --wf-noir-soft: #E2E0D8;
+  --wf-slate: #9E9EA8;
+  --wf-slate-muted: #6E6E78;
+  --wf-border: rgba(245, 244, 240, 0.11);
+  --wf-border-strong: rgba(245, 244, 240, 0.24);
 
-  --indigo-50: oklch(0.205 0 0);
-  --indigo-100: oklch(0.269 0 0);
-  --indigo-200: oklch(0.35 0 0);
-  --indigo-300: oklch(0.45 0 0);
-  --indigo-400: oklch(0.6 0 0);
-  --indigo-500: oklch(0.75 0 0);
-  --indigo-600: oklch(0.922 0 0);
-  --indigo-650: oklch(0.95 0 0);
-  --indigo-700: oklch(0.985 0 0);
-  --indigo-800: oklch(0.99 0 0);
-  --indigo-900: oklch(0.995 0 0);
-  --indigo-950: oklch(1 0 0);
+  --wf-seal-gold: #D4B892;
+  --wf-seal-gold-border: rgba(212, 184, 146, 0.45);
+
+  /* Direct Monochrome Tokens */
+  --color-bg: #0B0B0D;
+  --color-surface: #131317;
+  --color-text: #F5F4F0;
+  --color-text-muted: #9E9EA8;
+  --color-border: rgba(245, 244, 240, 0.14);
+  --color-danger: #EF4444;
+
+  /* Semantic Theme Variables */
+  --background: #0B0B0D;
+  --foreground: #F5F4F0;
+  --card: #131317;
+  --card-foreground: #F5F4F0;
+  --popover: #131317;
+  --popover-foreground: #F5F4F0;
+  --primary: #F5F4F0;
+  --primary-foreground: #0B0B0D;
+  --secondary: #1B1B21;
+  --secondary-foreground: #F5F4F0;
+  --muted: #1B1B21;
+  --muted-foreground: #9E9EA8;
+  --accent: #24242C;
+  --accent-foreground: #F5F4F0;
+  --destructive: #EF4444;
+  --border: rgba(245, 244, 240, 0.11);
+  --input: rgba(245, 244, 240, 0.18);
+  --ring: #F5F4F0;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+    box-sizing: border-box;
   }
+
   html {
-    @apply font-sans;
-    font-feature-settings:
-      "kern" 1,
-      "liga" 1,
-      "calt" 1,
-      "tnum" 0;
+    font-family: var(--font-sans);
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
     text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
   }
+
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
+  /* WCAG 2.2 AA Focus Ring */
   :focus-visible {
-    outline: 2px solid var(--studio-lime);
+    outline: 2px solid var(--ring);
     outline-offset: 3px;
   }
+
   button,
-  input,
-  optgroup,
-  select,
-  textarea {
-    font: inherit;
-    letter-spacing: inherit;
-  }
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-heading);
-    text-wrap: balance;
+  a,
+  [role="button"] {
+    cursor: pointer;
   }
 }
 
-/* Storefront-wide editorial floor: applied to every public route without changing content or behavior. */
-.storefront-shell {
-  background: #fbf9f5;
-  letter-spacing: -0.01em;
-}
-
-.storefront-shell main {
-  min-width: 0;
-}
-
-.storefront-shell a,
-.storefront-shell button,
-.storefront-shell input {
-  -webkit-tap-highlight-color: transparent;
-}
-
-.storefront-shell button,
-.storefront-shell a {
-  transition-property: color, background-color, border-color, opacity, transform;
-  transition-duration: 180ms;
-  transition-timing-function: ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .storefront-shell *,
-  .storefront-shell *::before,
-  .storefront-shell *::after {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: .01ms !important;
-  }
-}
-
-@utility drop-cap {
-  &::first-letter {
-    float: left;
-    font-size: 5rem;
-    line-height: 0.85;
-    padding-top: 0.08em;
-    padding-right: 0.12em;
-    padding-left: 0.05em;
-    font-family: var(--font-heading);
-    font-weight: 300;
-    color: inherit;
-  }
-}
-
-/* ==========================================================================
-   IMMERSIVE FASHION REDESIGN DESIGN SYSTEM - 3 COLOR ENVIRONMENTS
-   ========================================================================== */
-
-:root {
-  /* 404Studio Standardized Identity Colors */
-  --color-deep-forest: #062D22;
-  --color-dark-forest: #041E17;
-  --color-warm-ivory: #F7F6F1;
-  --color-pure-white: #FFFFFF;
-  --color-charcoal: #171B19;
-  --color-neutral-gray: #747974;
-  --color-accent-lime: #DCE84A;
-
-  /* Environment 1: Light Editorial (Default Storefront) */
-  --light-bg: #F7F7F7;
-  --light-surface: #FFFFFF;
-  --light-ink: #062D22;
-  --light-secondary: #747974;
-  --light-accent: #DCE84A;
-
-  /* Environment 2: Dark Forest Editorial (About & Storytelling) */
-  --forest-bg: #062D22;
-  --forest-text: #F7F6F1;
-  --forest-secondary: #D1D9CF;
-  --forest-accent: #DCE84A;
-
-  /* Environment 3: Creative Yellow / Lime (Editorial Badges) */
-  --yellow-bg: #DCE84A;
-  --yellow-ink: #062D22;
-  --yellow-surface: #FFFFFF;
-
-  /* Clamp Typography Tokens */
-  --hero-display: clamp(52px, 8.5vw, 160px);
-  --section-heading: clamp(36px, 5.5vw, 96px);
-  --product-title: clamp(28px, 3.5vw, 64px);
-}
-
-.theme-light-editorial {
-  background-color: var(--light-bg);
-  color: var(--light-ink);
-}
-
-.theme-dark-forest {
-  background-color: var(--forest-bg);
-  color: var(--forest-text);
-}
-
-.theme-creative-yellow {
-  background-color: var(--yellow-bg);
-  color: var(--yellow-ink);
-}
-
-/* Typography Classes */
-.font-display {
-  font-family: "Syne", "Outfit", sans-serif;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 0.92;
-}
-
-.text-hero-display {
-  font-size: var(--hero-display);
-  line-height: 0.92;
-  letter-spacing: -0.045em;
-  font-family: "Syne", "Outfit", sans-serif;
-  font-weight: 800;
-}
-
-.text-section-heading {
-  font-size: var(--section-heading);
-  line-height: 0.96;
-  letter-spacing: -0.035em;
-  font-family: "Syne", "Outfit", sans-serif;
-  font-weight: 800;
-}
-
-.text-product-title {
-  font-size: var(--product-title);
-  line-height: 1.05;
-  letter-spacing: -0.025em;
-  font-family: "Syne", "Outfit", sans-serif;
-  font-weight: 700;
-}
-
-.micro-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
+/* Atelier Eyebrow Label */
+.atelier-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
-/* Draggable Gallery & Custom Cursor Support */
+/* Atelier Gold Seal — The ONLY element permitted to use gold */
+.atelier-seal {
+  color: var(--wf-seal-gold);
+  border-color: var(--wf-seal-gold-border);
+}
+
+/* Minimum 44x44px touch target helper for mobile ergonomics */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Hide Scrollbar Utility */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -415,24 +195,19 @@
   scrollbar-width: none;
 }
 
-/* Announcement Bar Marquee 60fps Animation */
-@keyframes announcementMarquee {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+.font-condensed {
+  font-family: var(--font-condensed), "Oswald", sans-serif;
+  letter-spacing: -0.01em;
 }
 
-.announcement-marquee-track {
-  display: flex;
-  width: max-content;
-  animation: announcementMarquee 45s linear infinite;
-  will-change: transform;
-}
-
-.announcement-marquee-track:hover,
-.announcement-marquee-track:focus-within {
-  animation-play-state: paused;
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

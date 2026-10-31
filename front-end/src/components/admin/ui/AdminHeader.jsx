@@ -1,231 +1,262 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import {
   Menu,
+  Sun,
+  Moon,
+  LogOut,
+  User,
+  KeyRound,
   ChevronRight,
   ExternalLink,
-  Bell,
-  MessageCircle,
-  User,
-  Key,
-  LogOut,
-  Moon,
-  Sun,
-  Shield,
-} from 'lucide-react';
-import { useAuthStore } from '@/store/auth.store';
-import { toast } from 'react-toastify';
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
+import { useAuthStore } from "@/store/auth.store";
+import { toast } from "react-toastify";
 
-const routeNames = {
-  '/admin': 'Tổng quan',
-  '/admin/categories': 'Quản lý danh mục',
-  '/admin/products': 'Quản lý sản phẩm',
-  '/admin/orders': 'Quản lý đơn hàng',
-  '/admin/chats': 'Chat hỗ trợ',
-  '/admin/customers': 'Quản lý người dùng',
-  '/admin/coupons': 'Khuyến mãi (Voucher)',
-  '/admin/campaigns': 'Chiến dịch Sale',
-  '/admin/banners': 'Quản lý Banner',
-  '/admin/lookbooks': 'Quản lý Lookbook',
-  '/admin/pages': 'Quản lý trang CMS',
-  '/admin/settings': 'Cài đặt hệ thống',
+const routeTitleMap = {
+  "/admin": { group: "Tổng quan", title: "Bảng điều khiển" },
+  "/admin/products": { group: "Sản phẩm & Kho", title: "Quản lý sản phẩm" },
+  "/admin/categories": { group: "Sản phẩm & Kho", title: "Danh mục sản phẩm" },
+  "/admin/orders": { group: "Bán hàng & CSKH", title: "Quản lý đơn hàng" },
+  "/admin/customers": {
+    group: "Bán hàng & CSKH",
+    title: "Khách hàng & Tài khoản",
+  },
+  "/admin/chats": {
+    group: "Bán hàng & CSKH",
+    title: "Hỗ trợ trực tuyến (Chat)",
+  },
+  "/admin/coupons": {
+    group: "Marketing & Nội dung",
+    title: "Mã giảm giá (Voucher)",
+  },
+  "/admin/campaigns": {
+    group: "Marketing & Nội dung",
+    title: "Chiến dịch Flash Sale",
+  },
+  "/admin/banners": {
+    group: "Marketing & Nội dung",
+    title: "Quản lý Banner",
+  },
+  "/admin/lookbooks": {
+    group: "Marketing & Nội dung",
+    title: "Quản lý Lookbook",
+  },
+  "/admin/ab-testing": {
+    group: "Marketing & Nội dung",
+    title: "A/B Testing (AI Gợi ý)",
+  },
+  "/admin/pages": { group: "Cấu hình", title: "Trang nội dung (CMS)" },
+  "/admin/settings": { group: "Cấu hình", title: "Cài đặt hệ thống" },
 };
 
-export const AdminHeader = ({
+export function AdminHeader({
+  sidebarOpen,
   onToggleSidebar,
-  onToggleMobileSidebar,
-  collapsed,
-  unreadChatsCount = 0,
+  onOpenMobileSidebar,
   theme,
   onToggleTheme,
   onOpenProfileModal,
   onOpenPasswordModal,
-}) => {
+}) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef(null);
 
-  const currentRouteName = routeNames[pathname] || 'Quản trị';
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
+  const currentRoute = routeTitleMap[pathname] || {
+    group: "Hệ thống",
+    title: "Quản trị Atelier",
+  };
+
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = () => {
     logout();
-    toast.success('Đăng xuất thành công!');
-    navigate('/login');
+    toast.info("Đã đăng xuất khỏi phiên quản trị.");
+    navigate("/login");
   };
 
-  const adminName = user?.fullName || user?.name || user?.userName || user?.email || 'Quản trị viên';
-  const avatarUrl = user?.avatar_url || user?.avatar || '';
-  const firstLetter = adminName.charAt(0).toUpperCase();
+  const displayName =
+    user?.fullname || user?.fullName || user?.name || "Quản trị viên";
+  const displayInitial = displayName.charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 sm:px-6 backdrop-blur-md transition-colors">
-      {/* Left: Mobile trigger, Desktop toggle, Breadcrumbs */}
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 backdrop-blur-md sm:px-6">
+      {/* Left: Sidebar Toggle & Breadcrumb */}
       <div className="flex items-center gap-3">
-        {/* Mobile menu trigger */}
+        {/* Mobile Hamburger */}
         <button
-          onClick={onToggleMobileSidebar}
-          aria-label="Mở menu quản trị"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 md:hidden hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+          type="button"
+          onClick={onOpenMobileSidebar}
+          aria-label="Mở thanh điều hướng quản trị"
+          className="touch-target inline-flex items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] transition-colors hover:border-[var(--color-text)] lg:hidden"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5" strokeWidth={1.5} />
         </button>
 
-        {/* Desktop sidebar collapse toggle */}
+        {/* Desktop Sidebar Collapse Toggle */}
         <button
+          type="button"
           onClick={onToggleSidebar}
-          aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
-          className="hidden md:flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+          aria-label={sidebarOpen ? "Thu gọn thanh bên" : "Mở rộng thanh bên"}
+          title={sidebarOpen ? "Thu gọn thanh bên" : "Mở rộng thanh bên"}
+          className="touch-target hidden items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] transition-colors hover:border-[var(--color-text)] lg:inline-flex"
         >
-          <Menu className="h-4.5 w-4.5" />
+          {sidebarOpen ? (
+            <PanelLeftClose className="h-4 w-4" strokeWidth={1.5} />
+          ) : (
+            <PanelLeftOpen className="h-4 w-4" strokeWidth={1.5} />
+          )}
         </button>
 
-        {/* Breadcrumb / Page Context */}
-        <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+        {/* Breadcrumb */}
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 text-xs"
+        >
           <Link
             to="/admin"
-            className="hover:text-[#05251C] dark:hover:text-[#F5DD20] transition-colors"
+            className="hidden font-medium uppercase tracking-[0.14em] text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)] sm:inline"
           >
             Admin
           </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-400 dark:text-slate-600" />
-          <span className="font-semibold text-slate-800 dark:text-slate-200">
-            {currentRouteName}
+          <ChevronRight
+            className="hidden h-3.5 w-3.5 text-[var(--color-text-muted)] sm:inline"
+            aria-hidden="true"
+          />
+          <span className="hidden text-[var(--color-text-muted)] md:inline">
+            {currentRoute.group}
           </span>
-        </div>
+          <ChevronRight
+            className="hidden h-3.5 w-3.5 text-[var(--color-text-muted)] md:inline"
+            aria-hidden="true"
+          />
+          <span className="font-semibold text-[var(--color-text)]">
+            {currentRoute.title}
+          </span>
+        </nav>
       </div>
 
-      {/* Right Actions: View Store, Chat alerts, Theme switch, User profile */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* View Storefront */}
-        <a
-          href="/"
+      {/* Right Actions */}
+      <div className="flex items-center gap-2">
+        {/* Storefront Quick Link */}
+        <Link
+          to="/"
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 rounded-xl transition"
+          className="touch-target hidden items-center gap-1.5 border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text)] transition-colors hover:border-[var(--color-text)] sm:inline-flex"
         >
-          <span>Xem cửa hàng</span>
-          <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-        </a>
-
-        {/* Chat notification indicator */}
-        <Link
-          to="/admin/chats"
-          aria-label="Tin nhắn hỗ trợ"
-          className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-          title="Chat hỗ trợ khách hàng"
-        >
-          <MessageCircle className="h-4.5 w-4.5" />
-          {unreadChatsCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-xs">
-              {unreadChatsCount > 99 ? '99+' : unreadChatsCount}
-            </span>
-          )}
+          <span>Cửa hàng</span>
+          <ExternalLink className="h-3.5 w-3.5" />
         </Link>
 
-        {/* Theme toggle */}
+        {/* Light / Dark Mode Toggle */}
         <button
+          type="button"
           onClick={onToggleTheme}
-          aria-label="Chuyển chế độ giao diện"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-          title={theme === 'dark' ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}
+          aria-label={
+            theme === "dark"
+              ? "Chuyển sang chế độ sáng"
+              : "Chuyển sang chế độ tối"
+          }
+          title={
+            theme === "dark"
+              ? "Chuyển sang chế độ sáng"
+              : "Chuyển sang chế độ tối"
+          }
+          className="touch-target inline-flex items-center justify-center border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] transition-colors hover:border-[var(--color-text)]"
         >
-          {theme === 'dark' ? (
-            <Sun className="h-4.5 w-4.5 text-amber-400" />
+          {theme === "dark" ? (
+            <Sun className="h-4 w-4" strokeWidth={1.5} />
           ) : (
-            <Moon className="h-4.5 w-4.5 text-slate-600" />
+            <Moon className="h-4 w-4" strokeWidth={1.5} />
           )}
         </button>
 
-        {/* User Account Popover */}
-        <div className="relative" ref={userMenuRef}>
+        {/* Admin User Profile Dropdown */}
+        <div className="relative" ref={dropdownRef}>
           <button
-            onClick={() => setUserMenuOpen((prev) => !prev)}
-            aria-label="Tài khoản quản trị"
-            className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            type="button"
+            onClick={() => setDropdownOpen((prev) => !prev)}
+            aria-expanded={dropdownOpen}
+            aria-haspopup="menu"
+            aria-label="Tài khoản quản trị viên"
+            className="touch-target inline-flex items-center gap-2.5 border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 text-left transition-colors hover:border-[var(--color-text)]"
           >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={adminName}
-                className="h-8 w-8 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#05251C]/10 text-[#05251C] dark:bg-[#F5DD20]/15 dark:text-[#F5DD20] border border-[#05251C]/20 dark:border-[#F5DD20]/30 font-bold text-xs">
-                {firstLetter}
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center bg-[var(--color-text)] text-xs font-semibold text-[var(--color-bg)]">
+              {displayInitial}
+            </span>
+            <div className="hidden leading-tight sm:block">
+              <div className="max-w-[120px] truncate text-xs font-semibold text-[var(--color-text)]">
+                {displayName}
               </div>
-            )}
-            <div className="hidden lg:flex flex-col text-left">
-              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight truncate max-w-[120px]">
-                {adminName}
-              </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                {user?.role === 'admin' ? 'Quản trị viên' : 'Nhân viên'}
-              </span>
+              <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
+                Admin
+              </div>
             </div>
           </button>
 
-          {/* Dropdown Menu */}
-          {userMenuOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                  {adminName}
-                </p>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                  {user?.email || 'admin@404studio.vn'}
-                </p>
-                <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60">
-                  <Shield className="h-3 w-3" />
-                  <span>{user?.role === 'admin' ? 'Super Admin' : 'Staff'}</span>
+          {dropdownOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 mt-1.5 w-60 border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 shadow-2xl"
+            >
+              <div className="border-b border-[var(--color-border)] px-4 py-2.5">
+                <div className="truncate text-xs font-semibold text-[var(--color-text)]">
+                  {displayName}
+                </div>
+                <div className="truncate text-[11px] text-[var(--color-text-muted)]">
+                  {user?.email || "admin@webfashion.vn"}
                 </div>
               </div>
 
-              <div className="p-1">
+              <div className="py-1">
                 <button
+                  type="button"
+                  role="menuitem"
                   onClick={() => {
-                    setUserMenuOpen(false);
-                    onOpenProfileModal();
+                    setDropdownOpen(false);
+                    onOpenProfileModal?.();
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs text-[var(--color-text)] transition-colors hover:bg-[var(--color-bg)]"
                 >
-                  <User className="h-4 w-4 text-slate-400" />
-                  <span>Thông tin cá nhân</span>
+                  <User className="h-4 w-4 text-[var(--color-text-muted)]" />
+                  <span>Cập nhật hồ sơ</span>
                 </button>
 
                 <button
+                  type="button"
+                  role="menuitem"
                   onClick={() => {
-                    setUserMenuOpen(false);
-                    onOpenPasswordModal();
+                    setDropdownOpen(false);
+                    onOpenPasswordModal?.();
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs text-[var(--color-text)] transition-colors hover:bg-[var(--color-bg)]"
                 >
-                  <Key className="h-4 w-4 text-slate-400" />
+                  <KeyRound className="h-4 w-4 text-[var(--color-text-muted)]" />
                   <span>Đổi mật khẩu</span>
                 </button>
               </div>
 
-              <div className="border-t border-slate-100 dark:border-slate-800/80 my-1" />
-
-              <div className="p-1">
+              <div className="border-t border-[var(--color-border)] pt-1">
                 <button
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                    handleLogout();
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition cursor-pointer"
+                  type="button"
+                  role="menuitem"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/10"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Đăng xuất</span>
@@ -237,6 +268,6 @@ export const AdminHeader = ({
       </div>
     </header>
   );
-};
+}
 
 export default AdminHeader;

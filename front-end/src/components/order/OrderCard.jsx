@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import OrderItem from "./OrderItem";
 import { formatCurrency, formatDate } from "@/utils/format";
-import { CreditCard, Calendar, Hash, Eye, RotateCcw, AlertTriangle, MessageSquare, Loader2 } from "lucide-react";
+import {
+  CreditCard,
+  Calendar,
+  Hash,
+  Eye,
+  RotateCcw,
+  AlertTriangle,
+  MessageSquare,
+  Loader2,
+} from "lucide-react";
 import { paymentApi } from "@/api/payment.api";
 import { toast } from "react-toastify";
 
@@ -13,40 +22,39 @@ const paymentMethodMap = {
 };
 
 const statusMap = {
-  pending: { label: "Chờ xác nhận", colorClass: "text-orange-600 bg-orange-50 border-orange-100" },
-  confirmed: { label: "Chờ lấy hàng", colorClass: "text-blue-600 bg-blue-50 border-blue-100" },
-  shipping: { label: "Chờ giao hàng", colorClass: "text-purple-600 bg-purple-50 border-purple-100" },
-  delivered: { label: "Đã giao", colorClass: "text-green-600 bg-green-50 border-green-100" },
-  cancelled: { label: "Đã hủy", colorClass: "text-red-600 bg-red-50 border-red-100" },
+  pending: "Chờ xác nhận",
+  confirmed: "Chờ lấy hàng",
+  shipping: "Đang giao hàng",
+  delivered: "Đã giao",
+  cancelled: "Đã hủy",
+};
+
+const computeRemainingTime = (createdAt) => {
+  const difference =
+    new Date(createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now();
+  if (difference <= 0) return "Expired";
+
+  const hours = Math.floor(difference / (1000 * 60 * 60));
+  const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 };
 
 const OrderCountdown = ({ createdAt }) => {
-  const [timeLeft, setTimeLeft] = useState("");
+  const [timeLeft, setTimeLeft] = useState(() =>
+    computeRemainingTime(createdAt)
+  );
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const difference = new Date(createdAt).getTime() + 24 * 60 * 60 * 1000 - Date.now();
-      if (difference <= 0) {
-        return "Expired";
-      }
-
-      const hours = Math.floor(difference / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-      return `${hours.toString().padStart(2, "0")}:${minutes
-        .toString()
-        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-    };
-
-    setTimeLeft(calculateTimeLeft());
-
     const timer = setInterval(() => {
-      const formatted = calculateTimeLeft();
+      const formatted = computeRemainingTime(createdAt);
       setTimeLeft(formatted);
       if (formatted === "Expired") {
         clearInterval(timer);
-        window.location.reload(); // Refresh the page to update status once expired
+        window.location.reload();
       }
     }, 1000);
 
@@ -56,13 +64,19 @@ const OrderCountdown = ({ createdAt }) => {
   if (timeLeft === "Expired" || !timeLeft) return null;
 
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-100 animate-pulse">
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider border border-[var(--color-danger)] text-[var(--color-danger)]">
       Hủy sau: {timeLeft}
     </span>
   );
 };
 
-const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy }) => {
+const OrderCard = ({
+  order,
+  reviewedProductIds,
+  onViewDetail,
+  onCancel,
+  onRebuy,
+}) => {
   const [isPaying, setIsPaying] = useState(false);
 
   const isPendingPayment =
@@ -70,15 +84,14 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
     order.payment_method !== "cod" &&
     (order.payment_status === "pending" || order.payment_status === "failed");
 
-  const statusInfo = isPendingPayment
-    ? { label: "Chờ thanh toán", colorClass: "text-rose-600 bg-rose-50 border-rose-100" }
-    : statusMap[order.status] || { label: order.status, colorClass: "text-gray-600 bg-gray-50 border-gray-100" };
+  const statusLabel = isPendingPayment
+    ? "Chờ thanh toán"
+    : statusMap[order.status] || order.status;
 
   const canCancel = ["pending", "confirmed"].includes(order.status);
   const isDelivered = order.status === "delivered";
   const isCancelled = order.status === "cancelled";
 
-  // Helpers for review link
   const getProductSlug = (item) => item.product_slug || item.product?.slug;
 
   const handlePayNow = async () => {
@@ -95,7 +108,9 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
       if (payRes && payRes.success && payRes.paymentUrl) {
         window.location.href = payRes.paymentUrl;
       } else {
-        toast.error("Không thể khởi tạo liên kết thanh toán. Vui lòng thử lại.");
+        toast.error(
+          "Không thể khởi tạo liên kết thanh toán. Vui lòng thử lại."
+        );
       }
     } catch (err) {
       console.error("Pay now error:", err);
@@ -106,62 +121,72 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
   };
 
   return (
-    <div className="border border-gray-100 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col animate-fadeIn">
+    <article className="border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] overflow-hidden flex flex-col">
       {/* Card Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-6 py-4 bg-gray-50/50 border-b border-gray-100 gap-3">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
-          <span className="flex items-center gap-1 text-gray-900 font-medium">
-            <Hash className="w-3.5 h-3.5 text-gray-400" />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-6 py-4 bg-[var(--color-bg)] border-b border-[var(--color-border)] gap-3">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-[var(--color-text-muted)]">
+          <span className="flex items-center gap-1 text-[var(--color-text)] font-mono font-medium">
+            <Hash className="w-3.5 h-3.5" aria-hidden="true" />
             {order._id}
           </span>
           <span className="flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+            <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
             {formatDate(order.createdAt)}
           </span>
           <span className="flex items-center gap-1">
-            <CreditCard className="w-3.5 h-3.5 text-gray-400" />
+            <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
             {paymentMethodMap[order.payment_method] || order.payment_method}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {isPendingPayment && <OrderCountdown createdAt={order.createdAt} />}
-          <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusInfo.colorClass}`}>
-            {statusInfo.label}
+          <span
+            className={`inline-flex px-2.5 py-1 text-[11px] uppercase tracking-[0.14em] font-semibold border ${
+              isCancelled
+                ? "border-[var(--color-danger)] text-[var(--color-danger)]"
+                : "border-[var(--color-text)] text-[var(--color-text)]"
+            }`}
+          >
+            {statusLabel}
           </span>
         </div>
       </div>
 
       {/* Product List */}
-      <div className="px-6 py-2 divide-y divide-gray-100">
+      <div className="px-6 py-2 divide-y divide-[var(--color-border)]">
         {order.items?.map((item) => (
           <div key={item._id}>
             <OrderItem item={item} />
-            {/* If delivered, show individual review item triggers inside the list */}
             {isDelivered && (
-              <div className="flex justify-end gap-2 pb-3 pt-1">
+              <div className="flex flex-wrap justify-end gap-2 pb-3 pt-1">
                 {reviewedProductIds?.has(item.product_id?.toString()) ? (
                   <Link
-                    to={getProductSlug(item) ? `/product/${getProductSlug(item)}` : "#"}
-                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline bg-blue-50/50 px-2.5 py-1 rounded border border-blue-100 transition-colors"
+                    to={
+                      getProductSlug(item)
+                        ? `/product/${getProductSlug(item)}`
+                        : "/products"
+                    }
+                    className="inline-flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 text-xs uppercase tracking-wider font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-text)] transition-colors"
                   >
-                    <MessageSquare className="w-3.5 h-3.5" />
+                    <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
                     Xem đánh giá
                   </Link>
                 ) : (
                   <Link
                     to={`/reviews/create?product_id=${item.product_id}&order_id=${order._id}`}
                     state={{ item, order }}
-                    className="inline-flex items-center gap-1.5 text-xs text-orange-600 hover:text-orange-700 font-medium hover:underline bg-orange-50/50 px-2.5 py-1 rounded border border-orange-100 transition-colors"
+                    className="inline-flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 text-xs uppercase tracking-wider font-medium border border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-90 transition-opacity"
                   >
-                    <MessageSquare className="w-3.5 h-3.5" />
+                    <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
                     Đánh giá sản phẩm
                   </Link>
                 )}
                 <button
+                  type="button"
                   onClick={() => onRebuy(order, item)}
-                  className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-black font-medium hover:underline bg-gray-50 px-2.5 py-1 rounded border border-gray-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 text-xs uppercase tracking-wider font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-text)] transition-colors cursor-pointer"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                   Mua lại
                 </button>
               </div>
@@ -171,64 +196,70 @@ const OrderCard = ({ order, reviewedProductIds, onViewDetail, onCancel, onRebuy 
       </div>
 
       {/* Card Footer Summary */}
-      <div className="px-6 py-4 bg-gray-50/30 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="px-6 py-4 bg-[var(--color-bg)] border-t border-[var(--color-border)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span className="text-sm text-gray-500">
-            Tổng cộng: <strong className="text-base font-bold text-gray-950 ml-1">{formatCurrency(order.total_price)}</strong>
+          <span className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+            Tổng thanh toán:{" "}
+            <strong className="text-base font-mono font-semibold text-[var(--color-text)] ml-1">
+              {formatCurrency(order.total_price)}
+            </strong>
           </span>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-          {/* View Details - always visible */}
           <button
+            type="button"
             onClick={() => onViewDetail(order)}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 font-medium text-sm rounded-lg border border-gray-200 transition-colors duration-200 shadow-sm flex-1 sm:flex-none"
+            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 bg-[var(--color-surface)] text-[var(--color-text)] text-xs uppercase tracking-[0.14em] font-medium border border-[var(--color-border)] hover:border-[var(--color-text)] transition-colors flex-1 sm:flex-none cursor-pointer"
           >
-            <Eye className="w-4 h-4" />
-            Xem chi tiết
+            <Eye className="w-4 h-4" aria-hidden="true" />
+            Chi tiết
           </button>
 
-          {/* Pay Now - for unpaid MoMo/VNPay orders */}
           {isPendingPayment && (
             <button
+              type="button"
               onClick={handlePayNow}
               disabled={isPaying}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-400 text-white font-medium text-sm rounded-lg border border-transparent transition-colors duration-200 shadow-sm flex-1 sm:flex-none cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.14em] font-medium hover:opacity-90 disabled:opacity-40 transition-opacity flex-1 sm:flex-none cursor-pointer"
             >
               {isPaying ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2
+                  className="w-4 h-4 animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
-                <CreditCard className="w-4 h-4" />
+                <CreditCard className="w-4 h-4" aria-hidden="true" />
               )}
               Thanh toán ngay
             </button>
           )}
 
-          {/* Cancel Order - pending / confirmed */}
           {canCancel && (
             <button
+              type="button"
               onClick={() => onCancel(order._id)}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 font-medium text-sm rounded-lg border border-red-200 hover:border-red-300 transition-colors duration-200 shadow-sm flex-1 sm:flex-none"
+              className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 bg-[var(--color-surface)] text-[var(--color-danger)] text-xs uppercase tracking-[0.14em] font-medium border border-[var(--color-danger)] hover:opacity-80 transition-opacity flex-1 sm:flex-none cursor-pointer"
             >
-              <AlertTriangle className="w-4 h-4" />
-              Hủy đơn hàng
+              <AlertTriangle className="w-4 h-4" aria-hidden="true" />
+              Hủy đơn
             </button>
           )}
 
-          {/* Rebuy Entire Order - delivered / cancelled */}
           {(isDelivered || isCancelled) && (
             <button
+              type="button"
               onClick={() => onRebuy(order)}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#05251C] hover:bg-[#073D2A] text-[#F5DD20] font-bold text-xs uppercase tracking-wider rounded-xl border border-transparent transition-all duration-200 shadow-sm cursor-pointer active:scale-95 flex-1 sm:flex-none"
+              className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 bg-[var(--color-text)] text-[var(--color-bg)] text-xs uppercase tracking-[0.14em] font-medium hover:opacity-90 transition-opacity flex-1 sm:flex-none cursor-pointer"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-4 h-4" aria-hidden="true" />
               Mua lại toàn bộ
             </button>
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
