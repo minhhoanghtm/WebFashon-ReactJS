@@ -123,14 +123,14 @@ const CheckoutItemRow = ({ item }) => {
             className="h-full w-full object-cover object-center"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[10px] font-serif uppercase tracking-widest text-muted-foreground">
+          <div className="flex h-full w-full items-center justify-center text-[10px] font-display uppercase tracking-widest text-muted-foreground">
             WF
           </div>
         )}
       </div>
 
       <div className="min-w-0 flex-1 space-y-1">
-        <h4 className="truncate font-serif text-sm text-foreground">
+        <h4 className="truncate font-sans text-sm font-medium text-foreground">
           {item.name}
         </h4>
         <div className="flex flex-wrap items-center gap-2">
@@ -426,7 +426,7 @@ const Checkout = () => {
           <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
             {siteName} · Thanh toán
           </p>
-          <h1 className="mt-2 font-serif text-3xl text-foreground">
+          <h1 className="mt-2 font-display text-2xl uppercase tracking-wider text-foreground sm:text-3xl">
             Chưa có thiết kế nào để thanh toán
           </h1>
           <p className="mt-3 text-xs leading-relaxed text-muted-foreground sm:text-sm">
@@ -498,7 +498,7 @@ const Checkout = () => {
           <p className="text-[11px] font-medium tracking-[0.24em] uppercase text-muted-foreground">
             {siteName} · Giao dịch bảo mật
           </p>
-          <h1 className="mt-1 font-serif text-3xl font-normal tracking-tight text-foreground sm:text-5xl">
+          <h1 className="mt-1 font-display text-3xl font-bold uppercase tracking-wider text-foreground sm:text-4xl">
             Xác nhận đơn hàng
           </h1>
         </div>
@@ -791,7 +791,7 @@ const Checkout = () => {
           <div className="border border-border bg-card p-6 sm:p-8 space-y-6 lg:col-span-5 lg:sticky lg:top-24">
             <div>
               <div className="flex items-center justify-between border-b border-border pb-4">
-                <h2 className="font-serif text-2xl font-normal text-foreground">
+                <h2 className="font-display text-xl font-bold uppercase tracking-wider text-foreground">
                   Đơn hàng ({normalizedCheckoutItems.length})
                 </h2>
                 <span className="text-xs tabular-nums text-muted-foreground">
@@ -895,7 +895,7 @@ const Checkout = () => {
                     Đã bao gồm thuế GTGT (nếu có)
                   </span>
                 </div>
-                <dd className="font-serif text-2xl font-medium tabular-nums text-foreground">
+                <dd className="font-display text-2xl font-bold tabular-nums text-foreground">
                   {formatCurrency(finalTotal)}
                 </dd>
               </div>

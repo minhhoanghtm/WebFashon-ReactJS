@@ -306,7 +306,7 @@ const ProductSearch = () => {
     return filteredProducts.slice(start, start + pageSize);
   }, [filteredProducts, safePage]);
 
-  // Scroll reveal animation for product items (runs once)
+  // Scroll reveal animation for product items (re-runs on filter/page change)
   useEffect(() => {
     if (isLoading || paginatedProducts.length === 0) return undefined;
     const gridEl = productGridRef.current;
@@ -321,23 +321,44 @@ const ProductSearch = () => {
     if (!cards.length) return undefined;
 
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        cards,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          ease: "power2.out",
-          stagger: 0.08,
-          clearProps: "transform,opacity",
-          scrollTrigger: {
-            trigger: gridEl,
-            start: "top 85%",
-            once: true,
-          },
-        }
-      );
+      const rect = gridEl.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight && rect.bottom > 0;
+
+      if (inView) {
+        // Grid already in viewport: animate immediately without waiting for scroll
+        gsap.fromTo(
+          cards,
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            ease: "power2.out",
+            stagger: 0.04,
+            clearProps: "transform,opacity",
+          }
+        );
+      } else {
+        // Grid below fold: reveal on scroll
+        gsap.fromTo(
+          cards,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            ease: "power2.out",
+            stagger: 0.06,
+            clearProps: "transform,opacity",
+            scrollTrigger: {
+              trigger: gridEl,
+              start: "top 85%",
+              once: true,
+            },
+          }
+        );
+        ScrollTrigger.refresh();
+      }
     }, gridEl);
 
     return () => {
@@ -613,7 +634,7 @@ const ProductSearch = () => {
 
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-5xl">
+              <h1 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground sm:text-4xl">
                 {activeChildCategory
                   ? `${activeParentGroup?.name} · ${activeChildCategory.name}`
                   : activeParentGroup
@@ -758,7 +779,7 @@ const ProductSearch = () => {
               </div>
             ) : paginatedProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center border border-border bg-card px-6 py-20 text-center">
-                <p className="font-serif text-2xl text-foreground">
+                <p className="font-display text-xl uppercase tracking-wider text-foreground">
                   Không tìm thấy thiết kế phù hợp
                 </p>
                 <p className="mt-2 max-w-md text-xs text-muted-foreground">
@@ -874,7 +895,7 @@ const ProductSearch = () => {
           <div className="fixed inset-y-0 right-0 z-10 flex w-full max-w-xs flex-col justify-between overflow-y-auto border-l border-border bg-background p-6 shadow-2xl">
             <div>
               <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
-                <span className="font-serif text-lg uppercase tracking-[0.14em] text-foreground">
+                <span className="font-display text-base uppercase tracking-wider text-foreground">
                   Bộ lọc Giám tuyển
                 </span>
                 <button

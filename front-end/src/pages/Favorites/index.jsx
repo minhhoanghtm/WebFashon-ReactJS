@@ -35,23 +35,44 @@ const Favorites = ({ isDashboard = false }) => {
     if (!cards.length) return undefined;
 
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        cards,
-        { opacity: 0, y: 25 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.5,
-          ease: "power2.out",
-          stagger: 0.06,
-          clearProps: "transform,opacity",
-          scrollTrigger: {
-            trigger: gridEl,
-            start: "top 85%",
-            once: true,
-          },
-        }
-      );
+      const rect = gridEl.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight && rect.bottom > 0;
+
+      if (inView) {
+        // Grid already in viewport: animate immediately without waiting for scroll
+        gsap.fromTo(
+          cards,
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            ease: "power2.out",
+            stagger: 0.04,
+            clearProps: "transform,opacity",
+          }
+        );
+      } else {
+        // Grid below fold: reveal on scroll
+        gsap.fromTo(
+          cards,
+          { opacity: 0, y: 25 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            ease: "power2.out",
+            stagger: 0.06,
+            clearProps: "transform,opacity",
+            scrollTrigger: {
+              trigger: gridEl,
+              start: "top 85%",
+              once: true,
+            },
+          }
+        );
+        ScrollTrigger.refresh();
+      }
     }, gridEl);
 
     return () => {

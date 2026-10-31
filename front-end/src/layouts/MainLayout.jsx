@@ -52,6 +52,12 @@ const MainLayout = () => {
         id="main-content"
         ref={mainContentRef}
         key={location.pathname}
+        onAnimationEnd={(e) => {
+          if (e.target === e.currentTarget) {
+            e.currentTarget.classList.remove("page-fade-enter");
+            e.currentTarget.style.willChange = "auto";
+          }
+        }}
         className={`flex flex-1 flex-col page-fade-enter ${!isHomePage ? "pt-20" : ""}`}
       >
         {currentOutlet}

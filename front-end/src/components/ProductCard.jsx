@@ -40,24 +40,18 @@ const ProductCard = ({
   const [primaryIdx, setPrimaryIdx] = useState(0);
   const [hoverIdxError, setHoverIdxError] = useState(false);
 
-  const cardRef = useRef(null);
-  const quickToRef = useRef(null);
-
   const impressionRef = useProductImpression(product, {
     isRecommendation: Boolean(trackingMeta?.isRecommendation),
     algorithm: trackingMeta?.algorithm || "hybrid",
     position: trackingMeta?.position || 0,
   });
 
+  const quickToRef = useRef(null);
+
   // GSAP quickTo 3D Tilt (Max 6deg) with cleanup & motion queries
   useEffect(() => {
-    const el = cardRef.current;
+    const el = impressionRef?.current;
     if (!el) return undefined;
-
-    // Connect impression tracking element if available
-    if (impressionRef) {
-      impressionRef.current = el;
-    }
 
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const canHover = window.matchMedia("(hover: hover)").matches;
@@ -79,8 +73,9 @@ const ProductCard = ({
   }, [impressionRef]);
 
   const handleMouseMove = (e) => {
-    if (!quickToRef.current || !cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
+    const el = impressionRef?.current;
+    if (!quickToRef.current || !el) return;
+    const rect = el.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const xPercent = (x / rect.width) * 2 - 1; // -1 to 1
@@ -231,7 +226,7 @@ const ProductCard = ({
 
   return (
     <article
-      ref={cardRef}
+      ref={impressionRef}
       onClick={handleCardClick}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
