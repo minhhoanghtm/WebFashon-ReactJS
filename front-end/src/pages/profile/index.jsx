@@ -36,6 +36,7 @@ import {
 import { uploadImageService } from "../../services/upload.service";
 import { useAuthStore } from "../../store/auth.store";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import UpdatePhoneModal from "./UpdatePhoneModal";
 
 const DEFAULT_AVATAR =
   "/uploads/default-avatar.svg";
@@ -342,6 +343,7 @@ const Profile = () => {
   const setUser = useAuthStore((state) => state.setUser);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
   const [profileForm, setProfileForm] = useState(() => buildProfileForm());
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -877,6 +879,15 @@ const Profile = () => {
                         icon={Phone}
                         label="Số điện thoại"
                         value={getPhone(userProfile)}
+                        action={
+                          <button
+                            type="button"
+                            onClick={() => setIsPhoneModalOpen(true)}
+                            className="text-[11px] font-semibold text-foreground underline underline-offset-4 hover:opacity-80 py-1"
+                          >
+                            {getPhone(userProfile) === "Chưa cập nhật" ? "Thêm SĐT" : "Đổi SĐT"}
+                          </button>
+                        }
                       />
                       <InfoRow
                         icon={CalendarDays}
@@ -1228,23 +1239,37 @@ const Profile = () => {
           onSubmit={handleSubmitPassword}
         />
       )}
+
+      {isPhoneModalOpen && (
+        <UpdatePhoneModal
+          isOpen={isPhoneModalOpen}
+          onClose={() => setIsPhoneModalOpen(false)}
+          currentPhone={userProfile?.phone}
+          onSuccess={() => {
+            queryClient.invalidateQueries(["userProfile"]);
+          }}
+        />
+      )}
     </div>
   );
 };
 
-const InfoRow = ({ icon, label, value }) => (
-  <div className="flex items-start gap-3.5 text-xs">
-    <span className="w-8 h-8 border border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-center shrink-0 text-[var(--color-text-muted)]">
-      {React.createElement(icon, { size: 15 })}
-    </span>
-    <div className="min-w-0">
-      <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)]">
-        {label}
-      </div>
-      <div className="text-sm font-medium text-[var(--color-text)] mt-0.5 break-words">
-        {value || "Chưa cập nhật"}
+const InfoRow = ({ icon, label, value, action }) => (
+  <div className="flex items-start justify-between gap-3 text-xs">
+    <div className="flex items-start gap-3.5 min-w-0">
+      <span className="w-8 h-8 border border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-center shrink-0 text-[var(--color-text-muted)]">
+        {React.createElement(icon, { size: 15 })}
+      </span>
+      <div className="min-w-0">
+        <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)]">
+          {label}
+        </div>
+        <div className="text-sm font-medium text-[var(--color-text)] mt-0.5 break-words">
+          {value || "Chưa cập nhật"}
+        </div>
       </div>
     </div>
+    {action && <div className="shrink-0">{action}</div>}
   </div>
 );
 

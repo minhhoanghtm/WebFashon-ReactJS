@@ -12,6 +12,8 @@ import {
   registerService,
   sendOTPServive,
   verifyOTPService,
+  verifyRegisterService,
+  resendOtpService,
 } from "@/services/auth.service";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
@@ -38,6 +40,8 @@ const VerifyOTP = () => {
     () => location.state?.formData || {},
     [location.state?.formData]
   );
+  const identifier = formData.phone || formData.email || "";
+  const isPhone = Boolean(formData.phone);
   const email = formData.email || "";
 
   const [digits, setDigits] = useState(() => Array(OTP_LENGTH).fill(""));
@@ -53,12 +57,12 @@ const VerifyOTP = () => {
 
   const inputRefs = useRef([]);
 
-  // Nếu không có email (vào thẳng URL), chuyển về trang đăng ký
+  // Nếu không có identifier (vào thẳng URL), chuyển về trang đăng ký
   useEffect(() => {
-    if (!email) {
+    if (!identifier) {
       navigate("/register", { replace: true });
     }
-  }, [email, navigate]);
+  }, [identifier, navigate]);
 
   // Bộ đếm ngược cho nút gửi lại OTP
   useEffect(() => {
@@ -89,25 +93,42 @@ const VerifyOTP = () => {
       setIsVerifying(true);
 
       try {
-        await verifyOTPService({ email, otp: code });
-
-        const payload = {
-          email: formData.email,
-          passWord: formData.passWord,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          dateOfBirth: formData.dateOfBirth,
-          gender: formData.gender,
-        };
-
-        const regRes = await registerService(payload);
-
-        if (regRes) {
-          setSuccess(true);
-          toast.success("Đăng ký tài khoản thành công!");
-          setTimeout(() => {
-            navigate("/login", { replace: true });
-          }, 2000);
+        if (isPhone) {
+          const payload = {
+            phone: formData.phone,
+            otp: code,
+            fullName: formData.fullName || `${formData.lastName || ''} ${formData.firstName || ''}`.trim(),
+            passWord: formData.passWord,
+            email: formData.email || undefined,
+            birthday: formData.dateOfBirth || formData.birthday || undefined,
+            sex: formData.gender || formData.sex || undefined,
+          };
+          const regRes = await verifyRegisterService(payload);
+          if (regRes) {
+            setSuccess(true);
+            toast.success("Đăng ký tài khoản thành công!");
+            setTimeout(() => {
+              navigate("/login", { replace: true });
+            }, 1500);
+          }
+        } else {
+          await verifyOTPService({ email, otp: code });
+          const payload = {
+            email: formData.email,
+            passWord: formData.passWord,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            dateOfBirth: formData.dateOfBirth,
+            gender: formData.gender,
+          };
+          const regRes = await registerService(payload);
+          if (regRes) {
+            setSuccess(true);
+            toast.success("Đăng ký tài khoản thành công!");
+            setTimeout(() => {
+              navigate("/login", { replace: true });
+            }, 1500);
+          }
         }
       } catch (err) {
         console.error("Lỗi xác minh OTP:", err);
@@ -189,8 +210,13 @@ const VerifyOTP = () => {
     setIsResending(true);
     setError("");
     try {
-      await sendOTPServive({ email });
-      toast.success("Mã OTP mới đã được gửi đến email của bạn!");
+      if (isPhone) {
+        await resendOtpService({ identifier: formData.phone, purpose: "register" });
+        toast.success("Mã OTP mới đã được gửi đến số điện thoại của bạn!");
+      } else {
+        await sendOTPServive({ email });
+        toast.success("Mã OTP mới đã được gửi đến email của bạn!");
+      }
       setDigits(Array(OTP_LENGTH).fill(""));
       setCountdown(RESEND_COOLDOWN);
       inputRefs.current[0]?.focus();
@@ -256,7 +282,7 @@ const VerifyOTP = () => {
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground font-sans">
             Mã OTP gồm {OTP_LENGTH} chữ số đã được gửi tới{" "}
             <span className="font-semibold text-foreground break-all">
-              {email}
+              {identifier}
             </span>
             . Mã có hiệu lực trong 10 phút.
           </p>
