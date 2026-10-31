@@ -15,16 +15,13 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"), // 👈 thêm alias
+      "@": path.resolve(__dirname, "src"),
     },
   },
   build: {
     rollupOptions: {
       output: {
         manualChunks(id) {
-                    if (id.includes('node_modules/echarts')) return 'vendor-echarts';
-          if (id.includes('node_modules/motion')) return 'vendor-motion';
-          if (id.includes('node_modules/gsap')) return 'vendor-gsap';
           if (
             id.includes('node_modules/react') ||
             id.includes('node_modules/react-dom') ||
@@ -32,6 +29,8 @@ export default defineConfig({
           ) {
             return 'vendor-react';
           }
+          if (id.includes('node_modules/motion')) return 'vendor-motion';
+          if (id.includes('node_modules/gsap')) return 'vendor-gsap';
         },
       },
     },
