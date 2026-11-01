@@ -53,6 +53,7 @@ export async function runCompleteSeed() {
     {
       $set: {
         fullName: "Quản Trị Viên Atelier",
+        phone: "+84900000001",
         passWord: adminHash,
         role: "admin",
         status: "active",
@@ -80,6 +81,7 @@ export async function runCompleteSeed() {
     {
       $set: {
         fullName: "Nhân Viên CSKH Atelier",
+        phone: "+84900000002",
         passWord: staffHash,
         role: "admin",
         status: "active",
@@ -96,6 +98,7 @@ export async function runCompleteSeed() {
     {
       $set: {
         fullName: "Khách Hàng Thân Thiết",
+        phone: "+84987654321",
         passWord: customerHash,
         role: "user",
         status: "active",

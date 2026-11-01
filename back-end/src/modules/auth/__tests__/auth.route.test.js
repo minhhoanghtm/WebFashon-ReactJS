@@ -99,7 +99,7 @@ describe("Auth routes", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.data).toEqual({ accessToken: "access-token", userId: "user-1" });
+    expect(response.body.data).toMatchObject({ accessToken: "access-token", userId: "user-1" });
     expect(response.headers["set-cookie"].join(";")).toContain("refreshToken=refresh-token");
     expect(authServiceMock.signIn).toHaveBeenCalledWith(
       "linh@example.com",

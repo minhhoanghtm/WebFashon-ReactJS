@@ -265,6 +265,7 @@ const ResetPasswordForm = () => {
               </label>
               <input
                 id="forgot-identifier"
+                name="identifier"
                 type="text"
                 autoComplete="username"
                 placeholder="0912345678 hoặc name@example.com"

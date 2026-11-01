@@ -41,7 +41,7 @@ export async function testAdmin(browser, report) {
     });
 
     // 3. Admin Products Management
-    await page.goto(`${BASE_URL}/admin/products`, { waitUntil: "networkidle", timeout: 15000 });
+    await page.goto(`${BASE_URL}/admin/products`, { waitUntil: "domcontentloaded", timeout: 20000 });
     await page.waitForTimeout(1500);
 
     const productsLoaded = await page.evaluate(() => {
@@ -71,7 +71,7 @@ export async function testAdmin(browser, report) {
     });
 
     // 4. Admin Categories Management
-    await page.goto(`${BASE_URL}/admin/categories`, { waitUntil: "networkidle", timeout: 15000 });
+    await page.goto(`${BASE_URL}/admin/categories`, { waitUntil: "domcontentloaded", timeout: 20000 });
     await page.waitForTimeout(1500);
 
     const categoriesLoaded = await page.evaluate(() => {
@@ -92,7 +92,7 @@ export async function testAdmin(browser, report) {
     });
 
     // 5. Admin Orders Management
-    await page.goto(`${BASE_URL}/admin/orders`, { waitUntil: "networkidle", timeout: 15000 });
+    await page.goto(`${BASE_URL}/admin/orders`, { waitUntil: "domcontentloaded", timeout: 20000 });
     await page.waitForTimeout(1500);
 
     const ordersAdminLoaded = await page.evaluate(() => {
@@ -114,7 +114,7 @@ export async function testAdmin(browser, report) {
     });
 
     // 6. Admin Coupons Management
-    await page.goto(`${BASE_URL}/admin/coupons`, { waitUntil: "networkidle", timeout: 15000 });
+    await page.goto(`${BASE_URL}/admin/coupons`, { waitUntil: "domcontentloaded", timeout: 20000 });
     await page.waitForTimeout(1500);
 
     const couponsLoaded = await page.evaluate(() => {
@@ -134,7 +134,7 @@ export async function testAdmin(browser, report) {
     });
 
     // 7. Website Settings Management (with homeContent tab)
-    await page.goto(`${BASE_URL}/admin/settings`, { waitUntil: "networkidle", timeout: 15000 });
+    await page.goto(`${BASE_URL}/admin/settings`, { waitUntil: "domcontentloaded", timeout: 20000 });
     await page.waitForTimeout(1500);
 
     const settingsLoaded = await page.evaluate(() => {

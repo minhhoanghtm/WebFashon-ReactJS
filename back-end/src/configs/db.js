@@ -11,7 +11,13 @@ dotenv.config();
 export const connectDB = async () => {
   try {
     console.log("Attempting to connect to MongoDB...");
-    const connectionString = process.env.MONGO_CONNECTIONSTRING || "mongodb://127.0.0.1:27017/webfashion_test";
+    const connectionString =
+      process.env.LOCAL_DEV_MONGO_URI ||
+      (process.env.NODE_ENV !== "production"
+        ? "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin"
+        : null) ||
+      process.env.MONGO_CONNECTIONSTRING ||
+      "mongodb://127.0.0.1:27017/webfashion_test";
     const conn = await mongoose.connect(connectionString, {
       serverSelectionTimeoutMS: 5000,
       connectTimeoutMS: 10000,

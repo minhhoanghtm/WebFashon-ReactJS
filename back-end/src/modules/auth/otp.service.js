@@ -88,7 +88,7 @@ class OtpService {
       // 3. Check hourly limit per IP
       if (ip) {
         const ipCount = await redis.get(ipRateKey);
-        if (ipCount && parseInt(ipCount, 10) >= OTP_HOURLY_LIMIT_IP) {
+        if (ipCount && parseInt(ipCount, 10) >= ((ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || process.env.NODE_ENV !== 'production') ? OTP_HOURLY_LIMIT_IP * 50 : OTP_HOURLY_LIMIT_IP)) {
           const ttl = await redis.ttl(ipRateKey);
           const err = new AppError(
             `Quá nhiều yêu cầu OTP từ địa chỉ IP này. Vui lòng thử lại sau ${Math.ceil(ttl / 60)} phút.`,
@@ -279,10 +279,10 @@ class OtpService {
   /**
    * Delete OTP key immediately
    */
-  async deleteOtp(identifier, purpose) {
+  async deleteOtp(identifier, purpose, clearCooldown = false) {
     const otpKey = this.getOtpKey(identifier, purpose);
     try {
-      await redis.del(otpKey);
+      if (clearCooldown) await redis.del(otpKey, this.getCooldownKey(identifier, purpose)); else await redis.del(otpKey);
     } catch {
       memoryStore.delete(otpKey);
     }

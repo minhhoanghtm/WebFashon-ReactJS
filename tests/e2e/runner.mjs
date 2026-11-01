@@ -6,6 +6,7 @@ import { testCartAndCheckout } from "./02_cart_checkout.mjs";
 import { testAuthAndAccount } from "./03_auth_account.mjs";
 import { testAdmin } from "./04_admin.mjs";
 import { testChat } from "./05_chat.mjs";
+import { testSmsOtp } from "./06_sms_otp.mjs";
 
 class TestReport {
   constructor() {
@@ -50,9 +51,10 @@ class TestReport {
 |---|:---:|:---:|:---:|:---:|
 | **1. Storefront & Catalog (Desktop / Mobile 390x844, Light / Dark)** | ${this.results.filter((r) => r.suite === "Storefront").length} | ${this.results.filter((r) => r.suite === "Storefront" && r.status === "PASS").length} | ${this.results.filter((r) => r.suite === "Storefront" && r.status === "FAIL").length} | 0 |
 | **2. Cart & Checkout (Vouchers, Giá, Địa chỉ, COD)** | ${this.results.filter((r) => r.suite === "Cart & Checkout").length} | ${this.results.filter((r) => r.suite === "Cart & Checkout" && r.status === "PASS").length} | ${this.results.filter((r) => r.suite === "Cart & Checkout" && r.status === "FAIL").length} | 0 |
-| **3. Auth & Account (Login, Profile, Orders, Logout, RBAC)** | ${this.results.filter((r) => r.suite.includes("Auth") || r.suite.includes("Account")).length} | ${this.results.filter((r) => (r.suite.includes("Auth") || r.suite.includes("Account")) && r.status === "PASS").length} | ${this.results.filter((r) => (r.suite.includes("Auth") || r.suite.includes("Account")) && r.status === "FAIL").length} | ${this.results.filter((r) => (r.suite.includes("Auth") || r.suite.includes("Account")) && r.status === "BLOCKED").length} |
-| **4. Admin Management (Dashboard, Products, Orders, Settings, RBAC)** | ${this.results.filter((r) => r.suite.includes("Admin")).length} | ${this.results.filter((r) => r.suite.includes("Admin") && r.status === "PASS").length} | ${this.results.filter((r) => r.suite.includes("Admin") && r.status === "FAIL").length} | 0 |
+| **3. Auth & Account (Login, Profile, Orders, Logout, RBAC)** | ${this.results.filter((r) => (r.suite.includes("Auth") || r.suite.includes("Account")) && !r.suite.includes("SMS OTP")).length} | ${this.results.filter((r) => (r.suite.includes("Auth") || r.suite.includes("Account")) && !r.suite.includes("SMS OTP") && r.status === "PASS").length} | ${this.results.filter((r) => (r.suite.includes("Auth") || r.suite.includes("Account")) && !r.suite.includes("SMS OTP") && r.status === "FAIL").length} | ${this.results.filter((r) => (r.suite.includes("Auth") || r.suite.includes("Account")) && !r.suite.includes("SMS OTP") && r.status === "BLOCKED").length} |
+| **4. Admin Management (Dashboard, Products, Orders, Settings, RBAC)** | ${this.results.filter((r) => r.suite.includes("Admin")).length} | ${this.results.filter((r) => r.suite.includes("Admin" && r.status === "PASS")).length} | ${this.results.filter((r) => r.suite.includes("Admin") && r.status === "FAIL").length} | 0 |
 | **5. Chat Support (Storefront Widget & Admin 2-column)** | ${this.results.filter((r) => r.suite === "Chat").length} | ${this.results.filter((r) => r.suite === "Chat" && r.status === "PASS").length} | ${this.results.filter((r) => r.suite === "Chat" && r.status === "FAIL").length} | 0 |
+| **6. SMS OTP Authentication (Register, Login, Password Reset, Viewports)** | ${this.results.filter((r) => r.suite.includes("SMS OTP")).length} | ${this.results.filter((r) => r.suite.includes("SMS OTP") && r.status === "PASS").length} | ${this.results.filter((r) => r.suite.includes("SMS OTP") && r.status === "FAIL").length} | 0 |
 
 ---
 
@@ -77,11 +79,12 @@ class TestReport {
 
 ## 3. ĐÁNH GIÁ MÀN HÌNH & HIỆU NĂNG
 
-1. **Hiển thị Responsive (1920x1080 vs 390x844):**
+1. **Hiển thị Responsive (1920x1080 vs 1366x768 vs 390x844):**
    - Đạt chuẩn không tràn chiều ngang (\`scrollWidth <= clientWidth\`).
-   - Header, navigation, và các khối hình ảnh/banner co giãn mượt mà.
+   - Các màn hình định danh (\`/login\`, \`/register\`, \`/reset-password\`) vừa khít 1 màn hình desktop (1366x768) không cần cuộn dọc.
+   - Các ô nhập OTP trên mobile đạt touch target tối thiểu >= 44px và hỗ trợ \`inputmode="numeric"\`, \`autocomplete="one-time-code"\`.
 2. **Chế độ Sáng/Tối (Light/Dark Mode):**
-   - Cả 2 chế độ hiển thị rõ ràng, độ tương phản văn bản cao, không bị lỗi chữ đen trên nền tối.
+   - Cả 2 chế độ hiển thị rõ ràng, độ tương phản văn bản cao, đơn sắc monochrome sang trọng.
 3. **Console & Mạng (HTTP):**
    - Không phát sinh lỗi console đỏ 500 hoặc 404 cho tài sản tĩnh.
    - Toàn bộ ảnh sản phẩm, avatar, banner đều được phân phát từ BE qua thư mục \`/uploads\` hoặc SVG local.
@@ -98,11 +101,15 @@ async function run() {
   const browser = await createTestBrowser();
 
   try {
+    await fetch("http://localhost:5000/api/auth/dev/reset-rate-limits", { method: "POST" }).catch(() => {});
     await testStorefront(browser, report);
     await testCartAndCheckout(browser, report);
+    await fetch("http://localhost:5000/api/auth/dev/reset-rate-limits", { method: "POST" }).catch(() => {});
     await testAuthAndAccount(browser, report);
     await testAdmin(browser, report);
     await testChat(browser, report);
+    await fetch("http://localhost:5000/api/auth/dev/reset-rate-limits", { method: "POST" }).catch(() => {});
+    await testSmsOtp(browser, report);
   } catch (err) {
     console.error("Lỗi trong quá trình chạy E2E runner:", err);
   } finally {

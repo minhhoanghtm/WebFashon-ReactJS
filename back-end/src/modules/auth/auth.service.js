@@ -123,8 +123,8 @@ class AuthService {
     const newUser = await userRepository.create({
       passWord: hashedPass,
       fullName,
-      email: normalizedEmail,
-      phone: normPhone,
+      ...(normalizedEmail ? { email: normalizedEmail } : {}),
+      ...(normPhone ? { phone: normPhone } : {}),
       ...(birthday && { birthday: new Date(birthday) }),
       ...(sex && { sex }),
     });
@@ -233,7 +233,7 @@ class AuthService {
     const hashedPass = await bcrypt.hash(passWord, 10);
     const newUser = await userRepository.create({
       phone: normPhone,
-      email: normalizedEmail,
+      ...(normalizedEmail ? { email: normalizedEmail } : {}),
       fullName: fullName.trim(),
       passWord: hashedPass,
       role: "user",

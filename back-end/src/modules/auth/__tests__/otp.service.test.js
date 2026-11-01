@@ -4,8 +4,14 @@ describe("Secure OTP Service", () => {
   const testPhone = "+84901234567";
   const purpose = "register";
 
+  beforeEach(async () => {
+    for (const phone of ["+84901234567", "+84901234568", "+84901234569", "+84901234570"]) {
+      await otpService.deleteOtp(phone, purpose, true);
+    }
+  });
+
   afterEach(async () => {
-    await otpService.deleteOtp(testPhone, purpose);
+    await otpService.deleteOtp(testPhone, purpose, true);
   });
 
   test("sinh mã OTP 6 số ngẫu nhiên an toàn", () => {
@@ -20,7 +26,7 @@ describe("Secure OTP Service", () => {
 
   test("lưu mã OTP băm và xác thực thành công mã đúng", async () => {
     // Clear cooldown if any from previous test
-    await otpService.deleteOtp(testPhone, purpose);
+    await otpService.deleteOtp(testPhone, purpose, true);
     const { otp } = await otpService.createAndStoreOtp(testPhone, purpose);
 
     expect(otp).toBeDefined();

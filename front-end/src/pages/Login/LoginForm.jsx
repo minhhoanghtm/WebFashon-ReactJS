@@ -93,7 +93,14 @@ const LoginForm = () => {
 
   const handlePasswordInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === "email" || name === "identifier") {
+        next.identifier = value;
+        next.email = value;
+      }
+      return next;
+    });
     setErrors((prev) => ({ ...prev, [name]: null, general: null }));
   };
 
@@ -167,6 +174,7 @@ const LoginForm = () => {
       const payload = isEmail
         ? { email: trimmedIdentifier, passWord: formData.passWord }
         : { phone: trimmedIdentifier, emailOrPhone: trimmedIdentifier, passWord: formData.passWord };
+
 
       const response = await loginService(payload);
       const token = response?.data?.accessToken;
@@ -360,7 +368,7 @@ const LoginForm = () => {
               </label>
               <input
                 id="login-identifier"
-                name="identifier"
+                name="email"
                 type="text"
                 autoComplete="username"
                 placeholder="0912345678 hoặc name@example.com"

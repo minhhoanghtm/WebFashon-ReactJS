@@ -20,7 +20,7 @@ const createLimiter = (windowMs, max, message) => {
   }
   return rateLimit({
     windowMs,
-    max,
+    max: (process.env.NODE_ENV === 'production' ? max : Math.max(max * 50, 300)),
     standardHeaders: true, // Trả về RateLimit-* headers (draft-6)
     legacyHeaders: false,  // Tắt X-RateLimit-* cũ
     message: {

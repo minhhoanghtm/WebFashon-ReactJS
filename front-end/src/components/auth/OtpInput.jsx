@@ -96,11 +96,12 @@ export const OtpInput = ({
       {Array.from({ length: OTP_LENGTH }).map((_, index) => (
         <input
           key={index}
+          data-otp-slot={index}
           ref={(el) => (inputRefs.current[index] = el)}
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
-          autoComplete={index === 0 ? "one-time-code" : "off"}
+          autoComplete="one-time-code"
           maxLength={1}
           value={digits[index]}
           onChange={(e) => handleInputChange(index, e)}
