@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useFavoriteStore } from "@/store/favorite.store";
 import { formatCurrency } from "@/utils/format";
 import { getColorHex } from "../ProductSearch/productAdapter";
+import axiosClient from "@/api/axiosClient";
 
 const uniqueValues = (values) => [...new Set(values.filter(Boolean))];
 
@@ -332,33 +333,63 @@ const ProductActions = ({ product, variants = [], onVariantChange }) => {
       return;
     }
 
-    navigate("/checkout", {
-      state: {
-        checkoutItems: [
-          {
-            _id: selectedVariant?._id || product.id,
-            product_id: product.id,
-            variant_id: selectedVariant?._id || null,
-            product_name: product.name,
-            name: product.name,
-            product_image:
-              selectedVariant?.image_url || product.images?.[0] || "",
-            image: selectedVariant?.image_url || product.images?.[0] || "",
-            price: Number(product.price) || 0,
-            new_price: Number(product.price) || 0,
-            oldPrice: Number(product.oldPrice) || 0,
-            old_price: Number(product.oldPrice) || 0,
-            quantity: Number(quantity) || 1,
-            stock: stockLimit,
-            color: selectedColor || selectedVariant?.color || "",
-            size: selectedSize || selectedVariant?.size || "",
-            variant:
-              [selectedColor, selectedSize].filter(Boolean).join(" - ") ||
-              "Mặc định",
-          },
-        ],
-      },
-    });
+    try {
+      const reservationItems = [
+        {
+          productId: product.id || product._id,
+          variantId: selectedVariant?._id || null,
+          quantity: Number(quantity) || 1,
+          name: product.name,
+          color: selectedColor || selectedVariant?.color || "",
+          size: selectedSize || selectedVariant?.size || "",
+          unitPrice: Number(product.price) || 0,
+          image: selectedVariant?.image_url || product.images?.[0] || "",
+        },
+      ];
+
+      const res = await axiosClient.post("/checkout/reservations", {
+        items: reservationItems,
+      });
+
+      const reservationData = res?.data || res;
+      const reservationId = reservationData?.reservationId;
+
+      navigate(`/checkout?reservationId=${reservationId}`, {
+        state: {
+          reservationId,
+          checkoutItems: [
+            {
+              _id: selectedVariant?._id || product.id,
+              product_id: product.id,
+              variant_id: selectedVariant?._id || null,
+              product_name: product.name,
+              name: product.name,
+              product_image:
+                selectedVariant?.image_url || product.images?.[0] || "",
+              image: selectedVariant?.image_url || product.images?.[0] || "",
+              price: Number(product.price) || 0,
+              new_price: Number(product.price) || 0,
+              oldPrice: Number(product.oldPrice) || 0,
+              old_price: Number(product.oldPrice) || 0,
+              quantity: Number(quantity) || 1,
+              stock: stockLimit,
+              color: selectedColor || selectedVariant?.color || "",
+              size: selectedSize || selectedVariant?.size || "",
+              variant:
+                [selectedColor, selectedSize].filter(Boolean).join(" - ") ||
+                "Mặc định",
+            },
+          ],
+        },
+      });
+    } catch (err) {
+      console.error("Lỗi khi giữ hàng:", err);
+      const errorMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Sản phẩm hiện không đủ số lượng khả dụng trong kho.";
+      toast.error(errorMsg);
+    }
   };
 
   return (

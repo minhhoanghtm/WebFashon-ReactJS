@@ -1,3 +1,4 @@
+import useFeatureFlags from "@/hooks/useFeatureFlags";
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -21,6 +22,10 @@ import { paymentApi } from "../../api/payment.api";
 import { shippingApi } from "@/api/shipping.api";
 import trackingService from "@/services/tracking.service";
 import { formatCurrency } from "@/utils/format";
+import { getCartService } from "@/services/cart.service";
+import { getCartItemsService } from "@/services/cartItem.service";
+import axiosClient from "@/api/axiosClient";
+import { Clock } from "lucide-react";
 import CheckoutVoucherSelector from "../../components/CheckoutVoucherSelector";
 import ShippingAddress from "./ShippingAddress";
 
@@ -63,6 +68,12 @@ const formatAddress = (address) => {
 };
 
 const normalizeCheckoutItem = (item) => {
+  const rawProductId =
+    typeof item.product_id === "object" && item.product_id !== null
+      ? item.product_id._id || item.product_id.id
+      : item.product_id || item.id || item._id;
+  const productId = rawProductId ? String(rawProductId) : "";
+
   const name =
     item.name ||
     item.product_name ||
@@ -97,6 +108,7 @@ const normalizeCheckoutItem = (item) => {
 
   return {
     ...item,
+    product_id: productId,
     name,
     image,
     color,
@@ -114,13 +126,13 @@ const CheckoutItemRow = ({ item }) => {
 
   return (
     <li className="flex items-center gap-3.5 py-3.5">
-      <div className="relative aspect-[3/4] w-14 shrink-0 overflow-hidden border border-border bg-secondary">
+      <div className="relative aspect-[3/4] w-14 shrink-0 overflow-hidden border border-border bg-[var(--muted)]/40 dark:bg-zinc-900/50 flex items-center justify-center">
         {item.image && !imgFailed ? (
           <img
             src={item.image}
             alt={item.name}
             onError={() => setImgFailed(true)}
-            className="h-full w-full object-cover object-center"
+            className="h-full w-full object-contain object-center"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[10px] font-display uppercase tracking-widest text-muted-foreground">
@@ -167,6 +179,60 @@ const Checkout = () => {
   const { items, setCartItems } = useCartStore();
   const { user } = useAuthStore();
 
+  // Restore cart items if refreshed or accessed without state
+  useEffect(() => {
+    let isMounted = true;
+    if (!location.state?.checkoutItems && items.length === 0 && user) {
+      getCartService()
+        .then((cartRes) => {
+          const cartId = cartRes?.data?._id || cartRes?._id;
+          if (cartId && isMounted) {
+            getCartItemsService(cartId).then((itemsRes) => {
+              const backendItems = itemsRes?.data || [];
+              if (Array.isArray(backendItems) && backendItems.length > 0 && isMounted) {
+                const normalized = backendItems.map((item) => {
+                  const product = item.product_id || {};
+                  const variant = item.variant_id || {};
+                  return {
+                    _id: item._id,
+                    product_id: product._id || product.id || item.product_id,
+                    slug: product.slug || "",
+                    name: product.name || "Thiết kế thời trang",
+                    image:
+                      variant.image_url ||
+                      product.image ||
+                      (product.displayProduct && product.displayProduct[0]) ||
+                      "",
+                    new_price: Number(item.price ?? product.new_price ?? 0),
+                    price: Number(item.price ?? product.new_price ?? 0),
+                    quantity: Number(item.quantity || 1),
+                    stock: variant.stock ?? product.stock ?? 99,
+                    variants: variant._id
+                      ? [{ _id: variant._id, color: variant.color, size: variant.size }]
+                      : [],
+                  };
+                });
+                setCartItems(normalized);
+              }
+            });
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [location.state, items.length, user, setCartItems]);
+
+  const [activeReservation, setActiveReservation] = useState(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(300);
+  const [isReservationExpired, setIsReservationExpired] = useState(false);
+  const [isReleasing, setIsReleasing] = useState(false);
+
+  const searchParams = new URLSearchParams(location.search);
+  const urlReservationId = searchParams.get("reservationId");
+  const initialReservationId = location.state?.reservationId || urlReservationId || null;
+
   const fallbackStoredItems = useMemo(() => {
     try {
       const stored = sessionStorage.getItem("checkout_items_seed");
@@ -178,12 +244,107 @@ const Checkout = () => {
 
   const checkoutItems =
     location.state?.checkoutItems ||
+    (activeReservation?.items?.length > 0 ? activeReservation.items : null) ||
     (items.length > 0 ? items : fallbackStoredItems);
 
   const normalizedCheckoutItems = useMemo(
     () => (checkoutItems || []).map(normalizeCheckoutItem),
     [checkoutItems]
   );
+
+
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!initialReservationId) return;
+
+    axiosClient
+      .get(`/inventory/reservations/${initialReservationId}`)
+      .then((res) => {
+        const data = res?.data || res;
+        if (!isMounted || !data) return;
+        if (data.status === "ACTIVE" && data.remainingSeconds > 0) {
+          setActiveReservation(data);
+          setRemainingSeconds(data.remainingSeconds);
+        } else {
+          setIsReservationExpired(true);
+          Swal.fire({
+            title: "Thời gian giữ hàng 5 phút đã hết",
+            text: "Thời gian giữ hàng 5 phút đã hết. Sản phẩm của bạn đã được trả về kho. Vui lòng kiểm tra lại giỏ hàng để tiếp tục thanh toán.",
+            icon: "warning",
+            confirmButtonText: "Quay về giỏ hàng",
+          }).then(() => {
+            navigate("/cart");
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn("Lỗi kiểm tra phiên giữ hàng:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialReservationId, navigate]);
+
+  useEffect(() => {
+    if (!activeReservation || !activeReservation.expiresAt || isReservationExpired) return;
+
+    const timer = setInterval(() => {
+      const expiresAtMs = new Date(activeReservation.expiresAt).getTime();
+      const diff = Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+      setRemainingSeconds(diff);
+
+      if (diff <= 0) {
+        clearInterval(timer);
+        setIsReservationExpired(true);
+        axiosClient
+          .post(`/inventory/reservations/${activeReservation.reservationId}/release`, {
+            reason: "EXPIRED",
+          })
+          .catch(() => {});
+
+        Swal.fire({
+          title: "Thời gian giữ hàng 5 phút đã hết",
+          text: "Thời gian giữ hàng 5 phút đã hết. Sản phẩm của bạn đã được trả về kho. Vui lòng kiểm tra lại giỏ hàng để tiếp tục thanh toán.",
+          icon: "info",
+          confirmButtonText: "Quay về giỏ hàng",
+        }).then(() => {
+          navigate("/cart");
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activeReservation, isReservationExpired, navigate]);
+
+  const handleCancelReservation = async () => {
+    if (!activeReservation) return;
+    const result = await Swal.fire({
+      title: "Hủy giữ hàng và thanh toán?",
+      text: "Sản phẩm bạn đang giữ trong 5 phút sẽ được giải phóng ngay lập tức.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Đồng ý hủy",
+      cancelButtonText: "Tiếp tục thanh toán",
+    });
+
+    if (result.isConfirmed) {
+      setIsReleasing(true);
+      try {
+        await axiosClient.post(
+          `/inventory/reservations/${activeReservation.reservationId}/release`,
+          { reason: "USER_CANCELLED" }
+        );
+        toast.success("Đã hủy giữ hàng thành công");
+        navigate("/cart");
+      } catch {
+        navigate("/cart");
+      } finally {
+        setIsReleasing(false);
+      }
+    }
+  };
 
   const primaryUserAddress = getPrimaryAddress(user);
   const initialFormattedAddress =
@@ -312,7 +473,11 @@ const Checkout = () => {
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     setOrderError("");
-    if (normalizedCheckoutItems.length === 0) return;
+
+    if (normalizedCheckoutItems.length === 0) {
+      toast.warn("Giỏ hàng của bạn đang trống.");
+      return;
+    }
 
     if (hasStockConflict) {
       const msg =
@@ -322,10 +487,74 @@ const Checkout = () => {
       return;
     }
 
-    if (isEditingAddress) {
-      if (!shippingAddressRef.current?.validate()) return;
-    } else if (!fullName.trim() || !phone.trim() || !address.trim()) {
-      toast.warn("Vui lòng nhập đầy đủ thông tin nhận hàng.");
+    if (isEditingAddress && shippingAddressRef.current?.validate) {
+      const isAddressValid = shippingAddressRef.current.validate();
+      if (!isAddressValid) return;
+    }
+
+    const resolvedAddress = (
+      (isEditingAddress && shippingAddressRef.current?.getAddress
+        ? shippingAddressRef.current.getAddress()
+        : address) || ""
+    ).trim();
+
+    if (!fullName.trim() || !phone.trim() || !resolvedAddress) {
+      const msg = "Vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ nhận hàng.";
+      setOrderError(msg);
+      toast.warn(msg);
+      return;
+    }
+
+    // Clean & normalize phone format for backend (requires 9-11 digits)
+    let cleanPhone = phone.trim();
+    if (cleanPhone.startsWith("+84")) {
+      cleanPhone = "0" + cleanPhone.slice(3);
+    } else if (cleanPhone.startsWith("84") && cleanPhone.length === 11) {
+      cleanPhone = "0" + cleanPhone.slice(2);
+    }
+    cleanPhone = cleanPhone.replace(/[\s.-]/g, "");
+
+    const phoneRegex = /^[0-9]{9,11}$/;
+    if (!phoneRegex.test(cleanPhone)) {
+      const msg = "Số điện thoại không hợp lệ (yêu cầu từ 9 đến 11 chữ số).";
+      setOrderError(msg);
+      toast.error(msg);
+      return;
+    }
+
+    // Resolve items safely extracting string IDs
+    const resolvedItems = normalizedCheckoutItems
+      .map((item) => {
+        const rawProductId =
+          typeof item.product_id === "object" && item.product_id !== null
+            ? item.product_id._id || item.product_id.id
+            : item.product_id || item.id || item._id;
+
+        const rawVariant =
+          item.variants?.[0] || item.variant_id || item.product_variant_id;
+        const variantId =
+          typeof rawVariant === "object" && rawVariant !== null
+            ? rawVariant._id || rawVariant.id
+            : rawVariant || null;
+
+        return {
+          product_id: rawProductId ? String(rawProductId) : null,
+          product_variant_id:
+            variantId &&
+            String(variantId) !== "null" &&
+            String(variantId) !== "undefined"
+              ? String(variantId)
+              : null,
+          quantity: Number(item.quantity) || 1,
+          price: Number(item.new_price ?? item.price ?? 0),
+        };
+      })
+      .filter((item) => Boolean(item.product_id));
+
+    if (resolvedItems.length === 0) {
+      const msg = "Đơn hàng phải có ít nhất 1 sản phẩm hợp lệ.";
+      setOrderError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -340,20 +569,15 @@ const Checkout = () => {
         .join(",");
 
       const orderPayload = {
-        fullName,
-        phone,
-        shippingAddress: address,
-        paymentMethod,
-        items: normalizedCheckoutItems.map((item) => ({
-          product_id: item.product_id,
-          product_variant_id:
-            item.variants?.[0]?._id || item.variant_id || null,
-          quantity: item.quantity,
-          price: item.new_price || item.price || 0,
-        })),
+        fullName: fullName.trim(),
+        phone: cleanPhone,
+        shippingAddress: resolvedAddress,
+        paymentMethod: (paymentMethod || "COD").toUpperCase(),
+        items: resolvedItems,
         totalPrice: finalTotal,
         shippingFee: effectiveShippingFee,
         voucherCode: activeVoucherCodes || null,
+        reservation_id: activeReservation?.reservationId || initialReservationId || null,
       };
 
       const res = await orderApi.createOrder(orderPayload);
@@ -402,7 +626,8 @@ const Checkout = () => {
           }
         } else {
           toast.success("Đặt hàng thành công!");
-          navigate("/payment-result?success=true");
+          const isGuest = !user;
+          navigate(`/payment-result?success=true&orderCode=${orderId}&guest=${isGuest}`);
         }
       }
     } catch (err) {
@@ -531,6 +756,44 @@ const Checkout = () => {
                   "Một số thiết kế vượt quá số lượng tồn kho hiện có. Vui lòng quay lại giỏ hàng để kiểm tra."}
               </p>
             </div>
+          </div>
+        )}
+
+                {/* Redis Inventory Reservation Countdown Banner */}
+        {activeReservation && !isReservationExpired && (
+          <div
+            className={`flex flex-wrap items-center justify-between gap-3 border p-3.5 sm:p-4 text-xs transition-colors ${
+              remainingSeconds <= 60
+                ? "border-destructive/60 bg-destructive/10 text-destructive dark:bg-destructive/20"
+                : "border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200 dark:bg-amber-950/30"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Clock
+                className={`h-4 w-4 shrink-0 ${
+                  remainingSeconds <= 60 ? "animate-bounce text-destructive" : "text-amber-600 dark:text-amber-400"
+                }`}
+              />
+              <div>
+                <span className="font-bold tracking-wider">
+                  {remainingSeconds <= 60
+                    ? "⚠️ Sắp hết hạn! Thời gian giữ hàng còn lại: "
+                    : "Thời gian giữ hàng còn lại: "}
+                </span>
+                <span className="font-mono text-sm font-bold tabular-nums">
+                  {String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:
+                  {String(remainingSeconds % 60).padStart(2, "0")}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleCancelReservation}
+              disabled={isReleasing}
+              className="underline hover:opacity-80 cursor-pointer text-[11px] font-semibold tracking-wider uppercase shrink-0"
+            >
+              {isReleasing ? "Đang hủy..." : "Hủy giữ hàng"}
+            </button>
           </div>
         )}
 
@@ -677,7 +940,7 @@ const Checkout = () => {
                     <button
                       type="button"
                       disabled={
-                        !fullName.trim() || !phone.trim() || !address.trim()
+                        !fullName.trim() || !phone.trim() || !address.trim() || isReservationExpired
                       }
                       onClick={() => {
                         if (!fullName.trim() || !phone.trim()) {
@@ -789,6 +1052,16 @@ const Checkout = () => {
                   </span>
                 )}
               </button>
+              {activeReservation && !isReservationExpired && (
+                <button
+                  type="button"
+                  onClick={handleCancelReservation}
+                  disabled={loading || isReleasing}
+                  className="mt-2 flex w-full items-center justify-center border border-border bg-background py-2.5 text-xs font-semibold tracking-wider uppercase text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                >
+                  {isReleasing ? "Đang hủy giữ hàng..." : "Hủy thanh toán & Giải phóng hàng"}
+                </button>
+              )}
 
               {isEditingAddress && (
                 <p className="text-center text-[11px] text-muted-foreground">

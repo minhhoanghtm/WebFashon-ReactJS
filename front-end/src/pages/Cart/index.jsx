@@ -1,3 +1,4 @@
+import useFeatureFlags from "@/hooks/useFeatureFlags";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -15,6 +16,7 @@ import {
 } from "@/services/cartItem.service";
 import { validateVoucherService } from "@/services/voucher.service";
 import trackingService from "@/services/tracking.service";
+import axiosClient from "@/api/axiosClient";
 
 import CartItem from "@/components/cart/CartItem";
 import CartSummary from "@/components/cart/CartSummary";
@@ -103,6 +105,7 @@ const Cart = () => {
   useDocumentTitle(`Giỏ hàng — ${siteName}`);
 
   const { isAuthenticated: isLoggedIn, user } = useAuthStore();
+  const { flags } = useFeatureFlags();
   const { items, setCartItems } = useCartStore();
 
   const [loading, setLoading] = useState(false);
@@ -133,8 +136,19 @@ const Cart = () => {
     let isMounted = true;
     const fetchCartData = async () => {
       if (!isLoggedIn) {
-        setCartItems([]);
-        setSelectedItemIds([]);
+        try {
+          const guestRaw = localStorage.getItem("guest_cart_items");
+          const guestItems = guestRaw ? JSON.parse(guestRaw) : [];
+          if (isMounted) {
+            setCartItems(guestItems);
+            setSelectedItemIds(guestItems.map((i) => i._id));
+          }
+        } catch {
+          if (isMounted) {
+            setCartItems([]);
+            setSelectedItemIds([]);
+          }
+        }
         return;
       }
       try {
@@ -419,8 +433,10 @@ const Cart = () => {
   const totalDiscount = discountAmount + actualShippingDiscount;
   const grandTotal = Math.max(0, subtotal - discountAmount + finalShippingFee);
 
-  const handleCheckout = () => {
-    if (selectedCount === 0) return;
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+
+  const handleCheckout = async () => {
+    if (selectedCount === 0 || isStartingCheckout) return;
     if (hasStockIssue) {
       toast.error(
         "Vui lòng điều chỉnh số lượng hoặc bỏ chọn sản phẩm hết hàng."
@@ -428,15 +444,52 @@ const Cart = () => {
       return;
     }
 
-    trackingService.trackCheckoutStarted(checkedItems, grandTotal);
+    if (!isLoggedIn && !flags.allowGuestCheckout) {
+      toast.info("Vui lòng đăng nhập để tiến hành đặt hàng.");
+      navigate("/login?redirect=/checkout");
+      return;
+    }
 
-    navigate("/checkout", {
-      state: {
-        checkoutItems: checkedItems,
-        appliedCoupon: activeCoupon,
-        appliedShippingCoupon: activeShippingCoupon,
-      },
-    });
+    setIsStartingCheckout(true);
+    try {
+      const reservationItems = checkedItems.map((item) => ({
+        productId: item.product_id?._id || item.product_id?.id || item.product_id,
+        variantId: item.variant_id?._id || item.variant_id || item.variants?.[0]?._id || null,
+        quantity: Number(item.quantity || 1),
+        name: item.name || item.product_name,
+        color: item.color || item.variant_id?.color || "",
+        size: item.size || item.variant_id?.size || "",
+        unitPrice: Number(item.price || item.new_price || 0),
+        image: item.image || item.product_image || "",
+      }));
+
+      const res = await axiosClient.post("/checkout/reservations", {
+        items: reservationItems,
+      });
+
+      const reservationData = res?.data || res;
+      const reservationId = reservationData?.reservationId;
+
+      trackingService.trackCheckoutStarted(checkedItems, grandTotal);
+
+      navigate(`/checkout?reservationId=${reservationId}`, {
+        state: {
+          reservationId,
+          checkoutItems: checkedItems,
+          appliedCoupon: activeCoupon,
+          appliedShippingCoupon: activeShippingCoupon,
+        },
+      });
+    } catch (err) {
+      console.error("Lỗi khi giữ hàng giỏ hàng:", err);
+      const errorMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Sản phẩm hiện không đủ số lượng khả dụng trong kho.";
+      toast.error(errorMsg);
+    } finally {
+      setIsStartingCheckout(false);
+    }
   };
 
   const handleAddRecommendedToCart = async (product) => {
@@ -593,6 +646,7 @@ const Cart = () => {
 
             {/* Right Column: Voucher + Order Summary */}
             <div className="space-y-6 lg:col-span-4">
+              {flags.enableVoucher && (
               <CouponSection
                 couponCode={couponCode}
                 setCouponCode={setCouponCode}
@@ -604,6 +658,7 @@ const Cart = () => {
                 couponError={couponError}
                 isValidating={isValidatingCoupon}
               />
+              )}
 
               <CartSummary
                 subtotal={subtotal}

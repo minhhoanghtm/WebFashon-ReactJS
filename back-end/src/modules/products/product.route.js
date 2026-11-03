@@ -1,4 +1,5 @@
 import express from "express";
+import { checkAvailability } from "../inventory/inventory.controller.js";
 import validate from "../../middlewares/validateZod.js";
 import { protectedRoute, adminOnly } from "../../middlewares/auth.middleware.js";
 import { createProductSchema, updateProductSchema, searchProductSchema, createVariantSchema, updateVariantSchema } from "./productValidators.js";
@@ -26,6 +27,7 @@ productRouter.get("/suggestions", suggestProducts);
 productRouter.get("/search", validate(searchProductSchema), searchProducts);
 productRouter.get("/category/:categoryid", getProductByCategory);
 productRouter.get("/detail/:id", getProductDetail);
+productRouter.get("/:id/availability", checkAvailability);
 productRouter.post("/", protectedRoute, adminOnly, validate(createProductSchema), addProduct);
 productRouter.get("/", getProducts);
 productRouter.put("/:id", protectedRoute, adminOnly, validate(updateProductSchema), updateProduct);

@@ -19,14 +19,16 @@ import {
   adminCommunicationRouter,
   customerCommunicationRouter,
 } from "../modules/communication/communication.route.js";
-import { protectedRoute, adminOnly, noAdmin } from "../middlewares/auth.middleware.js";
+import { protectedRoute, optionalProtectedRoute, adminOnly, noAdmin } from "../middlewares/auth.middleware.js";
 import { authGlobalLimiter } from "../middlewares/rateLimiter.middleware.js";
 import shippingRouter from "../modules/shipping/shipping.routes.js";
 import trackingRouter from "../modules/tracking/tracking.route.js";
+import privacyRouter from "../modules/tracking/privacy.route.js";
 import searchHistoryRouter from "../modules/tracking/searchHistory.route.js";
 import recommendationRouter from "../modules/recommendations/recommendation.route.js";
 import experimentRouter from "../modules/recommendations/experiments/experiment.route.js";
 import aiRouter from "../modules/ai/ai.route.js";
+import inventoryRouter, { checkoutReservationRouter } from "../modules/inventory/inventory.route.js";
 import mongoose from "mongoose";
 import { getRedisConnection } from "../configs/redis.js";
 
@@ -78,17 +80,20 @@ rootRouter.use("/admin/campaigns", protectedRoute, adminOnly, adminCampaignRoute
 // Tracking, Recommendations & Vector AI routes
 rootRouter.use("/events", trackingRouter);
 rootRouter.use("/tracking", trackingRouter); // Backward-compatible alias
+rootRouter.use("/privacy", privacyRouter);
 rootRouter.use("/search", searchHistoryRouter);
 rootRouter.use("/recommendations", recommendationRouter);
 rootRouter.use("/experiments", experimentRouter);
 rootRouter.use("/ai", aiRouter);
+rootRouter.use("/inventory", inventoryRouter);
+rootRouter.use("/checkout", checkoutReservationRouter);
 
 // Private routes
 rootRouter.use("/user", protectedRoute, userRouter);
 rootRouter.use("/cart", protectedRoute, noAdmin, cartRouter);
 rootRouter.use("/cart_items", protectedRoute, noAdmin, cartItemRouter);
 rootRouter.use("/favorites", protectedRoute, favoriteRouter);
-rootRouter.use("/order", protectedRoute, orderRouter);
+rootRouter.use("/order", optionalProtectedRoute, orderRouter);
 rootRouter.use("/order_items", protectedRoute, orderItemRouter);
 rootRouter.use("/payments", paymentRouter);
 rootRouter.use("/vouchers", voucherRouter);
