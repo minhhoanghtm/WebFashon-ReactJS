@@ -7,6 +7,7 @@ import { SafeImage } from "../ui/SafeImage";
 
 export function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
   const toggleCompare = useCompareStore((state) => state.toggleCompare);
   const isInCompare = useCompareStore((state) =>
@@ -50,9 +51,15 @@ export function ProductCard({ product }) {
     toggleCompare(product);
   };
 
+  const handleToggleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsWishlisted((prev) => !prev);
+  };
+
   return (
     <div
-      className="group relative flex flex-col bg-[#121215] border border-[rgba(244,240,232,0.1)] transition-transform duration-200 hover:-translate-y-0.5"
+      className="group relative flex flex-col bg-[#121215] border border-[rgba(244,240,232,0.1)] hover:border-[#e65100]/40 transition-all duration-300 hover:-translate-y-0.5"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -62,25 +69,42 @@ export function ProductCard({ product }) {
           <SafeImage
             src={isHovered ? secondaryImage : imageSrc}
             alt={product.name}
-            className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
+            className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03] will-change-transform"
           />
         </Link>
 
-        {/* Compare quick button on top right */}
-        <button
-          type="button"
-          onClick={handleToggleCompare}
-          data-testid="product-compare-btn"
-          className={`absolute top-2.5 right-2.5 z-20 min-h-[32px] min-w-[32px] p-1.5 flex items-center justify-center transition-all ${
-            isInCompare
-              ? "bg-[#e65100] text-white border border-[#e65100] opacity-100"
-              : "bg-[#0c0c0e]/80 text-[#9a989f] hover:text-white border border-white/20 backdrop-blur-sm opacity-90 hover:opacity-100"
-          }`}
-          title={isInCompare ? "Đang trong danh sách so sánh" : "Thêm vào so sánh"}
-          aria-label="So sánh sản phẩm"
-        >
-          {isInCompare ? <Check size={14} /> : <Scale size={14} />}
-        </button>
+        {/* Action buttons on top right (Wishlist + Compare) */}
+        <div className="absolute top-2.5 right-2.5 z-20 flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={handleToggleWishlist}
+            data-testid="product-wishlist-btn"
+            className={`min-h-[32px] min-w-[32px] p-1.5 flex items-center justify-center transition-all btn-tactile ${
+              isWishlisted
+                ? "bg-[#e65100] text-white border border-[#e65100] animate-wishlist-pop"
+                : "bg-[#0c0c0e]/80 text-[#9a989f] hover:text-[#e65100] border border-white/20 backdrop-blur-sm opacity-90 hover:opacity-100"
+            }`}
+            title={isWishlisted ? "Đã lưu vào danh sách yêu thích" : "Thêm vào yêu thích"}
+            aria-label="Lưu vào danh sách yêu thích"
+          >
+            <Heart size={14} className={isWishlisted ? "fill-white" : ""} />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleToggleCompare}
+            data-testid="product-compare-btn"
+            className={`min-h-[32px] min-w-[32px] p-1.5 flex items-center justify-center transition-all btn-tactile ${
+              isInCompare
+                ? "bg-[#e65100] text-white border border-[#e65100] opacity-100"
+                : "bg-[#0c0c0e]/80 text-[#9a989f] hover:text-white border border-white/20 backdrop-blur-sm opacity-90 hover:opacity-100"
+            }`}
+            title={isInCompare ? "Đang trong danh sách so sánh" : "Thêm vào so sánh"}
+            aria-label="So sánh sản phẩm"
+          >
+            {isInCompare ? <Check size={14} /> : <Scale size={14} />}
+          </button>
+        </div>
 
         {/* Quick action buttons floating on bottom */}
         <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 pointer-events-auto">
@@ -88,7 +112,7 @@ export function ProductCard({ product }) {
             type="button"
             onClick={handleQuickAdd}
             aria-label={`Thêm ${product.name} vào giỏ hàng`}
-            className="flex-1 min-h-[44px] px-3 bg-[#0c0c0e]/90 hover:bg-[#e65100] text-[#f4f0e8] text-xs font-display tracking-wider uppercase flex items-center justify-center gap-1.5 backdrop-blur-sm border border-[rgba(244,240,232,0.2)] transition-colors"
+            className="flex-1 min-h-[44px] px-3 bg-[#0c0c0e]/90 hover:bg-[#e65100] text-[#f4f0e8] text-xs font-display tracking-wider uppercase flex items-center justify-center gap-1.5 backdrop-blur-sm border border-[rgba(244,240,232,0.2)] transition-colors btn-tactile"
             title="Thêm nhanh vào giỏ hàng"
           >
             <ShoppingBag size={14} />
@@ -97,7 +121,7 @@ export function ProductCard({ product }) {
           <Link
             to={`/product/${slug}`}
             aria-label={`Xem chi tiết ${product.name}`}
-            className="p-2 min-h-[44px] min-w-[44px] bg-[#0c0c0e]/90 hover:bg-white/20 text-[#f4f0e8] flex items-center justify-center backdrop-blur-sm border border-[rgba(244,240,232,0.2)] transition-colors"
+            className="p-2 min-h-[44px] min-w-[44px] bg-[#0c0c0e]/90 hover:bg-white/20 text-[#f4f0e8] flex items-center justify-center backdrop-blur-sm border border-[rgba(244,240,232,0.2)] transition-colors btn-tactile"
             title="Xem chi tiết"
           >
             <Eye size={14} />

@@ -12,7 +12,7 @@ export function Button({
   ...props
 }) {
   const base =
-    "inline-flex items-center justify-center font-display uppercase tracking-wider text-sm transition-colors duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer";
+    "inline-flex items-center justify-center font-display uppercase tracking-wider text-sm btn-tactile disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer";
 
   const sizes = {
     sm: "px-3 py-1.5 min-h-[36px] text-xs",

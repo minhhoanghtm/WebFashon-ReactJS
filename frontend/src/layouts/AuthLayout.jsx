@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, Outlet } from "react-router-dom";
 import { ThemeSwitcher } from "../components/ui/ThemeSwitcher";
+import { SilkVeilTransition } from "../components/shared/SilkVeilTransition";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 export function AuthLayout() {
@@ -34,16 +35,18 @@ export function AuthLayout() {
 
       {/* Centered Auth Card Container */}
       <div className="flex-1 flex items-center justify-center py-8">
-        <div className="w-full max-w-md bg-[#121215] border border-[rgba(244,240,232,0.12)] p-6 sm:p-8 shadow-2xl animate-fade-in">
-          <React.Suspense
-            fallback={
-              <div className="min-h-[30vh] flex items-center justify-center p-8">
-                <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
-              </div>
-            }
-          >
-            <Outlet />
-          </React.Suspense>
+        <div className="w-full max-w-md bg-[#121215] border border-[rgba(244,240,232,0.12)] p-6 sm:p-8 shadow-2xl">
+          <SilkVeilTransition>
+            <React.Suspense
+              fallback={
+                <div className="min-h-[30vh] flex items-center justify-center p-8">
+                  <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
+                </div>
+              }
+            >
+              <Outlet />
+            </React.Suspense>
+          </SilkVeilTransition>
         </div>
       </div>
 

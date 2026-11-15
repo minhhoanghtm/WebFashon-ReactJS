@@ -3,6 +3,7 @@ import { Link, Outlet } from "react-router-dom";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
 import { CookieConsentBanner } from "../components/shared/CookieConsentBanner";
+import { SilkVeilTransition } from "../components/shared/SilkVeilTransition";
 import { BookOpen, Sparkles, Compass } from "lucide-react";
 
 export function LookbookLayout() {
@@ -43,15 +44,17 @@ export function LookbookLayout() {
 
       {/* Main Full-Bleed Lookbook Experience */}
       <main className="flex-1 w-full flex flex-col">
-        <React.Suspense
-          fallback={
-            <div className="min-h-[50vh] flex items-center justify-center p-8">
-              <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
-            </div>
-          }
-        >
-          <Outlet />
-        </React.Suspense>
+        <SilkVeilTransition>
+          <React.Suspense
+            fallback={
+              <div className="min-h-[50vh] flex items-center justify-center p-8">
+                <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
+              </div>
+            }
+          >
+            <Outlet />
+          </React.Suspense>
+        </SilkVeilTransition>
       </main>
 
       <Footer />

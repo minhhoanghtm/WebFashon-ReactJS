@@ -7,6 +7,7 @@ import { CookieConsentBanner } from "../components/shared/CookieConsentBanner";
 import { AiAssistantModal } from "../components/shared/AiAssistantModal";
 import { AiStyleQuizModal } from "../components/shared/AiStyleQuizModal";
 import { ProductComparisonDrawer } from "../components/shared/ProductComparisonDrawer";
+import { SilkVeilTransition } from "../components/shared/SilkVeilTransition";
 
 export function EditorialLayout() {
   return (
@@ -14,15 +15,17 @@ export function EditorialLayout() {
       <AnnouncementBar />
       <Header />
       <main className="flex-1 w-full flex flex-col">
-        <React.Suspense
-          fallback={
-            <div className="min-h-[50vh] flex items-center justify-center p-8">
-              <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
-            </div>
-          }
-        >
-          <Outlet />
-        </React.Suspense>
+        <SilkVeilTransition>
+          <React.Suspense
+            fallback={
+              <div className="min-h-[50vh] flex items-center justify-center p-8">
+                <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
+              </div>
+            }
+          >
+            <Outlet />
+          </React.Suspense>
+        </SilkVeilTransition>
       </main>
       <Footer />
       <CookieConsentBanner />

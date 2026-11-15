@@ -2,6 +2,7 @@ import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
+import { SilkVeilTransition } from "../components/shared/SilkVeilTransition";
 import { CookieConsentBanner } from "../components/shared/CookieConsentBanner";
 import {
   BookOpen,
@@ -106,15 +107,17 @@ export function ContentLayout() {
 
           {/* Reading Content Pane */}
           <div className="lg:col-span-3 min-w-0 bg-[#121215] border border-[rgba(244,240,232,0.1)] p-6 sm:p-10 shadow-sm">
-            <React.Suspense
-              fallback={
-                <div className="min-h-[40vh] flex items-center justify-center p-8">
-                  <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
-                </div>
-              }
-            >
-              <Outlet />
-            </React.Suspense>
+            <SilkVeilTransition>
+              <React.Suspense
+                fallback={
+                  <div className="min-h-[40vh] flex items-center justify-center p-8">
+                    <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
+                  </div>
+                }
+              >
+                <Outlet />
+              </React.Suspense>
+            </SilkVeilTransition>
           </div>
         </div>
       </div>

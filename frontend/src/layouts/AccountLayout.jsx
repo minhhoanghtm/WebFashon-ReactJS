@@ -2,6 +2,7 @@ import React from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
+import { SilkVeilTransition } from "../components/shared/SilkVeilTransition";
 import { useAuthStore } from "../stores/authStore";
 import {
   LayoutDashboard,
@@ -123,15 +124,17 @@ export function AccountLayout() {
 
           {/* Account Content Region */}
           <div className="lg:col-span-3 min-w-0">
-            <React.Suspense
-              fallback={
-                <div className="min-h-[40vh] flex items-center justify-center p-8 bg-[#121215] border border-white/10">
-                  <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
-                </div>
-              }
-            >
-              <Outlet />
-            </React.Suspense>
+            <SilkVeilTransition>
+              <React.Suspense
+                fallback={
+                  <div className="min-h-[40vh] flex items-center justify-center p-8 bg-[#121215] border border-white/10">
+                    <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
+                  </div>
+                }
+              >
+                <Outlet />
+              </React.Suspense>
+            </SilkVeilTransition>
           </div>
         </div>
       </div>
