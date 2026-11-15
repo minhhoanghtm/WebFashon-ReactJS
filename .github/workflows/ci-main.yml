@@ -167,13 +167,12 @@ jobs:
           npm run lint --if-present
           npm run build
 
-      - name: Check Legacy Frontend Build (Graceful Fallback)
+      - name: Build Front-end
         if: steps.detect.outputs.dir == 'front-end'
         working-directory: ./front-end
         run: |
-          echo "Attempting legacy front-end build check..."
-          npm install --legacy-peer-deps --no-audit --no-fund || true
-          npm run build || echo "Notice: Legacy front-end build encountered known issues; new frontend resides on redesign-v2."
+          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+          npm run build
 
       - name: Notice when Frontend is not on current branch
         if: steps.detect.outputs.dir == 'none'
@@ -202,6 +201,9 @@ jobs:
           if [ -d "frontend" ] && [ -f "frontend/Dockerfile" ]; then
             echo "Building new frontend Docker image..."
             docker build -t webfashion-front:latest ./frontend
+          elif [ -d "front-end" ] && [ -f "front-end/Dockerfile" ]; then
+            echo "Building front-end Docker image..."
+            docker build -t webfashion-front:latest ./front-end
           else
             echo "Frontend Dockerfile not present on this branch. API image build verified successfully."
           fi

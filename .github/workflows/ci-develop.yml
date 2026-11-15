@@ -139,12 +139,12 @@ jobs:
           npm run lint --if-present
           npm run build
 
-      - name: Check Legacy Frontend Build (Graceful Fallback)
+      - name: Build Front-end
         if: steps.detect.outputs.dir == 'front-end'
         working-directory: ./front-end
         run: |
-          npm install --legacy-peer-deps --no-audit --no-fund || true
-          npm run build || echo "Notice: Legacy front-end build encountered known issues; new frontend resides on redesign-v2."
+          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+          npm run build
 
   deploy-vps:
     name: 🚀 Deploy to VPS (Develop Push Only)
