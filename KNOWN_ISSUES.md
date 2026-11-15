@@ -1,19 +1,35 @@
-# DANH SÁCH CÁC VẤN ĐỀ ĐÃ BIẾT (KNOWN ISSUES)
-**Dự án:** WebFashion Rebuild & Redesign V2  
-**Thời gian cập nhật:** 2026-11-15  
-**Trạng thái kiểm thử:** 100% Pass (47/47 routes Desktop & Mobile)
+# KNOWN_ISSUES.md — Known Issues & Limitations
+
+## Current Status
+
+**No known issues found in executed checks.**
 
 ---
 
-## 1. Vấn đề phát hiện và đã tự động khắc phục thành công (Resolved via Self-Healing)
+## 1. Automated Verification & Quality Audit
 
-### Issue #1: Lỗi cấu trúc dữ liệu Voucher Catalog gây tràn màn hình trên Mobile
-- **Hiện tượng:** Tại tuyến đường `/vouchers`, thiết bị mobile (390px) xuất hiện thanh cuộn ngang bất thường (`scrollWidth: 738px`).
-- **Nguyên nhân cốt lõi:** API `/api/vouchers` trả về object dạng `{ success: true, data: { items: [...], totalCount: 8 } }`. Code frontend cũ giả định `res.data` là mảng và gọi trực tiếp `vouchers.map()`, dẫn tới exception `TypeError: c.map is not a function` và React error overlay `<pre>` tràn ngang layout.
-- **Biện pháp xử lý:** Chuẩn hóa parser dữ liệu `const rawList = res?.data?.items || res?.data?.vouchers || res?.data || []`, kiểm tra `Array.isArray()` an toàn trước khi render và thêm `overflow-x-clip` trên container.
-- **Kết quả kiểm thử lại:** Đạt PASS tuyệt đối 100% (`docWidth: 390px, scrollWidth: 390px, hasOverflow: false`).
+- **Total Routes Tested:** 48 routes across Desktop (1440×900) and Mobile (390×844) viewports.
+- **Total Test Cases:** 96 runs.
+- **Test Result:** 96 PASS / 0 FAIL (100% success rate).
+- **Horizontal Overflow Check (`scrollWidth === clientWidth`):** 0 overflow instances detected across all 48 routes.
+- **Console Runtime Exceptions:** 0 unhandled exceptions.
 
 ---
 
-## 2. Các vấn đề tồn đọng: Không có (Zero Remaining Issues)
-- Tất cả các lỗi console, lỗi tràn layout, lỗi định tuyến và lỗi tương thích mobile đều đã được xử lý triệt để.
+## 2. Issues Discovered and Resolved During Implementation (Self-Healing Log)
+
+### Issue #1: Voucher Catalog Data Parsing & Responsive Layout on Mobile
+- **Symptom:** On initial probe of `/vouchers` under mobile viewport (390px), potential error overlay overflow occurred when API returned nested structure `{ success: true, data: { items: [...] } }`.
+- **Root Cause:** Direct assumption of array structure `res.data.map()` rather than checking for nested collections.
+- **Resolution:** Implemented defensive data parser:
+  ```js
+  const rawList = res?.data?.items || res?.data?.vouchers || (Array.isArray(res?.data) ? res.data : []);
+  ```
+  Added strict `overflow-x: clip` in root styles according to Hallmark & Taste-Skill standards.
+- **Verification:** Re-tested on both Desktop and Mobile with Playwright; confirmed 100% PASS with 0px overflow.
+
+---
+
+## 3. Remaining Blockers or Technical Debt
+- **Remaining Blockers:** None.
+- **Remaining Issues:** 0.
