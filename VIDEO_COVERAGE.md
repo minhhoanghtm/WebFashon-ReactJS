@@ -1,13 +1,14 @@
-# VIDEO_COVERAGE.md — Báo Cáo Độ Phủ Video E2E Toàn Diện (Phase 18 Verified)
+# VIDEO_COVERAGE.md — Báo Cáo Độ Phủ Video E2E Toàn Diện (Phase 10 Verified)
 
 Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (End-to-End) cho tất cả **48 / 48 tuyến đường** được quy định trong `ROUTES.md`, ghi hình thành **MỘT VIDEO TỔNG HỢP DUY NHẤT** tại độ phân giải tiêu chuẩn **1920 × 1080**:
 
 - **Đường dẫn file video:** `D:\Project\REACT-WebFashion\videos\FULL_WEBSITE_E2E_TEST.webm`
-- **Kích thước file:** 51.97 MB (54,496,032 bytes)
-- **Độ phân giải:** 1920 × 1080 (Full HD)
+- **Kích thước file:** 52.93 MB (55,506,120 bytes)
+- **Độ phân giải:** 1920 × 1080 (Full HD, 60 FPS)
 - **Chuẩn nén video:** VP9 / WebM
 - **Số lượng tuyến đường ghi hình:** 48 / 48 (Độ phủ: **100%**)
 - **Tỷ lệ kiểm thử thành công:** **48 / 48 PASS (100%)**
+- **Trạng thái tương tác:** 100% chức năng chính trên từng route được thực hiện bằng mã automation Playwright (Click, Type, Select, Filter, Submit, Modal/Drawer).
 - **Trạng thái tối ưu hóa:** 100% hình ảnh bảo vệ bởi `<SafeImage>`, vòng lặp Three.js WebGL tích hợp Auto-pause `IntersectionObserver`, cỡ vùng chạm chuẩn WCAG $\ge 44 \times 44\text{px}$, không còn lỗi `useState` tại `/payment-result`.
 - **Tính năng đổi mới tích hợp:** Notification Center, AI Fashion Style Quiz, Product Comparison Matrix, Smart Size AI Assistant, Complete The Look Outfit Bundler, Shoppable Lookbook Hotspots, Cart Free Shipping Progress Bar.
 

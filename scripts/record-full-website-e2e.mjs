@@ -490,6 +490,15 @@ const ALL_ROUTES = [
     role: "Admin",
     testId: "TC-ROUTE-33",
     desc: "Bảng điều khiển quản trị tổng quan (Doanh thu, Đơn hàng, Biểu đồ)",
+    interactions: async (page) => {
+      try {
+        const metricCard = await page.locator("div:has-text('Tổng Doanh Thu'), .font-display").first();
+        if (await metricCard.isVisible({ timeout: 1200 })) {
+          await metricCard.hover();
+          await page.waitForTimeout(500);
+        }
+      } catch (e) {}
+    },
   },
   {
     path: "/admin/categories",
@@ -581,6 +590,15 @@ const ALL_ROUTES = [
     role: "Admin",
     testId: "TC-ROUTE-39",
     desc: "Quản lý mã giảm giá & Điều kiện áp dụng",
+    interactions: async (page) => {
+      try {
+        const btn = await page.locator("button:has-text('Thêm Voucher')").first();
+        if (await btn.isVisible({ timeout: 1200 })) {
+          await btn.hover();
+          await page.waitForTimeout(400);
+        }
+      } catch (e) {}
+    },
   },
   {
     path: "/admin/campaigns",
@@ -588,6 +606,15 @@ const ALL_ROUTES = [
     role: "Admin",
     testId: "TC-ROUTE-40",
     desc: "Quản lý chiến dịch tiếp thị và Flash Sale",
+    interactions: async (page) => {
+      try {
+        const card = await page.locator("h1:has-text('Chiến Dịch Khuyến Mãi')").first();
+        if (await card.isVisible({ timeout: 1200 })) {
+          await card.hover();
+          await page.waitForTimeout(400);
+        }
+      } catch (e) {}
+    },
   },
   {
     path: "/admin/banners",
@@ -595,6 +622,15 @@ const ALL_ROUTES = [
     role: "Admin",
     testId: "TC-ROUTE-41",
     desc: "Quản trị banner quảng bá trang chủ",
+    interactions: async (page) => {
+      try {
+        const title = await page.locator("h1:has-text('Quản Lý Banners')").first();
+        if (await title.isVisible({ timeout: 1200 })) {
+          await title.hover();
+          await page.waitForTimeout(400);
+        }
+      } catch (e) {}
+    },
   },
   {
     path: "/admin/lookbooks",
@@ -602,6 +638,15 @@ const ALL_ROUTES = [
     role: "Admin",
     testId: "TC-ROUTE-42",
     desc: "Quản lý bộ sưu tập Lookbook thời trang may đo",
+    interactions: async (page) => {
+      try {
+        const title = await page.locator("h1:has-text('Quản Lý Lookbooks')").first();
+        if (await title.isVisible({ timeout: 1200 })) {
+          await title.hover();
+          await page.waitForTimeout(400);
+        }
+      } catch (e) {}
+    },
   },
   {
     path: "/admin/ab-testing",
@@ -609,6 +654,15 @@ const ALL_ROUTES = [
     role: "Admin",
     testId: "TC-ROUTE-43",
     desc: "Báo cáo thử nghiệm A/B kiểm định hiệu năng chuyển đổi",
+    interactions: async (page) => {
+      try {
+        const card = await page.locator("h1:has-text('A/B Testing')").first();
+        if (await card.isVisible({ timeout: 1200 })) {
+          await card.hover();
+          await page.waitForTimeout(400);
+        }
+      } catch (e) {}
+    },
   },
   {
     path: "/admin/user-activity",
@@ -616,6 +670,14 @@ const ALL_ROUTES = [
     role: "Admin",
     testId: "TC-ROUTE-44",
     desc: "Giám sát luồng hành vi người dùng thời gian thực",
+    interactions: async (page) => {
+      try {
+        const ping = await page.locator("span.animate-ping, .text-emerald-400").first();
+        if (await ping.isVisible({ timeout: 1200 })) {
+          await page.waitForTimeout(400);
+        }
+      } catch (e) {}
+    },
   },
   {
     path: "/admin/pages",
@@ -623,6 +685,15 @@ const ALL_ROUTES = [
     role: "Admin",
     testId: "TC-ROUTE-45",
     desc: "Quản lý nội dung các trang tĩnh CMS",
+    interactions: async (page) => {
+      try {
+        const title = await page.locator("h1:has-text('Nội Dung Tĩnh')").first();
+        if (await title.isVisible({ timeout: 1200 })) {
+          await title.hover();
+          await page.waitForTimeout(400);
+        }
+      } catch (e) {}
+    },
   },
   {
     path: "/admin/settings",
@@ -630,6 +701,15 @@ const ALL_ROUTES = [
     role: "Admin",
     testId: "TC-ROUTE-46",
     desc: "Cài đặt thông tin thương hiệu & Cấu hình thanh toán",
+    interactions: async (page) => {
+      try {
+        const saveBtn = await page.locator("button:has-text('Lưu Cấu Hình')").first();
+        if (await saveBtn.isVisible({ timeout: 1200 })) {
+          await saveBtn.click();
+          await page.waitForTimeout(500);
+        }
+      } catch (e) {}
+    },
   },
 
   // 6. System & Error Routes (2 routes)

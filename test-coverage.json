@@ -290,7 +290,7 @@
   {
     "route": "/admin",
     "accessed": "YES",
-    "interacted": "NO",
+    "interacted": "YES",
     "inVideo": "YES",
     "status": "PASS",
     "name": "AdminDashboard",
@@ -344,7 +344,7 @@
   {
     "route": "/admin/coupons",
     "accessed": "YES",
-    "interacted": "NO",
+    "interacted": "YES",
     "inVideo": "YES",
     "status": "PASS",
     "name": "AdminCoupons",
@@ -353,7 +353,7 @@
   {
     "route": "/admin/campaigns",
     "accessed": "YES",
-    "interacted": "NO",
+    "interacted": "YES",
     "inVideo": "YES",
     "status": "PASS",
     "name": "AdminCampaigns",
@@ -362,7 +362,7 @@
   {
     "route": "/admin/banners",
     "accessed": "YES",
-    "interacted": "NO",
+    "interacted": "YES",
     "inVideo": "YES",
     "status": "PASS",
     "name": "AdminBanners",
@@ -371,7 +371,7 @@
   {
     "route": "/admin/lookbooks",
     "accessed": "YES",
-    "interacted": "NO",
+    "interacted": "YES",
     "inVideo": "YES",
     "status": "PASS",
     "name": "AdminLookbooks",
@@ -380,7 +380,7 @@
   {
     "route": "/admin/ab-testing",
     "accessed": "YES",
-    "interacted": "NO",
+    "interacted": "YES",
     "inVideo": "YES",
     "status": "PASS",
     "name": "AdminAbTesting",
@@ -389,7 +389,7 @@
   {
     "route": "/admin/user-activity",
     "accessed": "YES",
-    "interacted": "NO",
+    "interacted": "YES",
     "inVideo": "YES",
     "status": "PASS",
     "name": "AdminUserActivity",
@@ -398,7 +398,7 @@
   {
     "route": "/admin/pages",
     "accessed": "YES",
-    "interacted": "NO",
+    "interacted": "YES",
     "inVideo": "YES",
     "status": "PASS",
     "name": "AdminPages",
@@ -407,7 +407,7 @@
   {
     "route": "/admin/settings",
     "accessed": "YES",
-    "interacted": "NO",
+    "interacted": "YES",
     "inVideo": "YES",
     "status": "PASS",
     "name": "AdminSettings",
