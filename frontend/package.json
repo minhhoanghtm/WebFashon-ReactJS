@@ -1,0 +1,43 @@
+{
+  "name": "react-webfashion-frontend",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/oswald": "^5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+    "@gsap/react": "^2.1.2",
+    "@react-oauth/google": "^0.9.1",
+    "@tailwindcss/typography": "^0.5.20",
+    "@tanstack/react-query": "^5.101.0",
+    "axios": "^1.15.2",
+    "clsx": "^2.1.1",
+    "dompurify": "^3.4.10",
+    "dotenv": "^17.4.2",
+    "echarts": "^6.0.0",
+    "echarts-for-react": "^3.0.6",
+    "gsap": "^3.15.0",
+    "lucide-react": "^1.17.0",
+    "marked": "^18.0.5",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-router-dom": "^7.13.1",
+    "socket.io-client": "^4.8.3",
+    "sweetalert2": "^11.26.24",
+    "tailwind-merge": "^3.5.0",
+    "three": "^0.187.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "tailwindcss": "^4.3.0",
+    "vite": "^8.0.1"
+  }
+}

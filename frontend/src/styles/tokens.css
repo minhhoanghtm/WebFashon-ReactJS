@@ -1,0 +1,29 @@
+/* Hallmark Stamp: 2026-11-16 WebFashion Atelier V2 Tokens */
+:root {
+  --font-display: 'Oswald', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  --color-bg-primary: #0c0c0e;
+  --color-bg-surface: #161619;
+  --color-bg-elevated: #1e1e23;
+  --color-bg-subtle: #25252b;
+
+  --color-text-primary: #f4f0e8;
+  --color-text-secondary: #9a989f;
+  --color-text-muted: #6b6973;
+
+  --color-accent-signal: #e65100;
+  --color-accent-signal-hover: #ff6d00;
+  --color-accent-cobalt: #2563eb;
+  --color-accent-lime: #84cc16;
+
+  --color-border: rgba(244, 240, 232, 0.12);
+  --color-border-subtle: rgba(244, 240, 232, 0.06);
+  --color-border-active: rgba(230, 81, 0, 0.6);
+
+  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-signal: 0 0 24px rgba(230, 81, 0, 0.25);
+
+  --max-content-width: 1440px;
+}
