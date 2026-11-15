@@ -1,15 +1,54 @@
-# V2 routes and API map
+# ROUTES.md — Complete Route Inventory & Interaction Specification
 
-All routes are defined in `front-end/src/v2/router.jsx`. Existing API/client, service, store and utility modules are retained; no backend or `.env` file is changed.
+Bảng định tuyến đầy đủ của toàn bộ ứng dụng REACT-WebFashion (48 routes), bao gồm cấu trúc phân cấp, vai trò truy cập, API tiêu thụ, tương tác chính và ca kiểm thử tự động Playwright.
 
-| Route family | Final routes | Data/API used |
-| --- | --- | --- |
-| Store | `/`, `/products`, `/product/:slug`, `/favorites`, `/lookbooks`, `/vouchers` | products, categories, favorites, lookbooks, vouchers, campaigns/banners |
-| Purchase | `/cart`, `/checkout`, `/payment-result`, `/payment/:orderId`, `/order-lookup` | cart/cart-items, vouchers/apply, order, payments, shipping |
-| Content | `/policy`, `/privacy`, `/terms`, `/shipping`, `/returns-refunds`, `/payment-policy`, `/cookies`, `/contact-legal`, `/faq`, `/guide`, `/about`, `/blog` | pages/:slug (with useful local fallback if unavailable) |
-| Identity | `/login`, `/register`, `/verify-otp`, `/reset-password` | auth/login, auth/register, auth/send-otp, auth/verify-otp, auth/forgot-password, auth/reset-password |
-| Customer | `/my-coupons`, `/profile`, `/profile/data-requests`, `/user/dashboard`, `/orders`, `/reviews/create` | vouchers/my, user/me/profile, privacy, order/my-orders, reviews |
-| Admin | `/admin`, `/admin/categories`, `/admin/products`, `/admin/orders`, `/admin/chats`, `/admin/customers`, `/admin/coupons`, `/admin/campaigns`, `/admin/banners`, `/admin/lookbooks`, `/admin/ab-testing`, `/admin/user-activity`, `/admin/pages`, `/admin/settings` | dashboard/orders/admin, categories, products, chat, users, vouchers, campaigns, banners, lookbooks, pages, settings |
-| Fallback | `*` | none |
-
-Guards remain behavioral rather than visual: protected pages redirect to `/login`; admin routes require `user.role === "admin"`.
+| Route | Page | Layout | Role | API | Main interactions | Test |
+|---|---|---|---|---|---|---|
+| `/` | Home | StoreLayout | Public | `GET /api/products`, `GET /api/categories`, `GET /api/banners`, `GET /api/campaigns` | Cuộn xem Hero 3D sóng vải lụa, lướt bộ sưu tập may đo, xem banner chiến dịch, mở modal tư vấn AI | TC-ROUTE-01 |
+| `/products` | Products | StoreLayout | Public | `GET /api/products`, `GET /api/categories`, `GET /api/products/search` | Lọc danh mục đa cấp, lọc theo khoảng giá, chọn size/màu, sắp xếp giá/bán chạy, phân trang | TC-ROUTE-02 |
+| `/product/:slug` | ProductDetail | StoreLayout | Public | `GET /api/products/:slug`, `GET /api/product_variants/:productId`, `GET /api/products/:id/availability` | Xem gallery ảnh phóng to, chọn biến thể kích cỡ/màu sắc, kiểm tra tồn kho thời gian thực, chọn số lượng, thêm vào giỏ hàng | TC-ROUTE-03 |
+| `/cart` | Cart | StoreLayout | User | `GET /api/cart`, `PUT /api/cart_items/:id`, `DELETE /api/cart_items/:id`, `POST /api/vouchers/apply` | Tăng/giảm số lượng sản phẩm, xóa item khỏi giỏ, kiểm tra tồn kho tức thì, nhập voucher giảm giá, chuyển sang Checkout | TC-ROUTE-04 |
+| `/checkout` | Checkout | StoreLayout | User | `POST /api/order`, `POST /api/shipping/fee`, `POST /api/payments/momo/create`, `POST /api/payments/vnpay/create` | Chọn/thêm địa chỉ nhận hàng, tính phí vận chuyển GHN theo quận huyện, chọn phương thức COD/MoMo/VNPay, xác nhận đặt hàng | TC-ROUTE-05 |
+| `/payment-result` | PaymentResult | StoreLayout | Public | `GET /api/order/:id` | Hiển thị kết quả thanh toán điện tử (thành công/thất bại), tóm tắt mã giao dịch, nút quay về đơn hàng hoặc tiếp tục mua | TC-ROUTE-06 |
+| `/order-lookup` | OrderLookup | StoreLayout | Public | `GET /api/order/lookup` | Nhập mã đơn hàng và số điện thoại để tra cứu tiến độ vận chuyển và chi tiết đơn không cần đăng nhập | TC-ROUTE-07 |
+| `/favorites` | Favorites | StoreLayout | User | `GET /api/favorites`, `DELETE /api/favorites/:id`, `POST /api/cart_items` | Xem danh sách sản phẩm yêu thích, xóa khỏi danh sách, chuyển nhanh sản phẩm vào giỏ hàng | TC-ROUTE-08 |
+| `/vouchers` | Vouchers | StoreLayout | Public | `GET /api/vouchers`, `POST /api/vouchers/save` | Xem vé voucher phong cách may đo, sao chép mã ưu đãi, lưu voucher vào ví cá nhân của tài khoản | TC-ROUTE-09 |
+| `/lookbooks` | Lookbooks | StoreLayout | Public | `GET /api/lookbooks` | Duyệt bộ ảnh lookbook thời trang theo mùa, xem chi tiết trang phục và mở nhanh sản phẩm trong set | TC-ROUTE-10 |
+| `/policy` | StaticContent | StoreLayout | Public | `GET /api/pages/policy` | Đọc tôn chỉ thiết kế may đo cao cấp, cam kết chất lượng vải và dịch vụ khách hàng | TC-ROUTE-11 |
+| `/privacy` | StaticContent | StoreLayout | Public | `GET /api/pages/privacy` | Đọc chính sách bảo mật dữ liệu cá nhân, quyền riêng tư và quy trình thu thập cookie | TC-ROUTE-12 |
+| `/terms` | StaticContent | StoreLayout | Public | `GET /api/pages/terms` | Đọc điều khoản dịch vụ, quyền sở hữu trí tuệ và thỏa thuận giao kết mua sắm | TC-ROUTE-13 |
+| `/shipping` | StaticContent | StoreLayout | Public | `GET /api/pages/shipping` | Đọc biểu phí giao hàng, thời gian vận chuyển đối tác GHN và khu vực phục vụ | TC-ROUTE-14 |
+| `/returns-refunds` | StaticContent | StoreLayout | Public | `GET /api/pages/returns-refunds` | Đọc quy định đổi trả trong 7 ngày, điều kiện sản phẩm còn nguyên tem mác | TC-ROUTE-15 |
+| `/payment-policy` | StaticContent | StoreLayout | Public | `GET /api/pages/payment-policy` | Đọc hướng dẫn thanh toán COD, chuyển khoản ngân hàng và ví điện tử MoMo/VNPay an toàn | TC-ROUTE-16 |
+| `/cookies` | StaticContent | StoreLayout | Public | `GET /api/pages/cookies` | Đọc cơ chế cookie theo dõi phiên làm việc, thiết lập sở thích và tùy chọn vô hiệu hóa | TC-ROUTE-17 |
+| `/contact-legal` | StaticContent | StoreLayout | Public | `GET /api/pages/contact-legal` | Xem thông tin pháp lý doanh nghiệp, địa chỉ trụ sở, số giấy phép và kênh liên hệ | TC-ROUTE-18 |
+| `/faq` | StaticContent | StoreLayout | Public | `GET /api/pages/faq` | Tra cứu câu hỏi thường gặp về đặt may, bảo quản trang phục và thời gian nhận hàng | TC-ROUTE-19 |
+| `/guide` | StaticContent | StoreLayout | Public | `GET /api/pages/guide` | Hướng dẫn đo kích thước cơ thể chi tiết (ngực, eo, mông, vai) để chọn size chuẩn | TC-ROUTE-20 |
+| `/about` | StaticContent | StoreLayout | Public | `GET /api/pages/about` | Khám phá câu chuyện thương hiệu Atelier may đo đương đại, hành trình nghệ nhân và triết lý thiết kế | TC-ROUTE-21 |
+| `/blog` | StaticContent | StoreLayout | Public | `GET /api/pages/blog` | Đọc tạp chí phong cách thời trang, xu hướng phối đồ và cảm hứng nghệ thuật | TC-ROUTE-22 |
+| `/login` | Login | AuthLayout | Public (Guest) | `POST /api/auth/login`, `POST /api/auth/google` | Đăng nhập bằng email/SĐT và mật khẩu, đăng nhập Google OAuth, liên kết chuyển sang đăng ký hoặc quên mật khẩu | TC-ROUTE-23 |
+| `/register` | Register | AuthLayout | Public (Guest) | `POST /api/auth/register`, `POST /api/auth/register/send-otp` | Điền thông tin tạo tài khoản, gửi OTP kích hoạt qua Email/SMS, chuyển sang trang xác thực OTP | TC-ROUTE-24 |
+| `/verify-otp` | VerifyOtp | AuthLayout | Public (Guest) | `POST /api/auth/verify-otp`, `POST /api/auth/otp/resend` | Nhập mã 6 số OTP, đếm ngược thời gian gửi lại (60s), xác nhận kích hoạt tài khoản | TC-ROUTE-25 |
+| `/reset-password` | ResetPassword | AuthLayout | Public (Guest) | `POST /api/auth/password/forgot`, `POST /api/auth/password/reset` | Nhập email/SĐT nhận mã xác thực, nhập OTP và mật khẩu mới để khôi phục quyền truy cập | TC-ROUTE-26 |
+| `/my-coupons` | MyCoupons | StoreLayout | User | `GET /api/vouchers/my` | Quản lý ví mã giảm giá đã lưu, xem hạn dùng và điều kiện đơn hàng tối thiểu | TC-ROUTE-27 |
+| `/profile` | Profile | StoreLayout | User | `GET /api/user/me`, `PUT /api/user/profile`, `POST /api/user/addresses` | Cập nhật họ tên, số điện thoại, avatar; thêm, sửa, xóa và đặt địa chỉ nhận hàng mặc định | TC-ROUTE-28 |
+| `/profile/data-requests` | DataRequests | StoreLayout | User | `GET /api/privacy/requests`, `POST /api/privacy/request` | Tạo yêu cầu xuất dữ liệu hoặc xóa tài khoản tuân thủ quy chuẩn quyền riêng tư GDPR | TC-ROUTE-29 |
+| `/user/dashboard` | UserDashboard | StoreLayout | User | `GET /api/user/me`, `GET /api/order/my-orders?limit=3` | Tổng quan tài khoản cá nhân, cấp bậc thẻ thành viên, đơn hàng gần nhất, thống kê chi tiêu | TC-ROUTE-30 |
+| `/orders` | Orders | StoreLayout | User | `GET /api/order/my-orders`, `GET /api/order/:id` | Xem danh sách toàn bộ đơn hàng, lọc theo trạng thái (chờ xác nhận, đang giao, hoàn tất, đã hủy), xem chi tiết hóa đơn | TC-ROUTE-31 |
+| `/reviews/create` | CreateReview | StoreLayout | User | `POST /api/reviews` | Chọn đơn hàng đã mua, xếp hạng số sao (1-5) và viết bình luận cảm nhận sản phẩm | TC-ROUTE-32 |
+| `/admin` | AdminDashboard | AdminLayout | Admin | `GET /api/admin/dashboard/stats`, `GET /api/admin/dashboard/revenue` | Bảng điều khiển quản trị: thẻ chỉ số doanh thu, đơn hàng, khách hàng, biểu đồ ECharts phân tích | TC-ROUTE-33 |
+| `/admin/categories` | AdminCategories | AdminLayout | Admin | `GET /api/categories`, `POST /api/categories`, `PUT /api/categories/:id`, `DELETE /api/categories/:id` | Bảng danh mục sản phẩm, tìm kiếm, mở modal tạo mới/chỉnh sửa, xóa danh mục | TC-ROUTE-34 |
+| `/admin/products` | AdminProducts | AdminLayout | Admin | `GET /api/products`, `POST /api/products`, `PUT /api/products/:id`, `DELETE /api/products/:id` | Bảng sản phẩm, lọc theo danh mục, quản lý biến thể màu/size, chỉnh sửa giá và tồn kho | TC-ROUTE-35 |
+| `/admin/orders` | AdminOrders | AdminLayout | Admin | `GET /api/order/admin/all`, `PUT /api/order/:id/status` | Danh sách đơn hàng toàn hệ thống, lọc trạng thái, cập nhật trạng thái đơn (đang xử lý -> đang giao -> hoàn tất) | TC-ROUTE-36 |
+| `/admin/chats` | AdminChats | AdminLayout | Admin | `GET /api/admin/conversations`, `GET /api/admin/messages/:id` | Giao diện hội thoại CSKH trực tiếp: danh sách khách đang chat, cửa sổ gửi nhận tin nhắn thời gian thực | TC-ROUTE-37 |
+| `/admin/customers` | AdminCustomers | AdminLayout | Admin | `GET /api/user/admin/all`, `PUT /api/user/:id/status` | Quản lý danh sách người dùng, xem chi tiết thông tin, khóa hoặc kích hoạt tài khoản | TC-ROUTE-38 |
+| `/admin/coupons` | AdminCoupons | AdminLayout | Admin | `GET /api/vouchers`, `POST /api/vouchers`, `PUT /api/vouchers/:id`, `DELETE /api/vouchers/:id` | Quản lý mã giảm giá: tạo voucher theo % hoặc tiền cố định, thiết lập ngày hết hạn và hạn mức dùng | TC-ROUTE-39 |
+| `/admin/campaigns` | AdminCampaigns | AdminLayout | Admin | `GET /api/admin/campaigns`, `POST /api/admin/campaigns` | Quản lý chiến dịch tiếp thị và sự kiện flash sale theo mùa | TC-ROUTE-40 |
+| `/admin/banners` | AdminBanners | AdminLayout | Admin | `GET /api/banners`, `POST /api/banners`, `PUT /api/banners/:id`, `DELETE /api/banners/:id` | Quản lý hình ảnh banner hiển thị trên website, thứ tự ưu tiên và liên kết đích | TC-ROUTE-41 |
+| `/admin/lookbooks` | AdminLookbooks | AdminLayout | Admin | `GET /api/lookbooks`, `POST /api/lookbooks` | Quản lý các bộ sưu tập Lookbook hình ảnh nghệ thuật | TC-ROUTE-42 |
+| `/admin/ab-testing` | AdminAbTesting | AdminLayout | Admin | `GET /api/experiments` | Xem báo cáo phân tích hiệu quả các biến thể A/B testing tính năng | TC-ROUTE-43 |
+| `/admin/user-activity` | AdminUserActivity | AdminLayout | Admin | `GET /api/events/admin/realtime` | Giám sát luồng sự kiện hành vi người dùng thời gian thực, mở ngăn kéo User Journey Drawer | TC-ROUTE-44 |
+| `/admin/pages` | AdminPages | AdminLayout | Admin | `GET /api/admin/pages`, `PUT /api/admin/pages/:id` | Soạn thảo và cập nhật nội dung tĩnh các trang chính sách, pháp lý, giới thiệu | TC-ROUTE-45 |
+| `/admin/settings` | AdminSettings | AdminLayout | Admin | `GET /api/settings`, `PUT /api/settings` | Cấu hình website: thông tin thương hiệu, logo, favicon, địa chỉ showroom, hotline, bật/tắt chế độ bảo trì | TC-ROUTE-46 |
+| `/non-existent-route-404-test` | NotFound | StoreLayout | Public | None | Kiểm tra trang 404 tùy biến, thông báo trang không tồn tại và điều hướng về trang chủ | TC-ROUTE-47 |
+| `*` | NotFound | StoreLayout | Public | None | Bắt mọi đường dẫn không xác định, trả về giao diện 404 thân thiện | TC-ROUTE-48 |
