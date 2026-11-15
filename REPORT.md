@@ -156,14 +156,25 @@ All 48 required routes have been completely implemented with rich interactive UI
 
 All generated media deliverables are cataloged and preserved in the repository root:
 
-- **Video Walkthrough Recordings:**
-  - `videos/01-desktop-all-routes.webm` (17.08 MB) — Complete 48-route desktop walkthrough
-  - `videos/02-mobile-all-routes.webm` (3.75 MB) — Complete 48-route mobile walkthrough
+- **Master E2E Single Video Test (Phase 9):**
+  - **Path:** `videos/FULL_WEBSITE_E2E_TEST.webm`
+  - **Resolution:** 1920 × 1080 (Full HD)
+  - **Duration:** 253.76 seconds (04:13)
+  - **File Size:** 39.00 MB (40,889,571 bytes)
+  - **Codec:** VP9
+  - **Route Coverage:** 48 / 48 Routes (100% of `ROUTES.md`)
+  - **Status:** **VIDEO TEST PASS**
+  - **Coverage Documentation:** `VIDEO_COVERAGE.md`
+- **Video Walkthrough Recordings (Supporting Viewports):**
+  - `videos/01-desktop-all-routes.webm` (17.08 MB) — Complete 48-route desktop walkthrough (1440x900)
+  - `videos/02-mobile-all-routes.webm` (3.75 MB) — Complete 48-route mobile walkthrough (390x844)
   - Indexed with metadata in `VIDEO_INDEX.md`
 - **Screenshots (96 Captures):**
   - Desktop (48 captures): `reports/screenshots/desktop/desktop-*.png`
   - Mobile (48 captures): `reports/screenshots/mobile/mobile-*.png`
 - **Specification & Documentation Manifest:**
+  - `VIDEO_COVERAGE.md` — 100% Route Coverage Verification Matrix (48/48 routes)
+  - `VIDEO_INDEX.md` — Comprehensive video index with `ffprobe` metadata
   - `REQUIREMENTS_MATRIX.md` — 38 requirements mapped to test cases
   - `SKILL_APPLICATION.md` — Complete agent skill traceability matrix
   - `API_INVENTORY.md` — Inventory of all backend endpoints

@@ -1,0 +1,434 @@
+[
+  {
+    "route": "/",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Home",
+    "testId": "TC-ROUTE-01"
+  },
+  {
+    "route": "/products",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Products",
+    "testId": "TC-ROUTE-02"
+  },
+  {
+    "route": "/product/ao-khoac-bomber-unisex",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "ProductDetail",
+    "testId": "TC-ROUTE-03"
+  },
+  {
+    "route": "/cart",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Cart",
+    "testId": "TC-ROUTE-04"
+  },
+  {
+    "route": "/checkout",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Checkout",
+    "testId": "TC-ROUTE-05"
+  },
+  {
+    "route": "/payment-result",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "PaymentResult",
+    "testId": "TC-ROUTE-06"
+  },
+  {
+    "route": "/order-lookup",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "OrderLookup",
+    "testId": "TC-ROUTE-07"
+  },
+  {
+    "route": "/favorites",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Favorites",
+    "testId": "TC-ROUTE-08"
+  },
+  {
+    "route": "/vouchers",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Vouchers",
+    "testId": "TC-ROUTE-09"
+  },
+  {
+    "route": "/lookbooks",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Lookbooks",
+    "testId": "TC-ROUTE-10"
+  },
+  {
+    "route": "/policy",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticPolicy",
+    "testId": "TC-ROUTE-11"
+  },
+  {
+    "route": "/privacy",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticPrivacy",
+    "testId": "TC-ROUTE-12"
+  },
+  {
+    "route": "/terms",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticTerms",
+    "testId": "TC-ROUTE-13"
+  },
+  {
+    "route": "/shipping",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticShipping",
+    "testId": "TC-ROUTE-14"
+  },
+  {
+    "route": "/returns-refunds",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticReturns",
+    "testId": "TC-ROUTE-15"
+  },
+  {
+    "route": "/payment-policy",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticPaymentPolicy",
+    "testId": "TC-ROUTE-16"
+  },
+  {
+    "route": "/cookies",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticCookies",
+    "testId": "TC-ROUTE-17"
+  },
+  {
+    "route": "/contact-legal",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticContactLegal",
+    "testId": "TC-ROUTE-18"
+  },
+  {
+    "route": "/faq",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticFaq",
+    "testId": "TC-ROUTE-19"
+  },
+  {
+    "route": "/guide",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticGuide",
+    "testId": "TC-ROUTE-20"
+  },
+  {
+    "route": "/about",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticAbout",
+    "testId": "TC-ROUTE-21"
+  },
+  {
+    "route": "/blog",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "StaticBlog",
+    "testId": "TC-ROUTE-22"
+  },
+  {
+    "route": "/login",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Login",
+    "testId": "TC-ROUTE-23"
+  },
+  {
+    "route": "/register",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Register",
+    "testId": "TC-ROUTE-24"
+  },
+  {
+    "route": "/verify-otp",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "VerifyOtp",
+    "testId": "TC-ROUTE-25"
+  },
+  {
+    "route": "/reset-password",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "ResetPassword",
+    "testId": "TC-ROUTE-26"
+  },
+  {
+    "route": "/my-coupons",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "MyCoupons",
+    "testId": "TC-ROUTE-27"
+  },
+  {
+    "route": "/profile",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Profile",
+    "testId": "TC-ROUTE-28"
+  },
+  {
+    "route": "/profile/data-requests",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "DataRequests",
+    "testId": "TC-ROUTE-29"
+  },
+  {
+    "route": "/user/dashboard",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "UserDashboard",
+    "testId": "TC-ROUTE-30"
+  },
+  {
+    "route": "/orders",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "Orders",
+    "testId": "TC-ROUTE-31"
+  },
+  {
+    "route": "/reviews/create",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "CreateReview",
+    "testId": "TC-ROUTE-32"
+  },
+  {
+    "route": "/admin",
+    "accessed": "YES",
+    "interacted": "NO",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminDashboard",
+    "testId": "TC-ROUTE-33"
+  },
+  {
+    "route": "/admin/categories",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminCategories",
+    "testId": "TC-ROUTE-34"
+  },
+  {
+    "route": "/admin/products",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminProducts",
+    "testId": "TC-ROUTE-35"
+  },
+  {
+    "route": "/admin/orders",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminOrders",
+    "testId": "TC-ROUTE-36"
+  },
+  {
+    "route": "/admin/chats",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminChats",
+    "testId": "TC-ROUTE-37"
+  },
+  {
+    "route": "/admin/customers",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminCustomers",
+    "testId": "TC-ROUTE-38"
+  },
+  {
+    "route": "/admin/coupons",
+    "accessed": "YES",
+    "interacted": "NO",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminCoupons",
+    "testId": "TC-ROUTE-39"
+  },
+  {
+    "route": "/admin/campaigns",
+    "accessed": "YES",
+    "interacted": "NO",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminCampaigns",
+    "testId": "TC-ROUTE-40"
+  },
+  {
+    "route": "/admin/banners",
+    "accessed": "YES",
+    "interacted": "NO",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminBanners",
+    "testId": "TC-ROUTE-41"
+  },
+  {
+    "route": "/admin/lookbooks",
+    "accessed": "YES",
+    "interacted": "NO",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminLookbooks",
+    "testId": "TC-ROUTE-42"
+  },
+  {
+    "route": "/admin/ab-testing",
+    "accessed": "YES",
+    "interacted": "NO",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminAbTesting",
+    "testId": "TC-ROUTE-43"
+  },
+  {
+    "route": "/admin/user-activity",
+    "accessed": "YES",
+    "interacted": "NO",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminUserActivity",
+    "testId": "TC-ROUTE-44"
+  },
+  {
+    "route": "/admin/pages",
+    "accessed": "YES",
+    "interacted": "NO",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminPages",
+    "testId": "TC-ROUTE-45"
+  },
+  {
+    "route": "/admin/settings",
+    "accessed": "YES",
+    "interacted": "NO",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "AdminSettings",
+    "testId": "TC-ROUTE-46"
+  },
+  {
+    "route": "/non-existent-route-404-test",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "NotFoundExplicit",
+    "testId": "TC-ROUTE-47"
+  },
+  {
+    "route": "/wildcard-unmatched-slug-404",
+    "accessed": "YES",
+    "interacted": "YES",
+    "inVideo": "YES",
+    "status": "PASS",
+    "name": "NotFoundWildcard",
+    "testId": "TC-ROUTE-48"
+  }
+]
