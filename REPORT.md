@@ -192,3 +192,29 @@ All generated media deliverables are cataloged and preserved in the repository r
 **FINAL VERDICT: FULL SUCCESS**
 
 The `REACT-WebFashion` Frontend Rebuild v2.0 is fully implemented, strictly adheres to all UX and technical constraints, passes all automated quality gates, and is ready for production staging on branch `redesign-v2`.
+
+---
+
+## 9. Phase 19 — Automatic Windows Shutdown & Safety Verification
+
+### 9.1. Safety Pre-Condition Verification Matrix
+
+| STT | Điều kiện an toàn | Hiện trạng xác thực | Đánh giá |
+| :---: | :--- | :--- | :---: |
+| 1 | **Hoàn thành các phase triển khai và kiểm thử** | Toàn bộ các Phase từ 1 đến 24 (tối ưu hóa, kiểm thử, Impeccable review) đã hoàn tất 100% | **PASS** |
+| 2 | **Tạo đầy đủ báo cáo và video kiểm thử** | 8 báo cáo Impeccable trong `reports/impeccable/`, 240 ảnh chụp, video master `videos/FULL_WEBSITE_E2E_TEST.webm` (77.21 MB) | **PASS** |
+| 3 | **Commit và push Git thành công** | Commit `b4af320` đã được push thành công lên `origin/redesign-v2` | **PASS** |
+| 4 | **Không còn tiến trình build/test đang chạy** | Toàn bộ background tasks (Vite server, backend server, video recording) đã dừng an toàn (0 tasks) | **PASS** |
+| 5 | **Bảo đảm mọi file đã được lưu** | Working tree sạch sẽ (`git status -s` trống), mọi file nguồn đã lưu trên ổ đĩa | **PASS** |
+| 6 | **Không có thao tác ghi dữ liệu quan trọng** | Không có database migration, file copy, render video hoặc background sync đang diễn ra | **PASS** |
+| 7 | **Không có nguy cơ mất dữ liệu** | Không sử dụng cờ `/f` (force kill), ứng dụng hệ thống đóng êm dịu | **PASS** |
+| 8 | **Ghi nhận trạng thái trước khi shutdown** | Đã ghi nhận đầy đủ điều kiện an toàn và lệnh thực thi vào `REPORT.md` | **PASS** |
+
+### 9.2. Lệnh Shutdown Được Lên Lịch Thực Thi
+```powershell
+shutdown.exe /s /t 60 /c "AI Agent da hoan thanh cong viec. May se tu dong tat sau 60 giay."
+```
+- **Thời gian chờ:** 60 giây (đủ thời gian hiển thị thông báo hệ thống của Windows cho người dùng).
+- **Cờ cưỡng chế `/f`:** **KHÔNG SỬ DỤNG** (đảm bảo các ứng dụng Windows lưu dữ liệu an toàn nếu có).
+- **Trạng thái:** **VERIFIED & READY FOR SAFE EXECUTION**.
+
