@@ -1,0 +1,12 @@
+{
+  "name": "webfashion-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "REACT-WebFashion Root Orchestration",
+  "scripts": {
+    "install:frontend": "cd front-end && npm install --no-audit --no-fund",
+    "build:frontend": "cd front-end && npm run build",
+    "build": "cd front-end && npm run build",
+    "start": "cd back-end && npm start"
+  }
+}
