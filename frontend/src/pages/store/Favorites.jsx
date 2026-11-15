@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { ProductCard } from "../../components/shared/ProductCard";
 import { productApi } from "../../api/endpoints";
 import { useCartStore } from "../../stores/cartStore";
+import { SafeImage } from "../../components/ui/SafeImage";
 
 export function Favorites() {
   const [favorites, setFavorites] = useState([]);
@@ -303,7 +304,7 @@ export function Lookbooks() {
                 idx % 2 === 1 ? "lg:order-2" : ""
               }`}
             >
-              <img
+              <SafeImage
                 src={set.image}
                 alt={set.title}
                 className="w-full h-full object-cover object-center"

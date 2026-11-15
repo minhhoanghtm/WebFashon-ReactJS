@@ -4,6 +4,7 @@ import { Scale, X, ShoppingBag, Check, ChevronUp, ChevronDown, Trash2, ArrowRigh
 import { useCompareStore } from "../../stores/compareStore";
 import { useCartStore } from "../../stores/cartStore";
 import { Button } from "../ui/Button";
+import { SafeImage } from "../ui/SafeImage";
 
 export function ProductComparisonDrawer() {
   const items = useCompareStore((state) => state.items);
@@ -70,7 +71,7 @@ export function ProductComparisonDrawer() {
                     key={p._id || p.id}
                     className="relative group w-9 h-11 border border-white/20 bg-[#161619] shrink-0"
                   >
-                    <img src={img} alt={p.name} className="w-full h-full object-cover" />
+                    <SafeImage src={img} alt={p.name} className="w-full h-full object-cover" />
                     <button
                       onClick={() => removeCompare(p._id || p.id)}
                       className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -151,7 +152,7 @@ export function ProductComparisonDrawer() {
                       return (
                         <th key={p._id || p.id} className="py-4 px-3 font-display text-center align-top min-w-[180px]">
                           <div className="aspect-[3/4] max-w-[140px] mx-auto bg-[#161619] border border-white/10 overflow-hidden mb-2 relative group">
-                            <img src={img} alt={p.name} className="w-full h-full object-cover" />
+                            <SafeImage src={img} alt={p.name} className="w-full h-full object-cover" />
                             <button
                               onClick={() => removeCompare(p._id || p.id)}
                               className="absolute top-1 right-1 p-1 bg-black/70 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"

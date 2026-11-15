@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ShoppingBag, Eye, Heart, Scale, Check } from "lucide-react";
 import { useCartStore } from "../../stores/cartStore";
 import { useCompareStore } from "../../stores/compareStore";
+import { SafeImage } from "../ui/SafeImage";
 
 export function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -57,11 +58,10 @@ export function ProductCard({ product }) {
     >
       {/* Product Image Frame */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#161619]">
-        <Link to={`/product/${slug}`} className="block w-full h-full">
-          <img
+        <Link to={`/product/${slug}`} className="block w-full h-full" aria-label={`Xem chi tiết ${product.name}`}>
+          <SafeImage
             src={isHovered ? secondaryImage : imageSrc}
             alt={product.name}
-            loading="lazy"
             className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
           />
         </Link>
@@ -87,7 +87,8 @@ export function ProductCard({ product }) {
           <button
             type="button"
             onClick={handleQuickAdd}
-            className="flex-1 min-h-[40px] px-3 bg-[#0c0c0e]/90 hover:bg-[#e65100] text-[#f4f0e8] text-xs font-display tracking-wider uppercase flex items-center justify-center gap-1.5 backdrop-blur-sm border border-[rgba(244,240,232,0.2)] transition-colors"
+            aria-label={`Thêm ${product.name} vào giỏ hàng`}
+            className="flex-1 min-h-[44px] px-3 bg-[#0c0c0e]/90 hover:bg-[#e65100] text-[#f4f0e8] text-xs font-display tracking-wider uppercase flex items-center justify-center gap-1.5 backdrop-blur-sm border border-[rgba(244,240,232,0.2)] transition-colors"
             title="Thêm nhanh vào giỏ hàng"
           >
             <ShoppingBag size={14} />
@@ -95,7 +96,8 @@ export function ProductCard({ product }) {
           </button>
           <Link
             to={`/product/${slug}`}
-            className="p-2 min-h-[40px] min-w-[40px] bg-[#0c0c0e]/90 hover:bg-white/20 text-[#f4f0e8] flex items-center justify-center backdrop-blur-sm border border-[rgba(244,240,232,0.2)] transition-colors"
+            aria-label={`Xem chi tiết ${product.name}`}
+            className="p-2 min-h-[44px] min-w-[44px] bg-[#0c0c0e]/90 hover:bg-white/20 text-[#f4f0e8] flex items-center justify-center backdrop-blur-sm border border-[rgba(244,240,232,0.2)] transition-colors"
             title="Xem chi tiết"
           >
             <Eye size={14} />

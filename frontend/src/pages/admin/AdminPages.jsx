@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { adminApi, categoryApi, productApi } from "../../api/endpoints";
 import { Button, Input, Badge } from "../../components/ui/Button";
+import { SafeImage } from "../../components/ui/SafeImage";
 
 export function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -215,8 +216,8 @@ export function AdminProducts() {
             {products.map((p) => (
               <tr key={p._id} className="hover:bg-white/5">
                 <td className="p-3 flex items-center gap-2.5">
-                  <img
-                    src={p.displayProduct?.[0] || p.displayProduct || p.image || "https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=100&q=80"}
+                  <SafeImage
+                    src={p.displayProduct?.[0] || p.displayProduct || p.image}
                     alt={p.name}
                     className="w-10 h-12 object-cover bg-black"
                   />

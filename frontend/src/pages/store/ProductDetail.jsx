@@ -6,6 +6,7 @@ import { useCartStore } from "../../stores/cartStore";
 import { Button } from "../../components/ui/Button";
 import { CompleteTheLook } from "../../components/shared/CompleteTheLook";
 import { SmartSizeAssistantModal } from "../../components/shared/SmartSizeAssistantModal";
+import { SafeImage } from "../../components/ui/SafeImage";
 
 export function ProductDetail() {
   const { slug } = useParams();
@@ -38,17 +39,26 @@ export function ProductDetail() {
             "https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600&q=80";
           setSelectedImage(defaultImg);
 
-          // Fetch variants if available
-          const varRes = await productApi.getVariants(data._id).catch(() => null);
-          const varList = varRes?.data || varRes || [];
-          setVariants(Array.isArray(varList) ? varList : []);
-          if (varList.length > 0) {
-            setSelectedVariant(varList[0]);
+          // Use pre-populated variants if available, otherwise fetch concurrently to avoid N+1 waterfall
+          let varList = Array.isArray(data.variants) && data.variants.length > 0 ? data.variants : null;
+          if (!varList) {
+            const [varRes, availRes] = await Promise.allSettled([
+              productApi.getVariants(data._id),
+              productApi.getAvailability(data._id),
+            ]);
+            if (varRes.status === "fulfilled") {
+              const resData = varRes.value?.data || varRes.value || [];
+              varList = Array.isArray(resData) ? resData : [];
+            }
+            if (availRes.status === "fulfilled" && availRes.value) {
+              setAvailability(availRes.value);
+            }
           }
-
-          // Check availability
-          const availRes = await productApi.getAvailability(data._id).catch(() => null);
-          if (availRes) setAvailability(availRes);
+          const finalVariants = Array.isArray(varList) ? varList : [];
+          setVariants(finalVariants);
+          if (finalVariants.length > 0) {
+            setSelectedVariant(finalVariants[0]);
+          }
         }
       } catch (err) {
         console.error("ProductDetail fetch error:", err);
@@ -142,7 +152,7 @@ export function ProductDetail() {
                       : "border-[rgba(244,240,232,0.15)] opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
+                  <SafeImage src={img} alt={`${product?.name || "Product"} thumbnail`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -150,9 +160,10 @@ export function ProductDetail() {
 
           {/* Main Visual Frame */}
           <div className="flex-1 aspect-[3/4] bg-[#161619] border border-[rgba(244,240,232,0.15)] overflow-hidden">
-            <img
+            <SafeImage
               src={selectedImage}
               alt={product.name}
+              priority={true}
               className="w-full h-full object-cover object-center"
             />
           </div>

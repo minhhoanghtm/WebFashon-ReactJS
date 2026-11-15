@@ -4,6 +4,7 @@ import { ShoppingBag, Check, Sparkles, Plus, ArrowRight } from "lucide-react";
 import { productApi } from "../../api/endpoints";
 import { useCartStore } from "../../stores/cartStore";
 import { Button } from "../ui/Button";
+import { SafeImage } from "../ui/SafeImage";
 
 export function CompleteTheLook({ currentProduct }) {
   const [bundleProducts, setBundleProducts] = useState([]);
@@ -159,7 +160,7 @@ export function CompleteTheLook({ currentProduct }) {
                 )}
 
                 <div className="aspect-[3/4] overflow-hidden bg-[#0c0c0e] mb-3">
-                  <img
+                  <SafeImage
                     src={img}
                     alt={p.name}
                     className="w-full h-full object-cover object-center"

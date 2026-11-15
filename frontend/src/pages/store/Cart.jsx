@@ -4,6 +4,7 @@ import { Trash2, ArrowRight, ShoppingBag, ShieldCheck, Tag } from "lucide-react"
 import { useCartStore } from "../../stores/cartStore";
 import { Button, Input } from "../../components/ui/Button";
 import { voucherApi } from "../../api/endpoints";
+import { SafeImage } from "../../components/ui/SafeImage";
 
 export function Cart() {
   const navigate = useNavigate();
@@ -109,8 +110,8 @@ export function Cart() {
               >
                 {/* Image & Title */}
                 <div className="sm:col-span-6 flex items-center gap-4">
-                  <img
-                    src={item.image || "https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600&q=80"}
+                  <SafeImage
+                    src={item.image}
                     alt={item.name}
                     className="w-16 sm:w-20 aspect-[3/4] object-cover bg-[#161619]"
                   />

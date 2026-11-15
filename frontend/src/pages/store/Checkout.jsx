@@ -5,6 +5,7 @@ import { useCartStore } from "../../stores/cartStore";
 import { useAuthStore } from "../../stores/authStore";
 import { orderApi, shippingApi } from "../../api/endpoints";
 import { Button, Input } from "../../components/ui/Button";
+import { SafeImage } from "../../components/ui/SafeImage";
 
 export function Checkout() {
   const navigate = useNavigate();
@@ -265,7 +266,7 @@ export function Checkout() {
             <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
               {items.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-3 text-xs">
-                  <img
+                  <SafeImage
                     src={item.image}
                     alt={item.name}
                     className="w-12 aspect-[3/4] object-cover bg-[#161619]"
