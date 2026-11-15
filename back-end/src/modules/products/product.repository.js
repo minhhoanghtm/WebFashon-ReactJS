@@ -42,9 +42,18 @@ class ProductRepository {
   }
 
   async findByIdWithVariants(id, options = {}) {
-    const { session } = options;
+    const { session, lean = true } = options;
     let q = Product.findById(id).populate("variants");
     if (session) q = q.session(session);
+    if (lean) q = q.lean();
+    return await q;
+  }
+
+  async findOneWithVariants(query, options = {}) {
+    const { session, lean = true } = options;
+    let q = Product.findOne(query).populate("variants");
+    if (session) q = q.session(session);
+    if (lean) q = q.lean();
     return await q;
   }
 

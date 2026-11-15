@@ -84,7 +84,7 @@ export const getProductDetail = async (id) => {
 };
 
 export const getProductBySlug = async (slug) => {
-  const product = await productRepository.findOne({ slug });
+  const product = await productRepository.findOneWithVariants({ slug });
   if (!product) {
     throw new AppError("Sản phẩm không tồn tại", 404);
   }

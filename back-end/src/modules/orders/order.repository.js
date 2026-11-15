@@ -17,12 +17,16 @@ class OrderRepository {
     return await orderDocument.save(options);
   }
 
-  async findById(id) {
-    return await Order.findById(id);
+  async findById(id, options = {}) {
+    const { lean = false } = options;
+    let q = Order.findById(id);
+    return lean ? await q.lean() : await q;
   }
 
-  async findOne(query) {
-    return await Order.findOne(query);
+  async findOne(query, options = {}) {
+    const { lean = false } = options;
+    let q = Order.findOne(query);
+    return lean ? await q.lean() : await q;
   }
 
   async findByIdAndUpdate(id, updateData, options = { new: true }) {
@@ -33,11 +37,12 @@ class OrderRepository {
     return await Order.findByIdAndDelete(id);
   }
 
-  async find(query = {}, sort = { createdAt: -1 }, skip = 0, limit = 0) {
+  async find(query = {}, sort = { createdAt: -1 }, skip = 0, limit = 0, options = {}) {
+    const { lean = true } = options;
     let queryChain = Order.find(query).sort(sort);
     if (skip > 0) queryChain = queryChain.skip(skip);
     if (limit > 0) queryChain = queryChain.limit(limit);
-    return await queryChain;
+    return lean ? await queryChain.lean() : await queryChain;
   }
 
   async countDocuments(query = {}) {

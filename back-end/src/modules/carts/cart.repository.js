@@ -33,7 +33,8 @@ class CartRepository {
       .populate({
         path: "variant_id",
         options: { strictPopulate: false },
-      });
+      })
+      .lean();
   }
 
   async findItemById(id) {
