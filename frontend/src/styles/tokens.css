@@ -1,7 +1,7 @@
 /* Hallmark Stamp: 2026-11-16 WebFashion Atelier V2 Tokens */
 :root {
-  --font-display: 'Oswald', sans-serif;
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Oswald Variable', 'Oswald', 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   --color-bg-primary: #0c0c0e;
   --color-bg-surface: #161619;
