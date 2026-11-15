@@ -12,7 +12,15 @@ export function StoreLayout() {
     <div className="min-h-screen flex flex-col bg-[#0c0c0e] text-[#f4f0e8] overflow-x-clip">
       <Header />
       <main className="flex-1 w-full flex flex-col">
-        <Outlet />
+        <React.Suspense
+          fallback={
+            <div className="min-h-[50vh] flex items-center justify-center p-8">
+              <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
+            </div>
+          }
+        >
+          <Outlet />
+        </React.Suspense>
       </main>
       <Footer />
       <CookieConsentBanner />
@@ -34,7 +42,15 @@ export function AuthLayout() {
       </div>
       <div className="flex-1 flex items-center justify-center py-10">
         <div className="w-full max-w-md bg-[#121215] border border-[rgba(244,240,232,0.12)] p-6 sm:p-8 shadow-2xl animate-fade-in">
-          <Outlet />
+          <React.Suspense
+            fallback={
+              <div className="min-h-[30vh] flex items-center justify-center p-8">
+                <div className="w-8 h-8 border-2 border-[#e65100] border-t-transparent animate-spin" />
+              </div>
+            }
+          >
+            <Outlet />
+          </React.Suspense>
         </div>
       </div>
       <div className="max-w-[1440px] mx-auto w-full pb-4 text-center text-xs text-[#6b6973] font-mono">

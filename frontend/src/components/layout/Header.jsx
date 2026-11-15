@@ -66,13 +66,14 @@ export function Header() {
         {/* Right Action Icons & Search */}
         <div className="flex items-center gap-2.5 sm:gap-3">
           {/* Quick Search Input */}
-          <form onSubmit={handleSearchSubmit} className="hidden lg:flex items-center relative">
+          <form onSubmit={handleSearchSubmit} className="hidden lg:flex items-center relative" role="search">
             <input
               type="text"
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
               placeholder="Tìm kiếm thiết kế..."
-              className="w-44 xl:w-56 min-h-[38px] pl-8 pr-3 bg-[#161619] border border-[rgba(244,240,232,0.12)] text-xs text-[#f4f0e8] placeholder-[#6b6973] focus:border-[#e65100] transition-all"
+              aria-label="Tìm kiếm thiết kế"
+              className="w-44 xl:w-56 min-h-[40px] pl-8 pr-3 bg-[#161619] border border-[rgba(244,240,232,0.12)] text-xs text-[#f4f0e8] placeholder-[#6b6973] focus:border-[#e65100] transition-all"
             />
             <Search className="absolute left-2.5 text-[#6b6973] pointer-events-none" size={14} />
           </form>
@@ -80,6 +81,7 @@ export function Header() {
           {/* AI Style Persona Button / Badge */}
           <button
             onClick={openQuiz}
+            aria-label="Khám phá phong cách thời trang AI"
             className="min-h-[40px] px-2.5 bg-[#161619] hover:bg-[#202025] border border-[rgba(244,240,232,0.15)] hover:border-[#e65100] text-[#f4f0e8] text-xs font-display tracking-wider uppercase flex items-center gap-1.5 transition-colors"
             title={persona ? `Phong cách của bạn: ${persona.title}` : "Khám phá phong cách thời trang AI"}
           >
@@ -92,6 +94,7 @@ export function Header() {
           {/* AI Shopping Assistant Button */}
           <button
             onClick={openAiModal}
+            aria-label="Mở trợ lý mua sắm AI"
             className="min-h-[40px] px-3 bg-[rgba(230,81,0,0.1)] hover:bg-[rgba(230,81,0,0.2)] border border-[#e65100]/40 text-[#ff6d00] text-xs font-display tracking-wider uppercase flex items-center gap-1.5 transition-colors"
             title="Trợ lý mua sắm AI"
           >
@@ -153,7 +156,8 @@ export function Header() {
           {/* Cart Indicator */}
           <Link
             to="/cart"
-            className="relative min-h-[40px] px-3 bg-[#161619] border border-[rgba(244,240,232,0.15)] hover:border-[#e65100] text-[#f4f0e8] flex items-center gap-2 transition-colors"
+            aria-label={`Xem giỏ hàng, hiện có ${cartCount} sản phẩm`}
+            className="relative min-h-[44px] px-3 bg-[#161619] border border-[rgba(244,240,232,0.15)] hover:border-[#e65100] text-[#f4f0e8] flex items-center gap-2 transition-colors"
             title="Xem giỏ hàng"
           >
             <ShoppingBag size={16} className="text-[#e65100]" />
@@ -163,8 +167,8 @@ export function Header() {
           {/* Mobile Menu Toggle */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden min-h-[40px] min-w-[40px] p-2 text-[#f4f0e8] flex items-center justify-center border border-[rgba(244,240,232,0.15)]"
-            aria-label="Toggle mobile menu"
+            className="md:hidden min-h-[44px] min-w-[44px] p-2 text-[#f4f0e8] flex items-center justify-center border border-[rgba(244,240,232,0.15)]"
+            aria-label="Mở bảng điều hướng di động"
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>

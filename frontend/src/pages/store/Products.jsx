@@ -16,9 +16,30 @@ export function Products() {
   const selectedSort = searchParams.get("sort") || "newest";
   const searchQuery = searchParams.get("search") || "";
 
+  // 1. Fetch categories once on mount with caching
   useEffect(() => {
     let active = true;
-    async function fetchData() {
+    async function fetchCategories() {
+      try {
+        const catRes = await categoryApi.getAll();
+        const cats = catRes?.data || catRes || [];
+        if (active && Array.isArray(cats)) {
+          setCategories(cats);
+        }
+      } catch (err) {
+        console.warn("Categories fetch error:", err);
+      }
+    }
+    fetchCategories();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // 2. Fetch filtered products with debounce-ready state
+  useEffect(() => {
+    let active = true;
+    async function fetchProducts() {
       setIsLoading(true);
       try {
         const queryParams = { limit: 12 };
@@ -26,25 +47,15 @@ export function Products() {
         if (selectedSort && selectedSort !== "newest") queryParams.sort = selectedSort;
         if (searchQuery) queryParams.search = searchQuery;
 
-        const [prodRes, catRes] = await Promise.allSettled([
-          productApi.getAll(queryParams),
-          categoryApi.getAll(),
-        ]);
-
+        const prodRes = await productApi.getAll(queryParams);
         if (active) {
-          if (prodRes.status === "fulfilled") {
-            const list = prodRes.value?.data || prodRes.value || [];
-            if (Array.isArray(list) && list.length > 0) {
-              setProducts(list);
-            } else {
-              const fallbackRes = await productApi.getAll({ limit: 8 }).catch(() => null);
-              const fbList = fallbackRes?.data || fallbackRes || [];
-              setProducts(Array.isArray(fbList) ? fbList : []);
-            }
-          }
-          if (catRes.status === "fulfilled") {
-            const cats = catRes.value?.data || catRes.value || [];
-            setCategories(Array.isArray(cats) ? cats : []);
+          const list = prodRes?.data || prodRes || [];
+          if (Array.isArray(list) && list.length > 0) {
+            setProducts(list);
+          } else {
+            const fallbackRes = await productApi.getAll({ limit: 8 }).catch(() => null);
+            const fbList = fallbackRes?.data || fallbackRes || [];
+            setProducts(Array.isArray(fbList) ? fbList : []);
           }
         }
       } catch (err) {
@@ -54,7 +65,7 @@ export function Products() {
       }
     }
 
-    fetchData();
+    fetchProducts();
     return () => {
       active = false;
     };
@@ -91,7 +102,8 @@ export function Products() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="md:hidden min-h-[40px] px-3.5 bg-[#161619] border border-[rgba(244,240,232,0.15)] text-xs font-display tracking-wider uppercase text-[#f4f0e8] flex items-center gap-2"
+            aria-label="Mở bộ lọc sản phẩm"
+            className="md:hidden min-h-[44px] px-3.5 bg-[#161619] border border-[rgba(244,240,232,0.15)] text-xs font-display tracking-wider uppercase text-[#f4f0e8] flex items-center gap-2"
           >
             <Filter size={14} />
             <span>Bộ Lọc</span>
@@ -100,7 +112,8 @@ export function Products() {
           <select
             value={selectedSort}
             onChange={handleSortChange}
-            className="min-h-[40px] px-3 bg-[#161619] border border-[rgba(244,240,232,0.15)] text-xs font-display tracking-wider uppercase text-[#f4f0e8] focus:border-[#e65100]"
+            aria-label="Sắp xếp sản phẩm"
+            className="min-h-[44px] px-3 bg-[#161619] border border-[rgba(244,240,232,0.15)] text-xs font-display tracking-wider uppercase text-[#f4f0e8] focus:border-[#e65100]"
           >
             <option value="newest">Mới Nhất</option>
             <option value="price_asc">Giá: Thấp đến Cao</option>
