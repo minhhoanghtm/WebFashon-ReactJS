@@ -9,6 +9,7 @@
     "lint": "eslint src",
     "dev": "nodemon src/server.js",
     "start": "node  src/server.js",
+    "worker": "node src/worker.js",
     "seed:pages": "node seed/pages.js",
     "seed:demo": "node seed/seed-demo-catalog.js",
     "ai:sync": "node src/scripts/sync-vectors.js",

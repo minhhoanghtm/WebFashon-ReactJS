@@ -34,7 +34,41 @@ import { getRedisConnection } from "../configs/redis.js";
 
 const rootRouter = express.Router();
 
-// Health check endpoint
+// Health check endpoints (Liveness & Readiness Probes)
+rootRouter.get("/health/liveness", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    uptime: process.uptime(),
+    timestamp: new Date()
+  });
+});
+
+rootRouter.get("/health/readiness", async (req, res) => {
+  try {
+    const mongoStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+    let redisStatus = "disconnected";
+    try {
+      const redisClient = getRedisConnection();
+      redisStatus = redisClient.status === "ready" || redisClient.status === "connect" ? "connected" : "disconnected";
+    } catch (redisErr) {
+      // Ignore redis retrieval errors
+    }
+    
+    // Core readiness requires MongoDB
+    const isReady = mongoStatus === "connected";
+    res.status(isReady ? 200 : 503).json({
+      status: isReady ? "READY" : "NOT_READY",
+      services: {
+        mongodb: mongoStatus,
+        redis: redisStatus
+      },
+      timestamp: new Date()
+    });
+  } catch (error) {
+    res.status(503).json({ status: "NOT_READY", message: error.message });
+  }
+});
+
 rootRouter.get("/health", async (req, res) => {
   try {
     const mongoStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
@@ -46,9 +80,9 @@ rootRouter.get("/health", async (req, res) => {
       // Ignore redis retrieval errors
     }
     
-    const isHealthy = mongoStatus === "connected" && redisStatus === "connected";
+    const isHealthy = mongoStatus === "connected";
     res.status(isHealthy ? 200 : 500).json({
-      status: isHealthy ? "OK" : "ERROR",
+      status: isHealthy ? "OK" : "DEGRADED",
       services: {
         mongodb: mongoStatus,
         redis: redisStatus

@@ -407,11 +407,15 @@ class TrackingService {
     const redis = getRedisConnection();
 
     // 1. Kiểm tra idempotent: Nếu job này đã xử lý trước đó, bỏ qua để tránh cộng điểm 2 lần
-    if (event_id && redis) {
-      const isAlreadyProcessed = await redis.get(`tracking:processed:${event_id}`);
-      if (isAlreadyProcessed) {
-        console.log(`[Tracking Worker] Job SKIPPED (already processed): ${event_id}`);
-        return;
+    if (event_id && redis && redis.status === 'ready') {
+      try {
+        const isAlreadyProcessed = await redis.get(`tracking:processed:${event_id}`);
+        if (isAlreadyProcessed) {
+          console.log(`[Tracking Worker] Job SKIPPED (already processed): ${event_id}`);
+          return;
+        }
+      } catch (redisErr) {
+        console.warn(`[Tracking Worker] Redis idempotent check skipped: ${redisErr.message}`);
       }
     }
 
@@ -451,14 +455,18 @@ class TrackingService {
     }
 
     // Fast-path Tombstone Check trong Redis
-    if (redis) {
-      if (rawUserId) {
-        const isCleared = await redis.get(`user:data_cleared:${rawUserId}`);
-        if (isCleared) return;
-      }
-      if (rawAnonId) {
-        const isClearedAnon = await redis.get(`user:data_cleared:${rawAnonId}`);
-        if (isClearedAnon) return;
+    if (redis && redis.status === 'ready') {
+      try {
+        if (rawUserId) {
+          const isCleared = await redis.get(`user:data_cleared:${rawUserId}`);
+          if (isCleared) return;
+        }
+        if (rawAnonId) {
+          const isClearedAnon = await redis.get(`user:data_cleared:${rawAnonId}`);
+          if (isClearedAnon) return;
+        }
+      } catch (redisErr) {
+        console.warn(`[Tracking Worker] Redis tombstone check skipped: ${redisErr.message}`);
       }
     }
 

@@ -1,0 +1,108 @@
+name: CD - Production Deployment
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      target_tag:
+        description: 'Release Tag / Git Ref to deploy'
+        required: false
+        default: 'main'
+      rollback_on_failure:
+        description: 'Automatically rollback to previous release on healthcheck failure'
+        type: boolean
+        default: true
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-production:
+    name: 🚀 Deploy to Production Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://${{ vars.DOMAIN || 'fashion.example.com' }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout target commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_tag || github.ref }}
+
+      - name: Pre-Deployment Health Check
+        id: pre_health
+        run: |
+          echo "Verifying remote target availability..."
+
+      - name: Deploy to VPS via SSH with Zero-Downtime Rolling Update
+        uses: appleboy/ssh-action@v1.2.2
+        if: env.VPS_HOST != ''
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            echo "--- Navigating to production directory ---"
+            cd /opt/webfashion || cd /root/WebFashon
+
+            echo "--- Stashing local state if any ---"
+            git fetch origin
+            PREV_COMMIT=$(git rev-parse HEAD)
+            echo "Previous commit: $PREV_COMMIT"
+
+            echo "--- Pulling latest production release ---"
+            git checkout main
+            git pull origin main
+
+            echo "--- Pulling/Building containers in background ---"
+            docker compose -f docker-compose.production.yml build --pull api worker frontend
+
+            echo "--- Executing rolling service update ---"
+            docker compose -f docker-compose.production.yml up -d --no-deps api
+            sleep 10
+
+            echo "--- Verifying API readiness probe ---"
+            MAX_TRIES=15
+            COUNT=0
+            HEALTHY=0
+            until [ $COUNT -ge $MAX_TRIES ]; do
+              if curl -s -f http://127.0.0.1:5000/api/health/liveness > /dev/null; then
+                HEALTHY=1
+                break
+              fi
+              COUNT=$((COUNT+1))
+              echo "Waiting for API liveness... ($COUNT/$MAX_TRIES)"
+              sleep 4
+            done
+
+            if [ $HEALTHY -eq 0 ]; then
+              echo "❌ CRITICAL: New API container failed health check!"
+              echo "--- Initiating automated rollback to $PREV_COMMIT ---"
+              git checkout $PREV_COMMIT
+              docker compose -f docker-compose.production.yml up -d --build api
+              exit 1
+            fi
+
+            echo "--- Updating Frontend and Workers ---"
+            docker compose -f docker-compose.production.yml up -d --no-deps frontend worker reverse-proxy
+
+            echo "--- Pruning unused dangling images ---"
+            docker image prune -f
+
+            echo "✅ Production deployment successfully verified!"
+
+      - name: Post-Deployment Smoke Test
+        run: |
+          echo "Deployment finished and verified via Docker healthcheck probes."

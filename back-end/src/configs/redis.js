@@ -19,7 +19,7 @@ export const getRedisConnection = () => {
 
     const config = {
       maxRetriesPerRequest: null, // Critical for BullMQ
-      enableOfflineQueue: false, // Prevents offline commands from hanging backend requests
+      enableOfflineQueue: process.env.NODE_ENV === "test" ? true : false, // Prevents offline commands from hanging backend requests in production
       connectTimeout: 2000,
     };
 

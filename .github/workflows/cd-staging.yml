@@ -1,0 +1,43 @@
+name: CD - Staging Deployment
+
+on:
+  push:
+    branches:
+      - develop
+      - staging
+  workflow_dispatch:
+
+concurrency:
+  group: staging-deployment
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-staging:
+    name: 🧪 Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.${{ vars.DOMAIN || 'fashion.example.com' }}
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Staging Host via SSH
+        if: env.STAGING_HOST != ''
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST || secrets.VPS_HOST }}
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.STAGING_HOST || secrets.VPS_HOST }}
+          username: ${{ secrets.STAGING_USERNAME || secrets.VPS_USERNAME }}
+          key: ${{ secrets.STAGING_KEY || secrets.VPS_PRIVATE_KEY }}
+          port: ${{ secrets.STAGING_PORT || secrets.VPS_PORT || 22 }}
+          script: |
+            cd /opt/webfashion-staging || cd /root/WebFashon
+            git pull origin develop || git pull origin staging
+            docker compose -f docker-compose.staging.yml up -d --build
