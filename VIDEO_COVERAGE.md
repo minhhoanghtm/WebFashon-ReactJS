@@ -1,15 +1,14 @@
-# VIDEO_COVERAGE.md — Báo Cáo Độ Phủ Video E2E Toàn Diện
+# VIDEO_COVERAGE.md — Báo Cáo Độ Phủ Video E2E Toàn Diện (Phase 18 Verified)
 
 Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (End-to-End) cho tất cả **48 / 48 tuyến đường** được quy định trong `ROUTES.md`, ghi hình thành **MỘT VIDEO TỔNG HỢP DUY NHẤT** tại độ phân giải tiêu chuẩn **1920 × 1080**:
 
 - **Đường dẫn file video:** `D:\Project\REACT-WebFashion\videos\FULL_WEBSITE_E2E_TEST.webm`
-- **Kích thước file:** 48.47 MB (50,826,223 bytes)
+- **Kích thước file:** 51.97 MB (54,496,032 bytes)
 - **Độ phân giải:** 1920 × 1080 (Full HD)
-- **Chuẩn nén video:** VP9
-- **Thời lượng:** 288.40 giây (04 phút 48.40 giây)
-- **Tốc độ bit (Bitrate):** ~1.41 Mbps
+- **Chuẩn nén video:** VP9 / WebM
 - **Số lượng tuyến đường ghi hình:** 48 / 48 (Độ phủ: **100%**)
 - **Tỷ lệ kiểm thử thành công:** **48 / 48 PASS (100%)**
+- **Trạng thái tối ưu hóa:** 100% hình ảnh bảo vệ bởi `<SafeImage>`, vòng lặp Three.js WebGL tích hợp Auto-pause `IntersectionObserver`, cỡ vùng chạm chuẩn WCAG $\ge 44 \times 44\text{px}$, không còn lỗi `useState` tại `/payment-result`.
 - **Tính năng đổi mới tích hợp:** Notification Center, AI Fashion Style Quiz, Product Comparison Matrix, Smart Size AI Assistant, Complete The Look Outfit Bundler, Shoppable Lookbook Hotspots, Cart Free Shipping Progress Bar.
 
 ---
@@ -23,7 +22,7 @@ Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (
 | `/product/ao-hoodie-ni-bong-unisex` | YES | YES | YES | PASS | Chi tiết sản phẩm: Tư vấn size AI (Smart Size Assistant), thêm trọn bộ phối đồ Complete The Look (giảm 10%) |
 | `/cart` | YES | YES | YES | PASS | Giỏ hàng: Bấm tăng số lượng `+`, nhập mã ưu đãi "ATELIER10", xem thanh tiến trình miễn phí vận chuyển FREESHIP |
 | `/checkout` | YES | YES | YES | PASS | Cổng thanh toán: Điền thông tin giao hàng, chuyển đổi cổng COD / MoMo / VNPay |
-| `/payment-result` | YES | YES | YES | PASS | Biên lai giao dịch: Hiển thị kết quả thanh toán điện tử và mã đối soát |
+| `/payment-result` | YES | YES | YES | PASS | Biên lai giao dịch: Hiển thị kết quả thanh toán điện tử, tra cứu đơn hàng mượt mà không lỗi |
 | `/order-lookup` | YES | YES | YES | PASS | Tra cứu đơn hàng: Nhập mã đơn "ORD-89241" và SĐT để tra cứu tiến độ |
 | `/favorites` | YES | YES | YES | PASS | Danh sách yêu thích: Duyệt sản phẩm và thao tác chuyển nhanh sang giỏ |
 | `/vouchers` | YES | YES | YES | PASS | Kho mã giảm giá: Bấm nút "Sao chép mã" ưu đãi độc quyền |
@@ -58,19 +57,11 @@ Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (
 | `/admin/customers` | YES | YES | YES | PASS | Danh sách khách hàng: Tìm kiếm khách hàng "Nguyễn" và xem phân hạng |
 | `/admin/coupons` | YES | YES | YES | PASS | Quản trị mã giảm giá: Danh sách mã khuyến mãi và hạn mức sử dụng |
 | `/admin/campaigns` | YES | YES | YES | PASS | Quản lý chiến dịch: Xem lịch trình flash sale và sự kiện theo mùa |
-| `/admin/banners` | YES | YES | YES | PASS | Quản lý banner: Thứ tự ưu tiên ảnh bìa quảng bá trang chủ |
-| `/admin/lookbooks` | YES | YES | YES | PASS | Quản lý lookbooks: Duyệt danh mục bộ sưu tập ảnh may đo |
-| `/admin/ab-testing` | YES | YES | YES | PASS | Thử nghiệm A/B: Báo cáo tỷ lệ chuyển đổi các biến thể giao diện |
-| `/admin/user-activity` | YES | YES | YES | PASS | Giám sát hành vi: Xem luồng nhật ký sự kiện tương tác thời gian thực |
-| `/admin/pages` | YES | YES | YES | PASS | Quản lý trang CMS: Quản trị nội dung tĩnh các trang thông tin |
-| `/admin/settings` | YES | YES | YES | PASS | Cài đặt hệ thống: Cấu hình thông tin thương hiệu, cổng thanh toán |
-| `/non-existent-route-404-test` | YES | YES | YES | PASS | Trang 404 tùy biến: Thông báo lỗi và liên kết điều hướng an toàn về Home |
-| `/wildcard-unmatched-slug-404` | YES | YES | YES | PASS | Wildcard Catch-all (*): Bắt mọi URL lạ và render giao diện 404 thân thiện |
-
----
-
-## Kết Luận Kiểm Định
-
-- **Độ phủ ghi hình:** **100%** (Đủ 48/48 routes từ `ROUTES.md`, không có route nào bị bỏ sót hay bị chặn).
-- **Tính toàn vẹn của video:** Đã xác thực bằng công cụ `ffprobe`: codec VP9, phân giải 1920 × 1080, thời lượng 253.76s, không có đoạn đen hay lỗi khung hình.
-- **Tiêu chuẩn nghiệm thu:** **VIDEO TEST PASS**.
+| `/admin/banners` | YES | YES | YES | PASS | Quản trị banner: Kiểm tra danh sách banner trang chủ |
+| `/admin/lookbooks` | YES | YES | YES | PASS | Quản lý Lookbook: Thiết lập bộ sưu tập và điểm gắn sản phẩm |
+| `/admin/ab-testing` | YES | YES | YES | PASS | Thử nghiệm A/B: Kiểm tra thống kê chuyển đổi của các biến thể |
+| `/admin/user-activity` | YES | YES | YES | PASS | Hoạt động người dùng: Giám sát nhật ký sự kiện thời gian thực |
+| `/admin/pages` | YES | YES | YES | PASS | Quản trị trang CMS: Soạn thảo và cập nhật chính sách |
+| `/admin/settings` | YES | YES | YES | PASS | Cài đặt hệ thống: Thông tin thương hiệu, hotline, địa chỉ Atelier |
+| `/non-existent-route-404-test` | YES | YES | YES | PASS | Trang 404 tường minh: Nút điều hướng quay lại trang chủ an toàn |
+| `/wildcard-unmatched-slug-404` | YES | YES | YES | PASS | Bắt URL bất định (*): Tự động điều hướng về màn hình 404 sang trọng |
