@@ -35,9 +35,8 @@ const VoucherHunting = ({ isDashboard = false }) => {
     setLoading(true);
     try {
       const res = await voucherApi.getPublicVouchers();
-      if (res.success) {
-        setVouchers(res.data || []);
-      }
+      const rawList = res?.data?.items || res?.data?.vouchers || res?.data || [];
+      setVouchers(Array.isArray(rawList) ? rawList : []);
     } catch (err) {
       console.error(err);
       toast.error("Không thể tải danh sách voucher");
@@ -56,9 +55,10 @@ const VoucherHunting = ({ isDashboard = false }) => {
       if (isAuthenticated) {
         try {
           const res = await voucherApi.getUserWallet();
-          if (isMounted && res.success) {
-            const ids = (res.data || []).map(
-              (item) => item.voucherId?._id || item.voucherId
+          const rawWallet = res?.data?.items || res?.data?.vouchers || res?.data || [];
+          if (isMounted && Array.isArray(rawWallet)) {
+            const ids = rawWallet.map(
+              (item) => item.voucherId?._id || item.voucherId || item._id
             );
             setClaimedIds(ids.filter(Boolean));
           }
@@ -154,10 +154,10 @@ const VoucherHunting = ({ isDashboard = false }) => {
       className={
         isDashboard
           ? "w-full space-y-6 text-[var(--color-text)]"
-          : "min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] py-12 px-4 sm:px-6 lg:px-8"
+          : "min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] py-12 px-4 sm:px-6 lg:px-8 overflow-x-clip"
       }
     >
-      <div className={isDashboard ? "space-y-6" : "mx-auto max-w-7xl space-y-8"}>
+      <div className={isDashboard ? "space-y-6" : "mx-auto max-w-7xl space-y-8 overflow-x-clip"}>
         {/* Banner Section */}
         {!isDashboard &&
           (!bannersLoading && promoBanners.length > 0 ? (
@@ -179,9 +179,9 @@ const VoucherHunting = ({ isDashboard = false }) => {
                   className="absolute inset-0 w-full h-full object-cover object-[50%_25%] opacity-50 grayscale"
                 />
               )}
-              <div className="relative z-10 p-8 md:p-12 max-w-2xl space-y-3">
+              <div className="relative z-10 p-5 sm:p-8 md:p-12 max-w-2xl space-y-3">
                 <span className="atelier-seal">Đặc quyền {siteName}</span>
-                <h1 className="font-display text-2xl md:text-4xl font-semibold text-white leading-[1.2]">
+                <h1 className="font-display text-2xl md:text-4xl font-semibold text-white leading-[1.2] break-words">
                   {promoBanners[0].title}
                 </h1>
                 {promoBanners[0].subtitle && (
@@ -200,7 +200,7 @@ const VoucherHunting = ({ isDashboard = false }) => {
               </div>
             </div>
           ) : (
-            <div className="border border-[var(--color-border)] bg-[var(--color-surface)] p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="space-y-3 max-w-lg">
                 <div className="inline-flex items-center gap-2">
                   <Sparkles className="h-4 w-4" aria-hidden="true" />
@@ -208,15 +208,15 @@ const VoucherHunting = ({ isDashboard = false }) => {
                     {siteName} · Voucher Archive
                   </span>
                 </div>
-                <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight uppercase leading-[1.2]">
+                <h1 className="font-display text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight uppercase leading-[1.2] break-words">
                   Đặc quyền ưu đãi Atelier
                 </h1>
                 <p className="text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed font-sans">
                   Lưu trữ các mã ưu đãi may đo từ {siteName} để sử dụng trực tiếp tại bước thanh toán.
                 </p>
               </div>
-              <div className="h-20 w-20 border border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-center shrink-0">
-                <Ticket className="h-8 w-8 stroke-[1.5]" aria-hidden="true" />
+              <div className="h-16 w-16 sm:h-20 sm:w-20 border border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-center shrink-0">
+                <Ticket className="h-7 w-7 sm:h-8 sm:w-8 stroke-[1.5]" aria-hidden="true" />
               </div>
             </div>
           ))}
@@ -247,7 +247,7 @@ const VoucherHunting = ({ isDashboard = false }) => {
                 Đang tải danh sách ưu đãi...
               </p>
             </div>
-          ) : vouchers.length === 0 ? (
+          ) : !Array.isArray(vouchers) || vouchers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 bg-[var(--color-surface)] border border-[var(--color-border)] text-center space-y-3 px-4">
               <Ticket
                 className="h-10 w-10 text-[var(--color-text-muted)] stroke-[1.5]"
@@ -282,7 +282,7 @@ const VoucherHunting = ({ isDashboard = false }) => {
                   <article
                     key={v._id}
                     onClick={() => openDetail(v)}
-                    className="group relative atelier-ticket p-6 transition-colors flex flex-col justify-between cursor-pointer min-h-[195px] hover:border-foreground"
+                    className="group relative atelier-ticket p-4 sm:p-6 transition-colors flex flex-col justify-between cursor-pointer min-h-[195px] hover:border-foreground overflow-hidden"
                   >
                     <div className="flex items-start gap-4">
                       <div className="h-12 w-12 bg-[var(--color-bg)] border border-[var(--color-border)] flex items-center justify-center shrink-0">

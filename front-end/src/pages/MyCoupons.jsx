@@ -32,8 +32,9 @@ const MyCoupons = ({ isDashboard = false, onNavigateToHunt }) => {
       if (isMounted) setLoading(true);
       try {
         const res = await voucherApi.getUserWallet(activeTab);
-        if (isMounted && res.success) {
-          setWalletItems(res.data || []);
+        const rawItems = res?.data?.items || res?.data?.vouchers || res?.data || [];
+        if (isMounted) {
+          setWalletItems(Array.isArray(rawItems) ? rawItems : []);
         }
       } catch (err) {
         console.error(err);
