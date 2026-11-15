@@ -1,0 +1,4 @@
+import { Link } from "react-router-dom";
+import { Heart, ArrowUpRight } from "lucide-react";
+import { imageOf, labelOf, money } from "../lib/data";
+export default function ProductCard({ product, index = 0 }) { const slug = product?.slug || product?._id || product?.id; return <article className={`product-card p${index % 4}`}><Link to={`/product/${slug || "preview"}`} className="product-image"><img src={imageOf(product)} alt={labelOf(product)} /><span>0{index + 1}</span></Link><div className="product-copy"><p>{product?.category?.name || "ARCHIVE EDIT"}</p><Link to={`/product/${slug || "preview"}`}><h3>{labelOf(product)}</h3></Link><strong>{money(product?.price || product?.salePrice)}</strong><button aria-label={`Lưu ${labelOf(product)}`}><Heart size={17}/></button><ArrowUpRight size={18}/></div></article>; }
