@@ -19,6 +19,8 @@ export const getRedisConnection = () => {
 
     const config = {
       maxRetriesPerRequest: null, // Critical for BullMQ
+      enableOfflineQueue: false, // Prevents offline commands from hanging backend requests
+      connectTimeout: 2000,
     };
 
     // Jest suites use the locally available Redis but must never retain retry

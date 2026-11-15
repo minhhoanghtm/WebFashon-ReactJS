@@ -169,22 +169,31 @@ export const getProductVariantById = async (req, res, next) => {
 };
 
 export const getProducts = async (req, res, next) => {
+  console.log("HANDLER REACHED: getProducts, query:", req.query);
   const redis = getRedisConnection();
   const CACHE_TTL = 600; // seconds
   const { limit } = req.query;
   const numericLimit = limit ? parseInt(limit, 10) : undefined;
   const CACHE_KEY = `products:all:limit:${numericLimit || "default"}`;
   try {
-    const cached = await redis.get(CACHE_KEY);
-    if (cached) {
-      logger.info('Cache hit for %s', CACHE_KEY);
-      const products = JSON.parse(cached);
-      return successResponse(res, products, 'From cache');
+    if (redis && redis.status === 'ready') {
+      try {
+        const cached = await redis.get(CACHE_KEY);
+        if (cached) {
+          logger.info('Cache hit for %s', CACHE_KEY);
+          const products = JSON.parse(cached);
+          return successResponse(res, products, 'From cache');
+        }
+      } catch (cacheErr) {
+        logger.warn('Redis cache get error: %s', cacheErr.message);
+      }
     }
-    logger.info('Cache miss for %s – querying DB', CACHE_KEY);
+    logger.info('Cache miss or Redis unavailable for %s – querying DB', CACHE_KEY);
     const products = await productFacade.getAllProducts(numericLimit);
-    await redis.set(CACHE_KEY, JSON.stringify(products), 'EX', CACHE_TTL);
-    logger.info('Cache set for %s with TTL %ds', CACHE_KEY, CACHE_TTL);
+    if (redis && redis.status === 'ready') {
+      redis.set(CACHE_KEY, JSON.stringify(products), 'EX', CACHE_TTL).catch(() => {});
+      logger.info('Cache set for %s with TTL %ds', CACHE_KEY, CACHE_TTL);
+    }
     return successResponse(res, products);
   } catch (err) {
     logger.error('getProducts error: %s', err);
