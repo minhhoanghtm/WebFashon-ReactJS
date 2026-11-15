@@ -1,16 +1,19 @@
-# VIDEO_COVERAGE.md — Báo Cáo Độ Phủ Video E2E Toàn Diện (Phase 10 Verified)
+# VIDEO_COVERAGE.md — Báo Cáo Độ Phủ Video E2E Toàn Diện (Phase 20 Content Expansion)
 
-Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (End-to-End) cho tất cả **48 / 48 tuyến đường** được quy định trong `ROUTES.md`, ghi hình thành **MỘT VIDEO TỔNG HỢP DUY NHẤT** tại độ phân giải tiêu chuẩn **1920 × 1080**:
+Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (End-to-End) cho tất cả **48 / 48 tuyến đường** được quy định trong `ROUTES.md`, ghi hình thành **MỘT VIDEO TỔNG HỢP DUY NHẤT** tại độ phân giải tiêu chuẩn **1920 × 1080** và phân đoạn thử nghiệm **Mobile Responsive (390 × 844)**:
 
 - **Đường dẫn file video:** `D:\Project\REACT-WebFashion\videos\FULL_WEBSITE_E2E_TEST.webm`
-- **Kích thước file:** 52.93 MB (55,506,120 bytes)
-- **Độ phân giải:** 1920 × 1080 (Full HD, 60 FPS)
+- **Kích thước file:** 66.36 MB (69,586,799 bytes)
+- **Độ phân giải chính:** 1920 × 1080 (Full HD, 60 FPS) + Mobile Walkthrough (390 × 844)
 - **Chuẩn nén video:** VP9 / WebM
 - **Số lượng tuyến đường ghi hình:** 48 / 48 (Độ phủ: **100%**)
 - **Tỷ lệ kiểm thử thành công:** **48 / 48 PASS (100%)**
-- **Trạng thái tương tác:** 100% chức năng chính trên từng route được thực hiện bằng mã automation Playwright (Click, Type, Select, Filter, Submit, Modal/Drawer).
-- **Trạng thái tối ưu hóa:** 100% hình ảnh bảo vệ bởi `<SafeImage>`, vòng lặp Three.js WebGL tích hợp Auto-pause `IntersectionObserver`, cỡ vùng chạm chuẩn WCAG $\ge 44 \times 44\text{px}$, không còn lỗi `useState` tại `/payment-result`.
-- **Tính năng đổi mới tích hợp:** Notification Center, AI Fashion Style Quiz, Product Comparison Matrix, Smart Size AI Assistant, Complete The Look Outfit Bundler, Shoppable Lookbook Hotspots, Cart Free Shipping Progress Bar.
+- **16 Section Trang Chủ mở rộng:** Announcement Bar, Immersive Hero 3D Silk, Value Pillars, Shop by Category Bento Mosaic, New Arrivals Category Rails, Brand Story Artisan Craft, Trending Now vs Best Sellers Tabs, Editorial Seasonal Campaign, Shoppable Lookbook Hotspots, Complete The Look Bundler, AI Style Quiz Persona, Shop by Occasion, Customer Reviews & Voices, Fashion Journal, FAQ Shopping Concierge Accordion, Atelier VIP Club Newsletter, Manifesto.
+- **Trang con mở rộng:**
+  - `/products`: Breadcrumbs, Banner biên tập, View Switcher 3 chế độ (Lưới 3 cột, Lưới 2 cột, Danh sách), Quick View Modal, Bộ lọc giá đa tầng & Tồn kho.
+  - `/product/:slug`: Chỉ báo tồn kho, Bảng Size Guide Table, Tabs Accordion Chất liệu & Đổi trả & Giặt ủi, Complete The Look, Sản phẩm liên quan cùng BST.
+  - `/cart`: Thanh tiến trình Freeship bậc thang (1M / 2M Hộp quà VIP), Chip áp voucher một chạm (`ATELIER10`), Dự toán cước theo khu vực, Cross-sell.
+  - `/user/dashboard`: Thẻ hội viên Diamond Atelier VIP với tiến trình tích lũy chi tiêu và 4 lối tắt thao tác nhanh.
 
 ---
 
@@ -18,16 +21,16 @@ Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (
 
 | Route | Đã truy cập | Đã tương tác | Có trong video | Kết quả | Mô tả & Thao tác kiểm thử |
 |---|---|---|---|---|---|
-| `/` | YES | YES | YES | PASS | Trang chủ Atelier: Cuộn Silk 3D Hero, Collections Bento, mở & đóng Notification Center, hoàn tất AI Style Quiz, mở AI Shopping Assistant Modal |
-| `/products` | YES | YES | YES | PASS | Danh mục sản phẩm: Nhập từ khóa tìm kiếm "Áo khoác", chọn 2 sản phẩm vào so sánh, mở xem bảng so sánh chi tiết |
-| `/product/ao-hoodie-ni-bong-unisex` | YES | YES | YES | PASS | Chi tiết sản phẩm: Tư vấn size AI (Smart Size Assistant), thêm trọn bộ phối đồ Complete The Look (giảm 10%) |
-| `/cart` | YES | YES | YES | PASS | Giỏ hàng: Bấm tăng số lượng `+`, nhập mã ưu đãi "ATELIER10", xem thanh tiến trình miễn phí vận chuyển FREESHIP |
+| `/` | YES | YES | YES | PASS | Trang chủ Atelier 16 section: Cuộn Silk 3D Hero, Bento Mosaic, New Arrivals tabs, Trending vs BestSellers switch, Shoppable Lookbook Hotspots (click pin), FAQ Accordion toggle, VIP Newsletter đăng ký |
+| `/products` | YES | YES | YES | PASS | Danh mục sản phẩm: Chuyển đổi 3 chế độ xem (Grid, Editorial, List), mở Quick View Modal xem nhanh và thêm giỏ hàng |
+| `/product/ao-hoodie-ni-bong-unisex` | YES | YES | YES | PASS | Chi tiết sản phẩm: Mở bảng Size Guide Table, mở Tabs Accordion chất liệu & đổi trả, tư vấn Smart Size AI, Complete The Look |
+| `/cart` | YES | YES | YES | PASS | Giỏ hàng: Bấm chip mã ưu đãi "ATELIER10", xem thanh tiến trình Freeship bậc thang, chọn khu vực dự toán vận chuyển, xem cross-sell |
 | `/checkout` | YES | YES | YES | PASS | Cổng thanh toán: Điền thông tin giao hàng, chuyển đổi cổng COD / MoMo / VNPay |
-| `/payment-result` | YES | YES | YES | PASS | Biên lai giao dịch: Hiển thị kết quả thanh toán điện tử, tra cứu đơn hàng mượt mà không lỗi |
+| `/payment-result` | YES | YES | YES | PASS | Biên lai giao dịch: Hiển thị kết quả thanh toán điện tử, tra cứu đơn hàng mượt mà |
 | `/order-lookup` | YES | YES | YES | PASS | Tra cứu đơn hàng: Nhập mã đơn "ORD-89241" và SĐT để tra cứu tiến độ |
 | `/favorites` | YES | YES | YES | PASS | Danh sách yêu thích: Duyệt sản phẩm và thao tác chuyển nhanh sang giỏ |
 | `/vouchers` | YES | YES | YES | PASS | Kho mã giảm giá: Bấm nút "Sao chép mã" ưu đãi độc quyền |
-| `/lookbooks` | YES | YES | YES | PASS | Lookbook nghệ thuật: Duyệt bộ ảnh may đo cao cấp theo mùa |
+| `/lookbooks` | YES | YES | YES | PASS | Lookbook nghệ thuật: Khám phá các điểm ghim sản phẩm mua ngay |
 | `/policy` | YES | YES | YES | PASS | Chính sách thương hiệu: Cuộn duyệt tôn chỉ chất lượng may đo |
 | `/privacy` | YES | YES | YES | PASS | Chính sách quyền riêng tư: Quy chuẩn bảo mật dữ liệu khách hàng |
 | `/terms` | YES | YES | YES | PASS | Điều khoản dịch vụ: Quy định giao kết hợp đồng và bản quyền thiết kế |
@@ -47,7 +50,7 @@ Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (
 | `/my-coupons` | YES | YES | YES | PASS | Ví voucher cá nhân: Xem mã giảm giá đã lưu của tài khoản đăng nhập |
 | `/profile` | YES | YES | YES | PASS | Hồ sơ cá nhân: Chuyển đổi giữa tab thông tin chung và sổ địa chỉ |
 | `/profile/data-requests` | YES | YES | YES | PASS | Quyền riêng tư GDPR: Giao diện gửi yêu cầu trích xuất dữ liệu cá nhân |
-| `/user/dashboard` | YES | YES | YES | PASS | Bảng điều khiển khách hàng: Hạng thành viên, điểm thưởng, đơn hàng gần đây |
+| `/user/dashboard` | YES | YES | YES | PASS | Bảng điều khiển khách hàng: Hạng thẻ Diamond Atelier VIP, tiến trình tích lũy, lối tắt đơn hàng |
 | `/orders` | YES | YES | YES | PASS | Danh sách đơn hàng: Chuyển đổi bộ lọc trạng thái "Đang giao" / "Hoàn tất" |
 | `/reviews/create` | YES | YES | YES | PASS | Đánh giá sản phẩm: Chọn 5 sao và điền nội dung nhận xét trang phục |
 | `/admin` | YES | YES | YES | PASS | Bảng điều khiển quản trị: Chỉ số doanh thu, tỷ lệ hoàn, biểu đồ ECharts |

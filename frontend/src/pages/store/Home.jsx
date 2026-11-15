@@ -6,11 +6,23 @@ import { ProductCard } from "../../components/shared/ProductCard";
 import { productApi, categoryApi, contentApi } from "../../api/endpoints";
 import { Button } from "../../components/ui/Button";
 import { usePersonaStore } from "../../stores/personaStore";
+import { CategoryMosaic } from "../../components/home/CategoryMosaic";
+import { BrandStorySection } from "../../components/home/BrandStorySection";
+import { TrendingBestSellers } from "../../components/home/TrendingBestSellers";
+import { CampaignEditorialBanner } from "../../components/home/CampaignEditorialBanner";
+import { LookbookHotspots } from "../../components/home/LookbookHotspots";
+import { ShopByOccasion } from "../../components/home/ShopByOccasion";
+import { CustomerReviewsSection } from "../../components/home/CustomerReviewsSection";
+import { FashionJournalSection } from "../../components/home/FashionJournalSection";
+import { FaqAccordionSection } from "../../components/home/FaqAccordionSection";
+import { VipNewsletterSection } from "../../components/home/VipNewsletterSection";
+import { CompleteTheLook } from "../../components/shared/CompleteTheLook";
 
 export function Home() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [banners, setBanners] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
 
   const openQuiz = usePersonaStore((state) => state.openQuiz);
@@ -20,7 +32,7 @@ export function Home() {
     async function loadData() {
       try {
         const [prodRes, catRes, banRes] = await Promise.allSettled([
-          productApi.getAll({ limit: 8 }),
+          productApi.getAll({ limit: 12 }),
           categoryApi.getAll(),
           contentApi.getBanners(),
         ]);
@@ -50,6 +62,21 @@ export function Home() {
       isMounted = false;
     };
   }, []);
+
+  // Filter products for New Arrivals rail if category selected
+  const filteredProducts =
+    selectedCategory === "all"
+      ? products.slice(0, 8)
+      : products
+          .filter(
+            (p) =>
+              p.category === selectedCategory ||
+              p.categoryId === selectedCategory ||
+              p.category?._id === selectedCategory
+          )
+          .slice(0, 8);
+
+  const displayNewArrivals = filteredProducts.length > 0 ? filteredProducts : products.slice(0, 8);
 
   return (
     <div className="w-full flex flex-col">
@@ -136,50 +163,61 @@ export function Home() {
         </div>
       </section>
 
-      {/* 3. FEATURED PRODUCTS & CATEGORY INDEX */}
-      <section className="py-16 sm:py-20 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 pb-4 border-b border-[rgba(244,240,232,0.1)]">
+      {/* 3. SHOP BY CATEGORY MOSAIC */}
+      <CategoryMosaic categories={categories} />
+
+      {/* 4. NEW ARRIVALS & CATEGORY FILTER RAILS */}
+      <section className="py-16 sm:py-24 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full border-b border-[rgba(244,240,232,0.1)]">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-[rgba(244,240,232,0.1)]">
           <div>
             <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase block mb-1">
-              TUYỂN TẬP SIGNATURE
+              TUYỂN TẬP MỚI PHÁT HÀNH
             </span>
             <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-[#f4f0e8]">
-              CÁC THIẾT KẾ NỔI BẬT
+              NEW ARRIVALS 2026/27
             </h2>
           </div>
-          <Link to="/products" className="inline-flex items-center gap-1.5 text-xs font-display tracking-widest text-[#9a989f] hover:text-[#f4f0e8] uppercase">
-            <span>Xem Tất Cả</span>
+          <Link
+            to="/products"
+            className="inline-flex items-center gap-1.5 text-xs font-display tracking-widest text-[#9a989f] hover:text-[#f4f0e8] uppercase transition-colors"
+          >
+            <span>Xem Toàn Bộ Tuyển Tập</span>
             <ArrowRight size={14} />
           </Link>
         </div>
 
-        {/* Categories Rail */}
-        {categories.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-6 mb-6 scrollbar-none">
-            <Link
-              to="/products"
-              className="px-4 py-2 bg-[#e65100] text-white text-xs font-display tracking-wider uppercase shrink-0"
+        {/* Categories Rail Filter */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+          <button
+            onClick={() => setSelectedCategory("all")}
+            className={`px-4 py-2 text-xs font-display tracking-wider uppercase shrink-0 transition-colors ${
+              selectedCategory === "all"
+                ? "bg-[#e65100] text-white"
+                : "bg-[#161619] border border-[rgba(244,240,232,0.1)] text-[#9a989f] hover:text-[#f4f0e8]"
+            }`}
+          >
+            Tất Cả Thiết Kế
+          </button>
+          {categories.slice(0, 6).map((cat) => (
+            <button
+              key={cat._id}
+              onClick={() => setSelectedCategory(cat._id)}
+              className={`px-4 py-2 text-xs font-display tracking-wider uppercase shrink-0 transition-colors ${
+                selectedCategory === cat._id
+                  ? "bg-[#e65100] text-white"
+                  : "bg-[#161619] border border-[rgba(244,240,232,0.1)] text-[#f4f0e8] hover:border-[#e65100]"
+              }`}
             >
-              Tất Cả
-            </Link>
-            {categories.slice(0, 8).map((cat) => (
-              <Link
-                key={cat._id}
-                to={`/products?category=${cat._id}`}
-                className="px-4 py-2 bg-[#161619] border border-[rgba(244,240,232,0.1)] hover:border-[#e65100] text-xs font-display tracking-wider uppercase text-[#f4f0e8] shrink-0 transition-colors"
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        )}
+              {cat.name}
+            </button>
+          ))}
+        </div>
 
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {products.length > 0 ? (
-            products.map((p) => <ProductCard key={p._id} product={p} />)
+          {displayNewArrivals.length > 0 ? (
+            displayNewArrivals.map((p) => <ProductCard key={p._id} product={p} />)
           ) : (
-            // Placeholder skeletons if loading
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] bg-[#161619] animate-pulse border border-white/5" />
             ))
@@ -187,8 +225,27 @@ export function Home() {
         </div>
       </section>
 
-      {/* 4. AI FASHION STYLE PERSONA BANNER */}
-      <section className="bg-gradient-to-r from-[#161619] via-[#1c1d22] to-[#161619] border-y border-[rgba(244,240,232,0.12)] py-12 px-4 sm:px-8">
+      {/* 5. BRAND STORY & ARTISAN HERITAGE */}
+      <BrandStorySection />
+
+      {/* 6. TRENDING NOW VS BEST SELLERS */}
+      <TrendingBestSellers products={products} />
+
+      {/* 7. EDITORIAL SEASONAL CAMPAIGN */}
+      <CampaignEditorialBanner />
+
+      {/* 8. SHOPPABLE LOOKBOOK HOTSPOTS */}
+      <LookbookHotspots />
+
+      {/* 9. COMPLETE THE LOOK / OUTFIT COORDINATOR */}
+      {products.length > 0 && (
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full border-b border-[rgba(244,240,232,0.1)] pb-16">
+          <CompleteTheLook currentProduct={products[0]} />
+        </div>
+      )}
+
+      {/* 10. AI FASHION STYLE PERSONA BANNER */}
+      <section className="bg-gradient-to-r from-[#161619] via-[#1c1d22] to-[#161619] border-b border-[rgba(244,240,232,0.12)] py-14 px-4 sm:px-8">
         <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-2 text-xs font-mono uppercase tracking-widest text-[#e65100]">
@@ -212,8 +269,23 @@ export function Home() {
         </div>
       </section>
 
-      {/* 5. EDITORIAL MANIFESTO CALLOUT */}
-      <section className="bg-[#121215] border-b border-[rgba(244,240,232,0.1)] py-16 sm:py-24">
+      {/* 11. SHOP BY OCCASION */}
+      <ShopByOccasion />
+
+      {/* 12. CUSTOMER REVIEWS & VOICES OF ATELIER */}
+      <CustomerReviewsSection />
+
+      {/* 13. ATELIER FASHION JOURNAL */}
+      <FashionJournalSection />
+
+      {/* 14. FAQ & SHOPPING CONCIERGE */}
+      <FaqAccordionSection />
+
+      {/* 15. ATELIER VIP CLUB NEWSLETTER */}
+      <VipNewsletterSection />
+
+      {/* 16. EDITORIAL MANIFESTO CALLOUT */}
+      <section className="bg-[#121215] py-20 sm:py-24">
         <div className="max-w-[1000px] mx-auto px-4 text-center space-y-6">
           <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase">
             TRIẾT LÝ ATELIER
@@ -222,7 +294,7 @@ export function Home() {
             "Chúng tôi không chỉ tạo ra quần áo, chúng tôi tạo dựng nên sự tự tin và cấu trúc thẩm mỹ cho người mặc."
           </blockquote>
           <p className="text-xs sm:text-sm text-[#9a989f] max-w-xl mx-auto">
-            Mỗi thiết kế từ 404Studio là kết quả của hàng chục giờ hoàn thiện tỉ mỉ từ những cuộn vải cao cấp nhất.
+            Mỗi thiết kế từ WebFashion Atelier là kết quả của hàng chục giờ hoàn thiện tỉ mỉ từ những cuộn vải cao cấp nhất.
           </p>
           <div className="pt-2">
             <Link to="/about">

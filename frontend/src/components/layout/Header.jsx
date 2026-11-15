@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingBag, Search, Sparkles, User, Menu, X, Shield, LogOut, Compass } from "lucide-react";
+import { ShoppingBag, Search, Sparkles, User, Menu, X, Shield, LogOut, Compass, Heart } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { useCartStore } from "../../stores/cartStore";
 import { useUiStore } from "../../stores/uiStore";
@@ -152,6 +152,16 @@ export function Header() {
               <span className="hidden sm:inline">Đăng Nhập</span>
             </Link>
           )}
+
+          {/* Wishlist Link */}
+          <Link
+            to="/favorites"
+            aria-label="Xem danh sách yêu thích"
+            className="min-h-[40px] px-2.5 bg-[#161619] border border-[rgba(244,240,232,0.15)] hover:border-[#e65100] text-[#9a989f] hover:text-[#f4f0e8] flex items-center justify-center transition-colors"
+            title="Sản phẩm yêu thích"
+          >
+            <Heart size={16} />
+          </Link>
 
           {/* Cart Indicator */}
           <Link

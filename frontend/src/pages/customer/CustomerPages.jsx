@@ -293,13 +293,50 @@ export function DataRequests() {
 
 export function UserDashboard() {
   const user = useAuthStore((state) => state.user);
+  const currentSpend = 8450000;
+  const targetSpend = 15000000;
+  const progressPercent = Math.min(100, Math.round((currentSpend / targetSpend) * 100));
+
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-10 w-full space-y-8 animate-fade-in">
-      <div className="pb-4 border-b border-white/10">
-        <span className="text-xs font-mono uppercase text-[#e65100]">TỔNG QUAN KHÁCH HÀNG</span>
-        <h1 className="font-display text-3xl font-bold uppercase text-[#f4f0e8]">
-          Bảng Điều Khiển: {user?.fullName || "Quý Khách"}
-        </h1>
+      <div className="pb-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <span className="text-xs font-mono uppercase text-[#e65100]">TỔNG QUAN THÀNH VIÊN ATELIER</span>
+          <h1 className="font-display text-3xl font-bold uppercase text-[#f4f0e8]">
+            Bảng Điều Khiển: {user?.fullName || "Quý Khách"}
+          </h1>
+        </div>
+        <div className="text-xs font-mono text-[#9a989f]">
+          Mã thành viên: <span className="text-[#ff6d00] font-bold">ATELIER-{user?._id?.slice(-6).toUpperCase() || "VIP892"}</span>
+        </div>
+      </div>
+
+      {/* VIP Tier Progress Card */}
+      <div className="p-6 bg-[#121215] border border-[rgba(244,240,232,0.15)] space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono tracking-widest text-[#e65100] uppercase block">
+              ĐẶC QUYỀN HỘI VIÊN
+            </span>
+            <h3 className="font-display text-xl font-bold text-[#f4f0e8] uppercase">
+              Hạng Thẻ: DIAMOND ATELIER (Chiết khấu 5% mọi đơn)
+            </h3>
+          </div>
+          <span className="text-xs font-mono text-[#ff6d00] font-bold">
+            {currentSpend.toLocaleString("vi-VN")} ₫ / {targetSpend.toLocaleString("vi-VN")} ₫
+          </span>
+        </div>
+
+        <div className="w-full h-2 bg-[#0c0c0e] overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-[#e65100] to-[#ff6d00] transition-all duration-500"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        <p className="text-xs text-[#9a989f]">
+          Tích lũy thêm {(targetSpend - currentSpend).toLocaleString("vi-VN")} ₫ để nâng cấp lên hạng thẻ cao nhất <strong className="text-white">BLACK OBSIDIAN</strong> (Chiết khấu 10% trọn đời & dịch vụ may đo riêng tại gia).
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -320,6 +357,50 @@ export function UserDashboard() {
             Sử dụng ngay →
           </Link>
         </div>
+      </div>
+
+      {/* Quick Action Shortcuts */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+        <Link
+          to="/orders"
+          className="p-4 bg-[#161619] border border-white/10 hover:border-[#e65100] text-center space-y-1.5 transition-colors"
+        >
+          <Package className="mx-auto text-[#e65100]" size={20} />
+          <span className="text-xs font-display uppercase tracking-wider text-[#f4f0e8] block font-bold">
+            Đơn Hàng
+          </span>
+          <span className="text-[10px] text-[#9a989f] block">Tra cứu trạng thái</span>
+        </Link>
+        <Link
+          to="/favorites"
+          className="p-4 bg-[#161619] border border-white/10 hover:border-[#e65100] text-center space-y-1.5 transition-colors"
+        >
+          <Star className="mx-auto text-[#e65100]" size={20} />
+          <span className="text-xs font-display uppercase tracking-wider text-[#f4f0e8] block font-bold">
+            Yêu Thích
+          </span>
+          <span className="text-[10px] text-[#9a989f] block">Mẫu đã lưu</span>
+        </Link>
+        <Link
+          to="/profile"
+          className="p-4 bg-[#161619] border border-white/10 hover:border-[#e65100] text-center space-y-1.5 transition-colors"
+        >
+          <User className="mx-auto text-[#e65100]" size={20} />
+          <span className="text-xs font-display uppercase tracking-wider text-[#f4f0e8] block font-bold">
+            Sổ Địa Chỉ
+          </span>
+          <span className="text-[10px] text-[#9a989f] block">Quản lý nhận hàng</span>
+        </Link>
+        <Link
+          to="/profile/data-requests"
+          className="p-4 bg-[#161619] border border-white/10 hover:border-[#e65100] text-center space-y-1.5 transition-colors"
+        >
+          <Shield className="mx-auto text-[#e65100]" size={20} />
+          <span className="text-xs font-display uppercase tracking-wider text-[#f4f0e8] block font-bold">
+            GDPR & Bảo Mật
+          </span>
+          <span className="text-[10px] text-[#9a989f] block">Xuất/Xóa dữ liệu</span>
+        </Link>
       </div>
     </div>
   );

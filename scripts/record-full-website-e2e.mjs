@@ -70,20 +70,72 @@ const ALL_ROUTES = [
         }
       } catch (e) {}
 
-      // 3. Open AI Assistant
+      // 3. Open AI Assistant & Close with Escape
       try {
-        const aiBtn = await page.locator("button:has-text('Trò chuyện với AI'), button[title*='AI']").first();
-        if (await aiBtn.isVisible({ timeout: 1500 })) {
-          await aiBtn.click();
-          await page.waitForTimeout(1000);
-          const suggestionPill = await page.locator("button:has-text('Gợi ý trang phục')").first();
-          if (await suggestionPill.isVisible({ timeout: 1000 })) {
-            await suggestionPill.click();
-            await page.waitForTimeout(1000);
+        const aiBtn = page.locator("button:has-text('Trợ lý AI')").first();
+        if (await aiBtn.isVisible({ timeout: 1200 })) {
+          await aiBtn.click({ timeout: 1200 });
+          await page.waitForTimeout(800);
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(500);
+        }
+      } catch (e) {}
+
+      // 4. Trending vs Best Sellers Switch
+      try {
+        const bestSellerTab = page.locator("button:has-text('Bán Chạy Nhất')").first();
+        if (await bestSellerTab.isVisible({ timeout: 1000 })) {
+          await bestSellerTab.scrollIntoViewIfNeeded();
+          await bestSellerTab.click({ timeout: 1200 });
+          await page.waitForTimeout(500);
+          const trendingTab = page.locator("button:has-text('Thịnh Hành Tuần Này')").first();
+          if (await trendingTab.isVisible({ timeout: 1000 })) {
+            await trendingTab.click({ timeout: 1200 });
+            await page.waitForTimeout(400);
           }
-          const closeBtn = await page.locator("button:has-text('Đóng'), button:has([data-lucide='x'])").first();
-          if (await closeBtn.isVisible({ timeout: 1000 })) {
-            await closeBtn.click();
+        }
+      } catch (e) {}
+
+      // 5. Shoppable Lookbook Hotspots
+      try {
+        const lookbookSection = page.locator("h2:has-text('SHOPPABLE LOOKBOOK')").first();
+        if (await lookbookSection.isVisible({ timeout: 1000 })) {
+          await lookbookSection.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(500);
+          const pins = page.locator('button[aria-label*="Xem sản phẩm"]');
+          if (await pins.count() > 1) {
+            await pins.nth(1).click({ timeout: 1200 });
+            await page.waitForTimeout(500);
+          }
+        }
+      } catch (e) {}
+
+      // 6. FAQ Accordion Toggle
+      try {
+        const faqSection = page.locator("h2:has-text('SHOPPING CONCIERGE')").first();
+        if (await faqSection.isVisible({ timeout: 1000 })) {
+          await faqSection.scrollIntoViewIfNeeded();
+          const secondFaq = page.locator("button[aria-expanded]").nth(1);
+          if (await secondFaq.isVisible({ timeout: 800 })) {
+            await secondFaq.click({ timeout: 1200 });
+            await page.waitForTimeout(500);
+          }
+        }
+      } catch (e) {}
+
+      // 7. VIP Newsletter Subscribe
+      try {
+        const newsSection = page.locator("h2:has-text('GIA NHẬP CỘNG ĐỒNG')").first();
+        if (await newsSection.isVisible({ timeout: 1000 })) {
+          await newsSection.scrollIntoViewIfNeeded();
+          const emailInput = page.locator('input[aria-label*="email"]').first();
+          if (await emailInput.isVisible({ timeout: 800 })) {
+            await emailInput.fill("vip.tester@webfashion.vn");
+            const subBtn = page.locator("button:has-text('Đăng Ký VIP')").first();
+            if (await subBtn.isVisible({ timeout: 800 })) {
+              await subBtn.click({ timeout: 1200 });
+              await page.waitForTimeout(800);
+            }
           }
         }
       } catch (e) {}
@@ -119,6 +171,35 @@ const ALL_ROUTES = [
               await closeMatrixBtn.click();
               await page.waitForTimeout(500);
             }
+          }
+        }
+
+        // View Mode Switcher
+        const editorialViewBtn = page.locator('button[title*="Lưới 2 cột"]').first();
+        if (await editorialViewBtn.isVisible({ timeout: 800 })) {
+          await editorialViewBtn.click();
+          await page.waitForTimeout(600);
+          const listViewBtn = page.locator('button[title*="Danh sách"]').first();
+          if (await listViewBtn.isVisible({ timeout: 800 })) {
+            await listViewBtn.click();
+            await page.waitForTimeout(600);
+          }
+          const gridViewBtn = page.locator('button[title*="Lưới 3 cột"]').first();
+          if (await gridViewBtn.isVisible({ timeout: 800 })) {
+            await gridViewBtn.click();
+            await page.waitForTimeout(500);
+          }
+        }
+
+        // Quick View Modal
+        const quickViewBtn = page.locator('button:has-text("Xem Nhanh")').first();
+        if (await quickViewBtn.isVisible({ timeout: 800 })) {
+          await quickViewBtn.click();
+          await page.waitForTimeout(800);
+          const closeQuickModalBtn = page.locator('button[aria-label*="Đóng cửa sổ"]').first();
+          if (await closeQuickModalBtn.isVisible({ timeout: 800 })) {
+            await closeQuickModalBtn.click();
+            await page.waitForTimeout(400);
           }
         }
       } catch (e) {}
@@ -160,6 +241,25 @@ const ALL_ROUTES = [
             await page.waitForTimeout(1000);
           }
         }
+
+        // 3. Size Guide Table Modal
+        const sizeGuideBtn = page.locator('button:has-text("Bảng Size")').first();
+        if (await sizeGuideBtn.isVisible({ timeout: 800 })) {
+          await sizeGuideBtn.click();
+          await page.waitForTimeout(800);
+          const closeTableBtn = page.locator('button:has-text("✕")').first();
+          if (await closeTableBtn.isVisible({ timeout: 800 })) {
+            await closeTableBtn.click();
+            await page.waitForTimeout(400);
+          }
+        }
+
+        // 4. Accordion Tabs for Craftsmanship
+        const accordionBtn = page.locator('button:has-text("Chính Sách Vận Chuyển")').first();
+        if (await accordionBtn.isVisible({ timeout: 800 })) {
+          await accordionBtn.click();
+          await page.waitForTimeout(600);
+        }
       } catch (e) {}
     },
   },
@@ -176,10 +276,16 @@ const ALL_ROUTES = [
           await plusBtn.click();
           await page.waitForTimeout(500);
         }
-        const voucherInput = await page.locator("input[placeholder*='mã giảm giá']").first();
-        if (await voucherInput.isVisible({ timeout: 1000 })) {
-          await voucherInput.fill("ATELIER10");
-          await page.waitForTimeout(500);
+        const quickChip = page.locator("button:has-text('ATELIER10')").first();
+        if (await quickChip.isVisible({ timeout: 1000 })) {
+          await quickChip.click();
+          await page.waitForTimeout(600);
+        } else {
+          const voucherInput = await page.locator("input[placeholder*='MÃ']").first();
+          if (await voucherInput.isVisible({ timeout: 1000 })) {
+            await voucherInput.fill("ATELIER10");
+            await page.waitForTimeout(500);
+          }
         }
       } catch (e) {}
     },
@@ -920,6 +1026,38 @@ async function recordFullWebsiteE2e() {
       name: route.name,
       testId: route.testId,
     });
+  }
+
+  // Phase Mobile Responsive Walkthrough within the same master video
+  console.log("\n>>> BẮT ĐẦU KIỂM THỬ TRẢI NGHIỆM MOBILE RESPONSIVE (390x844)...");
+  try {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await page.waitForTimeout(1200);
+
+    // Open & Close Mobile Navigation Drawer
+    const mobileMenuBtn = page.locator('button[aria-label*="bảng điều hướng di động"]').first();
+    if (await mobileMenuBtn.isVisible({ timeout: 1200 })) {
+      await mobileMenuBtn.click();
+      await page.waitForTimeout(1000);
+      await mobileMenuBtn.click();
+      await page.waitForTimeout(600);
+    }
+
+    // Scroll through mobile layout
+    await page.evaluate(async () => {
+      const scrollHeight = document.documentElement.scrollHeight;
+      const vh = window.innerHeight;
+      const steps = Math.min(Math.ceil(scrollHeight / (vh * 0.8)), 8);
+      for (let s = 1; s <= steps; s++) {
+        window.scrollTo({ top: s * vh * 0.8, behavior: "smooth" });
+        await new Promise((r) => setTimeout(r, 400));
+      }
+    });
+    await page.waitForTimeout(1200);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+  } catch (mErr) {
+    console.warn("Mobile walkthrough notice:", mErr.message);
   }
 
   // Outro Splash in recording

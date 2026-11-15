@@ -2,6 +2,7 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { AnnouncementBar } from "../home/AnnouncementBar";
 import { CookieConsentBanner } from "../shared/CookieConsentBanner";
 import { AiAssistantModal } from "../shared/AiAssistantModal";
 import { AiStyleQuizModal } from "../shared/AiStyleQuizModal";
@@ -10,6 +11,7 @@ import { ProductComparisonDrawer } from "../shared/ProductComparisonDrawer";
 export function StoreLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-[#0c0c0e] text-[#f4f0e8] overflow-x-clip">
+      <AnnouncementBar />
       <Header />
       <main className="flex-1 w-full flex flex-col">
         <React.Suspense
