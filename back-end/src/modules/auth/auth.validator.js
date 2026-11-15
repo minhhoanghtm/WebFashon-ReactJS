@@ -19,6 +19,10 @@ const signUpSchema = z.object({
   fullName: z.string().trim().optional(),
   birthday: z.string().optional(),
   sex: z.enum(["male", "female"], { message: "Giới tính không hợp lệ" }).optional(),
+  termsAccepted: z.literal(true, { message: "Bạn phải chấp nhận Điều khoản sử dụng" }),
+  privacyAccepted: z.literal(true, { message: "Bạn phải đồng ý xử lý dữ liệu cá nhân" }),
+  marketingAccepted: z.boolean().optional().default(false),
+  policyVersion: z.string().trim().min(1, "Thiếu phiên bản chính sách"),
 });
 
 const signInSchema = z
@@ -91,6 +95,10 @@ const verifyRegisterSchema = z.object({
   email: z.string().email("Định dạng email không hợp lệ").optional().or(z.literal("")),
   birthday: z.string().optional(),
   sex: z.enum(["male", "female"]).optional(),
+  termsAccepted: z.literal(true, { message: "Bạn phải chấp nhận Điều khoản sử dụng" }),
+  privacyAccepted: z.literal(true, { message: "Bạn phải đồng ý xử lý dữ liệu cá nhân" }),
+  marketingAccepted: z.boolean().optional().default(false),
+  policyVersion: z.string().trim().min(1, "Thiếu phiên bản chính sách"),
 });
 
 const sendLoginOtpSchema = z.object({

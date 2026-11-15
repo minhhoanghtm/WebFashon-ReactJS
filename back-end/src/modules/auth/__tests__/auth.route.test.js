@@ -72,6 +72,10 @@ describe("Auth routes", () => {
         firstName: "Linh",
         lastName: "Nguyen",
         sex: "female",
+        termsAccepted: true,
+        privacyAccepted: true,
+        marketingAccepted: false,
+        policyVersion: "1.0",
       });
 
     expect(response.status).toBe(201);
@@ -83,6 +87,10 @@ describe("Auth routes", () => {
       firstName: "Linh",
       lastName: "Nguyen",
       sex: "female",
+      termsAccepted: true,
+      privacyAccepted: true,
+      marketingAccepted: false,
+      policyVersion: "1.0",
     });
   });
 

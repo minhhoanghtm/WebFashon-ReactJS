@@ -65,6 +65,13 @@ class SmsService {
 
     // If SMS succeeded
     if (smsResult.success) {
+      console.log(`✅ [SMS Service] Gửi OTP thành công qua SMS:`, {
+        phone: maskPhone(normPhone),
+        purpose: purpose || "xác thực",
+        channel: "sms",
+        messageId: smsResult.messageId,
+        timestamp: new Date().toISOString(),
+      });
       return {
         success: true,
         channel: "sms",
@@ -81,6 +88,12 @@ class SmsService {
       );
       try {
         await addEmailJob(email, otp);
+        console.log(`✅ [SMS Fallback] Gửi OTP thành công qua Email:`, {
+          email,
+          purpose: purpose || "xác thực",
+          channel: "email",
+          timestamp: new Date().toISOString(),
+        });
         return {
           success: true,
           channel: "email",

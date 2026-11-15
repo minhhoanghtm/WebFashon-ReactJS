@@ -751,7 +751,7 @@ const Profile = () => {
                     src={avatarUrl}
                     alt={getUserName(userProfile)}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-[50%_25%]"
                     onError={() => setFailedAvatarUrl(avatarUrl)}
                   />
                 ) : (
@@ -801,6 +801,10 @@ const Profile = () => {
                   </Link>
                 );
               })}
+              <Link to="/profile/data-requests" className="flex items-center gap-3 px-3.5 py-3 min-h-[48px] border border-transparent hover:border-[var(--color-border)] text-[var(--color-text)]">
+                <ShieldCheck size={17} aria-hidden="true" className="shrink-0" />
+                <div><div className="text-xs uppercase tracking-[0.12em] font-medium">Dữ liệu cá nhân</div><div className="text-[11px] text-[var(--color-text-muted)]">Xuất, hạn chế, xóa</div></div>
+              </Link>
             </nav>
           </aside>
 
@@ -819,7 +823,7 @@ const Profile = () => {
                           src={avatarUrl}
                           alt={getUserName(userProfile)}
                           referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover object-[50%_25%]"
                           onError={() => setFailedAvatarUrl(avatarUrl)}
                         />
                       ) : (
@@ -1396,7 +1400,7 @@ const ProfileEditModal = ({
                     src={form.avatar_url}
                     alt="Ảnh đại diện"
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-[50%_25%]"
                   />
                 ) : (
                   <User size={22} />

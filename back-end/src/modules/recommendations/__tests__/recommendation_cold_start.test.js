@@ -11,6 +11,12 @@ jest.unstable_mockModule("../../../configs/redis.js", () => ({
   getRedisConnection: jest.fn().mockReturnValue(null),
 }));
 
+// Exercise recommendation ranking itself, not the separately tested A/B gate.
+jest.unstable_mockModule("../experiments/experiment.service.js", () => ({
+  default: { assignVariant: jest.fn().mockResolvedValue({ experiment_id: "test", variant: "B", algorithm: "hybrid_personalized", isAssigned: false }) },
+  DEFAULT_REC_EXPERIMENT_ID: "test",
+}));
+
 // 2. Mock Order & OrderItem
 jest.unstable_mockModule("../../orders/order.model.js", () => ({
   Order: {

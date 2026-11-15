@@ -2,6 +2,7 @@ export { AdminPageHeader } from "./AdminPageHeader";
 export { AdminCard } from "./AdminCard";
 export { AdminBadge } from "./AdminBadge";
 export { AdminModal } from "./AdminModal";
+export { AdminDrawer } from "./AdminDrawer";
 export { AdminPagination } from "./AdminPagination";
 export { AdminEmptyState } from "./AdminEmptyState";
 export { TableSkeleton, KPISkeleton, CardSkeleton } from "./AdminSkeleton";

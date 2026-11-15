@@ -21,6 +21,12 @@ export const getRedisConnection = () => {
       maxRetriesPerRequest: null, // Critical for BullMQ
     };
 
+    // Jest suites use the locally available Redis but must never retain retry
+    // timers or a referenced socket after a suite has finished.
+    if (process.env.NODE_ENV === "test") {
+      config.retryStrategy = () => null;
+    }
+
     if (!currentUrl) {
       config.host = currentHost;
       config.port = currentPort;
@@ -31,16 +37,28 @@ export const getRedisConnection = () => {
     }
     
     redisConnection = currentUrl ? new Redis(currentUrl, config) : new Redis(config);
+    const connection = redisConnection;
     
-    redisConnection.on("connect", () => {
+    connection.on("connect", () => {
+      if (process.env.NODE_ENV === "test") {
+        connection.connector?.stream?.unref?.();
+        return;
+      }
       console.log("✅ Kết nối Redis thành công");
     });
     
-    redisConnection.on("error", (err) => {
+    connection.on("error", (err) => {
       console.error("❌ Lỗi khi kết nối Redis:", err.message);
     });
   }
   return redisConnection;
+};
+
+export const closeRedisConnection = async () => {
+  if (!redisConnection) return;
+  const connection = redisConnection;
+  redisConnection = null;
+  await connection.quit().catch(() => connection.disconnect());
 };
 
 export default getRedisConnection;

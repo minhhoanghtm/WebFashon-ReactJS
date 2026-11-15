@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, SlidersHorizontal, X, RotateCcw, Check } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { formatCurrency } from "@/utils/format";
 import { getColorHex } from "./productAdapter";
 

@@ -96,6 +96,7 @@ const ResetPasswordForm = () => {
     try {
       setIsSubmitting(true);
       const res = await forgotPasswordOtpService({ identifier: cleanId });
+      console.log("✅ Gửi OTP quên mật khẩu thành công:", res);
       const display = res?.data?.identifier || maskIdentifierDisplay(cleanId);
       setMaskedTarget(display);
       setCountdown(res?.data?.cooldown || RESEND_COOLDOWN);
@@ -132,6 +133,7 @@ const ResetPasswordForm = () => {
         identifier: identifier.trim(),
         purpose: "reset_password",
       });
+      console.log("✅ Gửi lại OTP đặt lại mật khẩu thành công:", res);
       setCountdown(res?.data?.cooldown || RESEND_COOLDOWN);
       setOtp("");
       toast.success("Mã OTP mới đã được gửi!");

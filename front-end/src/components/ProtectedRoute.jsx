@@ -31,6 +31,22 @@ const ProtectedRoute = ({ element, isPublic = false, allowedRoles = [] }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Đang có token nhưng thông tin user chưa kịp nạp vào store: hiển thị loading thay vì vội vàng đẩy ra trang chủ
+  if (allowedRoles.length > 0 && !user) {
+    return (
+      <div
+        className="flex min-h-[70vh] flex-col items-center justify-center bg-background px-4 text-foreground"
+        aria-busy="true"
+        aria-live="polite"
+      >
+        <LoaderCircle size={28} strokeWidth={1.5} className="animate-spin text-foreground" />
+        <p className="mt-4 text-[11px] font-semibold tracking-[0.22em] uppercase text-muted-foreground">
+          Đang kiểm tra quyền truy cập...
+        </p>
+      </div>
+    );
+  }
+
   if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
     return <Navigate to="/" replace />;
   }

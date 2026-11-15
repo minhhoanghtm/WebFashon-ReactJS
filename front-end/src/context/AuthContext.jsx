@@ -16,17 +16,18 @@ export const AuthProvider = ({ children }) => {
     setToken(null); 
   };
 
-  //lấy info user
+  // Lấy info user
   useEffect(() => {
     const fetchUser = async () => {
-      if(token) {
+      if (token) {
         try {
           const res = await authMeService();
-          // console.log("ME RESPONSE:", res);
           setUser(res);
         } catch (error) {
           console.error("Lỗi khi lấy thông tin user:", error);
-          logout(); // Nếu token không hợp lệ, tự động logout
+          if (error.response?.status === 401 && !localStorage.getItem("accessToken")) {
+            logout();
+          }
         }
       } else {
         setUser(null);

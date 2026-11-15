@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import resetImage from "@/pages/Home/assets/lookbook-summer.webp";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
@@ -16,7 +16,7 @@ const ResetPasswordBanner = () => {
         <img
           src={resetImage}
           alt="Không gian bảo mật Atelier"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-40 grayscale contrast-125"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_25%] opacity-40 grayscale contrast-125"
           loading="eager"
           onError={() => setImgFailed(true)}
         />

@@ -25,6 +25,7 @@ import { userApi } from "@/api/user.api";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 import { addCartItemService } from "@/services/cartItem.service";
 import trackingService from "@/services/tracking.service";
+import consentService from "@/services/consent.service";
 
 const RESEND_COOLDOWN = 60;
 
@@ -104,21 +105,23 @@ const LoginForm = () => {
     setErrors((prev) => ({ ...prev, [name]: null, general: null }));
   };
 
-  const handleAfterLoginSuccess = async (token) => {
-    login(token);
-
-    let userRole = "";
+  const handleAfterLoginSuccess = async (token, initialUser = null) => {
+    let userRole = initialUser?.role || initialUser?.data?.role || "";
+    login(token, initialUser);
     try {
       const userRes = await userApi.getMe();
       if (userRes?.success && userRes?.data) {
         setUser(userRes.data);
-        userRole = userRes.data.role || userRes.data.data?.role || "";
+        userRole = userRes.data.role || userRes.data.data?.role || userRole;
       }
     } catch (err) {
       console.error("Lỗi khi lấy thông tin user sau khi đăng nhập:", err);
     }
 
     toast.success("Đăng nhập thành công!");
+
+    // Đồng bộ trạng thái quyền riêng tư của tài khoản đã đăng nhập
+    consentService.syncWithServer().catch(() => {});
 
     // Khôi phục giỏ hàng chờ sau khi đăng nhập
     const pendingCart = sessionStorage.getItem("pending_add_to_cart");
@@ -185,7 +188,8 @@ const LoginForm = () => {
         } else {
           localStorage.removeItem("rememberedEmail");
         }
-        await handleAfterLoginSuccess(token);
+        const initialUser = response?.data?.user;
+        await handleAfterLoginSuccess(token, initialUser);
       } else {
         toast.error("Đăng nhập thất bại: Không tìm thấy token xác thực.");
       }
@@ -219,6 +223,7 @@ const LoginForm = () => {
     try {
       setIsSubmitting(true);
       const res = await sendLoginOtpService({ phone: cleanPhone });
+      console.log("✅ Gửi OTP đăng nhập thành công:", res);
       setMaskedPhone(res?.data?.phone || maskPhoneDisplay(cleanPhone));
       setCountdown(res?.data?.cooldown || RESEND_COOLDOWN);
       setOtpStep(2);
@@ -251,8 +256,9 @@ const LoginForm = () => {
       });
 
       const token = res?.data?.accessToken;
+      const initialUser = res?.data?.user;
       if (token) {
-        await handleAfterLoginSuccess(token);
+        await handleAfterLoginSuccess(token, initialUser);
       } else {
         toast.error("Đăng nhập thất bại: Thiếu token xác thực.");
       }
@@ -277,6 +283,7 @@ const LoginForm = () => {
         identifier: cleanPhone,
         purpose: "login",
       });
+      console.log("✅ Gửi lại OTP đăng nhập thành công:", res);
       setCountdown(res?.data?.cooldown || RESEND_COOLDOWN);
       setLoginOtp("");
       toast.success("Mã OTP mới đã được gửi!");

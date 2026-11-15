@@ -1,5 +1,23 @@
 # Nhật Ký Quyết Định Kỹ Thuật (Decisions Log)
 
+## 10. Chuẩn Hóa Admin Overlay & Khắc Phục Lỗi Tự Tham Chiếu Tracking (2026-11-03)
+- **Nguyên nhân gốc lỗi Drawer/Overlay bị cắt ngang:**
+  - Ngăn kéo timeline và các modal trong Admin trước đây được render trực tiếp bên trong thẻ `<main>` của `AdminLayout`.
+  - Thẻ `<main>` mang lớp `page-fade-enter` (chứa CSS `transform` và `opacity`) kết hợp `overflow-y-auto`. Theo quy chuẩn CSS Transforms Module Level 1 (Section 6), bất kỳ phần tử nào có `transform` khác `none` sẽ trở thành một containing block cho tất cả các phần tử con có `position: fixed`.
+  - Do đó, `fixed inset-0` và `h-full` chỉ phủ trong ranh giới của `<main>`, không thể bao phủ toàn bộ viewport, để lộ `AdminHeader` (z-30), `Sidebar` (z-40) và bị cắt ngang khi trang cuộn.
+- **Giải pháp chuẩn hóa AdminDrawer & AdminModal:**
+  - Tạo mới component dùng chung `AdminDrawer` ([`AdminDrawer.jsx`](file:///D:/Project/REACT-WebFashion/front-end/src/components/admin/ui/AdminDrawer.jsx)) và nâng cấp [`AdminModal.jsx`](file:///D:/Project/REACT-WebFashion/front-end/src/components/admin/ui/AdminModal.jsx).
+  - Sử dụng React `createPortal` đưa toàn bộ overlay ra trực tiếp `document.body`, đặt `z-[60]` (vượt trên Header z-30 và Sidebar z-40/50), `position: fixed; inset: 0`.
+  - Khóa cuộn nền (`document.body.style.overflow = 'hidden'`) kèm bù trừ khoảng giật layout bằng độ rộng thanh cuộn (`paddingRight = scrollbarWidth + 'px'`).
+  - Đảm bảo chuẩn tiếp cận WCAG 2.2 AA: Focus Trap (bẫy phím Tab tuần hoàn trong modal/drawer), khôi phục tiêu điểm về nút kích hoạt khi đóng, hỗ trợ phím `Escape`, vùng chạm nút đóng đạt chuẩn tối thiểu >= 44px (`min-h-[44px] min-w-[44px]`).
+- **Khắc phục lỗi dữ liệu Tracking tự tham chiếu (Mục C):**
+  - **Vấn đề (a) - Đệ quy tự ghi log request sự kiện:**
+    - `apiTracing.middleware.js` tại Backend trước đây chỉ bỏ qua `/presence/heartbeat` và `/health`. Khi client gửi batch tracking `POST /api/events`, middleware đã ghi nhận request này vào MongoDB như một sự kiện `api_trace`, gây nhiễu dữ liệu timeline.
+    - Khắc phục: Bổ sung loại trừ toàn diện các endpoint viễn thám và quyền riêng tư: `/events`, `/tracking`, `/presence/`, `/privacy`, `/health`.
+  - **Vấn đề (b) - Lỗi ảo status 0 durationMs 4ms:**
+    - Trong `axiosClient.js`, interceptor bắt lỗi đã bắt cả các request bị hủy bởi `AbortController` (khi người dùng gõ tìm kiếm liên tục hoặc chuyển trang) và request tracking `/events`. Các request này trả về `error.response = null` nên mã lỗi bị gán thành 0 và ghi nhận như một `api_error` (CLIENT_ERROR).
+    - Khắc phục: Kiểm tra `axios.isCancel(error)`, `ERR_CANCELED`, loại trừ toàn bộ endpoint tracking khỏi interceptor lỗi, và bỏ qua các request status 0 có duration < 100ms do chuyển trang, ngăn chặn triệt để vòng lặp sinh `api_error`.
+
 ## 8. AI action confirmation hardening (2026-11-03)
 - Persist pending AI write actions in MongoDB with a five-minute TTL, normalized server-owned parameters and a SHA-256 digest. Confirmation is only accepted at `POST /chat/ai/actions/:id/confirm`; cancellation uses its own authenticated endpoint.
 - The record is atomically claimed before calling the allowlisted tool. This makes confirmation idempotent under double-click/retry and rechecks price/stock via the existing cart service at execution time.

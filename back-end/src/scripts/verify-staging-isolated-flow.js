@@ -3,17 +3,16 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import Redis from "ioredis";
+import { requireEnv } from "./require-env.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-const STAGING_MONGO_URI = "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin";
-const STAGING_REDIS_URL = "redis://127.0.0.1:6381";
+const STAGING_MONGO_URI = requireEnv("MONGO_CONNECTIONSTRING");
+const STAGING_REDIS_URL = requireEnv("REDIS_URL");
 
 process.env.REDIS_URL = STAGING_REDIS_URL;
-process.env.REDIS_PORT = "6381";
-process.env.MONGO_CONNECTIONSTRING = STAGING_MONGO_URI;
 
 const { default: Experiment } = await import("../modules/recommendations/experiments/experiment.model.js");
 const { default: experimentService, AA_EXPERIMENT_ID } = await import("../modules/recommendations/experiments/experiment.service.js");

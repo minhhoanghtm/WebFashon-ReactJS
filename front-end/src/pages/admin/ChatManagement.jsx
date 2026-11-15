@@ -309,7 +309,7 @@ const ChatManagement = () => {
                         <img
                           src={conversation.user.avatar_url}
                           alt={getConversationTitle(conversation)}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover object-[50%_25%]"
                         />
                       ) : (
                         <span className="flex h-full w-full items-center justify-center text-sm font-bold text-white">
@@ -364,7 +364,7 @@ const ChatManagement = () => {
                     <img
                       src={selectedConversation.user.avatar_url}
                       alt={selectedTitle}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover object-[50%_25%]"
                     />
                   ) : (
                     <span className="flex h-full w-full items-center justify-center font-bold text-white">

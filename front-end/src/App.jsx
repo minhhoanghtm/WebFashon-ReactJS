@@ -4,6 +4,8 @@ import { queryClient } from './config/queryClient';
 import AppRouter from './routes/AppRouter';
 import { useAuthStore } from './store/auth.store';
 import { userApi } from './api/user.api';
+import { tokenStorage } from './utils/token';
+import { ConsentProvider } from './context/ConsentContext';
 
 // Toast Notifications
 import { ToastContainer } from 'react-toastify';
@@ -15,7 +17,7 @@ const App = () => {
   // On initial mount, restore session if token exists
   useEffect(() => {
     const bootstrapAuth = async () => {
-      const token = localStorage.getItem('accessToken');
+      const token = tokenStorage.getToken();
       if (!token) {
         setIsLoading(false);
         return;
@@ -26,12 +28,15 @@ const App = () => {
         const res = await userApi.getMe();
         if (res.success && res.data) {
           setUser(res.data);
-        } else {
+        } else if (!tokenStorage.getToken()) {
           logout();
         }
       } catch (err) {
         console.error('Session bootstrap failed:', err);
-        logout();
+        // Only log out if backend explicitly rejected with 401 and refresh token is invalid
+        if (err.response?.status === 401 && !tokenStorage.getToken()) {
+          logout();
+        }
       } finally {
         setIsLoading(false);
       }
@@ -42,8 +47,10 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppRouter />
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ConsentProvider>
+        <AppRouter />
+        <ToastContainer position="top-right" autoClose={3000} />
+      </ConsentProvider>
     </QueryClientProvider>
   );
 };

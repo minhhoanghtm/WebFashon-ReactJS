@@ -17,13 +17,17 @@ import {
   ExternalLink,
   X,
   Award,
+  Activity,
 } from "lucide-react";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const navigationGroups = [
   {
     title: "Tổng quan",
-    items: [{ name: "Bảng điều khiển", href: "/admin", icon: LayoutDashboard }],
+    items: [
+      { name: "Bảng điều khiển", href: "/admin", icon: LayoutDashboard },
+      { name: "Giám sát & Trực tuyến", href: "/admin/user-activity", icon: Activity },
+    ],
   },
   {
     title: "Sản phẩm & Kho",

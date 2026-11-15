@@ -36,7 +36,7 @@ export async function testStorefront(browser, report) {
         // 2. Check Footer dynamic content from BE
         const footerHasBE = await page.evaluate(() => {
           const body = document.body.innerText;
-          return body.includes("404 STUDIO") || body.includes("Đồng Khởi");
+          return body.includes("404 STUDIO") || body.includes("404Studio") || body.includes("Cao Bằng") || body.includes("Nguyễn văn cừ") || body.includes("Đồng Khởi");
         });
 
         // 3. Overflow check

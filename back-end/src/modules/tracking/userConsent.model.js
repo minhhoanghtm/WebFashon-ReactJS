@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { PRIVACY_POLICY_VERSION } from "../../common/constants/privacyPolicy.js";
 
 const userConsentSchema = new mongoose.Schema(
   {
@@ -18,6 +19,25 @@ const userConsentSchema = new mongoose.Schema(
       enum: ["granted", "denied"],
       required: true,
       default: "granted",
+    },
+    consent_choice: {
+      type: String,
+      enum: ["UNKNOWN", "ESSENTIAL_ONLY", "CUSTOM", "ALL_ACCEPTED", "WITHDRAWN", "RECONSENT_REQUIRED"],
+      default: "ESSENTIAL_ONLY",
+    },
+    categories: {
+      necessary: { type: Boolean, default: true },
+      analytics: { type: Boolean, default: false },
+      personalization: { type: Boolean, default: false },
+      marketing: { type: Boolean, default: false },
+    },
+    policy_version: {
+      type: String,
+      default: PRIVACY_POLICY_VERSION,
+    },
+    source: {
+      type: String,
+      default: "banner",
     },
     // Durable Deletion Fence / Watermark:
     // Mọi event có timestamp <= cleared_at đều bị Worker drop vĩnh viễn,

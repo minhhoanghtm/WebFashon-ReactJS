@@ -2,7 +2,7 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-const index = () => {
+const ForgotPassword = () => {
   useDocumentTitle("Quên mật khẩu");
   const navigate = useNavigate();
   return (
@@ -39,4 +39,4 @@ const index = () => {
   );
 };
 
-export default index;
+export default ForgotPassword;

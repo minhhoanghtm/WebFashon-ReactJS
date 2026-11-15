@@ -7,6 +7,7 @@ import { testAuthAndAccount } from "./03_auth_account.mjs";
 import { testAdmin } from "./04_admin.mjs";
 import { testChat } from "./05_chat.mjs";
 import { testSmsOtp } from "./06_sms_otp.mjs";
+import { testCookieConsent } from "./07_cookie_consent.spec.mjs";
 
 class TestReport {
   constructor() {
@@ -55,6 +56,7 @@ class TestReport {
 | **4. Admin Management (Dashboard, Products, Orders, Settings, RBAC)** | ${this.results.filter((r) => r.suite.includes("Admin")).length} | ${this.results.filter((r) => r.suite.includes("Admin" && r.status === "PASS")).length} | ${this.results.filter((r) => r.suite.includes("Admin") && r.status === "FAIL").length} | 0 |
 | **5. Chat Support (Storefront Widget & Admin 2-column)** | ${this.results.filter((r) => r.suite === "Chat").length} | ${this.results.filter((r) => r.suite === "Chat" && r.status === "PASS").length} | ${this.results.filter((r) => r.suite === "Chat" && r.status === "FAIL").length} | 0 |
 | **6. SMS OTP Authentication (Register, Login, Password Reset, Viewports)** | ${this.results.filter((r) => r.suite.includes("SMS OTP")).length} | ${this.results.filter((r) => r.suite.includes("SMS OTP") && r.status === "PASS").length} | ${this.results.filter((r) => r.suite.includes("SMS OTP") && r.status === "FAIL").length} | 0 |
+| **7. Privacy & Cookie Consent (Banner, Choices, Modal, Withdrawal, Viewports)** | ${this.results.filter((r) => r.suite === "Privacy & Consent").length} | ${this.results.filter((r) => r.suite === "Privacy & Consent" && r.status === "PASS").length} | ${this.results.filter((r) => r.suite === "Privacy & Consent" && r.status === "FAIL").length} | 0 |
 
 ---
 
@@ -69,8 +71,8 @@ class TestReport {
         res.status === "PASS"
           ? "✅ PASS"
           : res.status === "BLOCKED"
-          ? "⛔ BLOCKED"
-          : "❌ FAIL";
+            ? "⛔ BLOCKED"
+            : "❌ FAIL";
       md += `| ${res.suite} | ${res.testName} | ${badge} | ${res.details} |\n`;
     }
 
@@ -101,15 +103,13 @@ async function run() {
   const browser = await createTestBrowser();
 
   try {
-    await fetch("http://localhost:5000/api/auth/dev/reset-rate-limits", { method: "POST" }).catch(() => {});
     await testStorefront(browser, report);
     await testCartAndCheckout(browser, report);
-    await fetch("http://localhost:5000/api/auth/dev/reset-rate-limits", { method: "POST" }).catch(() => {});
     await testAuthAndAccount(browser, report);
     await testAdmin(browser, report);
     await testChat(browser, report);
-    await fetch("http://localhost:5000/api/auth/dev/reset-rate-limits", { method: "POST" }).catch(() => {});
     await testSmsOtp(browser, report);
+    await testCookieConsent(browser, report);
   } catch (err) {
     console.error("Lỗi trong quá trình chạy E2E runner:", err);
   } finally {

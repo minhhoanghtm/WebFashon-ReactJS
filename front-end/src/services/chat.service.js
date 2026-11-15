@@ -34,13 +34,15 @@ export const getCustomerConversationsService = async () => {
   return unwrap(await chatApi.getCustomerConversations());
 };
 
-export const getCustomerMessagesService = async (conversationId) => {
-  return unwrap(await chatApi.getCustomerMessages(conversationId));
+export const getCustomerMessagesService = async (conversationId, params) => {
+  return unwrap(await chatApi.getCustomerMessages(conversationId, params));
 };
 
 export const sendCustomerAiMessageService = async (payload) => {
   return unwrap(await chatApi.sendCustomerAiMessage(payload));
 };
+export const confirmCustomerAiActionService = async (id, paramsHash) => unwrap(await chatApi.confirmAiAction(id, paramsHash));
+export const cancelCustomerAiActionService = async (id) => unwrap(await chatApi.cancelAiAction(id));
 
 export const sendCustomerSupportMessageService = async (payload) => {
   return unwrap(await chatApi.sendCustomerSupportMessage(payload));

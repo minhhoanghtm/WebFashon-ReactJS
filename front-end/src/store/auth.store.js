@@ -12,9 +12,18 @@ export const useAuthStore = create((set) => ({
   login: (token, user = null) => {
     tokenStorage.setToken(token);
     set({ isAuthenticated: true, user });
+    import("./cart.store").then(({ useCartStore }) => {
+      useCartStore.getState().syncGuestCartToBackend();
+    }).catch(() => {});
+    import("../services/presence.service").then(({ default: presenceService }) => {
+      presenceService.recordUserAction("user_logged_in");
+    }).catch(() => {});
   },
 
   logout: () => {
+    import("../services/presence.service").then(({ default: presenceService }) => {
+      presenceService.handleLogout();
+    }).catch(() => {});
     signOutApi().catch(() => {});
     tokenStorage.removeToken();
     try {

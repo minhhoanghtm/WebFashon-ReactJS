@@ -31,9 +31,14 @@ export default defineConfig({
           }
           if (id.includes('node_modules/motion')) return 'vendor-motion';
           if (id.includes('node_modules/gsap')) return 'vendor-gsap';
+          if (id.includes('node_modules/echarts')) return 'vendor-echarts';
         },
       },
     },
     chunkSizeWarningLimit: 1200,
+  },
+  test: {
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.js",
   },
 });

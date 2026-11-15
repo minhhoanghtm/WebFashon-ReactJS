@@ -1,5 +1,5 @@
 import React from "react";
-import { Bot, Headphones, User, AlertCircle, Check, RotateCw } from "lucide-react";
+import { Bot, Headphones, User, AlertCircle, Check, RotateCw, Clock, ArrowRight } from "lucide-react";
 import Markdown from "@/components/Markdown";
 import ProductSuggestionCard from "./ProductSuggestionCard";
 import { parseInlineProducts } from "@/hooks/useAiChat";
@@ -41,10 +41,13 @@ export const MessageBubble = ({
     );
   }
 
-  // Parse inline products if AI message
-  const { cleanedContent, items } = isAi
+  // Parse inline products if AI message, or use structured products
+  const structuredProducts = message.metadata?.products || message.products || [];
+  const { cleanedContent, items: inlineItems } = isAi
     ? parseInlineProducts(message.content)
     : { cleanedContent: message.content, items: [] };
+
+  const items = structuredProducts.length > 0 ? structuredProducts : inlineItems;
 
   const pendingAction = message.metadata?.pendingAction;
   const actionResult = message.metadata?.actionResult;
@@ -56,7 +59,7 @@ export const MessageBubble = ({
     <div
       className={`group flex gap-2.5 ${
         isUser ? "flex-row-reverse" : "flex-row"
-      } items-start text-left`}
+      } items-start text-left max-w-full overflow-hidden`}
     >
       {/* Avatar Icon */}
       {!isUser && (
@@ -71,12 +74,12 @@ export const MessageBubble = ({
 
       {/* Bubble Content */}
       <div
-        className={`flex max-w-[85%] flex-col ${
+        className={`flex max-w-[85%] min-w-0 flex-col ${
           isUser ? "items-end" : "items-start"
         }`}
       >
         <div
-          className={`px-3.5 py-2.5 text-xs leading-relaxed transition-all ${
+          className={`px-3.5 py-2.5 text-xs leading-relaxed transition-all max-w-full overflow-hidden ${
             isUser
               ? "bg-primary text-primary-foreground font-normal"
               : "border border-border bg-card text-card-foreground"
@@ -84,7 +87,7 @@ export const MessageBubble = ({
         >
           {/* Main text content */}
           {cleanedContent && (
-            <div className="prose-chat break-words">
+            <div className="prose-chat break-words overflow-hidden [overflow-wrap:anywhere]">
               {isUser ? (
                 <p className="whitespace-pre-wrap">{cleanedContent}</p>
               ) : (
@@ -95,7 +98,7 @@ export const MessageBubble = ({
 
           {/* Inline Product Cards */}
           {items.length > 0 && (
-            <div className="mt-3 flex flex-col gap-2">
+            <div className="mt-3 flex flex-col gap-2 w-full max-w-full overflow-hidden">
               {items.map((prod, idx) => (
                 <ProductSuggestionCard
                   key={idx}
@@ -107,15 +110,29 @@ export const MessageBubble = ({
             </div>
           )}
 
-          {/* Pending Action Confirmation Gate (e.g. add_to_cart) */}
-          {pendingAction?.actionType === "add_to_cart" &&
+          {/* Pending Action Confirmation Gate (e.g. start_checkout / add_to_cart / place_order / cancel_checkout) */}
+          {pendingAction &&
             Array.isArray(pendingAction.items) &&
             pendingAction.items.length > 0 && (
               <div className="mt-3 border border-border bg-muted/40 p-2.5 space-y-2">
                 <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-foreground">
-                  <span>Xác nhận thêm giỏ hàng</span>
-                  <span>{pendingAction.totalEstimatedPriceFormatted}</span>
+                  <span className="flex items-center gap-1.5">
+                    {(pendingAction.actionType === "start_checkout" || pendingAction.actionType === "buy_now") ? (
+                      <>
+                        <Clock className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+                        <span>Xác nhận thanh toán (Giữ hàng 5 phút)</span>
+                      </>
+                    ) : pendingAction.actionType === "place_order" ? (
+                      <span>Xác nhận đặt hàng</span>
+                    ) : pendingAction.actionType === "cancel_checkout" ? (
+                      <span>Hủy giữ hàng thanh toán</span>
+                    ) : (
+                      <span>Xác nhận thêm giỏ hàng</span>
+                    )}
+                  </span>
+                  <span className="tabular-nums font-semibold">{pendingAction.totalEstimatedPriceFormatted}</span>
                 </div>
+
                 <div className="space-y-1 text-[11px] text-muted-foreground border-y border-border/60 py-1.5">
                   {pendingAction.items.map((it, idx) => (
                     <div key={idx} className="flex justify-between gap-2">
@@ -123,25 +140,38 @@ export const MessageBubble = ({
                         {it.name} ({it.color}/{it.size}) × {it.quantity}
                       </span>
                       <span className="shrink-0 font-medium text-foreground tabular-nums">
-                        {(it.unit_price * it.quantity).toLocaleString("vi-VN")} đ
+                        {((it.unit_price || it.unitPrice || 0) * (it.quantity || 1)).toLocaleString("vi-VN")} đ
                       </span>
                     </div>
                   ))}
                 </div>
+
                 <div className="flex gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => onActionConfirm?.(pendingAction)}
-                    className="flex-1 bg-primary py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-primary-foreground hover:opacity-90 active:scale-98"
+                    disabled={pendingAction.status !== "pending"}
+                    className="flex-1 bg-primary py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-primary-foreground hover:opacity-90 active:scale-98 cursor-pointer disabled:opacity-50"
                   >
-                    ✓ Xác nhận thêm
+                    {pendingAction.status === "pending"
+                      ? (pendingAction.actionType === "start_checkout" || pendingAction.actionType === "buy_now")
+                        ? "Tiếp tục thanh toán"
+                        : pendingAction.actionType === "place_order"
+                        ? "Xác nhận đặt hàng"
+                        : pendingAction.actionType === "cancel_checkout"
+                        ? "Hủy thanh toán"
+                        : "Xác nhận thêm giỏ hàng"
+                      : "Đã xử lý"}
                   </button>
                   <button
                     type="button"
                     onClick={() => onActionCancel?.(pendingAction)}
-                    className="border border-border bg-background px-3 py-1.5 text-[10px] font-medium text-foreground hover:bg-muted active:scale-98"
+                    disabled={pendingAction.status !== "pending"}
+                    className="border border-border bg-background px-3 py-1.5 text-[10px] font-medium text-foreground hover:bg-muted active:scale-98 cursor-pointer disabled:opacity-50"
                   >
-                    Hủy
+                    {(pendingAction.actionType === "start_checkout" || pendingAction.actionType === "buy_now")
+                      ? "Hủy thanh toán"
+                      : "Hủy"}
                   </button>
                 </div>
               </div>
@@ -149,9 +179,28 @@ export const MessageBubble = ({
 
           {/* Action Result Badge */}
           {actionResult?.status === "EXECUTED" && (
-            <div className="mt-2 inline-flex items-center gap-1.5 border border-border bg-muted px-2 py-1 text-[10px] font-medium text-foreground">
-              <Check className="h-3 w-3" />
-              <span>{actionResult.message || "Đã thêm giỏ hàng thành công"}</span>
+            <div className="mt-2 space-y-2">
+              <div className="inline-flex items-center gap-1.5 border border-border bg-muted px-2 py-1 text-[10px] font-medium text-foreground">
+                <Check className="h-3 w-3 text-emerald-600" />
+                <span>{actionResult.message || "Thao tác đã được thực hiện thành công"}</span>
+              </div>
+              {actionResult.checkoutUrl && (
+                <div className="pt-1">
+                  <a
+                    href={actionResult.checkoutUrl}
+                    className="inline-flex items-center gap-1.5 bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground hover:opacity-90"
+                  >
+                    <span>Mở trang thanh toán ngay</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          {actionResult?.status === "CANCELLED" && (
+            <div className="mt-2 inline-flex items-center gap-1.5 border border-border bg-muted/60 px-2 py-1 text-[10px] font-medium text-muted-foreground">
+              <span>{actionResult.message || "Đã hủy thao tác"}</span>
             </div>
           )}
 
@@ -204,6 +253,7 @@ export const MessageBubble = ({
         {timeStr && (
           <span className="mt-1 px-1 text-[10px] tabular-nums text-muted-foreground">
             {timeStr}
+            {isUser && !message.isFailed && !String(message._id || "").startsWith("temp_") ? " · Đã gửi" : ""}
           </span>
         )}
       </div>

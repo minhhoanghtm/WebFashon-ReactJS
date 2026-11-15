@@ -114,6 +114,10 @@ describe("SMS OTP Auth Routes Integration", () => {
           otp: "123456",
           fullName: "Nguyễn Văn A",
           passWord: "Password123@",
+          termsAccepted: true,
+          privacyAccepted: true,
+          marketingAccepted: false,
+          policyVersion: "1.0",
         });
 
       expect(res.status).toBe(201);

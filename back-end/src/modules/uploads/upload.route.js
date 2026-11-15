@@ -1,27 +1,13 @@
 import express from "express";
 import multer from "multer";
-import crypto from "crypto";
 import path from "path";
 import { uploadSingleImage } from "./upload.controller.js";
-import uploadService from "./upload.service.js";
 import { protectedRoute } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
-const uploadDir = uploadService.ensureUploadDirExists();
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const randomName = `${crypto.randomUUID()}${ext}`;
-    cb(null, randomName);
-  },
-});
 
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
@@ -35,7 +21,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter,
 });

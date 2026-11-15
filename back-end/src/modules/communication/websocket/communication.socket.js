@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../../users/user.model.js";
 import supportChatService from "../supportChat/supportChat.service.js";
+import conversationService from "../conversations/conversation.service.js";
 
 const getSocketActor = (socket) => {
   const token =
@@ -36,8 +37,24 @@ export const registerCommunicationSocket = async (io, socket) => {
     socket.join("admins");
   }
 
-  socket.on("conversation:join", (conversationId) => {
-    if (conversationId) socket.join(`conversation:${conversationId}`);
+  socket.on("conversation:join", async (conversationId, callback) => {
+    try {
+      if (!actor?.userId) throw new Error("Unauthenticated socket");
+      if (!conversationId) throw new Error("conversationId is required");
+
+      // Authorization must happen before joining, otherwise an authenticated
+      // customer could listen to another customer's conversation room.
+      await conversationService.getConversationById(conversationId, {
+        userId: actor.userId,
+        role: actorRole,
+      });
+      socket.join(`conversation:${conversationId}`);
+      callback?.({ success: true });
+    } catch (error) {
+      const payload = { success: false, message: error.message || "Forbidden conversation room" };
+      socket.emit("conversation:error", payload);
+      callback?.(payload);
+    }
   });
 
   socket.on("conversation:leave", (conversationId) => {
@@ -53,10 +70,11 @@ export const registerCommunicationSocket = async (io, socket) => {
           ? await supportChatService.sendAdminMessage(actor.userId, payload)
           : await supportChatService.sendCustomerMessage(actor.userId, payload);
 
-      io.to(`conversation:${result.conversationId}`).emit("message:new", result.message);
+      const messagePayload = { message: result.message, conversation: result.conversation };
+      io.to(`conversation:${result.conversationId}`).emit("message:new", messagePayload);
 
       if (actorRole !== "admin") {
-        io.to("admins").emit("message:new", result.message);
+        io.to("admins").emit("message:new", messagePayload);
       }
 
       callback?.({ success: true, data: result });

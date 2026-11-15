@@ -3,6 +3,8 @@ import { ENV } from '../config/env';
 import { tokenStorage } from '../utils/token';
 import { useAuthStore } from '../store/auth.store';
 import { getAnonymousId, getAnonymousToken } from '../utils/anonymousId';
+import sessionService from '../services/session.service';
+import presenceService from '../services/presence.service';
 
 const cleanUrls = (obj) => {
   if (!obj) return obj;
@@ -44,22 +46,112 @@ const axiosClient = axios.create({
   },
 });
 
-// Response/Request state for token refresh queueing
-let isRefreshing = false;
-let failedQueue = [];
+// Single-flight refresh token promise & Multi-tab broadcast channel
+let activeRefreshPromise = null;
+let authBroadcastChannel = null;
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
+if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+  try {
+    authBroadcastChannel = new BroadcastChannel('webfashion_auth_sync');
+    authBroadcastChannel.onmessage = (event) => {
+      const data = event.data;
+      if (data?.type === 'TOKEN_REFRESHED' && data.token) {
+        const currentToken = tokenStorage.getToken();
+        if (currentToken !== data.token) {
+          tokenStorage.setToken(data.token);
+          const currentUser = useAuthStore.getState().user;
+          useAuthStore.getState().login(data.token, currentUser);
+        }
+      } else if (data?.type === 'LOGOUT') {
+        tokenStorage.removeToken();
+        useAuthStore.getState().logout();
+      }
+    };
+  } catch {
+    authBroadcastChannel = null;
+  }
+}
+
+/**
+ * Single-flight Refresh Token Manager:
+ * Ensures all concurrent 401s and proactive refresh checks reuse the exact same in-flight HTTP request.
+ * Completely eliminates race conditions, token reuse false positives, and multi-tab logout loops.
+ */
+export const requestNewAccessToken = async () => {
+  if (activeRefreshPromise) {
+    return activeRefreshPromise;
+  }
+
+  activeRefreshPromise = (async () => {
+    try {
+      const storedRefreshToken = tokenStorage.getRefreshToken?.() || null;
+      const refreshResponse = await axios.post(
+        `${ENV.API_BASE_URL}/auth/refreshToken`,
+        storedRefreshToken ? { refreshToken: storedRefreshToken } : {},
+        { withCredentials: true, timeout: 15000 }
+      );
+
+      const respData = refreshResponse.data?.data || refreshResponse.data;
+      const newAccessToken = respData?.accessToken;
+      const newRefreshToken = respData?.refreshToken;
+
+      if (!newAccessToken) {
+        throw new Error("No access token returned from refresh endpoint");
+      }
+
+      tokenStorage.setToken(newAccessToken);
+      if (newRefreshToken && tokenStorage.setRefreshToken) {
+        tokenStorage.setRefreshToken(newRefreshToken);
+      }
+
+      const currentUser = useAuthStore.getState().user;
+      useAuthStore.getState().login(newAccessToken, currentUser);
+
+      // Notify other tabs immediately
+      if (authBroadcastChannel) {
+        try {
+          authBroadcastChannel.postMessage({
+            type: 'TOKEN_REFRESHED',
+            token: newAccessToken,
+          });
+        } catch { /* Cross-tab notification is best-effort. */ }
+      }
+
+      return newAccessToken;
+    } catch (refreshError) {
+      const status = refreshError.response?.status;
+      // ONLY trigger forced logout when the backend explicitly rejects the refresh token as invalid/expired (401/403)
+      if (status === 401 || status === 403) {
+        tokenStorage.removeToken();
+        useAuthStore.getState().logout();
+
+        if (authBroadcastChannel) {
+          try {
+            authBroadcastChannel.postMessage({ type: 'LOGOUT' });
+          } catch { /* Cross-tab notification is best-effort. */ }
+        }
+
+        if (typeof window !== 'undefined') {
+          const pathname = window.location.pathname;
+          if (!pathname.startsWith('/login') && !pathname.startsWith('/register')) {
+            window.location.href = '/login';
+          }
+        }
+      } else {
+        // Network error (ECONNRESET, timeout), 500, 502, 503, 504:
+        // PRESERVE user credentials and auth state — DO NOT LOG OUT!
+        console.warn("[axiosClient] Token refresh failed due to temporary network/server error:", refreshError.message);
+      }
+      throw refreshError;
+    } finally {
+      activeRefreshPromise = null;
     }
-  });
-  failedQueue = [];
+  })();
+
+  return activeRefreshPromise;
 };
 
-// Request interceptor to dynamically inject the JWT bearer token with proactive renewal
+// Request interceptor to dynamically inject the JWT bearer token with safe proactive renewal
 axiosClient.interceptors.request.use(
   async (config) => {
     // Avoid recursion: do not run refresh logic on the refreshToken endpoint itself!
@@ -73,53 +165,20 @@ axiosClient.interceptors.request.use(
       if (decoded && decoded.exp) {
         const expirationTime = decoded.exp * 1000;
         const currentTime = Date.now();
-        
-        // If the token is about to expire in less than 5 minutes (300,000 ms), proactively refresh it
-        if (expirationTime - currentTime < 5 * 60 * 1000) {
-          if (isRefreshing) {
-            try {
-              const newAccessToken = await new Promise((resolve, reject) => {
-                failedQueue.push({ resolve, reject });
-              });
-              config.headers.Authorization = `Bearer ${newAccessToken}`;
-              return config;
-            } catch {
-              return config; // Fallback to current token, let the request fail and trigger standard 401 logout
-            }
-          }
 
-          isRefreshing = true;
+        // If the token expires in less than 2 minutes (120,000 ms), proactively refresh it in background
+        if (expirationTime - currentTime < 2 * 60 * 1000) {
           try {
-            const refreshResponse = await axios.post(
-              `${ENV.API_BASE_URL}/auth/refreshToken`,
-              {},
-              { withCredentials: true }
-            );
-
-            const newAccessToken = refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken;
-            if (newAccessToken) {
-              tokenStorage.setToken(newAccessToken);
-              
-              const currentUser = useAuthStore.getState().user;
-              useAuthStore.getState().login(newAccessToken, currentUser);
-
-              processQueue(null, newAccessToken);
-              config.headers.Authorization = `Bearer ${newAccessToken}`;
-            } else {
-              throw new Error("No access token returned from refresh endpoint");
-            }
-          } catch (refreshError) {
-            processQueue(refreshError, null);
-            useAuthStore.getState().logout();
-            window.location.href = '/login';
-            return Promise.reject(refreshError);
-          } finally {
-            isRefreshing = false;
+            const freshToken = await requestNewAccessToken();
+            config.headers.Authorization = `Bearer ${freshToken}`;
+            return config;
+          } catch {
+            // Proactive renewal error: proceed with current token and let standard 401 response interceptor handle if needed
           }
         }
       }
-      
-      // Inject bearer token (if we didn't refresh or refresh updated it)
+
+      // Inject bearer token
       const currentToken = tokenStorage.getToken();
       if (currentToken && config.headers) {
         config.headers.Authorization = `Bearer ${currentToken}`;
@@ -136,6 +195,20 @@ axiosClient.interceptors.request.use(
       config.headers['x-anonymous-token'] = anonymousToken;
     }
 
+    // Gắn thông tin phiên làm việc, nhãn tab, traceId và actionId để tương quan API
+    if (config.headers) {
+      config._startTime = Date.now();
+      const traceId = sessionService.createTraceId();
+      config.headers['x-trace-id'] = traceId;
+      config.headers['x-session-id'] = sessionService.getSessionId();
+      config.headers['x-tab-id'] = sessionService.getTabId();
+      config.headers['x-frontend-route'] = sessionService.getCurrentRoute();
+      const actionId = sessionService.getCurrentActionId();
+      if (actionId) {
+        config.headers['x-action-id'] = actionId;
+      }
+    }
+
     return config;
   },
   (error) => {
@@ -145,6 +218,32 @@ axiosClient.interceptors.request.use(
 
 axiosClient.interceptors.response.use(
   (response) => {
+    try {
+      const config = response.config || {};
+      const durationMs = config._startTime ? Date.now() - config._startTime : 0;
+      const cleanUrl = config.url ? config.url.replace(ENV.API_BASE_URL, '') : '';
+      const isObservabilityEndpoint =
+        cleanUrl.includes('/events') ||
+        cleanUrl.includes('/tracking') ||
+        cleanUrl.includes('/presence') ||
+        cleanUrl.includes('/privacy') ||
+        cleanUrl.includes('/health');
+
+      if (!isObservabilityEndpoint) {
+        presenceService.reportApiCall(cleanUrl);
+      }
+      if (durationMs >= 5000 && !isObservabilityEndpoint && typeof window !== 'undefined' && window.trackingService) {
+        window.trackingService.track('api_slow', {
+          meta: {
+            endpoint: cleanUrl,
+            durationMs,
+            status: response.status,
+            actionId: config.headers?.['x-action-id'] || null,
+          },
+        });
+      }
+    } catch { /* Request metadata is optional. */ }
+
     // Return standard success response data (typically { success: true, data: ..., message: ... })
     if (response && response.data) {
       response.data = cleanUrls(response.data);
@@ -152,70 +251,94 @@ axiosClient.interceptors.response.use(
     return response.data;
   },
   async (error) => {
+    try {
+      const config = error.config || {};
+      const durationMs = config._startTime ? Date.now() - config._startTime : 0;
+      const cleanUrl = config.url ? config.url.replace(ENV.API_BASE_URL, '') : '';
+      const isObservabilityEndpoint =
+        cleanUrl.includes('/events') ||
+        cleanUrl.includes('/tracking') ||
+        cleanUrl.includes('/presence') ||
+        cleanUrl.includes('/privacy') ||
+        cleanUrl.includes('/health');
+
+      const isCanceled =
+        axios.isCancel(error) ||
+        error?.code === 'ERR_CANCELED' ||
+        error?.name === 'CanceledError' ||
+        error?.message === 'canceled';
+
+      if (
+        !isObservabilityEndpoint &&
+        !isCanceled &&
+        typeof window !== 'undefined' &&
+        window.trackingService
+      ) {
+        const status = error.response
+          ? error.response.status
+          : (error.code === 'ECONNABORTED' ? 408 : 0);
+
+        if (status !== 0 || durationMs >= 100) {
+          window.trackingService.track('api_error', {
+            meta: {
+              endpoint: cleanUrl,
+              durationMs,
+              status,
+              errorCategory:
+                status >= 500
+                  ? 'SERVER_ERROR'
+                  : status === 408
+                  ? 'TIMEOUT'
+                  : status === 0
+                  ? 'NETWORK_ERROR'
+                  : 'CLIENT_ERROR',
+              actionId: config.headers?.['x-action-id'] || null,
+            },
+          });
+        }
+      }
+    } catch { /* Request metadata is optional. */ }
+
     const originalRequest = error.config;
     const response = error.response;
-    
-    // Automatically refresh token if a 401 Unauthorized error is detected (except on auth pages)
-    if (response && response.status === 401 && !originalRequest._retry) {
-      const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
+
+    // Automatically refresh token if a 401 Unauthorized error is detected (single retry guard)
+    if (response && response.status === 401 && originalRequest && !originalRequest._retry) {
+      const isAuthPage = typeof window !== 'undefined' && (
+        window.location.pathname.startsWith('/login') ||
+        window.location.pathname.startsWith('/register')
+      );
       if (isAuthPage) {
         return Promise.reject(error);
       }
 
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return axiosClient(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
+      // Do not attempt refresh on auth endpoints to prevent recursion loops
+      if (originalRequest.url && (
+        originalRequest.url.includes('/auth/refreshToken') ||
+        originalRequest.url.includes('/auth/login') ||
+        originalRequest.url.includes('/auth/signIn') ||
+        originalRequest.url.includes('/auth/signOut')
+      )) {
+        return Promise.reject(error);
       }
 
       originalRequest._retry = true;
-      isRefreshing = true;
 
       try {
-        // Request a new access token from the refresh token cookie
-        const refreshResponse = await axios.post(
-          `${ENV.API_BASE_URL}/auth/refreshToken`,
-          {},
-          { withCredentials: true }
-        );
-
-        const newAccessToken = refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken;
-        if (newAccessToken) {
-          tokenStorage.setToken(newAccessToken);
-          
-          // Retrieve the current user from store to pass to login
-          const currentUser = useAuthStore.getState().user;
-          useAuthStore.getState().login(newAccessToken, currentUser);
-
-          processQueue(null, newAccessToken);
-
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return axiosClient(originalRequest);
-        } else {
-          throw new Error("No access token returned from refresh endpoint");
-        }
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        
-        // Only log out if refreshing failed (e.g. refresh token expired or invalid)
-        useAuthStore.getState().logout();
-        window.location.href = '/login';
-        
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
+        const freshToken = await requestNewAccessToken();
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${freshToken}`;
+        return axiosClient(originalRequest);
+      } catch (refreshErr) {
+        return Promise.reject(refreshErr);
       }
     }
 
     if (response && response.status === 403) {
-      const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
+      const isAuthPage = typeof window !== 'undefined' && (
+        window.location.pathname.startsWith('/login') ||
+        window.location.pathname.startsWith('/register')
+      );
       if (!isAuthPage) {
         const msg = response.data?.message || "";
         const isBlocked = msg.includes("khóa") || msg.includes("chặn") || msg.toLowerCase().includes("blocked");
@@ -236,6 +359,16 @@ axiosClient.interceptors.response.use(
           window.location.href = '/login';
           return Promise.reject(error);
         }
+      }
+    }
+
+    if (response && response.status === 503 && response.data?.code === "MAINTENANCE") {
+      try {
+        window.dispatchEvent(
+          new CustomEvent("maintenance:active", { detail: response.data })
+        );
+      } catch {
+        // The storage fallback is deliberately best-effort.
       }
     }
 

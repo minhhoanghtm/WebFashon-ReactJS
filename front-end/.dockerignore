@@ -3,5 +3,9 @@ dist
 npm-debug.log
 *.log
 .env
+.env.*
 .git
+.github
 coverage
+.vscode
+.idea

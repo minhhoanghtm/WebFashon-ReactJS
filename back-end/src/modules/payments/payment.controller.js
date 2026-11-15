@@ -27,6 +27,11 @@ class PaymentController {
       const amount = Number(req.query.vnp_Amount || 0) / 100;
       const txnNo = req.query.vnp_TransactionNo || null;
 
+      // The browser return is not an authoritative payment notification.  It
+      // only returns the customer to the order's read-only payment view; the
+      // independently signed IPN below is the only provider path that mutates.
+      return res.redirect(`${process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:5173"}/payment/${encodeURIComponent(orderId || "")}`);
+
       if (isValid && orderId) {
         const order = await Order.findById(orderId);
         if (order && order.payment_status !== "paid" && order.status !== "cancelled") {
@@ -159,10 +164,11 @@ class PaymentController {
           }
         }
 
-        // 8. Trigger real-time notifications
+        // 8. Notify the order owner and admins after verified payment.
         import("../../../sockets/events.js")
-          .then(({ emitOrderNotification }) => {
-            emitOrderNotification(updatedOrder);
+          .then(({ emitOrderStatusChanged, emitPaymentUpdated }) => {
+            emitOrderStatusChanged(updatedOrder);
+            emitPaymentUpdated(updatedOrder);
           })
           .catch((err) =>
             console.error("Failed to emit order socket notification:", err.message),
@@ -211,8 +217,8 @@ class PaymentController {
         }
 
         import("../../../sockets/events.js")
-          .then(({ emitOrderNotification }) => {
-            emitOrderNotification(updatedOrder);
+          .then(({ emitPaymentUpdated }) => {
+            emitPaymentUpdated(updatedOrder);
           })
           .catch((err) =>
             console.error("Failed to emit order socket notification:", err.message),
@@ -238,46 +244,12 @@ class PaymentController {
 
   async momoReturn(req, res, next) {
     try {
-      const query = { ...req.query };
-      const isValid = paymentService.verifyMomoReturn(query);
-
-      const isSuccess = req.query.resultCode === "0";
       const rawOrderId = req.query.orderId || "";
       const orderId = rawOrderId.split('_')[0];
-      const amount = Number(req.query.amount || 0);
-      const transId = req.query.transId || null;
 
-      if (isValid && orderId) {
-        const order = await Order.findById(orderId);
-        if (order && order.payment_status !== "paid" && order.status !== "cancelled") {
-          if (Math.abs(order.total_price - amount) <= 1) {
-            try {
-              const existingTxn = await PaymentTransaction.findOne({ order_id: orderId, transaction_id: transId });
-              if (!existingTxn) {
-                await PaymentTransaction.create({
-                  order_id: orderId,
-                  provider: "momo",
-                  transaction_id: transId,
-                  amount: amount,
-                  status: isSuccess ? "success" : "failed",
-                  raw_response: req.query,
-                });
-              }
-            } catch (err) {
-              if (err.code !== 11000) throw err;
-            }
-
-            if (isSuccess) {
-              await orderFacade.paymentCallback(orderId, "success", transId);
-            } else {
-              await orderFacade.paymentCallback(orderId, "failed", null);
-            }
-          }
-        }
-      }
-
-      const paymentStatus = isSuccess ? "paid" : "failed";
-      return res.redirect(`${process.env.FRONTEND_URL}/orders?paymentStatus=${paymentStatus}`);
+      // The browser redirect is non-authoritative. momoIpn() independently
+      // validates the signature and is the only route that may settle an order.
+      return res.redirect(`${process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:5173"}/payment/${encodeURIComponent(orderId || "")}`);
     } catch (error) {
       next(error);
     }
@@ -406,8 +378,9 @@ class PaymentController {
         }
 
         import("../../../sockets/events.js")
-          .then(({ emitOrderNotification }) => {
-            emitOrderNotification(updatedOrder);
+          .then(({ emitOrderStatusChanged, emitPaymentUpdated }) => {
+            emitOrderStatusChanged(updatedOrder);
+            emitPaymentUpdated(updatedOrder);
           })
           .catch((err) =>
             console.error("Failed to emit order socket notification:", err.message),
@@ -464,8 +437,8 @@ class PaymentController {
         }
 
         import("../../../sockets/events.js")
-          .then(({ emitOrderNotification }) => {
-            emitOrderNotification(updatedOrder);
+          .then(({ emitPaymentUpdated }) => {
+            emitPaymentUpdated(updatedOrder);
           })
           .catch((err) =>
             console.error("Failed to emit order socket notification:", err.message),

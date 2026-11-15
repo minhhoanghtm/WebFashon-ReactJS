@@ -54,6 +54,7 @@ const getProductImages = (product) => {
       ? product.variants.map((v) => v?.image_url || v?.image)
       : []),
   ]
+    .map((u) => (typeof u === "object" && u !== null ? (u.url || u.imageUrl || u.src || "") : u))
     .filter((u) => typeof u === "string" && u.trim().length > 0)
     .map((u) => u.trim());
 

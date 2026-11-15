@@ -1,3 +1,4 @@
+import { Order, OrderItem } from "../orders/order.model.js";
 import reviewRepository from "./review.repository.js";
 import { AppError } from "../../common/exceptions/AppError.js";
 import mongoose from "mongoose";
@@ -58,6 +59,50 @@ class ReviewService {
       throw new AppError("product_id không hợp lệ", 400);
     }
 
+    const ratingNum = Number(rating);
+    if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+      throw new AppError("Số sao đánh giá phải từ 1 đến 5", 400);
+    }
+
+    const sanitizedText = String(content.text || "")
+      .replace(/<[^>]*>?/gm, "")
+      .trim();
+
+    if (!sanitizedText) {
+      throw new AppError("Nội dung đánh giá không được để trống", 400);
+    }
+
+    // Purchase check: User must have at least one delivered order containing this product
+    const deliveredOrders = await Order.find({
+      user_id: userId,
+      status: "delivered",
+    }).select("_id").lean();
+
+    if (!deliveredOrders || deliveredOrders.length === 0) {
+      throw new AppError(
+        "Chỉ khách hàng đã nhận hàng thành công mới có thể đánh giá sản phẩm này.",
+        403,
+        "NOT_PURCHASED"
+      );
+    }
+
+    const deliveredOrderIds = deliveredOrders.map((o) => o._id);
+    const hasPurchasedProduct = await OrderItem.exists({
+      order_id: { $in: deliveredOrderIds },
+      $or: [
+        { product_id: new mongoose.Types.ObjectId(product_id) },
+        { product_id: product_id.toString() },
+      ],
+    });
+
+    if (!hasPurchasedProduct) {
+      throw new AppError(
+        "Bạn chỉ có thể đánh giá sản phẩm mà bạn đã mua và nhận hàng thành công.",
+        403,
+        "NOT_PURCHASED"
+      );
+    }
+
     const productObjectId = new mongoose.Types.ObjectId(product_id);
     const userObjectId = mongoose.Types.ObjectId.isValid(userId)
       ? new mongoose.Types.ObjectId(userId)
@@ -66,7 +111,7 @@ class ReviewService {
     const reviewPayload = {
       rating,
       content: {
-        text: content.text,
+        text: sanitizedText,
         images: content.images || [],
         videos: content.videos || [],
       },

@@ -19,7 +19,7 @@ export class OpenRouterProvider extends AIProvider {
       model: this.model,
       messages,
       temperature: 0.25,
-      max_tokens: Number(process.env.OPENROUTER_MAX_TOKENS) || 1000,
+      max_tokens: Number(process.env.AI_CHAT_MAX_TOKENS || process.env.OPENROUTER_MAX_TOKENS) || 800,
     };
 
     if (tools?.length > 0) {

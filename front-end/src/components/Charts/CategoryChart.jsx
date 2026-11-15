@@ -1,16 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import ReactECharts from 'echarts-for-react';
 const CategoryChart = () => {
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    setData([
-      { name: "Ao thun", value: 120 },
-      { name: "Ao khoac", value: 80 },
-      { name: "Non", value: 150 },
-      { name: "Phu kien", value: 30 },
-    ]);
-  }, []);
+  const data = [
+    { name: "Ao thun", value: 120 },
+    { name: "Ao khoac", value: 80 },
+    { name: "Non", value: 150 },
+    { name: "Phu kien", value: 30 },
+  ];
 
   //bieu do
   const renderChart = {

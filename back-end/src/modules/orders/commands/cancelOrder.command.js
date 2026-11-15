@@ -68,8 +68,9 @@ export const cancelExpiredOrder = async (orderId) => {
 
   // Trigger socket notification
   import("../../../sockets/events.js")
-    .then(({ emitOrderNotification }) => {
-      emitOrderNotification(order);
+    .then(({ emitOrderStatusChanged, emitPaymentUpdated }) => {
+      emitOrderStatusChanged(order);
+      emitPaymentUpdated(order);
     })
     .catch((err) =>
       console.error("Failed to emit order socket notification:", err.message),

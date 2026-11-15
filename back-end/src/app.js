@@ -1,3 +1,5 @@
+import { maintenanceMiddleware } from "./middlewares/maintenance.middleware.js";
+import apiTracingMiddleware from "./middlewares/apiTracing.middleware.js";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -55,10 +57,15 @@ const corsOptions = {
     "x-anonymous-id",
     "x-anonymous-token",
     "x-session-id",
+    "x-tab-id",
+    "x-trace-id",
+    "x-action-id",
+    "x-frontend-route",
     "X-Requested-With",
     "Accept",
     "Origin",
   ],
+  exposedHeaders: ["x-trace-id", "x-request-id"],
 };
 
 app.use(cors(corsOptions));
@@ -80,7 +87,8 @@ app.use(cookieParser());
 app.use("/uploads", express.static("uploads"));
 
 // REST APIs mapping
-app.use("/api", rootRouter);
+app.use(apiTracingMiddleware);
+app.use("/api", maintenanceMiddleware, rootRouter);
 
 // Centralized error routing
 app.use(errorHandler);

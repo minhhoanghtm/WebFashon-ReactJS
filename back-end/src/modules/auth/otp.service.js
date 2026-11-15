@@ -1,10 +1,10 @@
 import crypto from "crypto";
 import getRedisConnection from "../../configs/redis.js";
 import { AppError } from "../../common/exceptions/AppError.js";
+import { requireSecret } from "../../common/utils/requireSecret.js";
 
+const OTP_SECRET = requireSecret("OTP_SECRET");
 const redis = getRedisConnection();
-
-const OTP_SECRET = process.env.OTP_SECRET || "webfashion_otp_hmac_secret_2026";
 const OTP_TTL_SECONDS = parseInt(process.env.OTP_TTL_SECONDS, 10) || 300; // 5 minutes
 const OTP_MAX_ATTEMPTS = parseInt(process.env.OTP_MAX_ATTEMPTS, 10) || 5;
 const OTP_COOLDOWN_SECONDS = parseInt(process.env.OTP_COOLDOWN_SECONDS, 10) || 60; // 60s

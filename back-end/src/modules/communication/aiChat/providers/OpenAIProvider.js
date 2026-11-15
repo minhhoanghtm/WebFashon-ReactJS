@@ -5,11 +5,13 @@ export class OpenAIProvider extends AIProvider {
     apiKey = process.env.OPENAI_API_KEY,
     model = process.env.OPENAI_MODEL || "gpt-4o-mini",
     timeoutMs = Number(process.env.AI_CHAT_TIMEOUT_MS) || 25000,
+    maxTokens = Number(process.env.AI_CHAT_MAX_TOKENS) || 800,
   } = {}) {
     super();
     this.apiKey = apiKey;
     this.model = model;
     this.timeoutMs = timeoutMs;
+    this.maxTokens = maxTokens;
   }
 
   async chat({ messages, tools }) {
@@ -19,6 +21,7 @@ export class OpenAIProvider extends AIProvider {
       model: this.model,
       messages,
       temperature: 0.25,
+      max_tokens: this.maxTokens,
     };
 
     if (tools?.length > 0) {

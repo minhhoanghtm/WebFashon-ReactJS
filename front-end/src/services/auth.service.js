@@ -25,7 +25,12 @@ export const loginService = async (data) => {
 // ── SMS OTP Login ──────────────────────────────────────────────────────────
 export const sendLoginOtpService = async (data) => {
   const res = await sendLoginOtpApi(data);
-  return res?.success !== undefined ? res : (res?.data ?? res);
+  const result = res?.success !== undefined ? res : (res?.data ?? res);
+  console.log("✅ Gửi OTP thành công (Đăng nhập OTP):", {
+    phone: data?.phone,
+    result,
+  });
+  return result;
 };
 
 export const verifyLoginOtpService = async (data) => {
@@ -36,7 +41,13 @@ export const verifyLoginOtpService = async (data) => {
 // ── Registration with SMS OTP ──────────────────────────────────────────────
 export const sendRegisterOtpService = async (data) => {
   const res = await sendRegisterOtpApi(data);
-  return res?.success !== undefined ? res : (res?.data ?? res);
+  const result = res?.success !== undefined ? res : (res?.data ?? res);
+  console.log("✅ Gửi OTP thành công (Đăng ký tài khoản):", {
+    phone: data?.phone,
+    channel: data?.channel || "sms",
+    result,
+  });
+  return result;
 };
 
 export const verifyRegisterService = async (data) => {
@@ -47,7 +58,12 @@ export const verifyRegisterService = async (data) => {
 // ── Forgot & Reset Password ────────────────────────────────────────────────
 export const forgotPasswordOtpService = async (data) => {
   const res = await forgotPasswordOtpApi(data);
-  return res?.success !== undefined ? res : (res?.data ?? res);
+  const result = res?.success !== undefined ? res : (res?.data ?? res);
+  console.log("✅ Gửi OTP thành công (Quên / Đặt lại mật khẩu):", {
+    identifier: data?.identifier,
+    result,
+  });
+  return result;
 };
 
 export const resetPasswordWithOtpService = async (data) => {
@@ -58,13 +74,24 @@ export const resetPasswordWithOtpService = async (data) => {
 // ── Resend OTP ─────────────────────────────────────────────────────────────
 export const resendOtpService = async (data) => {
   const res = await resendOtpApi(data);
-  return res?.success !== undefined ? res : (res?.data ?? res);
+  const result = res?.success !== undefined ? res : (res?.data ?? res);
+  console.log("✅ Gửi lại OTP thành công:", {
+    identifier: data?.identifier,
+    purpose: data?.purpose,
+    result,
+  });
+  return result;
 };
 
 // ── Profile Phone Verification ─────────────────────────────────────────────
 export const sendUpdatePhoneOtpService = async (data) => {
   const res = await sendUpdatePhoneOtpApi(data);
-  return res?.success !== undefined ? res : (res?.data ?? res);
+  const result = res?.success !== undefined ? res : (res?.data ?? res);
+  console.log("✅ Gửi OTP thành công (Cập nhật số điện thoại):", {
+    phone: data?.phone,
+    result,
+  });
+  return result;
 };
 
 export const verifyAndUpdatePhoneService = async (data) => {
@@ -85,12 +112,17 @@ export const registerService = async (data) => {
 
 export const sendOTPServive = async (data) => {
   const res = await sendOTPApi(data);
-  return res?.success !== undefined ? res : (res?.data ?? res);
+  const result = res?.success !== undefined ? res : (res?.data ?? res);
+  console.log("✅ Gửi OTP email thành công:", { email: data?.email, result });
+  return result;
 };
+export const sendOTPService = sendOTPServive;
 
 export const sendResetOTPService = async (data) => {
   const res = await sendResetOTPApi(data);
-  return res?.success !== undefined ? res : (res?.data ?? res);
+  const result = res?.success !== undefined ? res : (res?.data ?? res);
+  console.log("✅ Gửi OTP reset email thành công:", { email: data?.email, result });
+  return result;
 };
 
 export const verifyOTPService = async (data) => {

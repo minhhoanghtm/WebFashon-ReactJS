@@ -213,7 +213,7 @@ const HeadquartersAddressPicker = ({ value = "", onChange }) => {
     if (fullAddress) { onChangeRef.current(fullAddress); return; }
     if (legacyAddress && !hasEdited) { onChangeRef.current(legacyAddress); return; }
     onChangeRef.current("");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [fullAddress, legacyAddress, hasEdited]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────

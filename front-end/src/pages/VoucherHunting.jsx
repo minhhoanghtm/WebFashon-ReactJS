@@ -176,7 +176,7 @@ const VoucherHunting = ({ isDashboard = false }) => {
                 <img
                   src={promoBanners[0].imageUrl}
                   alt={promoBanners[0].title}
-                  className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale"
+                  className="absolute inset-0 w-full h-full object-cover object-[50%_25%] opacity-50 grayscale"
                 />
               )}
               <div className="relative z-10 p-8 md:p-12 max-w-2xl space-y-3">

@@ -1,3 +1,4 @@
+import { requireFeature } from "../../middlewares/featureGuard.middleware.js";
 import express from "express";
 import {
   createReviewController,
@@ -10,8 +11,8 @@ import { protectedRoute } from "../../middlewares/auth.middleware.js";
 const router = express.Router();
 
 router.get("/:productId", getReviewsByProductIdController);
-router.post("/", protectedRoute, createReviewController);
-router.put("/:reviewId", protectedRoute, updateReviewController);
-router.delete("/:reviewId", protectedRoute, deleteReviewController);
+router.post("/", requireFeature("enableReviews", "Tính năng đánh giá sản phẩm hiện đang tạm tắt"), protectedRoute, createReviewController);
+router.put("/:reviewId", requireFeature("enableReviews", "Tính năng đánh giá sản phẩm hiện đang tạm tắt"), protectedRoute, updateReviewController);
+router.delete("/:reviewId", requireFeature("enableReviews", "Tính năng đánh giá sản phẩm hiện đang tạm tắt"), protectedRoute, deleteReviewController);
 
 export default router;

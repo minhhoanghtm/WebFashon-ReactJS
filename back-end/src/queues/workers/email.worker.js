@@ -25,5 +25,9 @@ export const initEmailWorker = () => {
     console.error(`[Queue Worker] Job ${job?.id} failed with error:`, err.message);
   });
 
+  worker.on("error", (err) => {
+    console.warn(`[Queue Worker] Connection / Worker warning:`, err.message);
+  });
+
   return worker;
 };

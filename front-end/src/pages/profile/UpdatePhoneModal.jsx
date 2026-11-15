@@ -57,6 +57,7 @@ export const UpdatePhoneModal = ({ isOpen, onClose, currentPhone, onSuccess }) =
     try {
       setIsSubmitting(true);
       const res = await sendUpdatePhoneOtpService({ phone: cleanPhone });
+      console.log("✅ Gửi OTP cập nhật số điện thoại thành công:", res);
       setMaskedPhone(res?.data?.phone || cleanPhone);
       setCountdown(res?.data?.cooldown || RESEND_COOLDOWN);
       setStep(2);
@@ -110,6 +111,7 @@ export const UpdatePhoneModal = ({ isOpen, onClose, currentPhone, onSuccess }) =
         identifier: cleanPhone,
         purpose: "verify_phone",
       });
+      console.log("✅ Gửi lại OTP xác thực số điện thoại thành công:", res);
       setCountdown(res?.data?.cooldown || RESEND_COOLDOWN);
       setOtp("");
       toast.success("Mã OTP mới đã được gửi!");

@@ -51,7 +51,7 @@ export const signIn = async (req, res, next) => {
 
     return successResponse(
       res,
-      { accessToken, userId: user.id || user._id, user },
+      { accessToken, refreshToken, userId: user.id || user._id, user },
       `User ${user.fullName} đã đăng nhập thành công!`
     );
   } catch (error) {
@@ -196,7 +196,7 @@ export const signOut = async (req, res, next) => {
 
 export const refreshAccessToken = async (req, res, next) => {
   try {
-    const token = req.cookies?.refreshToken;
+    const token = req.cookies?.refreshToken || req.body?.refreshToken || req.headers["x-refresh-token"];
     const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     const ua = req.headers["user-agent"];
 
@@ -209,7 +209,7 @@ export const refreshAccessToken = async (req, res, next) => {
       maxAge: REFRESH_TOKEN_TTL,
     });
 
-    return successResponse(res, { accessToken }, `Refresh token thành công cho user ${user.fullName}`);
+    return successResponse(res, { accessToken, refreshToken, user }, `Refresh token thành công cho user ${user.fullName}`);
   } catch (error) {
     next(error);
   }

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import app from "./app.js";
 import { connectDB } from "./configs/db.js";
+import inventoryReservationService from "./modules/inventory/inventoryReservation.service.js";
 import { initSocketServer } from "./sockets/index.js";
 import { initEmailWorker } from "./queues/workers/email.worker.js";
 import { initTrackingWorker } from "./queues/workers/tracking.worker.js";
@@ -12,16 +13,30 @@ import { createServer } from "http";
 
 const PORT = process.env.PORT || 5000;
 
+// Catch unhandled errors gracefully to ensure backend stability
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("⚠️ [Process] Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("❌ [Process] Uncaught Exception:", err);
+});
+
 const startServer = async () => {
   try {
     // 1. Kết nối cơ sở dữ liệu MongoDB
     await connectDB();
 
+    // 1.1 Phục hồi và đồng bộ trạng thái giữ hàng (Redis Inventory Reservation Recovery)
+    await inventoryReservationService.reconcileReservationsFromDB().catch((err) => {
+      console.warn("⚠️ Không thể đồng bộ trạng thái giữ hàng tồn kho:", err.message);
+    });
+
     // 2. Tạo server HTTP bọc ứng dụng Express
     const server = createServer(app);
 
     // 3. Khởi tạo Socket.IO
-    initSocketServer(server);
+    await initSocketServer(server);
 
     // 4. Khởi chạy hàng đợi (BullMQ Workers)
     initEmailWorker();

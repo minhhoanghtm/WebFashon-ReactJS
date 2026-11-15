@@ -1,5 +1,6 @@
 import websiteSettingsService from "./websiteSettings.service.js";
 import { successResponse } from "../../common/responses/index.js";
+import { invalidateFeatureFlagsCache } from "../../common/utils/featureFlags.js";
 
 const filterSettingsResponse = (settings, isAdmin = false) => {
   if (!settings) return null;
@@ -24,9 +25,13 @@ const filterSettingsResponse = (settings, isAdmin = false) => {
     },
     system: {
       maintenanceMode: Boolean(raw.system?.maintenanceMode),
+      maintenanceMessage:
+        raw.system?.maintenanceMessage ||
+        "Hệ thống đang được nâng cấp để mang đến trải nghiệm tốt hơn. Quý khách vui lòng quay lại sau ít phút.",
+      maintenanceUntil: raw.system?.maintenanceUntil || null,
       allowGuestCheckout: Boolean(raw.system?.allowGuestCheckout),
-      enableVoucher: Boolean(raw.system?.enableVoucher),
-      enableReviews: Boolean(raw.system?.enableReviews),
+      enableVoucher: raw.system?.enableVoucher !== false,
+      enableReviews: raw.system?.enableReviews !== false,
     },
     socialLinks: {
       facebook: raw.socialLinks?.facebook || "",
@@ -73,6 +78,21 @@ export const updateSettings = async (req, res, next) => {
     const adminId = req.user?.userId;
     const settings = await websiteSettingsService.updateSettings(adminId, req.body);
     const responseData = filterSettingsResponse(settings, true);
+
+    // Invalidate memory cache immediately
+    invalidateFeatureFlagsCache();
+
+    // Broadcast settings:updated to connected clients via Socket.IO
+    try {
+      const { getSocketIO } = await import("../../sockets/index.js");
+      const io = getSocketIO();
+      if (io) {
+        io.emit("settings:updated", responseData);
+      }
+    } catch (wsErr) {
+      // Non-fatal if socket is not initialized
+    }
+
     return successResponse(res, responseData, "Cập nhật thông tin cài đặt thành công");
   } catch (error) {
     next(error);

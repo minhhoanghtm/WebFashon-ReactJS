@@ -9,6 +9,9 @@ export const trackingApi = {
   clearMyData: () => axiosClient.delete("/events/me"),
   getAnalyticsOverview: (params) => axiosClient.get("/events/analytics/overview", { params }),
   getFunnelAnalytics: (params) => axiosClient.get("/events/analytics/funnel", { params }),
+  getLiveSessions: (params) => axiosClient.get("/events/presence/live", { params }),
+  getSessionTimeline: (sessionId) => axiosClient.get(`/events/presence/session/${sessionId}`),
+  getActivityAnalytics: (params) => axiosClient.get("/events/analytics/activity", { params }),
 };
 
 export default trackingApi;

@@ -51,6 +51,7 @@ const createMessageDtoSchema = z.object({
   messageType:    z.enum(["text", "image", "file", "product_card", "order_card", "system"], { message: "messageType must be one of: text, image, file, product_card, order_card, system" }).default("text"),
   content:        z.string({ required_error: "content is required" }).max(10000, "content must be at most 10000 characters"),
   metadata:       z.record(z.string(), z.any()).optional().default({}),
+  clientMessageId: z.string().trim().min(1).max(128).optional(),
 });
 
 const textMessageDtoSchema = z.object({
@@ -61,6 +62,7 @@ const textMessageDtoSchema = z.object({
   currentProductId: z.any().optional(),
   messageType:      z.enum(["text", "image", "file", "product_card", "order_card", "system"]).optional(),
   metadata:         z.record(z.string(), z.any()).optional().default({}),
+  clientMessageId:  z.string().trim().min(1).max(128).optional(),
   history:          z.array(z.any()).optional(),
   confirmAction:    z.any().optional(),
   cancelAction:     z.any().optional(),
@@ -75,6 +77,23 @@ const textMessageDtoSchema = z.object({
     ...data,
     content: data.content ?? data.message,
   }));
+
+const aiChatMessageDtoSchema = z.object({
+  conversationId: z.any().optional(),
+  content: z.string().max(2000, "content must be at most 2000 characters").optional(),
+  message: z.string().max(2000, "message must be at most 2000 characters").optional(),
+  currentProductId: z.any().optional(),
+  messageType: z.enum(["text", "image", "file", "product_card", "order_card", "system"]).optional(),
+  metadata: z.record(z.string(), z.any()).optional().default({}),
+  history: z.array(z.any()).optional(),
+  confirmAction: z.any().optional(),
+  cancelAction: z.any().optional(),
+})
+  .refine((data) => !!data.content || !!data.message, {
+    message: "content is required (or message)",
+    path: ["content"],
+  })
+  .transform((data) => ({ ...data, content: data.content ?? data.message }));
 
 // ---------------------------------------------------------------------------
 // Utility exports — tên và signature giữ nguyên, backward compatible
@@ -103,3 +122,7 @@ export const validateCreateMessageDto = (payload = {}) =>
  */
 export const validateTextMessageDto = (payload = {}) =>
   parseOrThrow(textMessageDtoSchema, payload);
+
+/** AI input is deliberately smaller than human support chat to cap provider cost. */
+export const validateAiChatMessageDto = (payload = {}) =>
+  parseOrThrow(aiChatMessageDtoSchema, payload);

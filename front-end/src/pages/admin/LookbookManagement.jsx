@@ -413,7 +413,7 @@ const LookbookManagement = () => {
                         <img
                           src={lb.thumbnailUrl || lb.bannerUrl || defaultLookbookCover}
                           alt={lb.title}
-                          className="h-14 w-20 object-cover rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs"
+                          className="h-14 w-20 object-contain rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs p-0.5"
                         />
                       </td>
 
@@ -623,7 +623,7 @@ const LookbookManagement = () => {
                     <img
                       src={formThumbnailUrl}
                       alt="Thumbnail preview"
-                      className="h-28 w-44 object-cover rounded-xl border border-slate-200 shadow-xs"
+                      className="h-28 w-44 object-contain rounded-xl border border-slate-200 bg-slate-100 dark:bg-slate-800 shadow-xs p-1"
                     />
                   )}
                 </div>

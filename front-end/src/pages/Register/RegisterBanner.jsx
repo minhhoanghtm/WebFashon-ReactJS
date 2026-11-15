@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import registerImage from "@/pages/Home/assets/hero-atelier.webp";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
@@ -17,7 +17,7 @@ const RegisterBanner = () => {
           src={registerImage}
           alt="Không gian thiết kế thời trang đơn sắc"
           onError={() => setImgFailed(true)}
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-40 grayscale contrast-125"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_25%] opacity-40 grayscale contrast-125"
           loading="eager"
         />
       ) : (

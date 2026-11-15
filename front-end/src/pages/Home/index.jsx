@@ -1,28 +1,46 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useOutletContext } from "react-router-dom";
-import { ArrowUpRight, RefreshCw } from "lucide-react";
+import { ArrowUpRight, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getAllProductService } from "@/services/product.service";
 import { getAllCategoriesService } from "@/services/category.service";
 import { useFavoriteStore } from "@/store/favorite.store";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import useLenis from "@/hooks/useLenis";
+import useLenis, { scrollToLenis } from "@/hooks/useLenis";
+import { useGSAP } from "@/hooks/useGSAP";
+import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
 import ProductCard from "@/components/ProductCard";
 import CinematicHeader from "./components/CinematicHeader";
 import CinematicHero from "./components/CinematicHero";
 import BrandChapterSection from "./components/BrandChapterSection";
 import ManifestoVideoSection from "./components/ManifestoVideoSection";
 import CollageLookbookSection from "./components/CollageLookbookSection";
+import HomeDotNavigation from "./components/HomeDotNavigation";
 import {
   buildCategoryHierarchy,
   normalizeProduct,
   normalizeSearchText,
 } from "./productAdapter";
 
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+const HOME_SECTIONS = [
+  { id: "section-hero", label: "Khám phá Atelier" },
+  { id: "section-collection", label: "Tất cả thiết kế" },
+  { id: "section-brand", label: "Chương thương hiệu" },
+  { id: "section-manifesto", label: "Tuyên ngôn bản sắc" },
+  { id: "section-lookbook", label: "Collage Lookbook" },
+];
+
 const Home = () => {
   useDocumentTitle("404 STUDIO — Atelier Edition");
   useLenis(); // Smooth scrolling with Lenis + ScrollTrigger integration
 
   const exploreRef = useRef(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const { homeSearchTerm = "", setHomeSearchTerm } = useOutletContext() || {};
 
   const favoriteItems = useFavoriteStore((state) => state.items);
@@ -35,6 +53,11 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [selectedParentKey, setSelectedParentKey] = useState("all");
   const [selectedChildKey, setSelectedChildKey] = useState("all");
+  const [productCarouselPage, setProductCarouselPage] = useState(0);
+
+  useEffect(() => {
+    setProductCarouselPage(0);
+  }, [selectedParentKey, selectedChildKey, homeSearchTerm]);
 
   const favoriteIds = useMemo(
     () => new Set(favoriteItems.map((item) => String(item.id || item._id))),
@@ -62,6 +85,24 @@ const Home = () => {
   useEffect(() => {
     fetchHomeData();
   }, []);
+
+  // Refresh GSAP ScrollTrigger on resize and after data loads
+  useEffect(() => {
+    const handleResize = () => {
+      ScrollTrigger.refresh();
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      const timer = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   const categoryMap = useMemo(() => {
     return Object.fromEntries(
@@ -142,9 +183,41 @@ const Home = () => {
 
   const handleScrollToExplore = () => {
     if (exploreRef.current) {
-      exploreRef.current.scrollIntoView({ behavior: "smooth" });
+      scrollToLenis(exploreRef.current, { duration: 1.1 });
     }
   };
+
+  // GSAP: Home Sections Reveal on Scroll (Opacity + translateY, runs only once)
+  useGSAP(
+    () => {
+      if (prefersReducedMotion || typeof window === "undefined") return;
+
+      const sections = exploreRef.current?.querySelectorAll("[data-scroll-section]");
+      if (!sections || sections.length === 0) return;
+
+      sections.forEach((sec) => {
+        gsap.fromTo(
+          sec,
+          {
+            opacity: 0,
+            y: 32,
+          },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: sec,
+              start: "top 88%",
+              once: true,
+            },
+          }
+        );
+      });
+    },
+    { scope: exploreRef, dependencies: [prefersReducedMotion] }
+  );
 
   return (
     <div className="relative flex flex-col bg-neutral-950 text-foreground">
@@ -155,7 +228,10 @@ const Home = () => {
         isHomePage={true}
       />
 
-      {/* 1. Cinematic Hero (100svh, dark, sticky, auto-crossfade, condensed 2-line title, thin button) */}
+      {/* Desktop Dot Navigation */}
+      <HomeDotNavigation sections={HOME_SECTIONS} />
+
+      {/* 1. Cinematic Hero */}
       <CinematicHero onExploreClick={handleScrollToExplore} />
 
       {/* Subsequent Content (Slides up over sticky Hero on scroll) */}
@@ -164,45 +240,66 @@ const Home = () => {
         id="home-content"
         className="relative z-10 min-h-screen bg-[#FBF9F5] text-[#05251C] shadow-[0_-25px_50px_rgba(0,0,0,0.5)] transition-colors duration-500"
       >
-        {/* Section 3: "CHƯƠNG THƯƠNG HIỆU" (nền trắng, ảnh 3:4 so le, clip-path reveal, parallax) */}
-        <BrandChapterSection />
-
-        {/* Section 4: "CÂU KHẨU HIỆU + VIDEO" (nền đen, chữ sáng dần theo cuộn, video mở rộng full-bleed) */}
-        <ManifestoVideoSection />
-
-        {/* Section 5: "COLLAGE LOOKBOOK" (nền trắng, ảnh rải quanh hội tụ, nút chuyển trang trắng <= 0.6s) */}
-        <CollageLookbookSection />
-
-        {/* Curated Product Collection Section */}
+        {/* Section 1: "TẤT CẢ THIẾT KẾ" (ngay sau Hero) */}
         <section
+          id="section-collection"
+          data-scroll-section
           aria-labelledby="home-collection-heading"
-          className="mx-auto w-full max-w-[1440px] px-4 py-16 sm:px-6 sm:py-24 lg:px-10"
+          className="mx-auto w-full max-w-[1440px] px-4 pt-20 pb-8 sm:px-6 lg:px-10 min-h-[100svh] flex flex-col justify-between"
         >
           {/* Section Header */}
-          <div className="flex flex-col justify-between gap-6 border-b border-[#05251C]/10 pb-8 md:flex-row md:items-end">
+          <div className="flex flex-col justify-between gap-4 border-b border-[#05251C]/10 pb-4 md:flex-row md:items-end">
             <div>
               <p className="text-[11px] font-medium tracking-[0.28em] uppercase text-[#05251C]/60">
-                Chương Mở Đầu · Curated Atelier Edit
+                Tất cả thiết kế · Curated Atelier Edit
               </p>
               <h2
                 id="home-collection-heading"
-                className="mt-2 font-condensed text-4xl font-bold tracking-tight text-[#05251C] uppercase sm:text-5xl"
+                className="mt-1 font-condensed text-3xl font-bold tracking-tight text-[#05251C] uppercase sm:text-4xl lg:text-5xl"
               >
                 {activeCategoryName}
               </h2>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {!isLoading && !hasError && (
                 <span className="text-xs tabular-nums tracking-[0.14em] uppercase text-[#05251C]/60 font-mono">
                   {filteredProducts.length} thiết kế
                 </span>
               )}
+
+              {/* Carousel Pagination Controls */}
+              {Math.ceil(filteredProducts.length / 4) > 1 && (
+                <div className="flex items-center gap-1.5 bg-[#05251C]/5 p-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setProductCarouselPage((p) => Math.max(0, p - 1))}
+                    disabled={productCarouselPage === 0}
+                    className="p-1.5 hover:bg-[#05251C]/10 rounded text-[#05251C] disabled:opacity-30 disabled:pointer-events-none transition-colors touch-target flex items-center justify-center min-h-[36px] min-w-[36px] cursor-pointer"
+                    aria-label="Trang sản phẩm trước"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span className="text-xs font-mono font-medium px-2 text-[#05251C]/80 tabular-nums">
+                    {String(productCarouselPage + 1).padStart(2, "0")} / {String(Math.max(1, Math.ceil(filteredProducts.length / 4))).padStart(2, "0")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setProductCarouselPage((p) => Math.min(Math.ceil(filteredProducts.length / 4) - 1, p + 1))}
+                    disabled={productCarouselPage >= Math.ceil(filteredProducts.length / 4) - 1}
+                    className="p-1.5 hover:bg-[#05251C]/10 rounded text-[#05251C] disabled:opacity-30 disabled:pointer-events-none transition-colors touch-target flex items-center justify-center min-h-[36px] min-w-[36px] cursor-pointer"
+                    aria-label="Trang sản phẩm kế tiếp"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+
               <Link
                 to="/products"
-                className="touch-target inline-flex items-center gap-1.5 border border-[#05251C]/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] uppercase text-[#05251C] transition-colors hover:border-[#05251C] hover:bg-[#05251C] hover:text-[#FBF9F5]"
+                className="btn-cta touch-target inline-flex items-center gap-1.5 border border-[#05251C]/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] uppercase text-[#05251C] transition-colors hover:border-[#05251C] hover:bg-[#05251C] hover:text-[#FBF9F5] min-h-[44px]"
               >
-                <span>Xem tất cả</span>
+                <span>Toàn bộ</span>
                 <ArrowUpRight size={14} />
               </Link>
             </div>
@@ -211,18 +308,18 @@ const Home = () => {
           {/* Grouped & Deduplicated Parent-Child Category Chips */}
           {categoryGroups.length > 0 && (
             <div className="mt-8 space-y-3">
-              {/* Level 1: Parent Groups */}
+              {/* Level 1: Parent Groups (horizontally scrollable on mobile) */}
               <div
                 role="tablist"
                 aria-label="Nhóm danh mục chính"
-                className="flex flex-wrap items-center gap-2"
+                className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:flex-wrap sm:pb-0"
               >
                 <button
                   type="button"
                   role="tab"
                   aria-selected={selectedParentKey === "all"}
                   onClick={() => handleSelectParent("all")}
-                  className={`min-h-[44px] px-4 text-xs font-semibold tracking-[0.18em] uppercase transition-colors ${
+                  className={`min-h-[44px] shrink-0 px-4 text-xs font-semibold tracking-[0.18em] uppercase transition-colors ${
                     selectedParentKey === "all"
                       ? "bg-[#05251C] text-[#FBF9F5]"
                       : "border border-[#05251C]/15 bg-transparent text-[#05251C]/70 hover:border-[#05251C] hover:text-[#05251C]"
@@ -239,7 +336,7 @@ const Home = () => {
                       role="tab"
                       aria-selected={isSelected}
                       onClick={() => handleSelectParent(group.key)}
-                      className={`min-h-[44px] px-4 text-xs font-semibold tracking-[0.18em] uppercase transition-colors ${
+                      className={`min-h-[44px] shrink-0 px-4 text-xs font-semibold tracking-[0.18em] uppercase transition-colors ${
                         isSelected
                           ? "bg-[#05251C] text-[#FBF9F5]"
                           : "border border-[#05251C]/15 bg-transparent text-[#05251C]/70 hover:border-[#05251C] hover:text-[#05251C]"
@@ -256,14 +353,14 @@ const Home = () => {
                 <div
                   role="tablist"
                   aria-label={`Danh mục con của ${activeParentGroup.name}`}
-                  className="flex flex-wrap items-center gap-2 border-l-2 border-[#05251C]/30 pl-3 pt-1"
+                  className="flex items-center gap-2 overflow-x-auto no-scrollbar border-l-2 border-[#05251C]/30 pl-3 pt-1 pb-1 sm:flex-wrap sm:pb-0"
                 >
                   <button
                     type="button"
                     role="tab"
                     aria-selected={selectedChildKey === "all"}
                     onClick={() => setSelectedChildKey("all")}
-                    className={`min-h-[38px] px-3.5 text-[11px] font-semibold tracking-[0.14em] uppercase transition-colors ${
+                    className={`min-h-[38px] shrink-0 px-3.5 text-[11px] font-semibold tracking-[0.14em] uppercase transition-colors ${
                       selectedChildKey === "all"
                         ? "border border-[#05251C] bg-[#05251C]/10 text-[#05251C]"
                         : "border border-[#05251C]/15 text-[#05251C]/60 hover:text-[#05251C]"
@@ -280,7 +377,7 @@ const Home = () => {
                         role="tab"
                         aria-selected={isChildSelected}
                         onClick={() => setSelectedChildKey(child.key)}
-                        className={`min-h-[38px] px-3.5 text-[11px] font-semibold tracking-[0.14em] uppercase transition-colors ${
+                        className={`min-h-[38px] shrink-0 px-3.5 text-[11px] font-semibold tracking-[0.14em] uppercase transition-colors ${
                           isChildSelected
                             ? "border border-[#05251C] bg-[#05251C]/10 text-[#05251C]"
                             : "border border-[#05251C]/15 text-[#05251C]/60 hover:text-[#05251C]"
@@ -366,23 +463,53 @@ const Home = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-                {filteredProducts.slice(0, 12).map((product, index) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    isFavorite={favoriteIds.has(String(product.id))}
-                    onToggleFavorite={toggleFavorite}
-                    trackingMeta={{
-                      position: index + 1,
-                      source: "home_collection",
-                    }}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 items-stretch my-auto py-2">
+                  {filteredProducts
+                    .slice(productCarouselPage * 4, (productCarouselPage + 1) * 4)
+                    .map((product, index) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        isFavorite={favoriteIds.has(String(product.id))}
+                        onToggleFavorite={toggleFavorite}
+                        trackingMeta={{
+                          position: productCarouselPage * 4 + index + 1,
+                          source: "home_collection",
+                        }}
+                      />
+                    ))}
+                </div>
+
+                {/* Bottom CTA to view all products */}
+                <div className="mt-4 flex justify-center pb-2">
+                  <Link
+                    to="/products"
+                    className="btn-cta touch-target inline-flex min-h-[44px] items-center gap-2 border border-[#05251C] bg-[#05251C] px-8 py-3 text-xs font-semibold tracking-[0.2em] uppercase text-[#FBF9F5] transition-all duration-300 hover:bg-transparent hover:text-[#05251C]"
+                  >
+                    <span>Xem toàn bộ thiết kế</span>
+                    <ArrowUpRight size={15} />
+                  </Link>
+                </div>
+              </>
             )}
           </div>
         </section>
+
+        {/* Section 2: "CHƯƠNG THƯƠNG HIỆU" */}
+        <div id="section-brand" data-scroll-section className="min-h-[100svh] flex flex-col justify-center">
+          <BrandChapterSection />
+        </div>
+
+        {/* Section 3: "CÂU KHẨU HIỆU + VIDEO" */}
+        <div id="section-manifesto" data-scroll-section className="min-h-[100svh] flex flex-col justify-center">
+          <ManifestoVideoSection />
+        </div>
+
+        {/* Section 4: "COLLAGE LOOKBOOK" */}
+        <div id="section-lookbook" data-scroll-section className="min-h-[100svh] flex flex-col justify-center">
+          <CollageLookbookSection />
+        </div>
       </div>
     </div>
   );

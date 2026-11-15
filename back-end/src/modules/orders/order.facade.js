@@ -57,8 +57,8 @@ class OrderFacade {
     return await createOrder(userId, orderData);
   }
 
-  async paymentOrder(userId, orderId, payment_method) {
-    return await paymentOrder(userId, orderId, payment_method);
+  async paymentOrder(userId, orderId, payment_method, options) {
+    return await paymentOrder(userId, orderId, payment_method, options);
   }
 
   async cancelExpiredOrder(orderId) {

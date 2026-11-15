@@ -1,5 +1,6 @@
 import express from "express";
 import { adminOnly, protectedRoute, optionalProtectedRoute, noAdmin } from "../../middlewares/auth.middleware.js";
+import { aiChatDailyQuota, aiChatLimiter } from "../../middlewares/rateLimiter.middleware.js";
 import {
   assignConversation,
   closeConversation,
@@ -12,6 +13,7 @@ import {
 } from "./conversations/conversation.controller.js";
 import { getAdminMessages, getCustomerMessages } from "./messages/message.controller.js";
 import { sendAiMessage } from "./aiChat/aiChat.controller.js";
+import { confirmPendingAction, cancelPendingAction } from "../ai/pendingAction.controller.js";
 import {
   sendAdminSupportMessage,
   sendCustomerSupportMessage,
@@ -30,8 +32,12 @@ adminCommunicationRouter.get("/messages/:conversationId", getAdminMessages);
 adminCommunicationRouter.post("/support/send", sendAdminSupportMessage);
 
 export const customerCommunicationRouter = express.Router();
-customerCommunicationRouter.post("/ai/send", optionalProtectedRoute, noAdmin, sendAiMessage);
+customerCommunicationRouter.post("/ai/send", optionalProtectedRoute, noAdmin, aiChatLimiter, aiChatDailyQuota, sendAiMessage);
 customerCommunicationRouter.use(protectedRoute, noAdmin);
+// Confirmation is intentionally a separate authenticated endpoint. Text such as
+// "ok" in the chat is never an authorization to mutate account/cart state.
+customerCommunicationRouter.post("/ai/actions/:id/confirm", confirmPendingAction);
+customerCommunicationRouter.post("/ai/actions/:id/cancel", cancelPendingAction);
 customerCommunicationRouter.post("/support/send", sendCustomerSupportMessage);
 customerCommunicationRouter.get("/conversations", getCustomerConversations);
 customerCommunicationRouter.get("/messages/:conversationId", getCustomerMessages);

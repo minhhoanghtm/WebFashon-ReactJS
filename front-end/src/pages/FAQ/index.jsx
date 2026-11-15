@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getPageBySlugService } from "@/services/page.service";
 import { ChevronDown, Search, Sparkles, HelpCircle, Package, RefreshCw, ShieldCheck, PhoneCall } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence } from "motion/react";
 
 import HeroSection from "@/components/page-sections/HeroSection";
 import StorySection from "@/components/page-sections/StorySection";
@@ -69,7 +69,6 @@ const defaultFaqCategories = [
 export const FAQ = () => {
   useDocumentTitle("Câu hỏi thường gặp — 404STUDIO");
   const [pageSections, setPageSections] = useState([]);
-  const [contentHtml, setContentHtml] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeAccordion, setActiveAccordion] = useState({});
 
@@ -79,7 +78,6 @@ export const FAQ = () => {
         const data = await getPageBySlugService("faq").catch(() => null);
         const page = data?.page || data;
         const sections = data?.sections || data?.page?.sections || [];
-        if (page?.content) setContentHtml(page.content);
         if (sections && sections.length > 0) setPageSections(sections);
       } catch (err) {
         console.error("Lỗi khi tải dữ liệu FAQ:", err);

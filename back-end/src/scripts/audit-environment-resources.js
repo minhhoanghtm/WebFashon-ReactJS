@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import { requireEnv } from "./require-env.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
@@ -51,7 +52,7 @@ async function audit() {
   // 3. Local Dedicated Staging MongoDB 27018 (webfashion-mongo-staging)
   console.log("\n3. Inspecting MongoDB 27018 (webfashion-mongo-staging container):");
   try {
-    const localUri = "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin";
+    const localUri = requireEnv("MONGO_CONNECTIONSTRING");
     const connStaging = await mongoose.createConnection(localUri, { serverSelectionTimeoutMS: 3000 }).asPromise();
     console.log(`   Connected to local staging MongoDB: ${connStaging.name}`);
     const collectionsStaging = await connStaging.db.listCollections().toArray();

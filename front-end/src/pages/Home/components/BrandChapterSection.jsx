@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { gsap } from "gsap";
@@ -93,7 +93,7 @@ export const BrandChapterSection = () => {
             scrollTrigger: {
               trigger: containerRef.current,
               start: "top 75%",
-              toggleActions: "play none none reverse",
+              once: true,
             },
           }
         );
@@ -107,7 +107,7 @@ export const BrandChapterSection = () => {
           scrollTrigger: {
             trigger: card,
             start: "top 85%",
-            toggleActions: "play none none reverse",
+            once: true,
           },
         });
 
@@ -176,9 +176,10 @@ export const BrandChapterSection = () => {
 
   return (
     <section
+      id="section-brand"
       ref={containerRef}
       aria-label="Chương thương hiệu: Triết lý cấu trúc may đo"
-      className="relative z-10 bg-white text-[#05251C] px-4 py-20 sm:px-8 sm:py-32 lg:px-14 lg:py-40 border-t border-[#05251C]/10"
+      className="relative z-10 bg-white text-[#05251C] px-4 pt-20 pb-8 sm:px-8 lg:px-14 min-h-[100svh] min-h-[100vh] flex flex-col justify-center border-t border-[#05251C]/10"
     >
       <div className="mx-auto max-w-[1600px]">
         <div className="grid gap-14 lg:grid-cols-12 lg:gap-16 items-start">
@@ -244,11 +245,11 @@ export const BrandChapterSection = () => {
             <div ref={col1Ref} className="space-y-8 sm:space-y-12">
               {itemsCol1.map((item) => (
                 <div key={item.id} className="group space-y-3">
-                  <div className="clip-reveal-card relative aspect-[3/4] w-full overflow-hidden bg-neutral-100 border border-[#05251C]/10 shadow-xs">
+                  <div className="clip-reveal-card relative aspect-[3/4] w-full overflow-hidden bg-[var(--muted)]/40 dark:bg-zinc-900/50 flex items-center justify-center border border-[#05251C]/10 shadow-xs">
                     <img
                       src={item.imageUrl}
                       alt={item.title}
-                      className="clip-reveal-img h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      className="clip-reveal-img h-full w-full object-contain object-center transition-transform duration-700 ease-out group-hover:scale-105"
                       loading="lazy"
                       onLoad={() => ScrollTrigger.refresh()}
                     />
@@ -270,11 +271,11 @@ export const BrandChapterSection = () => {
             >
               {itemsCol2.map((item) => (
                 <div key={item.id} className="group space-y-3">
-                  <div className="clip-reveal-card relative aspect-[3/4] w-full overflow-hidden bg-neutral-100 border border-[#05251C]/10 shadow-xs">
+                  <div className="clip-reveal-card relative aspect-[3/4] w-full overflow-hidden bg-[var(--muted)]/40 dark:bg-zinc-900/50 flex items-center justify-center border border-[#05251C]/10 shadow-xs">
                     <img
                       src={item.imageUrl}
                       alt={item.title}
-                      className="clip-reveal-img h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      className="clip-reveal-img h-full w-full object-contain object-center transition-transform duration-700 ease-out group-hover:scale-105"
                       loading="lazy"
                       onLoad={() => ScrollTrigger.refresh()}
                     />

@@ -7,6 +7,9 @@ import embeddingService from "../modules/ai/services/embedding.service.js";
 
 const runSync = async () => {
   try {
+    if (process.env.NODE_ENV === "production" && process.env.AI_REINDEX_CONFIRM !== "true") {
+      throw new Error("Refusing vector reindex in production. Set AI_REINDEX_CONFIRM=true only after an explicit review.");
+    }
     const force = process.argv.includes("--force");
     console.log("🚀 Starting Vector AI Initial / Incremental Synchronization...");
     await connectDB();

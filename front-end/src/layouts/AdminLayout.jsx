@@ -137,7 +137,10 @@ const AdminLayout = () => {
           onOpenPasswordModal={() => setPasswordModalOpen(true)}
         />
 
-        <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main
+          key={pathname}
+          className="page-fade-enter min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8"
+        >
           <div className="mx-auto h-full max-w-[1600px]">
             <Outlet />
           </div>

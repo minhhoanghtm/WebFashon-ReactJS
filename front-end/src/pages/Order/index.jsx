@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { io } from "socket.io-client";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   getOrdersByUserIdService,
@@ -12,6 +13,8 @@ import {
 import { getCartService } from "@/services/cart.service";
 import { getReviewsByProductIdService } from "@/services/review.service";
 import { useAuthStore } from "../../store/auth.store";
+import { tokenStorage } from "@/utils/token";
+import { ENV } from "@/config/env";
 import { toast } from "react-toastify";
 import { monochromeSwal } from "@/utils/swal";
 import { Search, X, Loader2 } from "lucide-react";
@@ -45,38 +48,71 @@ const UserAccountManagement = ({ isDashboard = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRebuying, setIsRebuying] = useState(false);
   const [error, setError] = useState("");
+  const [socketConnected, setSocketConnected] = useState(false);
 
   // Modal states
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // Fetch user orders on mount
-  useEffect(() => {
-    let isMounted = true;
-    const fetchOrders = async () => {
-      try {
-        const ordersData = await getOrdersByUserIdService();
-        if (isMounted && ordersData && ordersData.orders) {
-          setOrders(ordersData.orders);
-        }
-      } catch (err) {
-        console.error("Failed to fetch orders:", err);
-        if (isMounted) {
-          setError("Lấy dữ liệu đơn hàng thất bại. Vui lòng thử lại sau.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    fetchOrders();
-    return () => {
-      isMounted = false;
-    };
+  const { user, isAuthenticated } = useAuthStore();
+  const socketUrl = useMemo(() => ENV.API_BASE_URL.replace(/\/api\/?$/, "") || "/", []);
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const ordersData = await getOrdersByUserIdService();
+      if (ordersData?.orders) setOrders(ordersData.orders);
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
+      setError("Lấy dữ liệu đơn hàng thất bại. Vui lòng thử lại sau.");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const { user, isAuthenticated } = useAuthStore();
+  // Fetch user orders on mount.
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // Re-fetch immediately on a permitted order event. If the socket is down,
+  // fall back to a 30-second poll so status never requires a manual refresh.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return undefined;
+    }
+    const token = tokenStorage.getToken();
+    const userId = user?._id || user?.id || tokenStorage.decodeToken(token)?.userId;
+    if (!token || !userId) return undefined;
+
+    const socket = io(socketUrl, {
+      auth: { token },
+      transports: ["websocket"],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1_500,
+    });
+    const refresh = () => fetchOrders();
+    socket.on("connect", () => {
+      setSocketConnected(true);
+      socket.emit("join", userId);
+      refresh();
+    });
+    socket.on("disconnect", () => setSocketConnected(false));
+    socket.on("order:created", refresh);
+    socket.on("order:status_changed", refresh);
+    socket.on("payment:updated", refresh);
+
+    return () => {
+      socket.disconnect();
+      setSocketConnected(false);
+    };
+  }, [fetchOrders, isAuthenticated, socketUrl, user?._id, user?.id]);
+
+  useEffect(() => {
+    if (!isAuthenticated || socketConnected) return undefined;
+    const intervalId = window.setInterval(fetchOrders, 30_000);
+    return () => window.clearInterval(intervalId);
+  }, [fetchOrders, isAuthenticated, socketConnected]);
+
   const [reviewedProductIds, setReviewedProductIds] = useState(() => new Set());
 
   // Fetch which products have already been reviewed by the user

@@ -41,11 +41,11 @@ const ProductsSection = ({ data }) => {
 
                 {/* Image */}
                 {mainImage && (
-                  <div className="aspect-[3/4] w-full overflow-hidden bg-neutral-50 relative rounded-none">
+                  <div className="aspect-[3/4] w-full overflow-hidden bg-[var(--muted)]/40 dark:bg-zinc-900/50 flex items-center justify-center relative rounded-none">
                     <img
                       src={mainImage}
                       alt={product.name}
-                      className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-700 ease-out rounded-none"
+                      className="w-full h-full object-contain object-center group-hover:scale-[1.03] transition-transform duration-700 ease-out rounded-none"
                       loading="lazy"
                     />
                   </div>

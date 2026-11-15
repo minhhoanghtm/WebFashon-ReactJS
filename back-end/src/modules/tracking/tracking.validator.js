@@ -43,6 +43,30 @@ export const singleEventCoreSchema = z
       .max(100, "session_id tối đa 100 ký tự")
       .optional()
       .nullable(),
+    tab_id: z
+      .string()
+      .trim()
+      .max(100, "tab_id tối đa 100 ký tự")
+      .optional()
+      .nullable(),
+    action_id: z
+      .string()
+      .trim()
+      .max(100, "action_id tối đa 100 ký tự")
+      .optional()
+      .nullable(),
+    trace_id: z
+      .string()
+      .trim()
+      .max(100, "trace_id tối đa 100 ký tự")
+      .optional()
+      .nullable(),
+    duration_ms: z
+      .number()
+      .min(0)
+      .max(86_400_000)
+      .optional()
+      .nullable(),
     event_id: z
       .string()
       .trim()
@@ -105,8 +129,18 @@ export const singleEventCoreSchema = z
     context: z
       .object({
         deviceType: z.string().max(50).optional().nullable(),
-        referrer: z.string().max(300).optional().nullable(),
-        pathname: z.string().max(300).optional().nullable(),
+        referrer: z.string().max(1000).optional().nullable(),
+        referrerOrigin: z.string().max(300).optional().nullable(),
+        pathname: z.string().max(500).optional().nullable(),
+        fromPath: z.string().max(500).optional().nullable(),
+        toPath: z.string().max(500).optional().nullable(),
+        navigationType: z.string().max(50).optional().nullable(),
+        entrySource: z.string().max(100).optional().nullable(),
+        trafficChannel: z.string().max(100).optional().nullable(),
+        utm: z.record(z.string(), z.any()).optional().nullable(),
+        timing: z.record(z.string(), z.any()).optional().nullable(),
+        perf: z.record(z.string(), z.any()).optional().nullable(),
+        api: z.record(z.string(), z.any()).optional().nullable(),
       })
       .optional()
       .default({}),
@@ -159,9 +193,75 @@ export const updateConsentSchema = z.object({
     .object({
       consent: z.enum(["granted", "denied"], {
         errorMap: () => ({ message: "consent phải là 'granted' hoặc 'denied'" }),
-      }),
+      }).optional(),
+      choice: z.enum(["UNKNOWN", "ESSENTIAL_ONLY", "CUSTOM", "ALL_ACCEPTED", "WITHDRAWN", "RECONSENT_REQUIRED"]).optional(),
+      categories: z
+        .object({
+          necessary: z.boolean().optional().default(true),
+          analytics: z.boolean().optional().default(false),
+          personalization: z.boolean().optional().default(false),
+          marketing: z.boolean().optional().default(false),
+        })
+        .optional(),
+      policy_version: z.string().max(20).optional(),
+      policyVersion: z.string().max(20).optional(),
+      source: z.string().max(50).optional(),
       anonymous_id: z.string().uuid().optional().nullable(),
       anonymous_token: z.string().max(100).optional().nullable(),
     })
-    .strict(),
+    .strict()
+    .refine((data) => Boolean(data.consent || data.choice), {
+      message: "Yêu cầu phải có trường 'consent' hoặc 'choice'",
+    }),
+});
+
+export const presenceHeartbeatSchema = z.object({
+  body: z
+    .object({
+      session_id: z.string().trim().min(1, "session_id là bắt buộc"),
+      tab_id: z.string().trim().min(1, "tab_id là bắt buộc"),
+      anonymous_id: z.string().trim().optional().nullable(),
+      initial: z.boolean().optional().nullable(),
+      consent_status: z.string().optional().nullable(),
+      status: z.enum([
+        "ACTIVE",
+        "IDLE",
+        "AWAY",
+        "BACKGROUND",
+        "PASSIVE_VIEWING",
+        "DISCONNECTED",
+        "SESSION_ENDED",
+      ]),
+      current_route: z.string().max(500).optional().nullable(),
+      previous_route: z.string().max(500).optional().nullable(),
+      idle_duration_sec: z.number().min(0).optional().nullable(),
+      session_duration_sec: z.number().min(0).optional().nullable(),
+      entry_source: z.string().max(100).optional().nullable(),
+      traffic_channel: z.string().max(100).optional().nullable(),
+      last_action: z.string().max(100).optional().nullable(),
+      last_api: z.string().max(300).optional().nullable(),
+      visible: z.boolean().optional().nullable(),
+      timestamp: z.union([z.string(), z.number()]).optional().nullable(),
+    })
+    .passthrough(),
+});
+
+export const presenceLeaveSchema = z.object({
+  body: z
+    .object({
+      session_id: z.string().trim().min(1, "session_id là bắt buộc"),
+      tab_id: z.string().trim().min(1, "tab_id là bắt buộc"),
+      reason: z.string().max(100).optional().nullable(),
+      final_timings: z.record(z.string(), z.any()).optional().nullable(),
+    })
+    .passthrough(),
+});
+
+export const presenceDisassociateSchema = z.object({
+  body: z
+    .object({
+      session_id: z.string().trim().min(1, "session_id là bắt buộc"),
+      tab_id: z.string().trim().optional().nullable(),
+    })
+    .passthrough(),
 });

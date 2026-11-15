@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { motion, useMotionValue, useSpring } from "motion/react";
 import usePrefersReducedMotion from "../../hooks/usePrefersReducedMotion";
 

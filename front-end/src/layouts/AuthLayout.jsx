@@ -1,7 +1,9 @@
 import React, { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import useTracking from "@/hooks/useTracking";
 
 const AuthLayout = () => {
+  useTracking({ autoTrackPageView: true });
   const location = useLocation();
 
   useEffect(() => {
@@ -9,7 +11,10 @@ const AuthLayout = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground antialiased">
+    <div
+      key={location.pathname}
+      className="page-fade-enter min-h-screen bg-background font-sans text-foreground antialiased pb-56 sm:pb-40"
+    >
       <Outlet />
     </div>
   );

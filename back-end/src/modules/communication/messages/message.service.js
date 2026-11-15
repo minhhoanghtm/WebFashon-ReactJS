@@ -11,6 +11,11 @@ const assertObjectId = (id, field = "id") => {
 };
 
 class MessageService {
+  async findByClientMessageId(senderId, clientMessageId) {
+    if (!senderId || !clientMessageId) return null;
+    return messageRepository.findOne({ senderId, clientMessageId });
+  }
+
   async createMessage(payload, actor = {}, options = {}) {
     const { skipConversationCheck = false, ...repositoryOptions } = options;
     const data = validateCreateMessageDto(payload);
@@ -21,7 +26,18 @@ class MessageService {
       await conversationService.getConversationById(data.conversationId, actor);
     }
 
-    const message = await messageRepository.create(data, repositoryOptions);
+    const existing = await this.findByClientMessageId(data.senderId, data.clientMessageId);
+    if (existing) return existing;
+
+    let message;
+    try {
+      message = await messageRepository.create(data, repositoryOptions);
+    } catch (error) {
+      // The unique index is the race-safe guard when two retries arrive together.
+      if (error?.code !== 11000 || !data.clientMessageId) throw error;
+      message = await this.findByClientMessageId(data.senderId, data.clientMessageId);
+      if (!message) throw error;
+    }
     const nextStatus =
       data.senderType === "user"
         ? "waiting_admin"
@@ -43,13 +59,27 @@ class MessageService {
     const limit = Math.min(Math.max(Number(query.limit) || 50, 1), 100);
     const skip = (page - 1) * limit;
     const filter = { conversationId };
+    const cursor = query.cursor || query.after;
+    if (cursor) {
+      const after = new Date(cursor);
+      if (Number.isNaN(after.getTime())) throw new ValidationError("cursor is invalid");
+      filter.createdAt = { $gt: after };
+    }
 
     const [items, total] = await Promise.all([
       messageRepository.find(filter, { skip, limit }),
       messageRepository.count(filter),
     ]);
 
-    return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+    const lastItem = items[items.length - 1];
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      nextCursor: lastItem?.createdAt ? new Date(lastItem.createdAt).toISOString() : null,
+    };
   }
 
   async copyConversationMessages(sourceConversationId, targetConversationId, options = {}) {

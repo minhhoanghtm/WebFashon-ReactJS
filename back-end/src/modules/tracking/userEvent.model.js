@@ -24,6 +24,25 @@ const userEventSchema = new mongoose.Schema(
       default: null,
       trim: true,
     },
+    tab_id: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    action_id: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    trace_id: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    duration_ms: {
+      type: Number,
+      default: null,
+    },
     event_type: {
       type: String,
       required: true,
@@ -58,7 +77,17 @@ const userEventSchema = new mongoose.Schema(
     context: {
       deviceType: { type: String, default: null, trim: true },
       referrer: { type: String, default: null, trim: true },
+      referrerOrigin: { type: String, default: null, trim: true },
       pathname: { type: String, default: null, trim: true },
+      fromPath: { type: String, default: null, trim: true },
+      toPath: { type: String, default: null, trim: true },
+      navigationType: { type: String, default: null, trim: true },
+      entrySource: { type: String, default: null, trim: true },
+      trafficChannel: { type: String, default: null, trim: true },
+      utm: { type: mongoose.Schema.Types.Mixed, default: null },
+      timing: { type: mongoose.Schema.Types.Mixed, default: null },
+      perf: { type: mongoose.Schema.Types.Mixed, default: null },
+      api: { type: mongoose.Schema.Types.Mixed, default: null },
     },
   },
   {
@@ -77,7 +106,11 @@ userEventSchema.pre("validate", function () {
 // Compound indexes phục vụ truy vấn analytics & profile nhanh chóng
 userEventSchema.index({ user_id: 1, createdAt: -1 });
 userEventSchema.index({ anonymous_id: 1, createdAt: -1 });
+userEventSchema.index({ session_id: 1, createdAt: 1 }); // Timeline ascending
 userEventSchema.index({ session_id: 1, createdAt: -1 });
+userEventSchema.index({ tab_id: 1, createdAt: -1 });
+userEventSchema.index({ action_id: 1, createdAt: -1 });
+userEventSchema.index({ trace_id: 1 });
 userEventSchema.index({ product_id: 1, event_type: 1 });
 userEventSchema.index({ event_type: 1, createdAt: -1 });
 userEventSchema.index({ "meta.experiment_id": 1, event_type: 1, createdAt: -1 });

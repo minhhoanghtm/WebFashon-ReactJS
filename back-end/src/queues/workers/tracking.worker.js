@@ -23,5 +23,9 @@ export const initTrackingWorker = () => {
     console.error(`[Tracking Worker] Job ${job?.id} failed:`, err.message);
   });
 
+  worker.on("error", (err) => {
+    console.warn(`[Tracking Worker] Connection / Worker warning:`, err.message);
+  });
+
   return worker;
 };

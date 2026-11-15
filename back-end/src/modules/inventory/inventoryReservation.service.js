@@ -6,6 +6,7 @@ import { Product, ProductVariant } from "../products/product.model.js";
 import UserEvent from "../tracking/userEvent.model.js";
 import { EVENT_TYPES } from "../tracking/tracking.constants.js";
 import logger from "../../common/logger.js";
+import pricingService from "../campaigns/pricing.service.js";
 
 export const HOLD_DURATION_SECONDS = 300; // Exactly 5 minutes (300s)
 
@@ -245,45 +246,92 @@ class InventoryReservationService {
       let name = it.name || "Sản phẩm";
       let color = it.color || "";
       let size = it.size || "";
-      let unitPrice = Number(it.unitPrice ?? it.price ?? 0);
+      let unitPrice = 0;
       let image = it.image || "";
 
+      let variantDoc = null;
       if (variantId && mongoose.isValidObjectId(variantId)) {
-        const variant = await ProductVariant.findById(variantId).lean();
-        if (!variant) {
-          throw new Error(`Biến thể không tồn tại (ID: ${variantId})`);
-        }
-        dbStock = Number(variant.stock || 0);
-        color = variant.color || color;
-        size = variant.size || size;
-        if (variant.image_url) image = variant.image_url;
+        variantDoc = await ProductVariant.findById(variantId).lean();
+      }
 
-        const parentProd = await Product.findById(productId).select("name new_price displayProduct").lean();
-        if (parentProd) {
-          name = parentProd.name;
-          if (!unitPrice) unitPrice = Number(parentProd.new_price || 0);
-          if (!image && parentProd.displayProduct?.[0]) image = parentProd.displayProduct[0];
+      const productDoc = await Product.findById(productId).lean();
+      if (!productDoc) {
+        throw new Error(`Sản phẩm không tồn tại (ID: ${productId})`);
+      }
+
+      name = productDoc.name;
+      if (productDoc.displayProduct?.[0]) image = productDoc.displayProduct[0];
+      if (productDoc.image) image = productDoc.image;
+
+      // Check embedded variants in product.variants if not in standalone collection
+      if (!variantDoc && Array.isArray(productDoc.variants) && productDoc.variants.length > 0) {
+        if (variantId) {
+          variantDoc = productDoc.variants.find(
+            (v) => String(v._id) === String(variantId) || v.sku === variantId
+          );
+        }
+        if (!variantDoc && (color || size)) {
+          variantDoc = productDoc.variants.find(
+            (v) => (!color || v.color?.toLowerCase() === color.toLowerCase()) &&
+                   (!size || v.size?.toUpperCase() === size.toUpperCase())
+          );
+        }
+        if (!variantDoc && !variantId) {
+          variantDoc = productDoc.variants[0];
+        }
+      }
+
+      if (variantDoc) {
+        dbStock = Number(variantDoc.stock || 0);
+        color = variantDoc.color || color;
+        size = variantDoc.size || size;
+        if (variantDoc.image_url || variantDoc.image) {
+          image = variantDoc.image_url || variantDoc.image;
         }
       } else {
-        const product = await Product.findById(productId).lean();
-        if (!product) {
-          throw new Error(`Sản phẩm không tồn tại (ID: ${productId})`);
-        }
-        dbStock = Number(product.stock || 0);
-        name = product.name;
-        if (!unitPrice) unitPrice = Number(product.new_price || 0);
-        if (!image && product.displayProduct?.[0]) image = product.displayProduct[0];
+        dbStock = Number(productDoc.stock || 0);
+      }
+
+      // Single source of truth for pricing: pricingService
+      try {
+        const resolved = await pricingService.resolvePrice(productDoc, variantDoc, new Date(), userId);
+        unitPrice = Number(resolved.finalPrice || 0);
+      } catch (priceErr) {
+        logger.warn(`Failed to resolve price via pricingService for ${productId}: ${priceErr.message}`);
+        unitPrice = Number(variantDoc?.price ?? productDoc.new_price ?? productDoc.price ?? 0);
+      }
+
+      if (unitPrice <= 0 && it.unitPrice) {
+        unitPrice = Number(it.unitPrice);
+      }
+      if (unitPrice <= 0 && it.price) {
+        unitPrice = Number(it.price);
+      }
+      if (unitPrice <= 0 && it.new_price) {
+        unitPrice = Number(it.new_price);
+      }
+
+      let finalVarId = null;
+      if (variantDoc?._id && mongoose.isValidObjectId(variantDoc._id)) {
+        finalVarId = String(variantDoc._id);
+      } else if (variantId && mongoose.isValidObjectId(variantId)) {
+        finalVarId = String(variantId);
       }
 
       preparedItems.push({
         productId,
-        variantId,
+        product_id: productId,
+        variantId: finalVarId,
+        product_variant_id: finalVarId,
         sku,
         name,
         color,
         size,
         quantity,
         unitPrice,
+        unit_price: unitPrice,
+        price: unitPrice,
+        new_price: unitPrice,
         image,
       });
 
@@ -603,23 +651,35 @@ class InventoryReservationService {
 
     const remainingSeconds = Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
     const items = data.items || [];
+    const formattedItems = items.map((it) => {
+      const priceVal = Number(it.unitPrice ?? it.unit_price ?? it.new_price ?? it.price ?? 0);
+      const prodId = String(it.productId || it.product_id || "");
+      const varId = it.variantId || it.product_variant_id ? String(it.variantId || it.product_variant_id) : null;
+      return {
+        sku: it.sku,
+        productId: prodId,
+        product_id: prodId,
+        variantId: varId,
+        product_variant_id: varId,
+        quantity: Number(it.quantity || 1),
+        name: it.name,
+        color: it.color,
+        size: it.size,
+        unitPrice: priceVal,
+        unit_price: priceVal,
+        price: priceVal,
+        new_price: priceVal,
+        image: it.image,
+      };
+    });
+
     return {
       reservationId: data.reservationId,
       userId: String(data.userId),
       checkoutSessionId: data.checkoutSessionId,
       status: remainingSeconds <= 0 && data.status === "ACTIVE" ? "EXPIRED" : data.status,
-      reservedItems: items.map((it) => ({
-        sku: it.sku,
-        productId: it.productId,
-        variantId: it.variantId,
-        quantity: it.quantity,
-        name: it.name,
-        color: it.color,
-        size: it.size,
-        unitPrice: it.unitPrice,
-        image: it.image,
-      })),
-      items,
+      reservedItems: formattedItems,
+      items: formattedItems,
       totalAmount: data.totalAmount,
       totalAmountFormatted: `${Number(data.totalAmount || 0).toLocaleString("vi-VN")}đ`,
       expiresAt: expiresAtMs,
@@ -638,6 +698,7 @@ class InventoryReservationService {
     this._reconcileInterval = setInterval(() => {
       this.processExpiredReservations().catch(() => {});
     }, 10000); // Check every 10 seconds
+    this._reconcileInterval.unref?.();
   }
 }
 

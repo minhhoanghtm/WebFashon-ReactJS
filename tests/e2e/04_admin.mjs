@@ -16,7 +16,7 @@ export async function testAdmin(browser, report) {
     await page.fill('input[type="email"], input[name="email"]', "admin@404studio.vn");
     await page.fill('input[type="password"], input[name="passWord"], input[name="password"]', "DevAdmin2026!");
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3500);
 
     // 2. Admin Dashboard & 3 Tabs
     await page.goto(`${BASE_URL}/admin`, { waitUntil: "networkidle", timeout: 15000 });

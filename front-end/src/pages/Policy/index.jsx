@@ -55,11 +55,21 @@ const policiesData = [
       "Hỗ trợ chỉnh sửa đường may, khuy cúc trọn đời tại hệ thống cửa hàng của chúng tôi.",
     ],
   },
+  {
+    id: "cookie-policy",
+    title: "5. CHÍNH SÁCH QUYỀN RIÊNG TƯ & COOKIE",
+    icon: Lock,
+    points: [
+      "Cookie cần thiết (Strictly Necessary): Luôn hoạt động để duy trì phiên đăng nhập an toàn, giỏ hàng, đặt hàng, giữ hàng tồn kho chính xác 300s (Redis Reservation) và phòng chống tấn công CSRF.",
+      "Phân tích hành vi (Analytics): Chỉ kích hoạt khi bạn đồng ý. Thu thập dữ liệu ẩn danh về lượt xem trang, tương tác và hiệu năng để cải thiện trải nghiệm mua sắm.",
+      "Cá nhân hóa (Personalization): Chỉ hoạt động khi có sự đồng thuận để gợi ý thiết kế phù hợp qua hệ thống đề xuất AI Recommendation.",
+      "Quyền kiểm soát & Rút lại đồng ý: Bạn có toàn quyền bật/tắt từng nhóm mục đích hoặc rút lại toàn bộ sự đồng ý bất kỳ lúc nào thông qua liên kết 'Quyền riêng tư & Cookie' tại chân trang.",
+    ],
+  },
 ];
 
 export const Policy = () => {
   useDocumentTitle("Chính sách & Điều khoản — 404STUDIO");
-  const [contentHtml, setContentHtml] = useState("");
   const [pageSections, setPageSections] = useState([]);
 
   useEffect(() => {
@@ -70,7 +80,6 @@ export const Policy = () => {
         );
         const page = data?.page || data;
         const sections = data?.sections || data?.page?.sections || [];
-        if (page?.content) setContentHtml(page.content);
         if (sections && sections.length > 0) setPageSections(sections);
       } catch (err) {
         console.error("Lỗi khi tải thông tin chính sách:", err);

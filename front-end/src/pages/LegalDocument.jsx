@@ -1,0 +1,16 @@
+import { Link } from "react-router-dom";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+
+export const legalDocuments = {
+  terms: { title: "Điều khoản mua bán", sections: [["Đặt hàng và xác nhận", "Hệ thống tạo đơn với trạng thái chờ xác nhận. Khách hàng cần cung cấp thông tin giao hàng chính xác; đơn có thể bị hủy theo trạng thái/điều kiện hệ thống. [CẦN CHỦ WEBSITE ĐIỀN: thời điểm hợp đồng được xác lập và điều kiện từ chối đơn]."], ["Giá và hóa đơn", "Giá/khuyến mại hiển thị tại thời điểm đặt hàng. [CẦN CHỦ WEBSITE ĐIỀN: đơn vị tiền tệ, thuế, quy trình và loại hóa đơn cung cấp]."]] },
+  shipping: { title: "Chính sách vận chuyển", sections: [["Giao hàng", "Website sử dụng GHN cho tra cứu khu vực và tính phí vận chuyển. Phí được tính trong checkout theo địa chỉ giao hàng."], ["Thời gian và phạm vi", "[CẦN CHỦ WEBSITE ĐIỀN: phạm vi giao hàng, thời gian dự kiến, cước phí, giao thất bại và quy trình kiểm hàng]."]] },
+  returns: { title: "Chính sách đổi trả và hoàn tiền", sections: [["Yêu cầu đổi trả", "[CẦN CHỦ WEBSITE ĐIỀN: điều kiện hàng hóa, thời hạn, ngoại lệ, địa chỉ nhận lại hàng và chi phí vận chuyển]."], ["Hoàn tiền", "[CẦN CHỦ WEBSITE ĐIỀN: phương thức, thời hạn, phí và cách xử lý khi thanh toán qua MoMo/VNPay]."]] },
+  payment: { title: "Chính sách thanh toán", sections: [["Phương thức", "Hệ thống hỗ trợ COD, MoMo, VNPay và có cấu hình chuyển khoản ngân hàng. Các thanh toán online được xử lý qua cổng tương ứng; website không nhập số thẻ trong mã nguồn hiện có."], ["Xác nhận", "Trạng thái thanh toán được cập nhật từ callback/IPN của cổng thanh toán. [CẦN CHỦ WEBSITE ĐIỀN: điều kiện thanh toán, đối soát, hoàn tiền và kênh hỗ trợ]."]] },
+  cookies: { title: "Chính sách Cookie", sections: [["Loại dữ liệu", "Website lưu lựa chọn consent, phiên/anonymous ID và chỉ gửi tracking analytics/cá nhân hóa khi có đồng ý."], ["Quản lý", "Bạn có thể thay đổi lựa chọn tại “Quyền riêng tư & Cookie”. Chi tiết dữ liệu cá nhân xem tại trang Chính sách bảo vệ dữ liệu cá nhân."]] },
+  contact: { title: "Thông tin chủ sở hữu và liên hệ pháp lý", sections: [["Chủ sở hữu", "[CẦN CHỦ WEBSITE ĐIỀN: tên pháp lý, MST/ĐKKD, địa chỉ trụ sở, cơ quan/cấp đăng ký]."], ["Liên hệ", "[CẦN CHỦ WEBSITE ĐIỀN: hotline, email hỗ trợ, email tiếp nhận khiếu nại và thời hạn phản hồi]."]] },
+};
+
+export default function LegalDocument({ document }) {
+  useDocumentTitle(`${document.title} — 404STUDIO`);
+  return <main className="min-h-screen bg-[#FBF9F5] px-4 py-12 text-[#05251C] sm:py-20"><article className="mx-auto max-w-3xl rounded-3xl border border-[#05251C]/10 bg-white p-6 sm:p-10"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6B716E]">Văn bản pháp lý</p><h1 className="mt-3 text-3xl font-bold sm:text-4xl">{document.title}</h1><p className="mt-3 text-sm text-[#6B716E]">Phiên bản: 2026-11-07 · Ngày hiệu lực: [CẦN CHỦ WEBSITE ĐIỀN: ngày hiệu lực]</p><div className="mt-8 space-y-7">{document.sections.map(([heading, text]) => <section key={heading}><h2 className="text-lg font-bold">{heading}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{text}</p></section>)}</div><p className="mt-10 text-sm"><Link className="underline" to="/privacy">Chính sách bảo vệ dữ liệu cá nhân</Link></p></article></main>;
+}

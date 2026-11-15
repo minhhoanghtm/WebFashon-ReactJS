@@ -1,10 +1,6 @@
 /**
  * WebsiteSettings validators — Zod schema-based.
  * Giữ nguyên tên export để không break websiteSettings.route.js.
- *
- * Đặc biệt xử lý:
- *  - Nested object `general` với các field bắt buộc
- *  - Nested object `system` với boolean coercion (string "true"/"false" → boolean)
  */
 import { z } from "zod";
 import { validate } from "../../common/utils/validate.js";
@@ -27,28 +23,30 @@ const zodBoolCoerce = z.preprocess(
 // ---------------------------------------------------------------------------
 
 const updateSettingsSchema = z.object({
-  general: z.object(
-    {
-      siteName: z.string({ required_error: "Tên website (siteName) không được để trống" }).trim().min(1, "Tên website (siteName) không được để trống"),
-      email:    zodEmail,
-      hotline:  z.string({ required_error: "Hotline không được để trống" }).trim().min(1, "Hotline không được để trống"),
-      address:  z.string({ required_error: "Địa chỉ không được để trống" }).trim().min(1, "Địa chỉ không được để trống"),
-    },
-    { required_error: "Thiếu thông tin cấu hình chung (general)" }
-  ).passthrough(), // cho phép các field khác như logoUrl, faviconUrl, workingHours đi qua
+  general: z
+    .object({
+      siteName: z.string().trim().min(1, "Tên website không được để trống").optional(),
+      email:    zodEmail.optional(),
+      hotline:  z.string().trim().min(1, "Hotline không được để trống").optional(),
+      address:  z.string().trim().min(1, "Địa chỉ không được để trống").optional(),
+    })
+    .passthrough()
+    .optional(),
   system: z
     .object({
       maintenanceMode:    zodBoolCoerce,
+      maintenanceMessage: z.string().optional().nullable(),
+      maintenanceUntil:   z.union([z.string(), z.date(), z.null()]).optional(),
       allowGuestCheckout: zodBoolCoerce,
       enableVoucher:      zodBoolCoerce,
       enableReviews:      zodBoolCoerce,
     })
-    .passthrough() // cho phép các field cấu hình hệ thống khác đi qua nếu có
+    .passthrough()
     .optional(),
-}).passthrough(); // cho phép các field cấu hình khác đi qua
+}).passthrough();
 
 // ---------------------------------------------------------------------------
-// Middleware export — tên giữ nguyên, backward compatible
+// Middleware export
 // ---------------------------------------------------------------------------
 
 export const validateUpdateSettings = validate(updateSettingsSchema);

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { Sparkles, RefreshCw, Compass } from "lucide-react";
 import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
 

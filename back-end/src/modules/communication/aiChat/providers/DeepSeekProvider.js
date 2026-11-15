@@ -18,6 +18,7 @@ export class DeepSeekProvider extends OpenAIProvider {
         model: this.model,
         messages,
         temperature: 0.3,
+        max_tokens: this.maxTokens,
       }),
     });
 
@@ -28,6 +29,7 @@ export class DeepSeekProvider extends OpenAIProvider {
     const data = await response.json();
     return {
       content: data.choices?.[0]?.message?.content || "",
+      usage: data.usage || {},
       raw: data,
     };
   }

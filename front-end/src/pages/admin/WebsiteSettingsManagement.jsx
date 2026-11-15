@@ -18,7 +18,7 @@ import {
 import { toast } from "react-toastify";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import HeadquartersAddressPicker from "@/components/admin/HeadquartersAddressPicker";
-import { AdminPageHeader, AdminCard, CardSkeleton } from "@/components/admin/ui";
+import { AdminPageHeader, AdminCard, CardSkeleton, AdminModal } from "@/components/admin/ui";
 
 const WebsiteSettingsManagement = () => {
   useDocumentTitle("Cài đặt website — Quản trị");
@@ -34,6 +34,65 @@ const WebsiteSettingsManagement = () => {
 
   const [activeTab, setActiveTab] = useState("general");
   const [uploadingField, setUploadingField] = useState(null);
+  const [showMaintenanceConfirm, setShowMaintenanceConfirm] = useState(false);
+  const [savingMaintenanceInfo, setSavingMaintenanceInfo] = useState(false);
+
+  const handleSystemFlagToggle = async (key, newValue) => {
+    if (key === "maintenanceMode" && newValue === true) {
+      setShowMaintenanceConfirm(true);
+      return;
+    }
+    await executeSystemFlagChange(key, newValue);
+  };
+
+  const executeSystemFlagChange = async (key, newValue) => {
+    const previousValue = settings?.system?.[key];
+    const updatedSystem = {
+      ...(settings?.system || {}),
+      [key]: newValue,
+    };
+
+    setSettings((prev) => ({
+      ...prev,
+      system: updatedSystem,
+    }));
+
+    try {
+      await updateSettings({
+        ...settings,
+        system: updatedSystem,
+      });
+      toast.success("Đã cập nhật cài đặt hệ thống thành công!");
+    } catch (err) {
+      setSettings((prev) => ({
+        ...prev,
+        system: {
+          ...(prev.system || {}),
+          [key]: previousValue,
+        },
+      }));
+      toast.error("Không thể lưu cài đặt: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleSaveMaintenanceDetails = async () => {
+    setSavingMaintenanceInfo(true);
+    try {
+      await updateSettings({
+        ...settings,
+        system: {
+          ...(settings.system || {}),
+          maintenanceMessage: settings.system?.maintenanceMessage,
+          maintenanceUntil: settings.system?.maintenanceUntil || null,
+        },
+      });
+      toast.success("Đã lưu thông điệp và thời gian bảo trì thành công!");
+    } catch (err) {
+      toast.error("Lỗi khi lưu thông tin bảo trì: " + (err.response?.data?.message || err.message));
+    } finally {
+      setSavingMaintenanceInfo(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -755,7 +814,7 @@ const WebsiteSettingsManagement = () => {
                         <img
                           src={settings.seo.ogImage}
                           alt="OG Preview"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain p-1"
                         />
                       ) : (
                         <span className="text-xs text-slate-400">1200 × 630 px</span>
@@ -1109,6 +1168,11 @@ const WebsiteSettingsManagement = () => {
             {/* TAB: FOOTER */}
             {activeTab === "footer" && (
               <div className="space-y-6">
+                {(!settings.footer?.companyName || !settings.footer?.taxCode || !settings.general?.address || !settings.general?.hotline || !settings.general?.email) && (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                    Chưa thể công bố đủ thông tin chủ sở hữu: cần tên pháp lý, MST/ĐKKD, địa chỉ, hotline và email. Footer đang hiển thị cảnh báo thay vì để trống.
+                  </div>
+                )}
                 <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
                   <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                     Thông tin chân trang & Pháp lý doanh nghiệp
@@ -1169,6 +1233,45 @@ const WebsiteSettingsManagement = () => {
           </AdminCard>
         </div>
       </div>
+      {/* Confirmation Modal for turning Maintenance Mode ON */}
+      <AdminModal
+        isOpen={showMaintenanceConfirm}
+        onClose={() => setShowMaintenanceConfirm(false)}
+        title="Xác nhận bật chế độ bảo trì"
+        subtitle="Storefront sẽ tạm khóa đối với khách hàng vãng lai"
+        size="md"
+        footer={
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setShowMaintenanceConfirm(false)}
+              className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors min-h-[44px]"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type="button"
+              data-testid="confirm-maintenance-btn"
+              onClick={async () => {
+                setShowMaintenanceConfirm(false);
+                await executeSystemFlagChange("maintenanceMode", true);
+              }}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-semibold rounded-xl text-xs transition-colors min-h-[44px]"
+            >
+              Bật bảo trì ngay
+            </button>
+          </div>
+        }
+      >
+        <div className="p-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+          <p>
+            Khi bật <strong>Chế độ bảo trì</strong>, toàn bộ khách truy cập website sẽ được chuyển hướng tới trang thông báo bảo trì toàn phần và không thể đặt hàng hoặc xem sản phẩm.
+          </p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
+            Lưu ý: Chỉ tài khoản Quản trị viên đã đăng nhập mới có thể xem storefront và truy cập cổng quản trị.
+          </p>
+        </div>
+      </AdminModal>
     </div>
   );
 };

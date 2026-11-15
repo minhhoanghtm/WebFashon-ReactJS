@@ -21,6 +21,20 @@ export const CustomerChatWidget = () => {
   const siteName = settings?.general?.siteName || "404STUDIO";
   const launcherRef = useRef(null);
 
+  // Track previous route key (pathname + search). Excludes hash so in-page anchor jumps don't close chat.
+  const prevRouteKeyRef = useRef(`${location.pathname}${location.search}`);
+
+  // Automatically close chat on route transition (link click, back/forward, navigate) without stealing focus
+  useEffect(() => {
+    const currentRouteKey = `${location.pathname}${location.search}`;
+    if (prevRouteKeyRef.current !== currentRouteKey) {
+      prevRouteKeyRef.current = currentRouteKey;
+      if (isOpen) {
+        closeChat();
+      }
+    }
+  }, [location.pathname, location.search, isOpen, closeChat]);
+
   // Mode tab state: 'ai' or 'support'
   const [activeTab, setActiveTab] = useState(() => {
     try {
@@ -32,7 +46,7 @@ export const CustomerChatWidget = () => {
     return "ai";
   });
 
-  // Draft input state
+  // Draft input state with persistence
   const [inputDraft, setInputDraft] = useState(() => {
     try {
       return sessionStorage.getItem("customer_chat_draft") || "";
@@ -40,6 +54,15 @@ export const CustomerChatWidget = () => {
       return "";
     }
   });
+
+  const handleInputDraftChange = useCallback((val) => {
+    setInputDraft(val);
+    try {
+      sessionStorage.setItem("customer_chat_draft", val);
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   // Check auto-open from login redirect
   useEffect(() => {
@@ -151,27 +174,24 @@ export const CustomerChatWidget = () => {
         supportSocketStatus={supportChat.socketStatus}
         unreadSupportCount={supportChat.unreadCount}
         onSendSupportMessage={supportChat.sendMessage}
+        onRetrySupport={supportChat.retryMessage}
         // Shared
         user={user}
         isAuthenticated={isAuthenticated}
         context={context}
         onClearContext={clearContext}
         inputDraft={inputDraft}
-        onInputDraftChange={setInputDraft}
+        onInputDraftChange={handleInputDraftChange}
         onLoginRedirect={handleLoginRedirect}
         onActionConfirm={(action) => {
           trackingService.trackAIChatInteraction?.("ai_cart_action_confirmed", {
             actionId: action?.actionId,
             items: action?.items,
           });
-          aiChat.sendMessage("Xác nhận thêm vào giỏ hàng", aiChat.aiMetadata, {
-            confirmAction: action,
-          });
+          aiChat.confirmAction(action);
         }}
-        onActionCancel={() => {
-          aiChat.sendMessage("Hủy", aiChat.aiMetadata, {
-            cancelAction: true,
-          });
+        onActionCancel={(action) => {
+          aiChat.cancelAction(action);
         }}
         onAskProductDetails={(item) => {
           const targetMeta = item.id

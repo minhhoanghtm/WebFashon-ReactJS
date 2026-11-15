@@ -1,5 +1,4 @@
 import axiosClient from "./axiosClient";
-import { axiosPublic } from "./axiosPublic";
 
 export const chatApi = {
   getAdminConversations: (params) => axiosClient.get("/admin/conversations", { params }),
@@ -13,7 +12,9 @@ export const chatApi = {
 
   // Customer endpoints
   getCustomerConversations: () => axiosClient.get("/chat/conversations"),
-  getCustomerMessages: (conversationId) => axiosClient.get(`/chat/messages/${conversationId}`),
+  getCustomerMessages: (conversationId, params) => axiosClient.get(`/chat/messages/${conversationId}`, { params }),
   sendCustomerAiMessage: (payload) => axiosClient.post("/chat/ai/send", payload),
+  confirmAiAction: (id, paramsHash) => axiosClient.post(`/chat/ai/actions/${id}/confirm`, { paramsHash }),
+  cancelAiAction: (id) => axiosClient.post(`/chat/ai/actions/${id}/cancel`),
   sendCustomerSupportMessage: (payload) => axiosClient.post("/chat/support/send", payload),
 };

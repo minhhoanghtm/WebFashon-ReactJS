@@ -1,4 +1,5 @@
 import rateLimit from "express-rate-limit";
+import { getRedisConnection } from "../configs/redis.js";
 // Environment flag to bypass rate limiting strictly during isolated unit tests (NODE_ENV=test)
 const DISABLE_RATE_LIMIT_FOR_TESTS =
   process.env.NODE_ENV === "test" || process.env.DISABLE_RATE_LIMIT_FOR_TESTS === "true";
@@ -62,6 +63,13 @@ export const verifyOtpLimiter = createLimiter(
   "Bạn đã xác minh OTP quá nhiều lần. Vui lòng thử lại sau 15 phút.",
 );
 
+/** Re-authentication before a personal-data export or deletion request. */
+export const dataSubjectRequestLimiter = createLimiter(
+  15 * 60 * 1000,
+  5,
+  "Bạn đã xác thực dữ liệu quá nhiều lần. Vui lòng thử lại sau 15 phút.",
+);
+
 /** /auth/resetPassword — 5 req / 15 min */
 export const resetPasswordLimiter = createLimiter(
   15 * 60 * 1000,
@@ -95,3 +103,67 @@ export const eventTrackingLimiter = DISABLE_RATE_LIMIT_FOR_TESTS
         message: "Quá nhiều sự kiện ghi nhận. Vui lòng thử lại sau 1 phút.",
       },
     });
+
+/**
+ * /chat/ai/send — 30 requests/minute for each signed-in user and each guest IP.
+ * Auth is optional on this endpoint, therefore guests must never share a global
+ * bucket; their IP is their identity.
+ */
+export const createAiChatLimiter = ({ windowMs = 60 * 1000, max = 30 } = {}) =>
+  rateLimit({
+      windowMs,
+      max,
+      keyGenerator: (req) => req.user?.userId ? `user:${req.user.userId}:ip:${req.ip}` : `ip:${req.ip}`,
+      validate: false,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: {
+        status: 429,
+        message: "Bạn đã gửi quá nhiều tin nhắn cho AI. Vui lòng thử lại sau 1 phút.",
+      },
+    });
+
+export const aiChatLimiter = DISABLE_RATE_LIMIT_FOR_TESTS
+  ? (req, res, next) => next()
+  : createAiChatLimiter();
+
+const AI_CHAT_DAILY_QUOTA = Number.parseInt(process.env.AI_CHAT_DAILY_QUOTA || "200", 10);
+const ONE_DAY_SECONDS = 24 * 60 * 60;
+
+export const createAiChatDailyQuota = ({
+  redisProvider = getRedisConnection,
+  quota = AI_CHAT_DAILY_QUOTA,
+} = {}) => async (req, res, next) => {
+  const identity = req.user?.userId
+    ? `user:${req.user.userId}:ip:${req.ip}`
+    : `ip:${req.ip}`;
+  const key = `rate-limit:ai-chat:daily:${identity}`;
+
+  try {
+    const redis = redisProvider();
+    const count = await redis.incr(key);
+    if (count === 1) {
+      await redis.expire(key, ONE_DAY_SECONDS);
+    }
+
+    if (count > quota) {
+      return res.status(429).json({
+        success: false,
+        message: "Bạn đã dùng hết lượt chat AI hôm nay. Vui lòng quay lại sau.",
+        code: "AI_CHAT_DAILY_QUOTA_EXCEEDED",
+      });
+    }
+
+    return next();
+  } catch (error) {
+    // Do not silently bypass a cost-control mechanism when Redis is unavailable.
+    return res.status(503).json({
+      success: false,
+      message: "Dịch vụ chat AI đang tạm thời bận. Vui lòng thử lại sau.",
+      code: "AI_CHAT_QUOTA_UNAVAILABLE",
+    });
+  }
+};
+
+/** Redis-backed daily quota. Kept enabled in tests so the quota is testable. */
+export const aiChatDailyQuota = createAiChatDailyQuota();

@@ -2,6 +2,9 @@ import trackingApi from "../api/trackingApi";
 import { getAnonymousId } from "../utils/anonymousId";
 import sessionService from "./session.service";
 import consentService from "./consent.service";
+import presenceService from "./presence.service";
+import performanceService from "./performance.service";
+import { PRESENCE_STATUS } from "../config/activityConfig";
 
 const BATCH_SIZE = 10;
 const FLUSH_INTERVAL_MS = 3000;
@@ -39,7 +42,7 @@ const isAdminUser = () => {
       const parsed = JSON.parse(authData);
       if (parsed?.state?.user?.role === "admin") return true;
     }
-  } catch {}
+  } catch { /* Tracking must not block the UI when storage is unavailable. */ }
   return false;
 };
 
@@ -47,6 +50,10 @@ const isAdminUser = () => {
  * Gửi batch sự kiện lên server
  */
 const flushBuffer = async (useBeacon = false) => {
+  if (!consentService.isTrackingAllowed()) {
+    eventBuffer = [];
+    return;
+  }
   if (eventBuffer.length === 0) return;
 
   const eventsToSend = [...eventBuffer];
@@ -91,9 +98,62 @@ const ensureTimer = () => {
   }
 };
 
-// Đăng ký listener unload để flush toàn bộ sự kiện đang chờ
+// Đăng ký listener unload, presence và performance
 if (typeof window !== "undefined") {
   ensureTimer();
+
+  // Khởi tạo presence state machine và liên kết callbacks chuyển trạng thái
+  presenceService.init({
+    onTransition: ({ oldStatus, newStatus, reason, idleDurationSec }) => {
+      let eventType = null;
+      if (newStatus === PRESENCE_STATUS.IDLE) {
+        eventType = "user_became_idle";
+      } else if (newStatus === PRESENCE_STATUS.AWAY) {
+        eventType = "user_became_away";
+      } else if (
+        newStatus === PRESENCE_STATUS.ACTIVE &&
+        (oldStatus === PRESENCE_STATUS.IDLE || oldStatus === PRESENCE_STATUS.AWAY)
+      ) {
+        eventType = "user_resumed_activity";
+      } else if (newStatus === PRESENCE_STATUS.BACKGROUND) {
+        eventType = "page_backgrounded";
+      } else if (oldStatus === PRESENCE_STATUS.BACKGROUND && newStatus !== PRESENCE_STATUS.BACKGROUND) {
+        eventType = "page_foregrounded";
+      } else if (newStatus === PRESENCE_STATUS.SESSION_ENDED) {
+        eventType = "session_ended";
+      }
+
+      if (eventType) {
+        trackingService.track(eventType, {
+          meta: {
+            fromStatus: oldStatus,
+            toStatus: newStatus,
+            reason,
+            idleDurationSec,
+          },
+        });
+      }
+    },
+  });
+
+  // Khởi tạo chẩn đoán hiệu năng giao diện UI
+  performanceService.init({
+    onSignal: (signal) => {
+      if (signal.type === "ui_stall_suspected") {
+        trackingService.track("ui_stall_suspected", {
+          meta: signal,
+        });
+      } else if (signal.type === "ui_long_task") {
+        trackingService.track("ui_long_task", {
+          meta: signal,
+        });
+      } else if (signal.type === "unhandled_error" || signal.type === "unhandled_rejection") {
+        trackingService.track("ui_performance_signal", {
+          meta: signal,
+        });
+      }
+    },
+  });
 
   const handleUnload = () => {
     if (eventBuffer.length > 0) {
@@ -106,6 +166,20 @@ if (typeof window !== "undefined") {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       handleUnload();
+    }
+  });
+
+  // Đăng ký lắng nghe thay đổi quyền riêng tư:
+  // Nếu người dùng từ chối hoặc rút lại quyền Analytics, lập tức hủy toàn bộ buffer sự kiện
+  consentService.subscribe((state) => {
+    if (!state?.categories?.analytics || !state?.hasConsented) {
+      eventBuffer = [];
+      if (flushTimer) {
+        clearInterval(flushTimer);
+        flushTimer = null;
+      }
+    } else {
+      ensureTimer();
     }
   });
 }
@@ -152,19 +226,45 @@ export const trackingService = {
         });
       }
 
+      // Cập nhật hoạt động cho presence engine (để admin thấy last action)
+      if (
+        !eventType.startsWith("ui_") &&
+        eventType !== "page_view" &&
+        eventType !== "session_start" &&
+        eventType !== "session_end"
+      ) {
+        presenceService.reportAction(eventType);
+      }
+
+      const sessionCtx = sessionService.getSessionContext();
       const eventItem = {
         event_id: generateUUID(),
         event_type: eventType,
         anonymous_id: getAnonymousId(),
         session_id: sessionId,
+        tab_id: sessionService.getTabId(),
+        action_id: payload.action_id || sessionService.getCurrentActionId() || null,
+        trace_id: payload.trace_id || sessionService.createTraceId(),
+        duration_ms:
+          typeof payload.duration_ms === "number"
+            ? payload.duration_ms
+            : typeof payload.durationMs === "number"
+            ? payload.durationMs
+            : null,
         source: "frontend",
         product_id: payload.product_id || payload.productId || null,
         category_id: payload.category_id || payload.categoryId || null,
         query: payload.query || null,
         meta: payload.meta || {},
         context: {
-          ...sessionService.getSessionContext(),
+          ...sessionCtx,
           ...(payload.context || {}),
+          fromPath: payload.fromPath || payload.context?.fromPath || sessionCtx.fromPath,
+          toPath: payload.toPath || payload.context?.toPath || null,
+          navigationType: payload.navigationType || payload.context?.navigationType || null,
+          timing: payload.timing || payload.context?.timing || null,
+          perf: payload.perf || payload.context?.perf || null,
+          api: payload.api || payload.context?.api || null,
         },
         timestamp: new Date().toISOString(),
       };
@@ -450,6 +550,262 @@ export const trackingService = {
     this.track(actionType || "ai_product_search", {
       meta,
     });
+  },
+
+  trackAIIntentDetected(intent, confidence = 1, meta = {}) {
+    this.track("ai_intent_detected", {
+      meta: { intent, confidence, ...meta },
+    });
+  },
+
+  trackAIToolActionRequested(toolName, actionParams = {}, meta = {}) {
+    this.track("ai_tool_action_requested", {
+      meta: { toolName, actionParams, ...meta },
+    });
+  },
+
+  trackAIToolActionConfirmed(toolName, actionId, meta = {}) {
+    this.track("ai_tool_action_confirmed", {
+      meta: { toolName, actionId, ...meta },
+    });
+  },
+
+  trackAIToolActionCancelled(toolName, reason = "", meta = {}) {
+    this.track("ai_tool_action_cancelled", {
+      meta: { toolName, reason, ...meta },
+    });
+  },
+
+  trackAIToolActionFailed(toolName, error = "", meta = {}) {
+    this.track("ai_tool_action_failed", {
+      meta: { toolName, error, ...meta },
+    });
+  },
+
+  trackAICheckoutStarted(orderDraft = {}, meta = {}) {
+    this.track("ai_checkout_started", {
+      meta: { ...orderDraft, ...meta },
+    });
+  },
+
+  // -------------------------------------------------------------
+  // HELPER METHODS: NAVIGATION LIFECYCLE & DURATION
+  // -------------------------------------------------------------
+  trackPageEnter(pathname, meta = {}) {
+    this.track("page_enter", {
+      pathname,
+      meta,
+    });
+  },
+
+  trackPageLeave(pathname, timings = {}, meta = {}) {
+    this.track("page_leave", {
+      pathname,
+      duration_ms: timings.dwellMs || 0,
+      context: { timing: timings },
+      meta,
+    });
+  },
+
+  trackRouteChanged(fromPath, toPath, navigationType = "push", meta = {}) {
+    this.track("route_changed", {
+      fromPath,
+      toPath,
+      navigationType,
+      meta,
+    });
+  },
+
+  trackNavigationClicked(label, href, meta = {}) {
+    this.track("navigation_clicked", {
+      meta: { label, href, ...meta },
+    });
+  },
+
+  // -------------------------------------------------------------
+  // HELPER METHODS: EXTENDED PRODUCT & CART
+  // -------------------------------------------------------------
+  trackProductSizeSelected(product, size, meta = {}) {
+    if (!product?._id && !product?.id) return;
+    this.track("product_size_selected", {
+      product_id: product._id || product.id,
+      category_id: product.category_id || product.categoryId,
+      meta: { size, ...meta },
+    });
+  },
+
+  trackProductColorSelected(product, color, meta = {}) {
+    if (!product?._id && !product?.id) return;
+    this.track("product_color_selected", {
+      product_id: product._id || product.id,
+      category_id: product.category_id || product.categoryId,
+      meta: { color, ...meta },
+    });
+  },
+
+  trackProductGalleryInteracted(product, imageIndex = 0, meta = {}) {
+    if (!product?._id && !product?.id) return;
+    this.track("product_gallery_interacted", {
+      product_id: product._id || product.id,
+      meta: { imageIndex, ...meta },
+    });
+  },
+
+  trackBuyNowClicked(product, variant = {}, meta = {}) {
+    if (!product?._id && !product?.id) return;
+    this.track("buy_now_clicked", {
+      product_id: product._id || product.id,
+      category_id: product.category_id || product.categoryId,
+      meta: {
+        price: product.new_price || product.price,
+        color: variant?.color,
+        size: variant?.size,
+        ...meta,
+      },
+    });
+  },
+
+  trackCartViewed(cartItems = [], totalPrice = 0, meta = {}) {
+    this.track("cart_viewed", {
+      meta: {
+        itemCount: cartItems.length,
+        totalPrice,
+        items: cartItems.map((it) => ({
+          productId: it.product_id || it.productId || it.id,
+          quantity: it.quantity,
+          price: it.price,
+        })),
+        ...meta,
+      },
+    });
+  },
+
+  trackCartItemRemoved(product, meta = {}) {
+    if (!product?._id && !product?.id) return;
+    this.track("cart_item_removed", {
+      product_id: product._id || product.id,
+      category_id: product.category_id || product.categoryId,
+      meta,
+    });
+  },
+
+  // -------------------------------------------------------------
+  // HELPER METHODS: CHECKOUT & RESERVATION INTEGRATION
+  // -------------------------------------------------------------
+  trackCheckoutStepViewed(stepNumber, stepName, meta = {}) {
+    this.track("checkout_step_viewed", {
+      meta: { stepNumber, stepName, ...meta },
+    });
+  },
+
+  trackShippingStepCompleted(shippingData = {}, meta = {}) {
+    this.track("shipping_step_completed", {
+      meta: {
+        method: shippingData.method,
+        fee: shippingData.fee,
+        ...meta,
+      },
+    });
+  },
+
+  trackPaymentMethodSelected(paymentMethod, meta = {}) {
+    this.track("payment_method_selected", {
+      meta: { paymentMethod, ...meta },
+    });
+  },
+
+  trackReservationCreated(reservationId, expiresAt, meta = {}) {
+    this.track("reservation_created", {
+      meta: { reservationId, expiresAt, ...meta },
+    });
+  },
+
+  trackReservationExpired(reservationId, meta = {}) {
+    this.track("reservation_expired", {
+      meta: { reservationId, ...meta },
+    });
+  },
+
+  trackReservationCancelled(reservationId, meta = {}) {
+    this.track("reservation_cancelled", {
+      meta: { reservationId, ...meta },
+    });
+  },
+
+  trackCheckoutAbandoned(cartItems = [], step = 1, meta = {}) {
+    this.track("checkout_abandoned", {
+      meta: { step, itemCount: cartItems.length, ...meta },
+    });
+  },
+
+  // -------------------------------------------------------------
+  // HELPER METHODS: SEARCH & DISCOVERY
+  // -------------------------------------------------------------
+  trackSearchStarted(query, meta = {}) {
+    this.track("search_started", {
+      query: (query || "").trim().slice(0, 100),
+      meta,
+    });
+  },
+
+  trackFilterApplied(filterType, filterValue, meta = {}) {
+    this.track("filter_applied", {
+      meta: { filterType, filterValue, ...meta },
+    });
+  },
+
+  trackSortChanged(sortOption, meta = {}) {
+    this.track("sort_changed", {
+      meta: { sortOption, ...meta },
+    });
+  },
+
+  trackCategorySelected(categoryId, categoryName, meta = {}) {
+    this.track("category_selected", {
+      category_id: categoryId,
+      meta: { categoryName, ...meta },
+    });
+  },
+
+  // -------------------------------------------------------------
+  // HELPER METHODS: GENERAL UI ACTIONS
+  // -------------------------------------------------------------
+  trackButtonClicked(buttonName, meta = {}) {
+    this.track("button_clicked", {
+      meta: { buttonName, ...meta },
+    });
+  },
+
+  trackModalOpened(modalName, meta = {}) {
+    this.track("modal_opened", {
+      meta: { modalName, ...meta },
+    });
+  },
+
+  trackModalClosed(modalName, meta = {}) {
+    this.track("modal_closed", {
+      meta: { modalName, ...meta },
+    });
+  },
+
+  trackTabSelected(tabName, meta = {}) {
+    this.track("tab_selected", {
+      meta: { tabName, ...meta },
+    });
+  },
+
+  trackAccordionExpanded(accordionName, meta = {}) {
+    this.track("accordion_expanded", {
+      meta: { accordionName, ...meta },
+    });
+  },
+
+  startAction(actionName, meta = {}) {
+    return sessionService.startAction(actionName, meta);
+  },
+
+  endAction() {
+    sessionService.clearAction();
   },
 };
 

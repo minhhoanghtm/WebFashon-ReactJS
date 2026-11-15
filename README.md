@@ -224,6 +224,38 @@ docker compose up -d mongo redis
 
 ---
 
+## Triển khai Production bằng Docker Compose
+
+1. Sao chép `.env.example` thành `back-end/.env.production` và thay toàn bộ placeholder. Không dùng giá trị mặc định cho `DOMAIN`, `MONGO_USER`, `MONGO_PASS`, `ACCESS_TOKEN_SECRET`, `REFRESH_TOKEN_SECRET`, hoặc `ACTION_SECRET`.
+
+2. Kiểm tra cấu hình trước khi khởi chạy. Lệnh này phải báo lỗi nếu thiếu một biến bắt buộc:
+
+   ```bash
+   docker compose --env-file back-end/.env.production -f docker-compose.prod.yml config
+   ```
+
+3. Chỉ khi kiểm tra thành công mới triển khai:
+
+   ```bash
+   docker compose --env-file back-end/.env.production -f docker-compose.prod.yml up -d --build
+   ```
+
+### Socket.IO nhiều API instance
+
+Production bắt buộc có Redis (`REDIS_URL` hoặc `REDIS_HOST`). Mỗi API tạo một Redis publisher và subscriber cho `@socket.io/redis-adapter`; nếu Redis không kết nối được, API production sẽ không khởi động. Socket.IO chỉ nhận WebSocket, vì vậy Nginx không cần sticky session cho long-polling.
+
+Chạy hai API instance:
+
+```bash
+docker compose --env-file back-end/.env.production -f docker-compose.prod.yml up -d --build --scale api=2
+docker compose --env-file back-end/.env.production -f docker-compose.prod.yml ps api
+docker compose --env-file back-end/.env.production -f docker-compose.prod.yml logs api
+```
+
+Mở hai trình duyệt (khách và admin), xác nhận chúng kết nối tới hai container API khác nhau qua log, rồi gửi tin nhắn mỗi chiều. Tin phải xuất hiện ngay ở phía còn lại; cả hai log phải có `Socket.IO Redis adapter initialized`.
+
+---
+
 ## 🔒 Kiểm Tra An Toàn & Bảo Mật
 
 - File `.env` chứa thông tin nhạy cảm đã được loại trừ qua `.gitignore` và không bao giờ commit lên kho lưu trữ mã nguồn.

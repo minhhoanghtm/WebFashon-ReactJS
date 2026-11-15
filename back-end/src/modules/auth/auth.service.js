@@ -19,6 +19,8 @@ import {
   maskPhone,
 } from "../../common/utils/phone.js";
 import { validatePasswordStrength } from "../../common/utils/password.js";
+import { requireSecret } from "../../common/utils/requireSecret.js";
+import { PRIVACY_POLICY_VERSION } from "../../common/constants/privacyPolicy.js";
 
 const { OAuth2Client } = googleAuth;
 dotenv.config();
@@ -28,6 +30,10 @@ const redis = getRedisConnection();
 const ACCESS_TOKEN_TTL = "30m";
 const ACCESS_TOKEN_REDIS_TTL = 30 * 60; // 30 minutes in seconds
 const REFRESH_TOKEN_REDIS_TTL = 14 * 24 * 60 * 60; // 14 days in seconds
+const ACCESS_TOKEN_SECRET = requireSecret("ACCESS_TOKEN_SECRET");
+// Refresh tokens are opaque today, but require the configured secret so a future
+// signed refresh-token implementation cannot silently run with weak config.
+const REFRESH_TOKEN_SECRET = requireSecret("REFRESH_TOKEN_SECRET");
 
 const hashToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -40,8 +46,8 @@ class AuthService {
   async issueAuthSession(user, ip = null, ua = null) {
     const jti = crypto.randomUUID();
     const accessToken = jwt.sign(
-      { userId: user._id || user.id, jti },
-      process.env.ACCESS_TOKEN_SECRET,
+      { userId: user._id || user.id, role: user.role, jti },
+      ACCESS_TOKEN_SECRET,
       { expiresIn: ACCESS_TOKEN_TTL }
     );
 
@@ -82,10 +88,13 @@ class AuthService {
    * Legacy / Email-based Sign Up (Backwards Compatible)
    */
   async signUp(userData) {
-    const { passWord, lastName, firstName, email, phone, birthday, sex } = userData;
+    const { passWord, lastName, firstName, email, phone, birthday, sex, termsAccepted, privacyAccepted, marketingAccepted, policyVersion } = userData;
 
     if (!passWord || (!lastName && !firstName && !userData.fullName)) {
       throw new AppError("Không thể thiếu mật khẩu và họ tên!", 400);
+    }
+    if (!termsAccepted || !privacyAccepted || policyVersion !== PRIVACY_POLICY_VERSION) {
+      throw new AppError("Bạn cần xác nhận chính sách hiện hành để đăng ký.", 422);
     }
 
     const pwValidation = validatePasswordStrength(passWord);
@@ -127,6 +136,7 @@ class AuthService {
       ...(normPhone ? { phone: normPhone } : {}),
       ...(birthday && { birthday: new Date(birthday) }),
       ...(sex && { sex }),
+      legal_consents: { terms_accepted: true, privacy_accepted: true, marketing_accepted: Boolean(marketingAccepted), policy_version: PRIVACY_POLICY_VERSION, recorded_at: new Date() },
     });
 
     return {
@@ -176,6 +186,8 @@ class AuthService {
       throw new AppError(sendResult.error || "Không thể gửi SMS OTP.", 500);
     }
 
+    console.log(`✅ [Auth Service] Gửi OTP đăng ký thành công tới ${maskPhone(normPhone)} (Mục đích: register, Cooldown: ${cooldown}s)`);
+
     return {
       phone: maskPhone(normPhone),
       rawPhone: normPhone,
@@ -190,10 +202,13 @@ class AuthService {
    * Verify Registration OTP and create user
    */
   async verifyRegisterAndCreateUser(data, ip = null, ua = null) {
-    const { phone, otp, fullName, passWord, email, birthday, sex } = data;
+    const { phone, otp, fullName, passWord, email, birthday, sex, termsAccepted, privacyAccepted, marketingAccepted, policyVersion } = data;
 
     if (!phone || !otp || !fullName || !passWord) {
       throw new AppError("Thiếu thông tin đăng ký bắt buộc.", 400);
+    }
+    if (!termsAccepted || !privacyAccepted || policyVersion !== PRIVACY_POLICY_VERSION) {
+      throw new AppError("Bạn cần xác nhận chính sách hiện hành để đăng ký.", 422);
     }
 
     if (!isValidVietnamesePhone(phone)) {
@@ -240,6 +255,7 @@ class AuthService {
       status: "active",
       ...(birthday && { birthday: new Date(birthday) }),
       ...(sex && { sex }),
+      legal_consents: { terms_accepted: true, privacy_accepted: true, marketing_accepted: Boolean(marketingAccepted), policy_version: PRIVACY_POLICY_VERSION, recorded_at: new Date() },
     });
 
     // Auto login: issue session & tokens
@@ -363,6 +379,8 @@ class AuthService {
       throw new AppError(sendResult.error || "Không thể gửi SMS OTP đăng nhập.", 500);
     }
 
+    console.log(`✅ [Auth Service] Gửi OTP đăng nhập thành công tới ${maskPhone(normPhone)} (Mục đích: login, Cooldown: ${cooldown}s)`);
+
     return {
       phone: maskPhone(normPhone),
       cooldown,
@@ -459,6 +477,7 @@ class AuthService {
       await addEmailJob(normIdentifier, otp);
     }
 
+    console.log(`✅ [Auth Service] Gửi OTP đặt lại mật khẩu thành công tới ${isPhone ? maskPhone(normIdentifier) : normIdentifier} (Mục đích: reset_password, Cooldown: ${cooldown}s)`);
     genericSuccess.data.cooldown = cooldown;
     return genericSuccess;
   }
@@ -539,6 +558,7 @@ class AuthService {
       await addEmailJob(normIdentifier, otp);
     }
 
+    console.log(`✅ [Auth Service] Gửi lại OTP thành công tới ${isPhone ? maskPhone(normIdentifier) : normIdentifier} (Mục đích: ${purpose}, Cooldown: ${cooldown}s)`);
     return {
       identifier: isPhone ? maskPhone(normIdentifier) : normIdentifier,
       cooldown,
@@ -576,6 +596,7 @@ class AuthService {
       purpose: "verify_phone",
     });
 
+    console.log(`✅ [Auth Service] Gửi OTP cập nhật số điện thoại thành công tới ${maskPhone(normPhone)} (Mục đích: verify_phone, Cooldown: ${cooldown}s)`);
     return {
       phone: maskPhone(normPhone),
       cooldown,
@@ -619,6 +640,7 @@ class AuthService {
         await redis.del(sessionKey);
         await redis.del(`rt:${hashedRt}`);
       }
+      await redis.del(`rt:grace:${hashedRt}`);
     }
     if (jti) {
       await redis.del(`at:${jti}`);
@@ -633,6 +655,23 @@ class AuthService {
     const hashedRt = hashToken(refreshToken);
     const sessionKey = await redis.get(`rt:${hashedRt}`);
     if (!sessionKey) {
+      // Check 30s Grace Period for rotated tokens (handles multi-tab & concurrent requests race conditions)
+      const graceStr = await redis.get(`rt:grace:${hashedRt}`);
+      if (graceStr) {
+        try {
+          const graceData = JSON.parse(graceStr);
+          const user = await userRepository.findById(graceData.userId);
+          if (user && user.status !== "blocked") {
+            return {
+              accessToken: graceData.accessToken,
+              refreshToken: graceData.refreshToken,
+              user,
+            };
+          }
+        } catch {
+          // Fall through to 401
+        }
+      }
       throw new AppError("Phiên đăng nhập không hợp lệ hoặc đã hết hạn", 401);
     }
 
@@ -657,8 +696,8 @@ class AuthService {
 
     const newJti = crypto.randomUUID();
     const newAccessToken = jwt.sign(
-      { userId: user._id, jti: newJti },
-      process.env.ACCESS_TOKEN_SECRET,
+      { userId: user._id, role: user.role, jti: newJti },
+      ACCESS_TOKEN_SECRET,
       { expiresIn: ACCESS_TOKEN_TTL }
     );
 
@@ -676,6 +715,17 @@ class AuthService {
     const pipeline = redis.pipeline();
     pipeline.del(sessionKey);
     pipeline.del(`rt:${hashedRt}`);
+    // Store in grace period for 30s to allow concurrent in-flight requests and multi-tab synchronization
+    pipeline.set(
+      `rt:grace:${hashedRt}`,
+      JSON.stringify({
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        userId: String(user._id),
+      }),
+      "EX",
+      30
+    );
     pipeline.set(newSessionKey, JSON.stringify(newSessionData), "EX", REFRESH_TOKEN_REDIS_TTL);
     pipeline.set(`rt:${newHashedRt}`, newSessionKey, "EX", REFRESH_TOKEN_REDIS_TTL);
     pipeline.set(`at:${newJti}`, String(user._id), "EX", ACCESS_TOKEN_REDIS_TTL);
@@ -750,6 +800,7 @@ class AuthService {
     });
 
     await addEmailJob(normalizedEmail, otp);
+    console.log(`✅ [Auth Service] Gửi OTP email thành công tới ${normalizedEmail}`);
     return otp;
   }
 

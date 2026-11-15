@@ -6,6 +6,11 @@ import { ValidationError } from "../errors/communication.errors.js";
 class SupportChatService {
   async sendCustomerMessage(userId, payload) {
     const data = validateTextMessageDto(payload);
+    const existing = await messageService.findByClientMessageId(userId, data.clientMessageId);
+    if (existing) {
+      const conversation = await conversationService.getConversationById(existing.conversationId, { userId, role: "user" });
+      return { conversationId: String(existing.conversationId), message: existing, conversation };
+    }
     let conversationId = data.conversationId;
 
     if (!conversationId) {
@@ -27,16 +32,26 @@ class SupportChatService {
         messageType: "text",
         content: data.content,
         metadata: data.metadata,
+        clientMessageId: data.clientMessageId,
       },
       { userId, role: "user" }
     );
 
-    return { conversationId, message };
+    const conversation = await conversationService.getConversationById(conversationId, {
+      userId,
+      role: "user",
+    });
+    return { conversationId: String(conversationId), message, conversation };
   }
 
   async sendAdminMessage(adminId, payload) {
     const data = validateTextMessageDto(payload);
     if (!data.conversationId) throw new ValidationError("conversationId is required");
+    const existing = await messageService.findByClientMessageId(adminId, data.clientMessageId);
+    if (existing) {
+      const conversation = await conversationService.getConversationById(existing.conversationId, { userId: adminId, role: "admin" });
+      return { conversationId: String(existing.conversationId), message: existing, conversation };
+    }
 
     const message = await messageService.createMessage(
       {
@@ -46,11 +61,16 @@ class SupportChatService {
         messageType: "text",
         content: data.content,
         metadata: data.metadata,
+        clientMessageId: data.clientMessageId,
       },
       { userId: adminId, role: "admin" }
     );
 
-    return { conversationId: data.conversationId, message };
+    const conversation = await conversationService.getConversationById(data.conversationId, {
+      userId: adminId,
+      role: "admin",
+    });
+    return { conversationId: String(data.conversationId), message, conversation };
   }
 }
 

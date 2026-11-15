@@ -1,9 +1,16 @@
 const TOKEN_KEY = 'accessToken';
+const REFRESH_TOKEN_KEY = 'refreshToken';
 
 export const tokenStorage = {
   getToken: () => localStorage.getItem(TOKEN_KEY),
   setToken: (token) => localStorage.setItem(TOKEN_KEY, token),
-  removeToken: () => localStorage.removeItem(TOKEN_KEY),
+  removeToken: () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  },
+  getRefreshToken: () => localStorage.getItem(REFRESH_TOKEN_KEY),
+  setRefreshToken: (token) => localStorage.setItem(REFRESH_TOKEN_KEY, token),
+  removeRefreshToken: () => localStorage.removeItem(REFRESH_TOKEN_KEY),
   isAuthenticated: () => !!localStorage.getItem(TOKEN_KEY),
   
   // Decodes JWT payload to extract user details (e.g. role, userId)

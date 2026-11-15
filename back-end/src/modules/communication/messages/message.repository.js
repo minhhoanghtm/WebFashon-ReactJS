@@ -9,6 +9,10 @@ class MessageRepository {
     return Message.findById(id);
   }
 
+  findOne(filter = {}) {
+    return Message.findOne(filter).lean();
+  }
+
   find(filter = {}, { sort = { createdAt: 1 }, skip = 0, limit = 50 } = {}) {
     return Message.find(filter).sort(sort).skip(skip).limit(limit).lean();
   }

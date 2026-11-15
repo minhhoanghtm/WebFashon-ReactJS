@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { gsap } from "gsap";
@@ -172,9 +172,10 @@ export const CollageLookbookSection = () => {
       <CinematicWhiteTransition isVisible={isTransitioning} />
 
       <section
+        id="section-lookbook"
         ref={sectionRef}
         aria-label="Collage Lookbook đương đại"
-        className="relative z-10 min-h-[900px] lg:min-h-[1100px] w-full overflow-hidden bg-[#FBF9F5] text-[#05251C] py-24 sm:py-36 flex items-center justify-center border-t border-[#05251C]/10"
+        className="relative z-10 min-h-[100svh] min-h-[100vh] w-full overflow-hidden bg-[#FBF9F5] text-[#05251C] pt-20 pb-8 flex flex-col items-center justify-center border-t border-[#05251C]/10"
       >
         {/* Scattered Real Images */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
@@ -186,7 +187,7 @@ export const CollageLookbookSection = () => {
               <img
                 src={items[0].cover}
                 alt={items[0].title}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain object-center"
                 loading="lazy"
               />
             </div>
@@ -200,7 +201,7 @@ export const CollageLookbookSection = () => {
               <img
                 src={items[1].cover}
                 alt={items[1].title}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain object-center"
                 loading="lazy"
               />
             </div>
@@ -214,7 +215,7 @@ export const CollageLookbookSection = () => {
               <img
                 src={items[2].cover}
                 alt={items[2].title}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain object-center"
                 loading="lazy"
               />
             </div>
@@ -228,7 +229,7 @@ export const CollageLookbookSection = () => {
               <img
                 src={items[3].cover}
                 alt={items[3].title}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain object-center"
                 loading="lazy"
               />
             </div>

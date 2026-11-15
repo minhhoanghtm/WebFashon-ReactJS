@@ -5,9 +5,10 @@ const emitSupportMessage = async (data, { notifyAdmins = false } = {}) => {
   try {
     const { getSocketIO } = await import("../../../sockets/index.js");
     const io = getSocketIO();
-    io.to(`conversation:${data.conversationId}`).emit("message:new", data.message);
+    const payload = { message: data.message, conversation: data.conversation };
+    io.to(`conversation:${data.conversationId}`).emit("message:new", payload);
     if (notifyAdmins) {
-      io.to("admins").emit("message:new", data.message);
+      io.to("admins").emit("message:new", payload);
     }
   } catch (error) {
     console.error("Failed to emit support chat message:", error.message);

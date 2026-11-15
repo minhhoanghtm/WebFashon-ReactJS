@@ -1,6 +1,8 @@
 node_modules
+npm-debug.log
 .env
 .env.*
+!.env.staging.example
 load-tests/
 seed/
 backups/
@@ -14,3 +16,6 @@ check_redis.js
 ssh_deploy*.js
 src/scratch/
 jest.config.js
+.git
+.github
+coverage

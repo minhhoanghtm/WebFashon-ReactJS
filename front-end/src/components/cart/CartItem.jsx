@@ -67,14 +67,14 @@ const CartItem = ({
       {/* Image Thumbnail (3:4 Editorial Ratio) */}
       <Link
         to={`/product/${encodeURIComponent(productSlugOrId)}`}
-        className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden border border-border bg-secondary sm:w-24"
+        className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden border border-border bg-[var(--muted)]/40 dark:bg-zinc-900/50 flex items-center justify-center sm:w-24"
       >
         {activeImgUrl ? (
           <img
             src={activeImgUrl}
             alt={item.name}
             onError={() => setImgIdx((prev) => prev + 1)}
-            className={`h-full w-full object-cover object-center transition-opacity ${
+            className={`h-full w-full object-contain object-center transition-opacity ${
               isOutOfStock ? "opacity-40 grayscale" : ""
             }`}
           />

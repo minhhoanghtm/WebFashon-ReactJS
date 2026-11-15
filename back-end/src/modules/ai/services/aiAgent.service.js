@@ -9,12 +9,13 @@ import { Order, OrderItem } from "../../orders/order.model.js";
 import Voucher from "../../vouchers/voucher.model.js";
 import Review from "../../reviews/review.model.js";
 import pricingService from "../../campaigns/pricing.service.js";
+import inventoryReservationService from "../../inventory/inventoryReservation.service.js";
 import { toNoAccent } from "../../../common/utils/removeAccents.js";
 import logger from "../../../common/logger.js";
 import crypto from "crypto";
+import { requireSecret } from "../../../common/utils/requireSecret.js";
 
-const ACTION_SECRET =
-  process.env.JWT_SECRET || process.env.SESSION_SECRET || "webfashion_action_salt_404";
+const ACTION_SECRET = requireSecret("ACTION_SECRET");
 
 /**
  * Generate a cryptographically signed action token bound to userId, items digest, and expiration.
@@ -99,6 +100,27 @@ const addToCartItemSchema = z
   .refine((d) => d.product_id.length > 0, {
     message: "product_id là bắt buộc",
   });
+
+
+const startCheckoutArgsSchema = z
+  .object({
+    product_id: z.string().optional(),
+    productId: z.string().optional(),
+    name: z.string().optional(),
+    keyword: z.string().optional(),
+    variant_id: z.string().nullable().optional(),
+    variantId: z.string().nullable().optional(),
+    color: z.string().max(50).optional(),
+    size: z.string().max(20).optional(),
+    quantity: z.number().int().min(1).max(10).optional().default(1),
+    items: z.array(addToCartItemSchema).max(5).optional(),
+    confirmed: z.boolean().optional().default(false),
+  })
+  .transform((d) => ({
+    ...d,
+    product_id: d.product_id || d.productId || d.name || d.keyword,
+    variant_id: d.variant_id || d.variantId,
+  }));
 
 const addToCartArgsSchema = z
   .object({
@@ -218,6 +240,49 @@ export class AiToolRegistry {
             product_id: { type: "string", description: "ID hoặc Tên sản phẩm" },
             slug: { type: "string", description: "Slug của sản phẩm" },
             keyword: { type: "string", description: "Từ khóa tên sản phẩm" },
+          },
+        },
+      },
+      {
+        name: "start_checkout",
+        description:
+          "Bắt đầu quy trình thanh toán (Checkout / Mua ngay / Chốt đơn) cho sản phẩm. Giữ hàng (reserve inventory) trong 5 phút (300 giây) qua Redis và tạo phiên thanh toán trực tiếp. BẮT BUỘC dùng khi khách nói 'thanh toán giúp tôi', 'mua ngay', 'chốt đơn', 'tiến hành thanh toán', 'checkout'. TUYỆT ĐỐI KHÔNG dùng add_to_cart khi khách muốn thanh toán.",
+        parameters: {
+          type: "object",
+          properties: {
+            product_id: {
+              type: "string",
+              description: "ID sản phẩm (ObjectId) hoặc tên sản phẩm",
+            },
+            color: { type: "string", description: "Màu sắc sản phẩm" },
+            size: { type: "string", description: "Kích thước (S, M, L, XL...)" },
+            quantity: { type: "number", description: "Số lượng (mặc định 1)" },
+            items: {
+              type: "array",
+              description: "Danh sách sản phẩm nếu mua nhiều món",
+              items: {
+                type: "object",
+                properties: {
+                  product_id: { type: "string" },
+                  color: { type: "string" },
+                  size: { type: "string" },
+                  quantity: { type: "number" },
+                },
+                required: ["product_id"],
+              },
+            },
+            confirmed: { type: "boolean", description: "Người dùng đã xác nhận hay chưa" },
+          },
+        },
+      },
+      {
+        name: "cancel_checkout",
+        description:
+          "Hủy phiên thanh toán / hủy giữ hàng (release inventory reservation) khi khách hàng đổi ý hoặc nói 'hủy thanh toán', 'hủy đơn', 'không mua nữa'.",
+        parameters: {
+          type: "object",
+          properties: {
+            reservation_id: { type: "string", description: "Mã giữ hàng cần hủy (tùy chọn)" },
           },
         },
       },
@@ -348,9 +413,19 @@ export class AiToolRegistry {
           }
 
           const args = parsed.data;
-          const minPrice = parseFlexiblePrice(args.min_price ?? rawArgs.minPrice);
-          const maxPrice = parseFlexiblePrice(args.max_price ?? rawArgs.maxPrice);
+          let minPrice = parseFlexiblePrice(args.min_price ?? rawArgs.minPrice);
+          let maxPrice = parseFlexiblePrice(args.max_price ?? rawArgs.maxPrice);
           const queryText = (args.keyword || args.query || "thời trang").trim();
+
+          if (maxPrice === undefined || minPrice === undefined) {
+            const parsedNL = parseNaturalLanguageQuery(queryText);
+            if (maxPrice === undefined && parsedNL.extractedFilters?.maxPrice !== null) {
+              maxPrice = parsedNL.extractedFilters.maxPrice;
+            }
+            if (minPrice === undefined && parsedNL.extractedFilters?.minPrice !== null) {
+              minPrice = parsedNL.extractedFilters.minPrice;
+            }
+          }
 
           const searchRes = await semanticSearchService.search(
             {
@@ -367,12 +442,30 @@ export class AiToolRegistry {
             { userId, role: userRole }
           );
 
-          if (!searchRes.results || searchRes.results.length === 0) {
-            return "Không tìm thấy sản phẩm phù hợp với yêu cầu của bạn.";
+          // Deduplicate and strictly enforce price limits
+          const uniqueResults = [];
+          const seenIds = new Set();
+          for (const r of searchRes?.results || []) {
+            const idStr = String(r.sourceId || r.metadata?._id);
+            if (!seenIds.has(idStr)) {
+              seenIds.add(idStr);
+              const pNum = Number(r.metadata?.price || 0);
+              if (maxPrice !== undefined && maxPrice !== null && pNum > maxPrice) {
+                continue;
+              }
+              if (minPrice !== undefined && minPrice !== null && pNum < minPrice) {
+                continue;
+              }
+              uniqueResults.push(r);
+            }
+          }
+
+          if (uniqueResults.length === 0) {
+            return "Không tìm thấy sản phẩm phù hợp với mức giá và yêu cầu của bạn.";
           }
 
           this.metrics.successfulCalls++;
-          return searchRes.results.map((r) => ({
+          return uniqueResults.map((r) => ({
             id: r.sourceId,
             name: r.title || r.metadata?.name,
             slug: r.metadata?.slug,
@@ -479,6 +572,267 @@ export class AiToolRegistry {
               size: v.size,
               stock: v.stock,
             })),
+          };
+        }
+
+        
+        case "start_checkout":
+        case "buy_now": {
+          const parsed = startCheckoutArgsSchema.safeParse(rawArgs || {});
+          if (!parsed.success) {
+            this.metrics.validationFailures++;
+            return {
+              success: false,
+              code: "INVALID_TOOL_ARGS",
+              message: `Tham số thanh toán không hợp lệ: ${parsed.error.issues.map((i) => i.message).join(", ")}`,
+            };
+          }
+
+          if (!userId) {
+            this.metrics.blockedAuthCalls++;
+            return {
+              success: false,
+              code: "AUTH_REQUIRED",
+              message: "Bạn cần đăng nhập tài khoản khách hàng để tiến hành thanh toán và giữ hàng.",
+              targetData: parsed.data,
+            };
+          }
+
+          if (userRole === "admin") {
+            this.metrics.blockedAuthCalls++;
+            return {
+              success: false,
+              code: "FORBIDDEN_ROLE",
+              message: "Quản trị viên không được phép thực hiện thanh toán mua sắm khách hàng.",
+            };
+          }
+
+          // Normalize requested items
+          const rawItems =
+            Array.isArray(parsed.data.items) && parsed.data.items.length > 0
+              ? parsed.data.items
+              : parsed.data.product_id
+              ? [
+                  {
+                    product_id: parsed.data.product_id,
+                    variant_id: parsed.data.variant_id,
+                    color: parsed.data.color,
+                    size: parsed.data.size,
+                    quantity: parsed.data.quantity || 1,
+                  },
+                ]
+              : [];
+
+          if (rawItems.length === 0) {
+            this.metrics.validationFailures++;
+            return {
+              success: false,
+              code: "EMPTY_ITEMS",
+              message: "Vui lòng chọn sản phẩm hợp lệ để thanh toán.",
+            };
+          }
+
+          const verifiedItems = [];
+          const unavailableItems = [];
+
+          for (const reqItem of rawItems) {
+            let product = null;
+            if (mongoose.Types.ObjectId.isValid(reqItem.product_id)) {
+              product = await Product.findOne({ _id: reqItem.product_id, is_active: true }).lean();
+            }
+            if (!product && reqItem.product_id) {
+              const kw = String(reqItem.product_id).trim();
+              const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const noAccentKw = toNoAccent(kw).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              product = await Product.findOne({
+                is_active: true,
+                $or: [
+                  { name: new RegExp(escaped, "i") },
+                  { slug: new RegExp(escaped, "i") },
+                  { name_no_accents: new RegExp(noAccentKw, "i") },
+                ],
+              }).lean();
+            }
+            if (!product && reqItem.product_id) {
+              try {
+                const semRes = await semanticSearchService.search(
+                  { query: String(reqItem.product_id).trim(), sourceType: "product", topK: 1 },
+                  { userId, role: userRole }
+                );
+                const bestId = semRes.results?.[0]?.sourceId;
+                if (bestId && /^[a-f\d]{24}$/i.test(bestId)) {
+                  product = await Product.findOne({ _id: bestId, is_active: true }).lean();
+                }
+              } catch (_) {}
+            }
+            if (!product) {
+              unavailableItems.push({
+                product_id: reqItem.product_id,
+                reason: "Sản phẩm không tồn tại hoặc đã ngừng kinh doanh",
+              });
+              continue;
+            }
+
+            const dbVariants = (await ProductVariant.find({ product_id: product._id }).lean()) || [];
+            const allVariants = dbVariants.length > 0 ? dbVariants : (Array.isArray(product.variants) ? product.variants : []);
+            let chosenVariant = null;
+            let availableStock = Number(product.stock || 0);
+
+            if (allVariants.length > 0) {
+              const inStockVariants = allVariants.filter((v) => Number(v.stock || 0) > 0);
+              if (reqItem.variant_id && mongoose.Types.ObjectId.isValid(reqItem.variant_id)) {
+                chosenVariant = inStockVariants.find((v) => String(v._id) === String(reqItem.variant_id));
+              }
+              if (!chosenVariant && (reqItem.color || reqItem.size)) {
+                chosenVariant = inStockVariants.find((v) => {
+                  const matchColor =
+                    !reqItem.color ||
+                    toNoAccent(String(v.color || "")).toLowerCase().includes(toNoAccent(String(reqItem.color)).toLowerCase()) ||
+                    toNoAccent(String(reqItem.color)).toLowerCase().includes(toNoAccent(String(v.color || "")).toLowerCase());
+                  const matchSize =
+                    !reqItem.size ||
+                    String(v.size || "").toUpperCase() === String(reqItem.size).toUpperCase();
+                  return matchColor && matchSize;
+                });
+              }
+              if (!chosenVariant && inStockVariants.length > 0) {
+                chosenVariant = inStockVariants[0];
+              }
+              availableStock = chosenVariant ? Number(chosenVariant.stock || 0) : 0;
+            }
+
+            const qty = Math.min(Math.max(Number(reqItem.quantity || 1), 1), 10);
+            const sku = inventoryReservationService.getSku(product._id, chosenVariant?._id || chosenVariant?.sku);
+            const activeReserved = await inventoryReservationService.getReservedStock(sku);
+            const realAvailable = Math.max(0, availableStock - activeReserved);
+
+            if (realAvailable < qty) {
+              unavailableItems.push({
+                product_id: String(product._id),
+                name: product.name,
+                reason:
+                  realAvailable <= 0
+                    ? "Sản phẩm hiện đã hết hàng hoặc đang được giữ bởi khách hàng khác"
+                    : `Chỉ còn ${realAvailable} sản phẩm khả dụng trong kho (yêu cầu ${qty})`,
+              });
+              continue;
+            }
+
+            const priceInfo = await pricingService
+              .resolvePrice(product, chosenVariant?._id || null, new Date(), userId)
+              .catch(() => ({ finalPrice: Number(product.new_price || 0) }));
+
+            const varIdValid = chosenVariant?._id && mongoose.isValidObjectId(chosenVariant._id) ? String(chosenVariant._id) : null;
+            verifiedItems.push({
+              productId: String(product._id),
+              product_id: String(product._id),
+              variantId: varIdValid,
+              product_variant_id: varIdValid,
+              sku,
+              name: product.name,
+              slug: product.slug,
+              color: chosenVariant?.color || reqItem.color || "Mặc định",
+              size: chosenVariant?.size || reqItem.size || "Freesize",
+              quantity: qty,
+              unitPrice: Number(priceInfo.finalPrice || product.new_price || 0),
+              image:
+                chosenVariant?.image_url ||
+                chosenVariant?.image ||
+                product.image ||
+                product.displayProduct?.[0] ||
+                "",
+            });
+          }
+
+          if (verifiedItems.length === 0) {
+            return {
+              success: false,
+              code: "OUT_OF_STOCK_OR_INVALID",
+              message: "Không thể tiến hành thanh toán do sản phẩm không hợp lệ hoặc đã hết hàng.",
+              unavailableItems,
+            };
+          }
+
+          // Create or retrieve 300s Redis reservation
+          let reservation = null;
+          if (rawArgs.reservation_id) {
+            reservation = await inventoryReservationService.getReservation(rawArgs.reservation_id);
+          }
+          if (!reservation || reservation.status !== "ACTIVE") {
+            reservation = await inventoryReservationService.createReservation({
+              userId,
+              items: verifiedItems,
+              durationSeconds: 300,
+            });
+          }
+
+          const isConfirmed = Boolean(
+            authContext?.isConfirmedByGate === true ||
+            authContext?.confirmed === true
+          );
+
+          if (!isConfirmed) {
+            this.metrics.pendingConfirmations++;
+            const actionId = crypto.randomUUID();
+            const expiresAt = reservation.expiresAt ? new Date(reservation.expiresAt).getTime() : Date.now() + 300 * 1000;
+            const actionToken = generateActionToken({
+              actionId,
+              userId: String(userId),
+              items: verifiedItems.map(it => ({ product_id: it.productId, variant_id: it.variantId, quantity: it.quantity })),
+              expiresAt,
+            });
+
+            return {
+              success: true,
+              status: "PENDING_CONFIRMATION",
+              requiresConfirmation: true,
+              actionId,
+              actionType: "start_checkout",
+              actionToken,
+              reservationId: reservation.reservationId,
+              expiresAt,
+              remainingSeconds: reservation.remainingSeconds,
+              holdDurationFormatted: reservation.holdDurationFormatted,
+              message: `Mình đã giữ sản phẩm **${verifiedItems[0].name}** (Màu: ${verifiedItems[0].color}, Size: ${verifiedItems[0].size}) trong **${reservation.holdDurationFormatted}** phút cho bạn. Vui lòng bấm **"Tiếp tục thanh toán"** để chuyển sang trang Checkout hoàn tất đơn hàng nhé!`,
+              items: verifiedItems,
+              totalEstimatedPrice: reservation.totalAmount,
+              totalEstimatedPriceFormatted: reservation.totalAmountFormatted,
+              checkoutUrl: `/checkout?reservationId=${reservation.reservationId}`,
+            };
+          }
+
+          this.metrics.confirmedActionsExecuted++;
+          this.metrics.successfulCalls++;
+
+          return {
+            success: true,
+            status: "EXECUTED",
+            actionType: "start_checkout",
+            reservationId: reservation.reservationId,
+            message: `Đang chuyển hướng sang trang thanh toán. Sản phẩm của bạn được giữ trong ${reservation.holdDurationFormatted} phút.`,
+            items: verifiedItems,
+            totalEstimatedPrice: reservation.totalAmount,
+            totalEstimatedPriceFormatted: reservation.totalAmountFormatted,
+            checkoutUrl: `/checkout?reservationId=${reservation.reservationId}`,
+          };
+        }
+
+        case "cancel_checkout": {
+          const resId = rawArgs.reservation_id;
+          if (resId) {
+            await inventoryReservationService.releaseReservation(resId, "USER_CANCELLED");
+          } else if (userId) {
+            const activeRes = await (await import("../../inventory/inventoryReservation.model.js")).default.findOne({ userId, status: "ACTIVE" }).lean();
+            if (activeRes) {
+              await inventoryReservationService.releaseReservation(activeRes.reservationId, "USER_CANCELLED");
+            }
+          }
+          this.metrics.successfulCalls++;
+          return {
+            success: true,
+            status: "CANCELLED",
+            actionType: "cancel_checkout",
+            message: "Đã hủy phiên thanh toán và giải phóng sản phẩm đang giữ trong kho thành công.",
           };
         }
 
@@ -972,12 +1326,30 @@ export class AiToolRegistry {
    * High-level natural language intent handler for compound agentic requests
    * e.g., "Tìm cho tôi 3 áo thun dưới 300k và thêm vào giỏ hàng"
    */
+  detectCheckoutIntent(content = "") {
+    if (this.detectCancelCheckoutIntent(content)) return false;
+    const lower = String(content || "").toLowerCase().normalize("NFC");
+    return (
+      /(?:thanh\s+to[áa]n|ch[ốo]t\s+đ[ơo]n|mua\s+ngay|mua\s+lu[ôo]n|ti[ếe]n\s+h[àa]nh\s+thanh\s+to[áa]n|checkout|buy\s+now)/i.test(lower) ||
+      /(?:đ[ặa]t\s+h[àa]ng|dat\s+hang|đ[ặa]t\s+mua|dat\s+mua)/i.test(lower) ||
+      /(?:order\s+(?:gi[úu]p|h[ộo]|ngay|cho|lu[ôo]n)|mua\s+(?:gi[úu]p|h[ộo]|cho\s+t[ôo]i)|mua\s+s[ảa]n\s+ph[ẩa]m)/i.test(lower) ||
+      /(?:thanh\s+toan|chot\s+don|dat\s+mua\s+ngay)/i.test(lower)
+    );
+  }
+
+  detectCancelCheckoutIntent(content = "") {
+    const lower = String(content || "").toLowerCase().normalize("NFC");
+    return /(?:h[uủ]y\s+(?:thanh\s+to[áa]n|gi[ữư]\s+h[àa]ng|checkout|order|đ[ơo]n))/i.test(lower);
+  }
+
   detectCartActionIntent(content = "") {
     const lower = String(content || "").toLowerCase().normalize("NFC");
+    if (this.detectCheckoutIntent(content) || this.detectCancelCheckoutIntent(content)) {
+      return false;
+    }
     const hasCartVerb =
-      /(?:thêm|them|bỏ|bo|cho)\s+(?:vào|vao|vô|vo)\s+giỏ(?:\s+hàng)?/i.test(lower) ||
-      /add\s+to\s+cart/i.test(lower) ||
-      /mua\s+luôn|đặt\s+mua\s+ngay/i.test(lower);
+      /(?:th[êe]m|them|b[ỏo]|bo|cho)\s+(?:v[àa]o|vao|v[ôo]|vo)\s+gi[ỏo](?:\s+h[àa]ng)?/i.test(lower) ||
+      /add\s+to\s+cart/i.test(lower);
     return hasCartVerb;
   }
 

@@ -313,7 +313,7 @@ const BannerManagement = () => {
                         <img
                           src={b.imageUrl}
                           alt={b.title}
-                          className="h-14 w-28 object-cover rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs"
+                          className="h-14 w-28 object-contain rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs p-0.5"
                         />
                       </td>
 
@@ -493,7 +493,7 @@ const BannerManagement = () => {
                 <img
                   src={formImageUrl}
                   alt="Desktop preview"
-                  className="h-20 w-full object-cover rounded-lg border border-slate-200"
+                  className="h-20 w-full object-contain rounded-lg border border-slate-200 bg-slate-100 dark:bg-slate-800 p-1"
                 />
               )}
             </div>
@@ -515,7 +515,7 @@ const BannerManagement = () => {
                 <img
                   src={formMobileImageUrl}
                   alt="Mobile preview"
-                  className="h-20 w-16 object-cover rounded-lg border border-slate-200"
+                  className="h-20 w-16 object-contain rounded-lg border border-slate-200 bg-slate-100 dark:bg-slate-800 p-1"
                 />
               )}
             </div>

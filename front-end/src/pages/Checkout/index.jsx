@@ -1,4 +1,3 @@
-import useFeatureFlags from "@/hooks/useFeatureFlags";
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -19,6 +18,7 @@ import { useCartStore } from "../../store/cart.store";
 import { useAuthStore } from "../../store/auth.store";
 import { orderApi } from "../../api/order.api";
 import { paymentApi } from "../../api/payment.api";
+import { saveGuestOrderToken } from "@/utils/guestOrderAccess";
 import { shippingApi } from "@/api/shipping.api";
 import trackingService from "@/services/tracking.service";
 import { formatCurrency } from "@/utils/format";
@@ -28,16 +28,8 @@ import axiosClient from "@/api/axiosClient";
 import { Clock } from "lucide-react";
 import CheckoutVoucherSelector from "../../components/CheckoutVoucherSelector";
 import ShippingAddress from "./ShippingAddress";
+import { getInitialShippingAddress } from "@/utils/checkoutAddress";
 
-const getInitialShippingAddress = (routeState) => {
-  const possibleAddress = [
-    routeState?.shippingAddress,
-    routeState?.address,
-    routeState?.deliveryAddress,
-  ].find((item) => typeof item === "string" && item.trim());
-
-  return possibleAddress || "";
-};
 
 const getAddresses = (profile = {}) => {
   if (!profile) return [];
@@ -71,7 +63,7 @@ const normalizeCheckoutItem = (item) => {
   const rawProductId =
     typeof item.product_id === "object" && item.product_id !== null
       ? item.product_id._id || item.product_id.id
-      : item.product_id || item.id || item._id;
+      : item.productId || item.product_id || item.id || item._id;
   const productId = rawProductId ? String(rawProductId) : "";
 
   const name =
@@ -106,23 +98,59 @@ const normalizeCheckoutItem = (item) => {
     size = item.variants[0].size;
   }
 
+  const rawVariant =
+    item.variantId ||
+    item.variant_id ||
+    item.product_variant_id ||
+    item.variants?.[0] ||
+    item.sku;
+  const variantId =
+    typeof rawVariant === "object" && rawVariant !== null
+      ? rawVariant._id || rawVariant.id
+      : rawVariant || null;
+
+  // Single Source of Truth price resolution from backend
+  const rawPrice = item.unitPrice ?? item.unit_price ?? item.new_price ?? item.price;
+  const unitPrice = rawPrice !== undefined && rawPrice !== null ? Number(rawPrice) : 0;
+
+  let priceStatus = "VALID_PRICE";
+  if (rawPrice === undefined || rawPrice === null) {
+    priceStatus = "PRICE_UNAVAILABLE";
+  } else if (isNaN(unitPrice) || unitPrice < 0) {
+    priceStatus = "INVALID_PRICE";
+  } else if (unitPrice === 0) {
+    priceStatus = item.isFreeGift ? "VALID_PRICE" : "INVALID_PRICE";
+  }
+
   return {
     ...item,
+    productId,
     product_id: productId,
+    variantId,
+    product_variant_id: variantId,
     name,
     image,
     color,
     size,
+    unitPrice,
+    unit_price: unitPrice,
+    price: unitPrice,
+    new_price: unitPrice,
+    priceStatus,
   };
 };
 
 const CheckoutItemRow = ({ item }) => {
   const [imgFailed, setImgFailed] = useState(false);
-  const unitPrice = Number(item.new_price || item.price || 0);
+  const unitPrice = Number(item.unitPrice ?? item.unit_price ?? item.new_price ?? item.price ?? 0);
   const qty = Number(item.quantity || 1);
   const stock =
     item.stock !== undefined && item.stock !== null ? Number(item.stock) : 99;
   const hasStockWarning = stock <= 0 || qty > stock;
+  const isPriceInvalid =
+    item.priceStatus === "INVALID_PRICE" ||
+    item.priceStatus === "PRICE_UNAVAILABLE" ||
+    (unitPrice <= 0 && !item.isFreeGift);
 
   return (
     <li className="flex items-center gap-3.5 py-3.5">
@@ -160,11 +188,24 @@ const CheckoutItemRow = ({ item }) => {
             {stock <= 0 ? "Đã hết hàng" : `Chỉ còn ${stock} sản phẩm`}
           </p>
         )}
+        {isPriceInvalid && (
+          <p className="text-[11px] font-semibold text-destructive">
+            Giá không khả dụng
+          </p>
+        )}
       </div>
 
-      <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
-        {formatCurrency(unitPrice * qty)}
-      </span>
+      <div className="shrink-0 text-right">
+        {isPriceInvalid ? (
+          <span className="inline-block px-2 py-0.5 text-[11px] font-semibold text-destructive bg-destructive/10 rounded">
+            Chưa có giá
+          </span>
+        ) : (
+          <span className="text-xs font-semibold tabular-nums text-foreground">
+            {formatCurrency(unitPrice * qty)}
+          </span>
+        )}
+      </div>
     </li>
   );
 };
@@ -203,6 +244,7 @@ const Checkout = () => {
                       product.image ||
                       (product.displayProduct && product.displayProduct[0]) ||
                       "",
+                    unitPrice: Number(item.price ?? product.new_price ?? 0),
                     new_price: Number(item.price ?? product.new_price ?? 0),
                     price: Number(item.price ?? product.new_price ?? 0),
                     quantity: Number(item.quantity || 1),
@@ -397,8 +439,17 @@ const Checkout = () => {
   const subtotal = useMemo(() => {
     return normalizedCheckoutItems.reduce(
       (sum, item) =>
-        sum + Number(item.new_price || item.price || 0) * (item.quantity || 1),
+        sum + Number(item.unitPrice ?? item.unit_price ?? item.new_price ?? item.price ?? 0) * (item.quantity || 1),
       0
+    );
+  }, [normalizedCheckoutItems]);
+
+  const hasInvalidPricing = useMemo(() => {
+    return normalizedCheckoutItems.some(
+      (item) =>
+        item.priceStatus === "INVALID_PRICE" ||
+        item.priceStatus === "PRICE_UNAVAILABLE" ||
+        (Number(item.unitPrice) <= 0 && !item.isFreeGift)
     );
   }, [normalizedCheckoutItems]);
 
@@ -522,13 +573,20 @@ const Checkout = () => {
       return;
     }
 
+    if (hasInvalidPricing) {
+      const msg = "Không thể đặt hàng do có sản phẩm chưa xác định được giá hợp lệ.";
+      setOrderError(msg);
+      toast.error(msg);
+      return;
+    }
+
     // Resolve items safely extracting string IDs
     const resolvedItems = normalizedCheckoutItems
       .map((item) => {
         const rawProductId =
           typeof item.product_id === "object" && item.product_id !== null
             ? item.product_id._id || item.product_id.id
-            : item.product_id || item.id || item._id;
+            : item.productId || item.product_id || item.id || item._id;
 
         const rawVariant =
           item.variants?.[0] || item.variant_id || item.product_variant_id;
@@ -536,6 +594,8 @@ const Checkout = () => {
           typeof rawVariant === "object" && rawVariant !== null
             ? rawVariant._id || rawVariant.id
             : rawVariant || null;
+
+        const priceVal = Number(item.unitPrice ?? item.unit_price ?? item.new_price ?? item.price ?? 0);
 
         return {
           product_id: rawProductId ? String(rawProductId) : null,
@@ -546,13 +606,21 @@ const Checkout = () => {
               ? String(variantId)
               : null,
           quantity: Number(item.quantity) || 1,
-          price: Number(item.new_price ?? item.price ?? 0),
+          price: priceVal,
         };
       })
       .filter((item) => Boolean(item.product_id));
 
     if (resolvedItems.length === 0) {
       const msg = "Đơn hàng phải có ít nhất 1 sản phẩm hợp lệ.";
+      setOrderError(msg);
+      toast.error(msg);
+      return;
+    }
+
+    const hasZeroPriceItem = resolvedItems.some((it) => it.price <= 0);
+    if (hasZeroPriceItem) {
+      const msg = "Không thể đặt hàng do có sản phẩm có đơn giá không hợp lệ (0đ).";
       setOrderError(msg);
       toast.error(msg);
       return;
@@ -591,10 +659,16 @@ const Checkout = () => {
         setCartItems(remainingCartItems);
 
         const orderId = res.order?._id || res.order?.id;
+        const isGuest = !user;
+        const guestToken = res.guest_access_token;
+        if (isGuest && orderId && guestToken) {
+          saveGuestOrderToken(orderId, guestToken);
+          await Swal.fire({ title: "Lưu mã truy cập đơn hàng", text: `Mã truy cập: ${guestToken}. Mã đã lưu trên thiết bị này; hãy lưu thêm ở nơi an toàn.`, icon: "info", confirmButtonText: "Tôi đã lưu mã" });
+        }
 
         if (paymentMethod === "MOMO") {
           try {
-            const payRes = await paymentApi.createMomoPayment(orderId);
+            const payRes = isGuest ? await orderApi.payGuestOrder(orderId, "momo", guestToken) : await paymentApi.createMomoPayment(orderId);
             if (payRes?.success && payRes?.paymentUrl) {
               window.location.href = payRes.paymentUrl;
               return;
@@ -610,7 +684,7 @@ const Checkout = () => {
           }
         } else if (paymentMethod === "VNPAY") {
           try {
-            const payRes = await paymentApi.createVNPayPayment(orderId);
+            const payRes = isGuest ? await orderApi.payGuestOrder(orderId, "vnpay", guestToken) : await paymentApi.createVNPayPayment(orderId);
             if (payRes?.success && payRes?.paymentUrl) {
               window.location.href = payRes.paymentUrl;
               return;
@@ -626,7 +700,6 @@ const Checkout = () => {
           }
         } else {
           toast.success("Đặt hàng thành công!");
-          const isGuest = !user;
           navigate(`/payment-result?success=true&orderCode=${orderId}&guest=${isGuest}`);
         }
       }
@@ -740,8 +813,8 @@ const Checkout = () => {
           </h1>
         </div>
 
-        {/* Stock / Order Error Banner */}
-        {(orderError || hasStockConflict) && (
+        {/* Stock / Price / Order Error Banner */}
+        {(orderError || hasStockConflict || hasInvalidPricing) && (
           <div
             role="alert"
             className="flex items-start gap-3 border border-destructive/50 bg-destructive/10 p-4 text-xs text-destructive"
@@ -753,7 +826,9 @@ const Checkout = () => {
               </p>
               <p>
                 {orderError ||
-                  "Một số thiết kế vượt quá số lượng tồn kho hiện có. Vui lòng quay lại giỏ hàng để kiểm tra."}
+                  (hasInvalidPricing
+                    ? "Một số sản phẩm chưa xác định được giá hợp lệ từ hệ thống hoặc có giá 0đ. Vui lòng kiểm tra lại trước khi thanh toán."
+                    : "Một số thiết kế vượt quá số lượng tồn kho hiện có. Vui lòng quay lại giỏ hàng để kiểm tra.")}
               </p>
             </div>
           </div>
@@ -1034,6 +1109,8 @@ const Checkout = () => {
                   loading ||
                   normalizedCheckoutItems.length === 0 ||
                   hasStockConflict ||
+                  hasInvalidPricing ||
+                  isReservationExpired ||
                   isEditingAddress ||
                   !fullName.trim() ||
                   !phone.trim() ||
@@ -1052,6 +1129,9 @@ const Checkout = () => {
                   </span>
                 )}
               </button>
+              <p className="text-center text-[11px] leading-5 text-muted-foreground">
+                Khi đặt hàng, bạn đồng ý với <Link to="/terms" className="underline">Điều khoản mua bán</Link>, <Link to="/shipping" className="underline">Chính sách vận chuyển</Link>, <Link to="/returns-refunds" className="underline">Đổi trả & hoàn tiền</Link> và <Link to="/payment-policy" className="underline">Thanh toán</Link>.
+              </p>
               {activeReservation && !isReservationExpired && (
                 <button
                   type="button"

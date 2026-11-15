@@ -120,10 +120,11 @@ const CampaignManagement = () => {
         status,
         type,
       });
-      if (res.data?.success && res.data?.data) {
-        setCampaigns(res.data.data.campaigns || []);
+      const payload = res?.data || res;
+      if (res?.success || payload?.campaigns) {
+        setCampaigns(payload?.campaigns || (Array.isArray(payload) ? payload : []));
         setPagination(
-          res.data.data.pagination || {
+          payload?.pagination || res?.pagination || {
             page: 1,
             limit: 10,
             total: 0,
@@ -279,8 +280,9 @@ const CampaignManagement = () => {
     setDetailLoading(true);
     try {
       const res = await campaignApi.getCampaignDetail(campId);
-      if (res.data?.success) {
-        setDetailData(res.data.data);
+      const detail = res?.data || res;
+      if (res?.success || detail?._id) {
+        setDetailData(detail);
       }
     } catch {
       toast.error('Không thể tải chi tiết chiến dịch');
@@ -761,7 +763,7 @@ const CampaignManagement = () => {
                                 item.product?.image
                               }
                               alt={item.product?.name || 'Sản phẩm'}
-                              className="h-10 w-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
+                              className="h-10 w-10 rounded-lg object-contain bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-0.5"
                             />
                           ) : (
                             <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-[10px] border border-slate-200 dark:border-slate-700">

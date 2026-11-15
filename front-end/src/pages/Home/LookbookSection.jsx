@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
@@ -142,8 +142,8 @@ const LookbookSection = () => {
                     alt={primaryLook.title}
                     speed={0.12}
                     containerClassName="absolute inset-0 w-full h-full"
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-106"
-                    className="w-full h-full object-cover object-[center_top] transition-transform duration-700 ease-out group-hover:scale-106"
+
+                    className="w-full h-full object-cover object-[50%_20%] transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                 ) : (
                   <div className="absolute inset-0 bg-neutral-800" />
@@ -228,8 +228,8 @@ const LookbookSection = () => {
                       alt={secondaryLook.title}
                       speed={0.1}
                       containerClassName="absolute inset-0 w-full h-full"
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-106"
-                      className="w-full h-full object-cover object-[center_top] transition-transform duration-700 ease-out group-hover:scale-106"
+  
+                      className="w-full h-full object-cover object-[50%_20%] transition-transform duration-700 ease-out group-hover:scale-105"
                     />
                   ) : (
                     <div className="absolute inset-0 bg-neutral-800" />

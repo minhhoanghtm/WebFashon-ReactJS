@@ -20,8 +20,9 @@ import { Order, OrderItem } from "../modules/orders/order.model.js";
 import Review from "../modules/reviews/review.model.js";
 import Conversation from "../modules/conversations/conversation.model.js";
 import Message from "../modules/messages/message.model.js";
+import { requireEnv } from "./require-env.js";
 
-const LOCAL_DEV_MONGO_URI = process.env.LOCAL_DEV_MONGO_URI || "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin";
+const LOCAL_DEV_MONGO_URI = process.env.LOCAL_DEV_MONGO_URI || requireEnv("MONGO_CONNECTIONSTRING");
 
 // Safety check for connection target
 function verifySafeTarget(uri) {

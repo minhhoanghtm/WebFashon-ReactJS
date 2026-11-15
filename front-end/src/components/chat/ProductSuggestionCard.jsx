@@ -27,26 +27,35 @@ export const ProductSuggestionCard = ({
     ? `/products?search=${encodeURIComponent(item.name || "")}`
     : null;
 
+  const formattedPrice =
+    item.new_price ||
+    (typeof item.price === "number"
+      ? `${item.price.toLocaleString("vi-VN")}đ`
+      : item.price) ||
+    (typeof item.price_number === "number"
+      ? `${item.price_number.toLocaleString("vi-VN")}đ`
+      : "Liên hệ");
+
   return (
-    <div className="flex gap-3 border border-border bg-card p-2.5 text-card-foreground transition-all duration-150 hover:border-foreground/40">
+    <div className="flex gap-3 border border-border bg-card p-2.5 text-card-foreground transition-all duration-150 hover:border-foreground/40 w-full max-w-full overflow-hidden box-border">
       {item.image && (
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden bg-muted">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden bg-[var(--muted)]/50 dark:bg-zinc-900/60 flex items-center justify-center">
           <img
             src={item.image}
             alt={item.name}
             loading="lazy"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain object-center"
           />
         </div>
       )}
 
-      <div className="flex flex-1 min-w-0 flex-col justify-between">
+      <div className="flex flex-1 min-w-0 flex-col justify-between overflow-hidden">
         <div>
-          <h4 className="line-clamp-2 text-xs font-semibold leading-snug tracking-tight text-foreground">
+          <h4 className="line-clamp-2 text-xs font-semibold leading-snug tracking-tight text-foreground break-words">
             {item.name}
           </h4>
           <p className="mt-1 text-xs font-bold tabular-nums text-foreground">
-            {item.price}
+            {formattedPrice}
           </p>
         </div>
 

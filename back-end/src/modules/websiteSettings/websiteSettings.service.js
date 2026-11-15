@@ -20,7 +20,9 @@ class WebsiteSettingsService {
         },
         system: {
           maintenanceMode: false,
-          allowGuestCheckout: true,
+          maintenanceMessage: "Hệ thống đang được nâng cấp để mang đến trải nghiệm tốt hơn. Quý khách vui lòng quay lại sau ít phút.",
+          maintenanceUntil: null,
+          allowGuestCheckout: false,
           enableVoucher: true,
           enableReviews: true,
         },
@@ -39,6 +41,24 @@ class WebsiteSettingsService {
     delete sanitizedData.singletonKey;
     delete sanitizedData.createdBy;
 
+    // Use dot notation for nested objects to merge updates safely
+    const updateOps = { updatedBy: adminId };
+    for (const [key, val] of Object.entries(sanitizedData)) {
+      if (
+        val &&
+        typeof val === "object" &&
+        !Array.isArray(val) &&
+        !(val instanceof Date) &&
+        key !== "homeContent"
+      ) {
+        for (const [subKey, subVal] of Object.entries(val)) {
+          updateOps[`${key}.${subKey}`] = subVal;
+        }
+      } else {
+        updateOps[key] = val;
+      }
+    }
+
     let settings = await websiteSettingsRepository.findOne({ singletonKey: "default" });
     if (!settings) {
       settings = await websiteSettingsRepository.create({
@@ -50,7 +70,7 @@ class WebsiteSettingsService {
     } else {
       settings = await websiteSettingsRepository.findOneAndUpdate(
         { singletonKey: "default" },
-        { ...sanitizedData, updatedBy: adminId },
+        { $set: updateOps },
         { new: true }
       );
     }

@@ -7,6 +7,7 @@ import semanticSearchService, {
   parseNaturalLanguageQuery,
 } from "../../ai/services/semanticSearch.service.js";
 import { triggerProductVectorSync } from "../../ai/queues/vectorSync.queue.js";
+import inventoryReservationService from "../../inventory/inventoryReservation.service.js";
 
 export const getAllProducts = async (limit = 20) => {
   const products = await productRepository.findRandomProducts({}, limit);
@@ -20,6 +21,36 @@ const enrichProductWithPricing = async (product) => {
   if (!product) return product;
   const resolved = await pricingService.resolvePrice(product);
   const prodObj = product.toObject ? product.toObject() : { ...product };
+
+  // Calculate real-time available stock minus active Redis reservations
+  if (Array.isArray(prodObj.variants) && prodObj.variants.length > 0) {
+    prodObj.variants = await Promise.all(
+      prodObj.variants.map(async (v) => {
+        const vObj = v.toObject ? v.toObject() : { ...v };
+        const reserved = await inventoryReservationService.getReservedStock(`variant_${vObj._id}`);
+        const rawStock = Number(vObj.stock || 0);
+        const availableStock = Math.max(0, rawStock - reserved);
+        return {
+          ...vObj,
+          raw_stock: rawStock,
+          stock: availableStock,
+          available_stock: availableStock,
+          reserved_stock: reserved,
+        };
+      })
+    );
+    prodObj.stock = prodObj.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+    prodObj.available_stock = prodObj.stock;
+  } else if (prodObj._id) {
+    const reserved = await inventoryReservationService.getReservedStock(`product_${prodObj._id}`);
+    const rawStock = Number(prodObj.stock || 0);
+    const availableStock = Math.max(0, rawStock - reserved);
+    prodObj.raw_stock = rawStock;
+    prodObj.stock = availableStock;
+    prodObj.available_stock = availableStock;
+    prodObj.reserved_stock = reserved;
+  }
+
   return {
     ...prodObj,
     price: resolved.finalPrice,

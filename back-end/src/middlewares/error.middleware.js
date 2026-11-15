@@ -1,4 +1,10 @@
 export const errorHandler = (err, req, res, next) => {
+  // Delegate to built-in Express error handler if response headers were already sent
+  // (Prevents ERR_HTTP_HEADERS_SENT process crashes on streaming/closed sockets)
+  if (res.headersSent) {
+    return next(err);
+  }
+
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
 
@@ -53,6 +59,11 @@ export const errorHandler = (err, req, res, next) => {
     if (err.details) {
       response.details = err.details;
     }
+    if (err.code && typeof err.code === "string") {
+      response.code = err.code;
+    } else if (typeof err.details === "string") {
+      response.code = err.details;
+    }
     return res.status(err.statusCode).json(response);
   }
 
@@ -65,6 +76,11 @@ export const errorHandler = (err, req, res, next) => {
     if (err.details) {
       response.details = err.details;
     }
+    if (err.code && typeof err.code === "string") {
+      response.code = err.code;
+    } else if (typeof err.details === "string") {
+      response.code = err.details;
+    }
     return res.status(err.statusCode).json(response);
   }
 
@@ -74,4 +90,5 @@ export const errorHandler = (err, req, res, next) => {
     message: "Đã xảy ra lỗi hệ thống!",
   });
 };
+
 export default errorHandler;

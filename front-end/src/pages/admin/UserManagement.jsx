@@ -399,7 +399,7 @@ const UserManagement = () => {
                               <img
                                 src={u.avatar_url || u.avatar}
                                 alt={name}
-                                className="h-9 w-9 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                                className="h-9 w-9 rounded-xl object-cover object-[50%_25%] border border-slate-200 dark:border-slate-700 shrink-0"
                               />
                             ) : (
                               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold shrink-0">

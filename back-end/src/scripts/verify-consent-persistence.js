@@ -17,17 +17,17 @@ import mongoose from "mongoose";
 import Redis from "ioredis";
 import { execSync } from "child_process";
 import crypto from "crypto";
+import { requireEnv } from "./require-env.js";
 
 const STAGING_URL = "http://localhost:8081";
 const STAGING_API_URL = "http://localhost:8081/api";
-const STAGING_MONGO_URI = "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin";
-const STAGING_REDIS_URL = "redis://127.0.0.1:6381";
+const STAGING_MONGO_URI = requireEnv("MONGO_CONNECTIONSTRING");
+const STAGING_REDIS_URL = requireEnv("REDIS_URL");
+const customerPassword = requireEnv("STAGING_CUSTOMER_PASSWORD");
 
 process.env.NODE_ENV = "staging";
 process.env.MONGO_CONNECTIONSTRING = STAGING_MONGO_URI;
 process.env.REDIS_URL = STAGING_REDIS_URL;
-process.env.REDIS_HOST = "127.0.0.1";
-process.env.REDIS_PORT = "6381";
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -80,7 +80,7 @@ async function runConsentPersistenceVerification() {
     const loginRes = await fetch(`${STAGING_API_URL}/auth/signIn`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "customer@404studio.vn", passWord: "StagingPass123!" }),
+      body: JSON.stringify({ email: "customer@404studio.vn", passWord: customerPassword }),
     });
     const customerToken = (await loginRes.json()).data?.accessToken;
     if (!customerToken) throw new Error("Customer login failed");

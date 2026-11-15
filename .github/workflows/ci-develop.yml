@@ -8,13 +8,18 @@ on:
     branches:
       - develop
 
+concurrency:
+  group: develop-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  test-backend:
+    name: 🧪 Backend Test Pipeline
     runs-on: ubuntu-latest
 
     services:
       mongo:
-        image: mongo:6
+        image: mongo:7.0
         ports:
           - 27017:27017
         options: >-
@@ -24,7 +29,7 @@ jobs:
           --health-retries=5
 
       redis:
-        image: redis:7
+        image: redis:7-alpine
         ports:
           - 6379:6379
         options: >-
@@ -35,87 +40,112 @@ jobs:
 
     env:
       NODE_ENV: test
+      PORT: 5000
       MONGO_URI: mongodb://localhost:27017/webfashion_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
-      JWT_SECRET: test-secret
+      ACCESS_TOKEN_SECRET: test_access_token_secret_ci_develop_32
+      REFRESH_TOKEN_SECRET: test_refresh_token_secret_ci_develop_32
+      ACTION_SECRET: test_action_secret_ci_develop_32_char
+      OTP_SECRET: test_otp_secret_ci_develop_32_char___
 
     defaults:
       run:
         working-directory: back-end
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: back-end/package-lock.json
 
       - name: Install backend dependencies
-        working-directory: ./back-end
         run: npm install --no-audit --no-fund
 
       - name: Create .env for test
-        working-directory: ./back-end
         run: |
+          TEST_SECRET=$(node -e "console.log(require('crypto').randomBytes(48).toString('hex'))")
           cat > .env << EOF
           NODE_ENV=test
           PORT=5000
           MONGO_CONNECTIONSTRING=mongodb://127.0.0.1:27017/webfashion_test
           MONGODB_URI=mongodb://127.0.0.1:27017/webfashion_test
           REDIS_URL=redis://127.0.0.1:6379
-          JWT_SECRET=test_secret_key_ci
-          JWT_REFRESH_SECRET=test_refresh_secret_ci
+          ACCESS_TOKEN_SECRET=$TEST_SECRET
+          REFRESH_TOKEN_SECRET=$TEST_SECRET
+          ACTION_SECRET=$TEST_SECRET
+          OTP_SECRET=$TEST_SECRET
+          SMS_PROVIDER=console
           EOF
 
-      - name: Run Backend Tests
-        working-directory: ./back-end
+      - name: Run Backend CI checks
         run: |
+          npm run lint
           npm start > server.log 2>&1 &
           npx wait-on http://localhost:5000/api/health --timeout 60000 || (cat server.log && exit 1)
           npm test
-          node test-api.js
+          node test-api.js --if-present
 
-  build-frontend:
-    name: 🏗️ Frontend Build Check
+  test-frontend:
+    name: 🏗️ Frontend Build & Test
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: front-end/package-lock.json
-      - name: Show versions
-        run: |
-          node -v
-          npm -v
+
       - name: Install dependencies
         working-directory: ./front-end
         run: npm install --legacy-peer-deps --no-audit --no-fund
 
       - name: Run lint
         working-directory: ./front-end
-        run: npm run lint --if-present
+        run: npm run lint
 
       - name: Run tests
         working-directory: ./front-end
-        run: npm test --if-present
+        run: npm test
 
-      - name: Build project
+      - name: Build frontend production bundle
         working-directory: ./front-end
-        run: npm run build --if-present
+        env:
+          VITE_API_URL: /api
+        run: npm run build
 
-      - name: Build Docker image
-        run: docker compose build
+  validate-docker:
+    name: 🐳 Docker Compose Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Deploy to VPS
+      - name: Validate Docker Compose files syntax
+        run: |
+          export DOMAIN=example.test MONGO_USER=ci-user MONGO_PASS=ci-mongo-password ACCESS_TOKEN_SECRET=ci-access-token-secret-at-least-32 REFRESH_TOKEN_SECRET=ci-refresh-token-secret-at-least-32 ACTION_SECRET=ci-action-secret-at-least-32-chars OTP_SECRET=ci-otp-secret-at-least-32-chars STAGING_MONGO_USER=ci-user STAGING_MONGO_PASSWORD=ci-mongo-password
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f docker-compose.staging.yml config --quiet
+          docker compose -f docker-compose.prod.yml config --quiet
+
+  deploy-staging:
+    name: 🚀 Deploy Staging to VPS
+    needs: [test-backend, test-frontend, validate-docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -123,6 +153,15 @@ jobs:
           key: ${{ secrets.VPS_PRIVATE_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            cd /root/WebFashon
+            if [ -d "/root/WebFashion" ]; then
+              cd /root/WebFashion
+            elif [ -d "/root/WebFashon" ]; then
+              cd /root/WebFashon
+            elif [ -d "/opt/webfashion" ]; then
+              cd /opt/webfashion
+            else
+              echo "Target repository directory not found on VPS"
+              exit 1
+            fi
             git pull origin develop
-            docker compose up -d --build
+            docker compose -f docker-compose.staging.yml up -d --build

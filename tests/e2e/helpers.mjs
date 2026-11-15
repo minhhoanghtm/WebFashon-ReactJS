@@ -2,8 +2,8 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const { chromium } = require("../../back-end/node_modules/playwright");
 
-export const BASE_URL = process.env.TEST_FRONTEND_URL || "http://localhost:5173";
-export const API_URL = process.env.TEST_BACKEND_URL || "http://localhost:5000/api";
+export const BASE_URL = process.env.TEST_FRONTEND_URL || "http://localhost:8081";
+export const API_URL = process.env.TEST_BACKEND_URL || "http://localhost:8081/api";
 
 export const VIEWPORTS = {
   desktop: { width: 1920, height: 1080 },

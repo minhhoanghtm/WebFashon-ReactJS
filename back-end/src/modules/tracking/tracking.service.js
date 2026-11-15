@@ -7,6 +7,7 @@ import Product from "../products/product.model.js";
 import User from "../users/user.model.js";
 import { OrderItem } from "../orders/order.model.js";
 import { addTrackingJob } from "../../queues/tracking.queue.js";
+import { PRIVACY_POLICY_VERSION } from "../../common/constants/privacyPolicy.js";
 import { getRedisConnection } from "../../configs/redis.js";
 import {
   acquireDistributedLock,
@@ -193,6 +194,10 @@ class TrackingService {
       query,
       source,
       session_id,
+      tab_id,
+      action_id,
+      trace_id,
+      duration_ms,
       event_id,
       meta,
       context,
@@ -272,6 +277,10 @@ class TrackingService {
       user_id: userId ? userId.toString() : null,
       anonymous_id: anonymousId,
       session_id: session_id || null,
+      tab_id: tab_id || null,
+      action_id: action_id || null,
+      trace_id: trace_id || null,
+      duration_ms: typeof duration_ms === "number" ? duration_ms : null,
       event_type,
       product_id: validatedProductId,
       category_id: category_id ? category_id.toString() : null,
@@ -284,6 +293,36 @@ class TrackingService {
 
     // Đẩy bất đồng bộ vào BullMQ queue với durable fallback nếu Redis/Queue gặp sự cố
     await this._dispatchJob(jobPayload);
+
+    // Phát sự kiện realtime đến Admin Drawer (trạng thái: queued trong BullMQ)
+    if (session_id) {
+      try {
+        const { getSocketIO } = await import("../../sockets/index.js");
+        const io = getSocketIO();
+        if (io) {
+          io.to("admin-room").emit("journey:event_queued", {
+            sessionId: session_id,
+            event: {
+              eventId: assignedEventId,
+              eventType: event_type,
+              actionId: action_id || null,
+              traceId: trace_id || null,
+              tabId: tab_id || null,
+              durationMs: typeof duration_ms === "number" ? duration_ms : null,
+              timestamp: jobPayload.timestamp,
+              pathname: context?.pathname || null,
+              fromPath: context?.fromPath || null,
+              toPath: context?.toPath || null,
+              entrySource: context?.entrySource || null,
+              navigationType: context?.navigationType || null,
+              api: context?.api || null,
+              meta: meta || {},
+              persisted: false,
+            },
+          });
+        }
+      } catch {}
+    }
 
     return { accepted: true, deduplicated: false };
   }
@@ -352,6 +391,10 @@ class TrackingService {
       user_id,
       anonymous_id,
       session_id,
+      tab_id,
+      action_id,
+      trace_id,
+      duration_ms,
       event_type,
       product_id,
       category_id,
@@ -360,12 +403,14 @@ class TrackingService {
       meta,
       context,
     } = payload;
+    console.log(`[Tracking Worker] Job START: ${event_type} (${event_id}) sess=${session_id}`);
     const redis = getRedisConnection();
 
     // 1. Kiểm tra idempotent: Nếu job này đã xử lý trước đó, bỏ qua để tránh cộng điểm 2 lần
     if (event_id && redis) {
       const isAlreadyProcessed = await redis.get(`tracking:processed:${event_id}`);
       if (isAlreadyProcessed) {
+        console.log(`[Tracking Worker] Job SKIPPED (already processed): ${event_id}`);
         return;
       }
     }
@@ -423,6 +468,7 @@ class TrackingService {
     // 3. Worker-level Privacy & Consent Check: Thu hồi quyền riêng tư lập tức hủy mọi event đang chờ trong queue
     const isConsentDenied = await this.isConsentDenied(rawUserId, rawAnonId);
     if (isConsentDenied) {
+      console.log(`[Tracking Worker] Job DROPPED (consent denied): ${event_type} (${identity})`);
       return;
     }
 
@@ -508,6 +554,10 @@ class TrackingService {
               user_id: userObjectId,
               anonymous_id: anonymous_id || null,
               session_id: session_id || null,
+              tab_id: tab_id || null,
+              action_id: action_id || null,
+              trace_id: trace_id || null,
+              duration_ms: typeof duration_ms === "number" ? duration_ms : null,
               event_type,
               product_id: productObjectId,
               category_id: categoryObjectId,
@@ -520,10 +570,55 @@ class TrackingService {
           },
           { upsert: true }
         );
+        console.log(`[Tracking Worker] UserEvent UPSERTED successfully: ${event_type} (${event_id}) sess=${session_id}`);
+
+        // Phát sự kiện realtime đến Admin Drawer (trạng thái: đã persist vào MongoDB thành công)
+        if (session_id) {
+          try {
+            const { getSocketIO } = await import("../../sockets/index.js");
+            const io = getSocketIO();
+            if (io) {
+              io.to("admin-room").emit("journey:event_persisted", {
+                sessionId: session_id,
+                event: {
+                  eventId: event_id || eventDocId.toString(),
+                  eventType: event_type,
+                  actionId: action_id || null,
+                  traceId: trace_id || null,
+                  tabId: tab_id || null,
+                  durationMs: typeof duration_ms === "number" ? duration_ms : null,
+                  timestamp: eventTime.toISOString(),
+                  createdAt: new Date().toISOString(),
+                  pathname: context?.pathname || null,
+                  fromPath: context?.fromPath || null,
+                  toPath: context?.toPath || null,
+                  entrySource: context?.entrySource || null,
+                  navigationType: context?.navigationType || null,
+                  api: context?.api || null,
+                  meta: { ...meta, price: productPrice, brand: productBrand },
+                  persisted: true,
+                },
+              });
+            }
+          } catch {}
+        }
+
+        // Gộp danh tính (Identity Merge): Khi người dùng đăng nhập trong cùng phiên, liên kết các sự kiện trước đó của session với user_id
+        if (userObjectId && session_id) {
+          try {
+            await UserEvent.updateMany(
+              { session_id, user_id: null },
+              { $set: { user_id: userObjectId } }
+            );
+          } catch (mergeErr) {
+            console.warn("[Tracking Worker] Lỗi khi gộp danh tính session với User:", mergeErr.message);
+          }
+        }
       } catch (saveErr) {
         if (saveErr.code === 11000) {
           // Idempotency: Unique partial index (e.g. meta.order_id + product_id + purchase_completed)
           // ngăn chặn duplicate purchase do concurrent webhook hoặc retry; dừng xử lý ngay.
+          console.log(`[Tracking Worker] UserEvent DUPLICATE 11000: ${event_type}`);
           return;
         }
         console.error("Lỗi khi lưu UserEvent:", saveErr.message);
@@ -945,14 +1040,122 @@ class TrackingService {
   }
 
   /**
+   * Lấy trạng thái đồng thuận (Privacy & Consent) của chủ thể
+   */
+  async getConsent({ userId, anonymousId }) {
+    if (!userId && !anonymousId) {
+      return {
+        necessary: true,
+        analytics: false,
+        personalization: false,
+        marketing: false,
+        policyVersion: PRIVACY_POLICY_VERSION,
+        choice: "UNKNOWN",
+        status: "denied",
+        hasConsented: false,
+      };
+    }
+
+    const checkIdentities = [];
+    if (userId) checkIdentities.push(userId.toString());
+    if (anonymousId) checkIdentities.push(anonymousId.toString());
+
+    let consentDoc = null;
+    if (mongoose.connection?.readyState === 1 || (UserConsent.findOne && typeof UserConsent.findOne.mock === "object")) {
+      consentDoc = await UserConsent.findOne({
+        subject_id: { $in: checkIdentities },
+      })
+        .sort({ updatedAt: -1 })
+        .lean()
+        .catch(() => null);
+    }
+
+    if (!consentDoc) {
+      return {
+        necessary: true,
+        analytics: false,
+        personalization: false,
+        marketing: false,
+        policyVersion: PRIVACY_POLICY_VERSION,
+        choice: "UNKNOWN",
+        status: "denied",
+        hasConsented: false,
+      };
+    }
+
+    return {
+      necessary: true,
+      analytics: consentDoc.categories?.analytics ?? (consentDoc.consent_status === "granted"),
+      personalization: consentDoc.categories?.personalization ?? (consentDoc.consent_status === "granted"),
+      marketing: consentDoc.categories?.marketing ?? false,
+      policyVersion: consentDoc.policy_version || PRIVACY_POLICY_VERSION,
+      choice: consentDoc.consent_choice || (consentDoc.consent_status === "granted" ? "ALL_ACCEPTED" : "ESSENTIAL_ONLY"),
+      status: consentDoc.consent_status || "denied",
+      updatedAt: consentDoc.updatedAt || null,
+      hasConsented: true,
+    };
+  }
+
+  /**
    * Cập nhật trạng thái đồng ý theo dõi (Privacy & Consent)
    * Single Source of Truth: MongoDB UserConsent (durable)
    * Redis cache layer: consent:denied:{identity} (TTL 1 năm)
    */
-  async updateConsent({ userId, anonymousId, consent, anonymousToken }) {
+  async updateConsent({
+    userId,
+    anonymousId,
+    consent,
+    anonymousToken,
+    choice,
+    categories,
+    policyVersion,
+    policy_version,
+    source,
+  }) {
     if (!userId && !anonymousId) {
       throw new AppError("Cần cung cấp định danh người dùng để cập nhật consent", 400);
     }
+
+    const effectivePolicyVersion = policyVersion || policy_version || PRIVACY_POLICY_VERSION;
+    const effectiveSource = source || "banner";
+
+    // Chuẩn hóa categories & choice
+    let finalCategories = {
+      necessary: true,
+      analytics: false,
+      personalization: false,
+      marketing: false,
+    };
+
+    let finalChoice = choice || "CUSTOM";
+
+    if (categories && typeof categories === "object") {
+      finalCategories = {
+        necessary: true,
+        analytics: Boolean(categories.analytics),
+        personalization: Boolean(categories.personalization),
+        marketing: Boolean(categories.marketing),
+      };
+    } else if (consent === "granted") {
+      finalCategories = {
+        necessary: true,
+        analytics: true,
+        personalization: true,
+        marketing: false,
+      };
+      finalChoice = "ALL_ACCEPTED";
+    } else if (consent === "denied") {
+      finalCategories = {
+        necessary: true,
+        analytics: false,
+        personalization: false,
+        marketing: false,
+      };
+      finalChoice = "ESSENTIAL_ONLY";
+    }
+
+    // Determine consent_status for backward compatibility:
+    const finalConsentStatus = finalCategories.analytics ? "granted" : "denied";
 
     const userObjectId =
       userId && mongoose.Types.ObjectId.isValid(userId)
@@ -968,14 +1171,18 @@ class TrackingService {
             $set: {
               subject_id: userId.toString(),
               subject_type: "user",
-              consent_status: consent,
+              consent_status: finalConsentStatus,
+              consent_choice: finalChoice,
+              categories: finalCategories,
+              policy_version: effectivePolicyVersion,
+              source: effectiveSource,
               updatedAt: new Date(),
             },
           },
           { upsert: true }
         );
         if (userObjectId) {
-          await User.updateOne({ _id: userObjectId }, { $set: { consent_status: consent } }).catch(() => {});
+          await User.updateOne({ _id: userObjectId }, { $set: { consent_status: finalConsentStatus } }).catch(() => {});
         }
       }
 
@@ -983,7 +1190,11 @@ class TrackingService {
         const updateData = {
           subject_id: anonymousId,
           subject_type: "anonymous",
-          consent_status: consent,
+          consent_status: finalConsentStatus,
+          consent_choice: finalChoice,
+          categories: finalCategories,
+          policy_version: effectivePolicyVersion,
+          source: effectiveSource,
           updatedAt: new Date(),
         };
         if (anonymousToken) {
@@ -1006,7 +1217,7 @@ class TrackingService {
       await UserInterestProfile.updateOne(
         filter,
         {
-          $set: { consent_status: consent, updatedAt: new Date() },
+          $set: { consent_status: finalConsentStatus, updatedAt: new Date() },
           $setOnInsert: {
             user_id: userObjectId,
             anonymous_id: userObjectId ? null : anonymousId,
@@ -1018,7 +1229,7 @@ class TrackingService {
       if (userObjectId && anonymousId) {
         await UserInterestProfile.updateOne(
           { anonymous_id: anonymousId },
-          { $set: { consent_status: consent, updatedAt: new Date() } }
+          { $set: { consent_status: finalConsentStatus, updatedAt: new Date() } }
         ).catch(() => {});
       }
     }
@@ -1037,16 +1248,17 @@ class TrackingService {
 
     if (redis && identities.length > 0) {
       for (const id of identities) {
-        if (consent === "denied") {
+        if (!finalCategories.analytics) {
           await redis.set(`consent:denied:${id}`, "1", "EX", 86400 * 365);
         } else {
           await redis.del(`consent:denied:${id}`);
         }
+        await redis.set(`consent:state:${id}`, JSON.stringify(finalCategories), "EX", 86400 * 365);
       }
     }
 
-    // 3. Nếu từ chối: Xóa sạch dữ liệu hồ sơ sở thích cá nhân và xóa cache đề xuất
-    if (consent === "denied") {
+    // 3. Nếu Personalization bị tắt: Xóa sạch dữ liệu hồ sơ sở thích cá nhân và xóa cache đề xuất
+    if (!finalCategories.personalization) {
       const resetOr = [];
       if (userObjectId) resetOr.push({ user_id: userObjectId });
       if (anonymousId) resetOr.push({ anonymous_id: anonymousId });
@@ -1071,9 +1283,13 @@ class TrackingService {
 
     return {
       success: true,
-      consent,
+      consent: finalConsentStatus,
+      choice: finalChoice,
+      categories: finalCategories,
+      policyVersion: effectivePolicyVersion,
       userId: userId || null,
       anonymousId: anonymousId || null,
+      updatedAt: new Date().toISOString(),
     };
   }
 

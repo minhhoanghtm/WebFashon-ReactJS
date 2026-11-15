@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import FitImage from "../../components/common/FitImage";
 
 const ProductGallery = ({ images = [], productName = "Thiết kế WebFashion" }) => {
   const [failedMap, setFailedMap] = useState({});
@@ -33,13 +34,13 @@ const ProductGallery = ({ images = [], productName = "Thiết kế WebFashion" }
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-3 h-full min-h-0">
+    <div className="flex flex-col lg:flex-row gap-3 h-full min-h-0 items-center lg:items-start justify-center">
       {/* Desktop Thumbnails Column (hidden on mobile, vertical strip on left) */}
       {validImages.length > 1 && (
         <div
           role="tablist"
           aria-label="Chọn góc nhìn thiết kế (desktop)"
-          className="hidden lg:flex flex-col gap-2 w-16 xl:w-20 shrink-0 overflow-y-auto max-h-full py-0.5 scrollbar-none"
+          className="hidden lg:flex flex-col gap-2 w-16 xl:w-20 shrink-0 overflow-y-auto max-h-[calc(100svh-8rem)] py-0.5 scrollbar-none"
         >
           {validImages.map((url, idx) => {
             const isSelected = idx === safeIndex;
@@ -50,18 +51,19 @@ const ProductGallery = ({ images = [], productName = "Thiết kế WebFashion" }
                 role="tab"
                 aria-selected={isSelected}
                 onClick={() => setSelectedIndex(idx)}
-                className={`relative aspect-[3/4] w-full shrink-0 overflow-hidden border transition-all ${
+                className={`relative aspect-[3/4] w-full shrink-0 overflow-hidden border transition-all bg-[var(--muted)]/40 dark:bg-zinc-900/60 ${
                   isSelected
                     ? "border-foreground ring-1 ring-foreground"
                     : "border-border opacity-60 hover:opacity-100"
                 }`}
                 aria-label={`Góc nhìn ${idx + 1}`}
               >
-                <img
+                <FitImage
                   src={url}
-                  alt=""
+                  alt={`${productName} thumbnail ${idx + 1}`}
+                  mode="contain"
                   onError={() => handleImageError(url)}
-                  className="h-full w-full object-cover"
+                  className="w-full h-full"
                 />
               </button>
             );
@@ -69,18 +71,21 @@ const ProductGallery = ({ images = [], productName = "Thiết kế WebFashion" }
         </div>
       )}
 
-      {/* Main Image Frame: mobile aspect-[3/4], desktop flex-1 h-full min-h-0 */}
-      <div className="relative aspect-[3/4] lg:aspect-auto flex-1 h-full min-h-0 w-full overflow-hidden border border-border bg-secondary flex items-center justify-center">
+      {/* Main Image Frame: Adaptively sized to natural aspect ratio, constrained to max-h-[calc(100svh-8rem)] */}
+      <div className="relative flex-1 min-h-0 w-full flex items-center justify-center border border-border bg-[var(--muted)]/30 dark:bg-zinc-950/40 p-1 sm:p-2">
         {currentImage ? (
-          <img
+          <FitImage
             src={currentImage}
             alt={`${productName} - góc nhìn ${safeIndex + 1}`}
+            mode="adaptive"
+            maxHeight="calc(100svh - 8rem)"
+            priority={true}
             onError={() => handleImageError(currentImage)}
-            className="h-full w-full object-cover object-center"
+            className="w-full h-auto max-h-[calc(100svh-8rem)] object-contain shadow-xs"
           />
         ) : (
           <div
-            className="flex h-full w-full flex-col items-center justify-center p-8 text-center select-none"
+            className="flex h-64 lg:h-[calc(100svh-10rem)] w-full flex-col items-center justify-center p-8 text-center select-none"
             aria-label="Khung chờ hình ảnh thiết kế"
           >
             <div className="mb-3 flex h-20 w-14 items-center justify-center border border-border">
@@ -125,7 +130,7 @@ const ProductGallery = ({ images = [], productName = "Thiết kế WebFashion" }
         <div
           role="tablist"
           aria-label="Chọn góc nhìn sản phẩm (di động)"
-          className="flex lg:hidden gap-2 overflow-x-auto pb-1"
+          className="flex lg:hidden gap-2 overflow-x-auto pb-1 w-full"
         >
           {validImages.map((url, idx) => {
             const isSelected = idx === safeIndex;
@@ -136,18 +141,19 @@ const ProductGallery = ({ images = [], productName = "Thiết kế WebFashion" }
                 role="tab"
                 aria-selected={isSelected}
                 onClick={() => setSelectedIndex(idx)}
-                className={`relative aspect-[3/4] w-16 shrink-0 overflow-hidden border transition-all ${
+                className={`relative aspect-[3/4] w-16 shrink-0 overflow-hidden border transition-all bg-[var(--muted)]/40 dark:bg-zinc-900/60 ${
                   isSelected
                     ? "border-foreground ring-1 ring-foreground"
                     : "border-border opacity-60 hover:opacity-100"
                 }`}
                 aria-label={`Góc nhìn ${idx + 1}`}
               >
-                <img
+                <FitImage
                   src={url}
-                  alt=""
+                  alt={`${productName} thumbnail ${idx + 1}`}
+                  mode="contain"
                   onError={() => handleImageError(url)}
-                  className="h-full w-full object-cover"
+                  className="w-full h-full"
                 />
               </button>
             );

@@ -27,7 +27,12 @@ const websiteSettingsSchema = new mongoose.Schema(
     },
     system: {
       maintenanceMode: { type: Boolean, default: false },
-      allowGuestCheckout: { type: Boolean, default: true },
+      maintenanceMessage: {
+        type: String,
+        default: "Hệ thống đang được nâng cấp để mang đến trải nghiệm tốt hơn. Quý khách vui lòng quay lại sau ít phút.",
+      },
+      maintenanceUntil: { type: Date, default: null },
+      allowGuestCheckout: { type: Boolean, default: false },
       enableVoucher: { type: Boolean, default: true },
       enableReviews: { type: Boolean, default: true },
     },
@@ -48,6 +53,10 @@ const websiteSettingsSchema = new mongoose.Schema(
       googleAnalytics: { type: String, default: "" },
       googleTagManager: { type: String, default: "" },
       chatbotScript: { type: String, default: "" },
+    },
+    payment: {
+      bankName: { type: String, default: "" }, bankBin: { type: String, default: "" }, accountNumber: { type: String, default: "" }, accountName: { type: String, default: "" }, transferPrefix: { type: String, default: "ORDER" },
+      enableCod: { type: Boolean, default: true }, enableMomo: { type: Boolean, default: true }, enableVnpay: { type: Boolean, default: true }, enableBankTransfer: { type: Boolean, default: false },
     },
     homeContent: {
       type: mongoose.Schema.Types.Mixed,

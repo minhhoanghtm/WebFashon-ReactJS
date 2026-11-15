@@ -195,7 +195,7 @@ const LookbookDetail = () => {
                         <img
                           src={coverImage}
                           alt={lb.title}
-                          className="w-full h-full object-cover object-center group-hover:scale-[1.025] transition-transform duration-750 rounded-t-[12px]"
+                          className="w-full h-full object-cover object-[50%_25%] group-hover:scale-[1.025] transition-transform duration-750 rounded-t-[12px]"
                           loading="lazy"
                         />
                       </div>

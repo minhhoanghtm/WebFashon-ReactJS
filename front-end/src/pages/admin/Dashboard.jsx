@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { Suspense, lazy, useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import ReactECharts from "echarts-for-react";
 import {
   ShoppingCart,
   Package,
@@ -35,6 +34,12 @@ import {
   KPISkeleton,
   TableSkeleton,
 } from "@/components/admin/ui";
+
+const LineChart = lazy(() => import("@/components/admin/charts/LineChart"));
+const BarChart = lazy(() => import("@/components/admin/charts/BarChart"));
+const ChartFallback = ({ height }) => (
+  <div className="animate-pulse bg-[var(--color-bg)]" style={{ height }} aria-label="Đang tải biểu đồ" />
+);
 
 const Dashboard = () => {
   const { settings } = useWebsiteSettings();
@@ -587,10 +592,9 @@ const Dashboard = () => {
                     Chưa có phát sinh doanh thu trong khoảng thời gian này.
                   </div>
                 ) : (
-                  <ReactECharts
-                    option={salesChartOptions}
-                    style={{ height: "280px", width: "100%" }}
-                  />
+                  <Suspense fallback={<ChartFallback height="280px" />}>
+                    <LineChart option={salesChartOptions} style={{ height: "280px", width: "100%" }} />
+                  </Suspense>
                 )}
               </AdminCard>
 
@@ -796,10 +800,9 @@ const Dashboard = () => {
                 title="Tương tác Voucher"
                 subtitle="Lượt nhận (Claim) và lượt áp dụng thực tế (Usage)"
               >
-                <ReactECharts
-                  option={voucherChartOptions}
-                  style={{ height: "280px", width: "100%" }}
-                />
+                <Suspense fallback={<ChartFallback height="280px" />}>
+                  <LineChart option={voucherChartOptions} style={{ height: "280px", width: "100%" }} />
+                </Suspense>
               </AdminCard>
 
               <AdminCard
@@ -970,10 +973,9 @@ const Dashboard = () => {
               title="Phễu chuyển đổi hành vi (Conversion Funnel)"
               subtitle="Tỷ lệ giữ chân người dùng qua từng giai đoạn mua sắm"
             >
-              <ReactECharts
-                option={funnelChartOptions}
-                style={{ height: "320px", width: "100%" }}
-              />
+              <Suspense fallback={<ChartFallback height="320px" />}>
+                <BarChart option={funnelChartOptions} style={{ height: "320px", width: "100%" }} />
+              </Suspense>
 
               {/* Funnel Stage Breakdown Table */}
               <div className="mt-4 overflow-x-auto border-t border-[var(--color-border)] pt-4">
@@ -1042,7 +1044,7 @@ const Dashboard = () => {
                             <img
                               src={p.image}
                               alt={p.name}
-                              className="h-10 w-10 border border-[var(--color-border)] object-cover"
+                              className="h-10 w-10 border border-[var(--color-border)] object-contain bg-[var(--muted)]/40 p-0.5"
                             />
                           )}
                           <div className="min-w-0 flex-1">

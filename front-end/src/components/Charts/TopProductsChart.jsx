@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("vi-VN", {
@@ -7,17 +7,12 @@ const formatCurrency = (value) =>
   }).format(value || 0);
 
 const TopProductsChart = () => {
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    // Giả sử gọi API và nhận được dữ liệu
-    setData([
-      { name: "Sản phẩm A", value: 120, revenue: 2400000 },
-      { name: "Sản phẩm B", value: 80, revenue: 1600000 },
-      { name: "Sản phẩm C", value: 150, revenue: 3000000 },
-      { name: "Sản phẩm D", value: 30, revenue: 600000 },
-    ]);
-  }, []);
+  const data = [
+    { name: "Sản phẩm A", value: 120, revenue: 2400000 },
+    { name: "Sản phẩm B", value: 80, revenue: 1600000 },
+    { name: "Sản phẩm C", value: 150, revenue: 3000000 },
+    { name: "Sản phẩm D", value: 30, revenue: 600000 },
+  ];
 
   return (
     <div>

@@ -22,14 +22,14 @@ export const GoogleLoginButton = () => {
       if (res?.success && res?.data) {
         isSuccessRef.current = true;
         const token = res.data.accessToken;
-        login(token);
-
-        let userRole = "";
+        const initialUser = res.data.user;
+        let userRole = initialUser?.role || "";
+        login(token, initialUser);
         try {
           const userRes = await userApi.getMe();
           if (userRes.success && userRes.data) {
             setUser(userRes.data);
-            userRole = userRes.data.role || userRes.data.data?.role || "";
+            userRole = userRes.data.role || userRes.data.data?.role || userRole;
           }
         } catch (err) {
           console.error("Lỗi khi lấy thông tin user sau khi đăng nhập:", err);

@@ -124,3 +124,4 @@ Tất cả các khóa tuân thủ namespace cô lập riêng cho dự án WebFas
    - Hiển thị modal SweetAlert2 với thông báo:
      > *"Thời gian giữ hàng 5 phút đã hết. Sản phẩm của bạn đã được trả về kho. Vui lòng kiểm tra lại giỏ hàng để tiếp tục thanh toán."*
    - Tự động gọi API giải phóng kho và điều hướng người dùng về `/cart`.
+

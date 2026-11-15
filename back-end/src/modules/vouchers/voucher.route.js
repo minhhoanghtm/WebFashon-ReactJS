@@ -1,3 +1,4 @@
+import { requireFeature } from "../../middlewares/featureGuard.middleware.js";
 import express from "express";
 import {
   getPublicVouchers,
@@ -17,10 +18,10 @@ import { claimRateLimiter } from "../../middlewares/rateLimit.middleware.js";
 const voucherRouter = express.Router();
 
 // Public / Client Voucher APIs
-voucherRouter.get("/", getPublicVouchers);
-voucherRouter.post("/claim", protectedRoute, noAdmin, claimRateLimiter, claimVoucher);
-voucherRouter.get("/wallet", protectedRoute, getUserWallet);
-voucherRouter.post("/validate", protectedRoute, validateVoucher);
+voucherRouter.get("/", requireFeature("enableVoucher", "Tính năng mã giảm giá hiện đang tạm tắt"), getPublicVouchers);
+voucherRouter.post("/claim", requireFeature("enableVoucher", "Tính năng mã giảm giá hiện đang tạm tắt"), protectedRoute, noAdmin, claimRateLimiter, claimVoucher);
+voucherRouter.get("/wallet", requireFeature("enableVoucher", "Tính năng mã giảm giá hiện đang tạm tắt"), protectedRoute, getUserWallet);
+voucherRouter.post("/validate", requireFeature("enableVoucher", "Tính năng mã giảm giá hiện đang tạm tắt"), protectedRoute, validateVoucher);
 
 // Admin Voucher APIs (wrapped in protectedRoute + adminOnly)
 voucherRouter.get("/admin/stats", protectedRoute, adminOnly, getDashboardStats);

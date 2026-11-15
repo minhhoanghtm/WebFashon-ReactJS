@@ -6,7 +6,7 @@ import assignmentService from "../supportChat/assignment/assignment.service.js";
 import aiChatRepository from "./aiChat.repository.js";
 import { createAIProvider } from "./providers/createAIProvider.js";
 import { buildSystemPrompt } from "./prompts/systemPrompt.js";
-import { validateTextMessageDto } from "../validators/communication.validator.js";
+import { validateAiChatMessageDto } from "../validators/communication.validator.js";
 import { shopTools } from "./tools/shopTools.js";
 import { executeTool } from "./tools/toolExecutor.js";
 import ragService from "../../ai/services/rag.service.js";
@@ -16,6 +16,17 @@ import UserInterestProfile from "../../recommendations/userInterestProfile.model
 import recommendationService from "../../recommendations/recommendation.service.js";
 import { addTrackingJob } from "../../../queues/tracking.queue.js";
 import logger from "../../../common/logger.js";
+import aiTokenBudget from "./aiTokenBudget.service.js";
+import { getAiSafetyResponse } from "./safetyPolicy.js";
+
+const MAX_TOOL_ITERATIONS = 3;
+
+const estimateCostUsd = (usage = {}) => {
+  const inputRate = Number(process.env.AI_INPUT_COST_USD_PER_1M || 0);
+  const outputRate = Number(process.env.AI_OUTPUT_COST_USD_PER_1M || 0);
+  return Number((((Number(usage.prompt_tokens || 0) * inputRate) +
+    (Number(usage.completion_tokens || 0) * outputRate)) / 1_000_000).toFixed(8));
+};
 
 const handoffPatterns = [
   /khi[eê]u n[aạ]i/i,
@@ -122,8 +133,9 @@ class AiChatService {
 
   async sendMessage(userId, payload, authOptions = {}) {
     const startTime = Date.now();
-    const data = validateTextMessageDto(payload);
+    const data = validateAiChatMessageDto(payload);
     const userRole = authOptions?.role || "user";
+    await aiTokenBudget.assertAvailable(userId);
 
     // 1. Get or create conversation if authenticated
     let conversation = null;
@@ -165,6 +177,25 @@ class AiChatService {
 
     const cleanContent = data.content.trim().toLowerCase().normalize("NFC");
 
+    const safetyResponse = getAiSafetyResponse(data.content);
+    if (safetyResponse) {
+      const { userMessage, aiMessage } = await this._persistTurn({
+        userId,
+        conversation,
+        userContent: data.content,
+        aiContent: safetyResponse,
+        userMetadata: data.metadata,
+        aiMetadata: { safetyRefusal: true },
+      });
+      this._recordLatency(Date.now() - startTime, 0);
+      return {
+        conversationId: userId && conversation ? conversation._id : null,
+        userMessage,
+        aiMessage,
+        metadata: { safetyRefusal: true },
+      };
+    }
+
     // 3. Handle explicit Action Cancellation or Confirmation (Confirmation Gate)
     if (data.cancelAction || (pendingAction && aiToolRegistry.detectCancelReply(cleanContent))) {
       pendingAction = null;
@@ -174,7 +205,7 @@ class AiChatService {
         await conversation.save();
       }
 
-      const aiResponseText = "Đã hủy thao tác thêm sản phẩm vào giỏ hàng theo yêu cầu của bạn. Bạn cần mình tìm sản phẩm nào khác không ạ?";
+      const aiResponseText = "Đã hủy thao tác theo yêu cầu của bạn. Bạn cần mình tìm sản phẩm nào khác không ạ?";
       const { userMessage, aiMessage } = await this._persistTurn({
         userId,
         conversation,
@@ -679,6 +710,23 @@ class AiChatService {
           handoff,
         };
       }
+
+      const aiResponseText = "Để được nhân viên hỗ trợ khiếu nại, hoàn tiền hoặc tư vấn trực tiếp, bạn vui lòng đăng nhập rồi mở mục Hỗ trợ. Mình vẫn có thể tư vấn sản phẩm thời trang tại đây.";
+      const { userMessage, aiMessage } = await this._persistTurn({
+        userId: null,
+        conversation: null,
+        userContent: data.content,
+        aiContent: aiResponseText,
+        userMetadata: data.metadata,
+        aiMetadata: { guestHandoffRequired: true },
+      });
+      this._recordLatency(Date.now() - startTime, 0);
+      return {
+        conversationId: null,
+        userMessage,
+        aiMessage,
+        metadata: { guestHandoffRequired: true },
+      };
     }
 
     // 6. Retrieve Grounded RAG Context before LLM invocation
@@ -748,16 +796,20 @@ class AiChatService {
       { role: "user", content: data.content },
     ];
 
-    // 8. Unified Tool Calling & Agentic Loop (max 5 iterations)
+    // Three iterations cover search → tool result → answer, while bounding cost
+    // and preventing repeated tool calls from a malformed provider response.
     let finalResponse = null;
     let iterations = 0;
     let totalTokensTurn = 0;
+    const totalUsage = { prompt_tokens: 0, completion_tokens: 0 };
     let collectedProducts = [];
     let actionResult = null;
-    const isCartActionIntent = aiToolRegistry.detectCartActionIntent(data.content);
+    const isCheckoutIntent = aiToolRegistry.detectCheckoutIntent(data.content);
+    const isCancelCheckoutIntent = aiToolRegistry.detectCancelCheckoutIntent(data.content);
+    const isCartActionIntent = !isCheckoutIntent && !isCancelCheckoutIntent && aiToolRegistry.detectCartActionIntent(data.content);
 
     try {
-      while (!finalResponse && iterations < 5) {
+      while (!finalResponse && iterations < MAX_TOOL_ITERATIONS) {
         iterations++;
 
         const response = await this.provider.chat({
@@ -766,6 +818,16 @@ class AiChatService {
         });
 
         totalTokensTurn += Number(response.usage?.total_tokens || 0);
+        totalUsage.prompt_tokens += Number(response.usage?.prompt_tokens || 0);
+        totalUsage.completion_tokens += Number(response.usage?.completion_tokens || 0);
+        logger.info("AI chat provider usage", {
+          userId: userId ? String(userId) : null,
+          provider: this.provider.constructor.name,
+          promptTokens: Number(response.usage?.prompt_tokens || 0),
+          completionTokens: Number(response.usage?.completion_tokens || 0),
+          totalTokens: Number(response.usage?.total_tokens || 0),
+          estimatedCostUsd: estimateCostUsd(response.usage),
+        });
         const toolCalls = response.toolCalls || response.toolCall;
 
         if (toolCalls?.length) {
@@ -808,6 +870,30 @@ class AiChatService {
               }
             }
 
+                        if ((toolCall.name === "start_checkout" || toolCall.name === "buy_now") && result && typeof result === "object") {
+              lastIntent = "start_checkout";
+              if (result.status === "PENDING_CONFIRMATION") {
+                pendingAction = {
+                  actionType: "start_checkout",
+                  reservationId: result.reservationId,
+                  items: result.items,
+                  totalEstimatedPrice: result.totalEstimatedPrice,
+                  totalEstimatedPriceFormatted: result.totalEstimatedPriceFormatted,
+                  checkoutUrl: result.checkoutUrl,
+                  expiresAt: result.expiresAt,
+                  remainingSeconds: result.remainingSeconds,
+                  holdDurationFormatted: result.holdDurationFormatted,
+                };
+              } else {
+                actionResult = result;
+              }
+            }
+
+            if (toolCall.name === "cancel_checkout" && result && typeof result === "object") {
+              lastIntent = "cancel_checkout";
+              actionResult = result;
+            }
+
             if (toolCall.name === "add_to_cart" && result && typeof result === "object") {
               lastIntent = "add_to_cart";
               if (result.status === "PENDING_CONFIRMATION") {
@@ -822,10 +908,16 @@ class AiChatService {
               }
             }
 
+            let serializedResult = "";
+            try {
+              serializedResult = JSON.stringify(result);
+            } catch {
+              serializedResult = String(result?.message || result || "{}");
+            }
             aiMessages.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: JSON.stringify(result),
+              content: serializedResult,
             });
           }
           continue;
@@ -837,11 +929,85 @@ class AiChatService {
       logger.warn("LLM provider failed in AiChatService, executing grounded fallback:", {
         error: llmError.message,
       });
-      finalResponse = await this._buildFallbackAgentResponse(
+      const fallbackData = await this._buildFallbackAgentResponse(
         data.content,
         { userId, role: userRole },
         ragRetrieval
       );
+      finalResponse = typeof fallbackData === "string" ? fallbackData : fallbackData.text;
+      if (typeof fallbackData === "object" && Array.isArray(fallbackData.products) && fallbackData.products.length > 0) {
+        collectedProducts = fallbackData.products;
+      }
+    }
+
+        // 9.1 Compound CHECKOUT / BUY NOW intent handling
+    if (isCancelCheckoutIntent && !actionResult) {
+      const cancelRes = await executeTool("cancel_checkout", {}, { userId, role: userRole });
+      actionResult = cancelRes;
+      finalResponse = cancelRes.message || "Đã hủy phiên thanh toán và giải phóng sản phẩm đang giữ trong kho.";
+    } else if (isCheckoutIntent && !pendingAction && !actionResult) {
+      let extractedSize = null;
+      const sizeMatch = data.content.match(/(?:size|c[ỡo]|k[ií]ch\s+th[ưứ][ớo]c)\s*[:\s]?\s*([a-zA-Z0-9]+)/i);
+      if (sizeMatch) extractedSize = sizeMatch[1].toUpperCase();
+
+      let extractedColor = null;
+      const colorMatch = data.content.match(/(?:m[àa]u|color)\s+([^,.;\n]+?)(?:\s+(?:size|v[ớơ]i|s[ốo]|l[àa]|nh[ée]|$))/i);
+      if (colorMatch) extractedColor = colorMatch[1].trim();
+
+      let extractedQty = 1;
+      const qtyMatch = data.content.match(/(?:s[ốo]\s+l[ưứ][ợo]ng(?:\s+l[àa])?|\b)\s*(\d+)\s*(?:c[áa]i|chi[ếe]c|s[ảa]n\s+ph[ẩa]m)?/i);
+      if (qtyMatch && Number(qtyMatch[1]) > 0) extractedQty = Math.min(Number(qtyMatch[1]), 10);
+
+      let extractedKeyword = data.content;
+      // Strip intent phrases and attributes
+      extractedKeyword = extractedKeyword
+        .replace(/^(?:thanh\s+to[áa]n(?:\s+gi[úu]p\s+t[ôo]i|\s+h[ộo]|\s+ngay|\s+đ[ơo]n)?|đ[ặa]t\s+h[àa]ng(?:\s+gi[úu]p\s+t[ôo]i|\s+h[ộo]|\s+ngay)?|đ[ặa]t\s+mua(?:\s+gi[úu]p\s+t[ôo]i|\s+ngay)?|ch[ốo]t\s+đ[ơo]n(?:\s+gi[úu]p\s+t[ôo]i|\s+ngay)?|mua\s+ngay|mua\s+lu[ôo]n|order(?:\s+gi[úu]p\s+t[ôo]i|\s+h[ộo]|\s+ngay)?)\s*/i, "")
+        .replace(/(?:size|c[ỡo]|k[ií]ch\s+th[ưứ][ớo]c)\s*[:\s]?\s*[a-zA-Z0-9]+/gi, "")
+        .replace(/(?:m[àa]u|color)\s+[^,.;\n]+?(?:\s+(?:size|v[ớơ]i|s[ốo]|l[àa]|nh[ée]|$))/gi, "")
+        .replace(/(?:s[ốo]\s+l[ưứ][ợo]ng(?:\s+l[àa])?)\s*\d+\s*(?:c[áa]i|chi[ếe]c|s[ảa]n\s+ph[ẩa]m)?/gi, "")
+        .replace(/^(?:s[ảa]n\s+ph[ẩa]m|m[óo]n)\s+/i, "")
+        .trim();
+
+      if (!extractedKeyword || /^(?:n[àa]y|s[ảa]n\s+ph[ẩa]m\s+n[àa]y|m[óo]n\s+n[àa]y|em\s+n[àa]y|c[áa]i\s+n[àa]y)$/i.test(extractedKeyword)) {
+        if (lastProductId) {
+          extractedKeyword = lastProductId;
+        }
+      }
+
+      const checkoutRes = await executeTool(
+        "start_checkout",
+        {
+          product_id: extractedKeyword || data.content,
+          keyword: extractedKeyword || data.content,
+          size: extractedSize,
+          color: extractedColor,
+          quantity: extractedQty,
+          confirmed: false,
+        },
+        { userId, role: userRole, confirmed: false }
+      );
+
+      if (checkoutRes?.status === "PENDING_CONFIRMATION") {
+        pendingAction = {
+          actionId: checkoutRes.actionId,
+          actionType: "start_checkout",
+          userId: String(userId),
+          reservationId: checkoutRes.reservationId,
+          items: checkoutRes.items,
+          totalEstimatedPrice: checkoutRes.totalEstimatedPrice,
+          totalEstimatedPriceFormatted: checkoutRes.totalEstimatedPriceFormatted,
+          actionToken: checkoutRes.actionToken,
+          expiresAt: checkoutRes.expiresAt,
+          remainingSeconds: checkoutRes.remainingSeconds,
+          holdDurationFormatted: checkoutRes.holdDurationFormatted,
+          checkoutUrl: checkoutRes.checkoutUrl,
+          executed: false,
+        };
+        finalResponse = `🛒 Mình đã kiểm tra và đang giữ sản phẩm **${checkoutRes.items[0]?.name}** (Màu: ${checkoutRes.items[0]?.color}, Size: ${checkoutRes.items[0]?.size}, SL: ${checkoutRes.items[0]?.quantity}) trong **${checkoutRes.holdDurationFormatted}** phút cho bạn (Tổng thanh toán: **${checkoutRes.totalEstimatedPriceFormatted}**).\n\nBạn vui lòng bấm **"Tiếp tục thanh toán"** để chuyển sang trang Checkout hoàn tất đơn hàng nhé!`;
+      } else if (checkoutRes && !checkoutRes.success) {
+        actionResult = checkoutRes;
+        finalResponse = `⚠️ ${checkoutRes.message}`;
+      }
     }
 
     // 9. If user requested "tìm X và thêm vào giỏ hàng" and search_products found items
@@ -930,23 +1096,33 @@ class AiChatService {
       userMetadata: data.metadata,
       aiMetadata: {
         sources,
+        products: collectedProducts,
         pendingAction,
         actionResult,
       },
     });
 
     this._recordLatency(Date.now() - startTime, totalTokensTurn);
+    const usedToday = await aiTokenBudget.consume(userId, totalTokensTurn);
+    logger.info("AI chat turn completed", {
+      userId: userId ? String(userId) : null,
+      totalTokens: totalTokensTurn,
+      estimatedCostUsd: estimateCostUsd(totalUsage),
+      usedToday,
+    });
 
     return {
       conversationId: userId && conversation ? conversation._id : null,
       userMessage,
       aiMessage,
       sources,
+      products: collectedProducts,
       pendingAction,
       actionResult,
       metadata: {
         lastIntent,
         lastProductId,
+        products: collectedProducts,
         pendingAction,
         promptInjectionDetected: ragRetrieval.promptInjectionDetected,
       },
@@ -954,29 +1130,34 @@ class AiChatService {
   }
 
   async _buildFallbackAgentResponse(content, authContext, ragRetrieval) {
-    const searchRes = await executeTool(
-      "search_products",
-      { keyword: content, limit: 4 },
-      authContext
-    );
+    try {
+      const searchRes = await executeTool(
+        "search_products",
+        { keyword: content, limit: 4 },
+        authContext
+      );
 
-    if (Array.isArray(searchRes) && searchRes.length > 0) {
-      const lines = ["Dưới đây là các sản phẩm phù hợp tìm thấy trong hệ thống 404Studio:"];
-      for (const p of searchRes) {
-        lines.push(
-          `- **${p.name}** - Giá: ${p.new_price}${
-            p.image ? ` - Link ảnh: ${p.image}` : ""
-          } - ID sản phẩm: \`${p.id}\``
-        );
+      if (Array.isArray(searchRes) && searchRes.length > 0) {
+        return {
+          text: "Dưới đây là các mẫu thiết kế phù hợp đang có sẵn tại 404Studio:",
+          products: searchRes,
+        };
       }
-      return lines.join("\n");
+
+      if (ragRetrieval?.chunks?.length > 0) {
+        return {
+          text: ragService._buildDeterministicGroundedAnswer(ragRetrieval.chunks),
+          products: [],
+        };
+      }
+    } catch (fallbackErr) {
+      logger.warn("Error inside _buildFallbackAgentResponse:", fallbackErr.message);
     }
 
-    if (ragRetrieval?.chunks?.length > 0) {
-      return ragService._buildDeterministicGroundedAnswer(ragRetrieval.chunks);
-    }
-
-    return "Xin lỗi bạn, hiện tại hệ thống chưa tìm thấy sản phẩm hoặc thông tin khớp với yêu cầu này tại 404Studio.";
+    return {
+      text: "Xin lỗi bạn, hiện tại hệ thống chưa tìm thấy sản phẩm hoặc thông tin khớp với yêu cầu này tại 404Studio.",
+      products: [],
+    };
   }
 
   async handoffToSupport({ userId, sourceConversationId, reason }) {

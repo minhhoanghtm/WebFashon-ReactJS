@@ -22,6 +22,7 @@ export const campaignRouter = express.Router();
 export const adminCampaignRouter = express.Router();
 
 // Public routes
+campaignRouter.get("/", getActiveCampaigns);
 campaignRouter.get("/active", getActiveCampaigns);
 campaignRouter.get("/:slug", getCampaignBySlug);
 

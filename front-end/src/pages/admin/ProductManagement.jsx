@@ -611,7 +611,7 @@ const ProductManagement = () => {
                               defaultProductImage
                             }
                             alt={p.name}
-                            className="h-11 w-11 object-cover rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs"
+                            className="h-11 w-11 object-contain rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs p-0.5"
                             onError={(e) => {
                               e.target.src = defaultProductImage;
                             }}
@@ -928,7 +928,7 @@ const ProductManagement = () => {
                           key={i}
                           src={img}
                           alt="preview"
-                          className="h-20 w-20 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs"
+                          className="h-20 w-20 object-contain rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs p-1"
                           onError={(e) => {
                             e.target.src = defaultProductImage;
                           }}

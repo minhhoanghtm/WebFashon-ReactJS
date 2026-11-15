@@ -24,13 +24,13 @@ const RecommendedCard = ({ prod, isAdding, onAdd }) => {
         to={`/product/${encodeURIComponent(prod.slug || prod._id || prod.id)}`}
         className="block flex-1"
       >
-        <div className="relative aspect-[3/4] w-full overflow-hidden border-b border-border bg-secondary">
+        <div className="relative aspect-[3/4] w-full overflow-hidden border-b border-border bg-[var(--muted)]/40 dark:bg-zinc-900/50 flex items-center justify-center">
           {activeUrl ? (
             <img
               src={activeUrl}
               alt={prod.name}
               onError={() => setImgIdx((prev) => prev + 1)}
-              className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+              className="h-full w-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.03]"
             />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center p-4 text-center select-none">

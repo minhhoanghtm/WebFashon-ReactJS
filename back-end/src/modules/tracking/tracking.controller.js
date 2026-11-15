@@ -1,5 +1,8 @@
 import trackingService from "./tracking.service.js";
+import presenceService from "./presence.service.js";
 import { successResponse } from "../../common/responses/index.js";
+import { PRIVACY_POLICY_EFFECTIVE_DATE, PRIVACY_POLICY_VERSION } from "../../common/constants/privacyPolicy.js";
+import dataSubjectService from "./dataSubject.service.js";
 
 const normalizeIncomingEvent = (rawEvent, headerAnonymousId, headerSessionId) => {
   let eventType = (rawEvent.event_type || rawEvent.event_name || "").trim().toLowerCase();
@@ -19,6 +22,42 @@ const normalizeIncomingEvent = (rawEvent, headerAnonymousId, headerSessionId) =>
 };
 
 class TrackingController {
+  async exportPersonalData(req, res, next) {
+    try {
+      const data = await dataSubjectService.exportData(req.user.userId, req.body.currentPassword);
+      return successResponse(res, data, "Đã xuất dữ liệu cá nhân");
+    } catch (error) { next(error); }
+  }
+
+  async createDataSubjectRequest(req, res, next) {
+    try {
+      const { type, currentPassword, reason } = req.body;
+      if (!['ERASURE', 'RESTRICT', 'OBJECT'].includes(type)) {
+        return res.status(400).json({ success: false, message: "Loại yêu cầu không hợp lệ" });
+      }
+      if (type === 'ERASURE') await dataSubjectService.erase(req.user.userId, currentPassword, reason);
+      else await dataSubjectService.restrict(req.user.userId, currentPassword, type, reason);
+      return successResponse(res, null, "Yêu cầu dữ liệu cá nhân đã được xử lý");
+    } catch (error) { next(error); }
+  }
+
+  async listDataSubjectRequests(req, res, next) {
+    try {
+      return successResponse(res, await dataSubjectService.listRequests(req.user.userId));
+    } catch (error) { next(error); }
+  }
+
+  async getPolicyMetadata(req, res, next) {
+    try {
+      return successResponse(res, {
+        version: PRIVACY_POLICY_VERSION,
+        effectiveDate: PRIVACY_POLICY_EFFECTIVE_DATE,
+      }, "Lấy phiên bản chính sách thành công");
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async trackEvent(req, res, next) {
     try {
       const headerAnon = req.headers["x-anonymous-id"] || null;
@@ -51,18 +90,37 @@ class TrackingController {
     }
   }
 
+  async getConsent(req, res, next) {
+    try {
+      const userId = req.user?.userId;
+      const anonymousId = req.query.anonymous_id || req.headers["x-anonymous-id"] || null;
+      const data = await trackingService.getConsent({ userId, anonymousId });
+      return successResponse(res, data, "Lấy tùy chọn quyền riêng tư thành công");
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async updateConsent(req, res, next) {
     try {
       const userId = req.user?.userId;
       const anonymousId = req.body.anonymous_id || req.headers["x-anonymous-id"] || null;
       const anonymousToken = req.body.anonymous_token || req.headers["x-anonymous-token"] || null;
       const consent = req.body.consent;
+      const choice = req.body.choice;
+      const categories = req.body.categories;
+      const policyVersion = req.body.policyVersion || req.body.policy_version;
+      const source = req.body.source;
 
       const result = await trackingService.updateConsent({
         userId,
         anonymousId,
         consent,
         anonymousToken,
+        choice,
+        categories,
+        policyVersion,
+        source,
       });
 
       return successResponse(res, result, "Cập nhật tùy chọn quyền riêng tư thành công");
@@ -131,6 +189,127 @@ class TrackingController {
       const { startDate, endDate } = req.query;
       const data = await trackingService.getFunnelAnalytics({ startDate, endDate });
       return successResponse(res, data, "Lấy phân tích phễu chuyển đổi thành công");
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Real-time Presence & Observability Controllers
+  async updatePresenceHeartbeat(req, res, next) {
+    try {
+      const result = await presenceService.updateHeartbeat(req.body, req.user);
+      return res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async handlePresenceLeave(req, res, next) {
+    try {
+      const result = await presenceService.handleTabLeave(req.body);
+      return res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async handlePresenceDisassociate(req, res, next) {
+    try {
+      const result = await presenceService.disassociateUserSession(req.body);
+      return res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getLiveSessions(req, res, next) {
+    try {
+      const { statusFilter, routeFilter, limit } = req.query;
+      const data = await presenceService.getLiveSessions({
+        statusFilter,
+        routeFilter,
+        limit: limit ? parseInt(limit, 10) : 50,
+      });
+      return successResponse(res, data, "Lấy danh sách phiên trực tuyến thành công");
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * SSE Stream cho Real-time Observability trên Admin (Dự phòng cho WebSocket)
+   */
+  async streamLivePresence(req, res) {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    if (typeof res.flushHeaders === "function") {
+      res.flushHeaders();
+    }
+
+    let isClosed = false;
+
+    const cleanup = () => {
+      if (isClosed) return;
+      isClosed = true;
+      clearInterval(interval);
+      if (!res.writableEnded) {
+        try {
+          res.end();
+        } catch {}
+      }
+    };
+
+    req.on("close", cleanup);
+    req.on("end", cleanup);
+    req.on("error", cleanup);
+    res.on("error", cleanup);
+
+    const safeWrite = (data) => {
+      if (isClosed || res.writableEnded || res.destroyed) return;
+      try {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      } catch {
+        cleanup();
+      }
+    };
+
+    try {
+      const initial = await presenceService.getLiveSessions({ limit: 100 });
+      safeWrite({ type: "snapshot", data: initial });
+    } catch {
+      // ignore
+    }
+
+    const interval = setInterval(async () => {
+      if (isClosed || res.writableEnded || res.destroyed) {
+        clearInterval(interval);
+        return;
+      }
+      try {
+        const live = await presenceService.getLiveSessions({ limit: 100 });
+        safeWrite({ type: "update", data: live });
+      } catch {
+        // ignore
+      }
+    }, 4000);
+  }
+
+  async getSessionTimeline(req, res, next) {
+    try {
+      const { sessionId } = req.params;
+      const data = await presenceService.getSessionTimeline(sessionId);
+      return successResponse(res, data, "Lấy dòng thời gian hành trình phiên thành công");
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getActivityAnalytics(req, res, next) {
+    try {
+      const { startDate, endDate } = req.query;
+      const data = await presenceService.getActivityAnalytics({ startDate, endDate });
+      return successResponse(res, data, "Lấy thống kê hành vi và hiệu năng thành công");
     } catch (error) {
       next(error);
     }

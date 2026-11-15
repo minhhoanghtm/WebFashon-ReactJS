@@ -5,8 +5,25 @@ const orderSchema = new mongoose.Schema(
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
+      default: null,
       index: true,
+    },
+    is_guest: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    guest_email: {
+      type: String,
+      default: null,
+    },
+    // One-time credential returned only when a guest order is created. The raw
+    // value is never persisted or returned by normal order queries.
+    guest_access_token_hash: {
+      type: String,
+      default: null,
+      select: false,
     },
     total_price: {
       type: Number,
@@ -21,13 +38,13 @@ const orderSchema = new mongoose.Schema(
     },
     payment_method: {
       type: String,
-      enum: ["cod", "momo", "vnpay"],
+      enum: ["cod", "momo", "vnpay", "bank_transfer"],
       default: "cod",
       index: true,
     },
     payment_status: {
       type: String,
-      enum: ["pending", "paid", "failed"],
+      enum: ["pending", "awaiting_verification", "paid", "failed", "expired", "refunded"],
       default: "pending",
     },
     transaction_id: {
@@ -38,6 +55,8 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    payment_expires_at: { type: Date, default: null, index: true },
+    payment_status_history: { type: [{ status: String, source: { type: String, enum: ["gateway", "admin", "system"] }, at: { type: Date, default: Date.now } }], default: [] },
     stock_deducted: {
       type: Boolean,
       default: false,
@@ -81,6 +100,11 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
+    },
+    reservation_id: {
+      type: String,
+      default: null,
+      index: true,
     },
     original_price: {
       type: Number,

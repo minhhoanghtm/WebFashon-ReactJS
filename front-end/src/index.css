@@ -139,7 +139,7 @@
     font-family: var(--font-sans);
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
     text-rendering: optimizeLegibility;
-    scroll-behavior: smooth;
+    scroll-padding-bottom: 12rem;
   }
 
   body {
@@ -316,17 +316,36 @@
   }
 }
 
-/* Primary CTA Button Subtle Hover Lift */
+/* Primary CTA Button Subtle Hover Lift (Transform & Opacity only, <= 0.22s) */
 button:not(:disabled).btn-cta,
-a.btn-cta {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
+a.btn-cta,
+button:not(:disabled).atelier-cta,
+a.atelier-cta,
+[data-atelier-cta] {
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  will-change: transform;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   button:not(:disabled).btn-cta:hover,
-  a.btn-cta:hover {
-    transform: translateY(-1.5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  a.btn-cta:hover,
+  button:not(:disabled).atelier-cta:hover,
+  a.atelier-cta:hover,
+  [data-atelier-cta]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+
+  button:not(:disabled).btn-cta:active,
+  a.btn-cta:active,
+  button:not(:disabled).atelier-cta:active,
+  a.atelier-cta:active,
+  [data-atelier-cta]:active {
+    transform: translateY(0);
   }
 }
 
@@ -335,7 +354,10 @@ a.btn-cta {
     animation: none !important;
   }
   button:not(:disabled).btn-cta:hover,
-  a.btn-cta:hover {
+  a.btn-cta:hover,
+  button:not(:disabled).atelier-cta:hover,
+  a.atelier-cta:hover,
+  [data-atelier-cta]:hover {
     transform: none !important;
     box-shadow: none !important;
   }
@@ -408,3 +430,22 @@ button, input, select, textarea {
 
 
 
+
+
+/* Official Lenis Scroll Configuration */
+html.lenis,
+html.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+html.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}

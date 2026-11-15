@@ -21,6 +21,7 @@ import {
 } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
 import { userApi } from "@/api/user.api";
+import privacyApi from "@/api/privacyApi";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const RESEND_COOLDOWN = 60;
@@ -75,7 +76,9 @@ const RegisterForm = () => {
   // Step 1: Input details -> Step 2: OTP verification
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(initialFormData);
-  const [acceptedTerms, setAcceptedTerms] = useState(true);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [acceptedMarketing, setAcceptedMarketing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -144,6 +147,9 @@ const RegisterForm = () => {
     if (!acceptedTerms) {
       nextErrors.terms = "Vui lòng đồng ý với điều khoản sử dụng.";
     }
+    if (!acceptedPrivacy) {
+      nextErrors.privacy = "Vui lòng đồng ý xử lý dữ liệu cá nhân để tạo tài khoản.";
+    }
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -161,6 +167,7 @@ const RegisterForm = () => {
         phone: formData.phone.trim(),
         channel: "sms",
       });
+      console.log("✅ Gửi OTP đăng ký thành công:", res);
 
       const displayPhone = res?.data?.phone || maskPhoneDisplay(formData.phone);
       setMaskedPhone(displayPhone);
@@ -197,7 +204,16 @@ const RegisterForm = () => {
         email: formData.email.trim() || undefined,
         birthday: formData.dateOfBirth || undefined,
         sex: formData.gender || undefined,
+        termsAccepted: acceptedTerms,
+        privacyAccepted: acceptedPrivacy,
+        marketingAccepted: acceptedMarketing,
+        policyVersion: null,
       };
+
+      const policyResponse = await privacyApi.getPolicy();
+      const policyData = policyResponse?.data?.data || policyResponse?.data || policyResponse;
+      if (!policyData?.version) throw new Error("Không thể xác định phiên bản chính sách hiện hành.");
+      payload.policyVersion = policyData.version;
 
       const res = await verifyRegisterService(payload);
       const token = res?.data?.accessToken;
@@ -240,6 +256,7 @@ const RegisterForm = () => {
         identifier: formData.phone.trim(),
         purpose: "register",
       });
+      console.log("✅ Gửi lại OTP đăng ký thành công:", res);
       setCountdown(res?.data?.cooldown || RESEND_COOLDOWN);
       setOtp("");
       toast.success("Mã OTP mới đã được gửi!");
@@ -477,6 +494,15 @@ const RegisterForm = () => {
             {errors.terms && (
               <p className="text-[10px] font-medium text-destructive">{errors.terms}</p>
             )}
+            <div className="flex items-center gap-2">
+              <input id="reg-privacy" type="checkbox" checked={acceptedPrivacy} onChange={(e) => setAcceptedPrivacy(e.target.checked)} className="h-4 w-4 cursor-pointer rounded-none border border-border accent-foreground" />
+              <label htmlFor="reg-privacy" className="text-[11px] text-muted-foreground cursor-pointer select-none">Tôi đồng ý để WebFashion xử lý dữ liệu cá nhân theo <Link to="/privacy" className="underline underline-offset-4 text-foreground">Thông báo bảo mật</Link>.</label>
+            </div>
+            {errors.privacy && <p className="text-[10px] font-medium text-destructive">{errors.privacy}</p>}
+            <div className="flex items-center gap-2">
+              <input id="reg-marketing" type="checkbox" checked={acceptedMarketing} onChange={(e) => setAcceptedMarketing(e.target.checked)} className="h-4 w-4 cursor-pointer rounded-none border border-border accent-foreground" />
+              <label htmlFor="reg-marketing" className="text-[11px] text-muted-foreground cursor-pointer select-none">Tôi muốn nhận tin khuyến mãi và tiếp thị (tùy chọn).</label>
+            </div>
 
             <button
               type="submit"

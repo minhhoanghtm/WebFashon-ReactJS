@@ -1,12 +1,14 @@
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, Star, Zap } from "lucide-react";
 import { toast } from "react-toastify";
 import { gsap } from "gsap";
+import { useGSAP } from "@/hooks/useGSAP";
 import { useFavoriteStore } from "@/store/favorite.store";
 import trackingService from "@/services/tracking.service";
 import useProductImpression from "@/hooks/useProductImpression";
 import { formatCurrency } from "@/utils/format";
+import motionTokens from "@/config/motionTokens";
 
 const ProductCard = ({
   product,
@@ -48,29 +50,38 @@ const ProductCard = ({
 
   const quickToRef = useRef(null);
 
-  // GSAP quickTo 3D Tilt (Max 6deg) with cleanup & motion queries
-  useEffect(() => {
-    const el = impressionRef?.current;
-    if (!el) return undefined;
+  // GSAP useGSAP 3D Tilt (Max 6deg via quickTo) with automatic cleanup & motion queries
+  useGSAP(
+    () => {
+      const el = impressionRef?.current;
+      if (!el || typeof window === "undefined") return;
 
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const canHover = window.matchMedia("(hover: hover)").matches;
+      const prefersReduced = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+      const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-    if (prefersReduced || !canHover) {
-      return undefined;
-    }
+      // Disable tilt completely on touch devices and when prefers-reduced-motion is active
+      if (prefersReduced || !canHover) {
+        quickToRef.current = null;
+        return;
+      }
 
-    const ctx = gsap.context(() => {
-      gsap.set(el, { transformPerspective: 800, transformStyle: "preserve-3d" });
-      const xTo = gsap.quickTo(el, "rotationY", { duration: 0.4, ease: "power2.out" });
-      const yTo = gsap.quickTo(el, "rotationX", { duration: 0.4, ease: "power2.out" });
+      const perspectiveVal = parseInt(motionTokens.perspective?.card, 10) || 900;
+      gsap.set(el, { transformPerspective: perspectiveVal, transformStyle: "preserve-3d" });
+
+      const xTo = gsap.quickTo(el, "rotationY", {
+        duration: 0.35,
+        ease: "power2.out",
+      });
+      const yTo = gsap.quickTo(el, "rotationX", {
+        duration: 0.35,
+        ease: "power2.out",
+      });
       quickToRef.current = { xTo, yTo };
-    }, el);
-
-    return () => {
-      ctx.revert();
-    };
-  }, [impressionRef]);
+    },
+    { scope: impressionRef }
+  );
 
   const handleMouseMove = (e) => {
     const el = impressionRef?.current;
@@ -233,8 +244,8 @@ const ProductCard = ({
       data-product-card
       className="group relative flex w-full cursor-pointer flex-col border border-border bg-card transition-colors hover:border-foreground/40 will-change-transform"
     >
-      {/* Aspect 3:4 Portrait Garment Frame */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-secondary">
+      {/* Aspect 3:4 Portrait Garment Frame with Neutral Cohesive Background */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[var(--muted)]/40 dark:bg-zinc-900/50 flex items-center justify-center">
         {hasValidPrimary ? (
           <>
             <img
@@ -242,7 +253,7 @@ const ProductCard = ({
               alt={product.name || "Thiết kế WebFashion"}
               loading="lazy"
               onError={() => setPrimaryIdx((prev) => prev + 1)}
-              className={`h-full w-full object-cover object-center transition-opacity duration-500 ${
+              className={`h-full w-full object-contain object-center transition-opacity duration-500 ${
                 hasValidSecondary ? "group-hover:opacity-0" : ""
               }`}
             />
@@ -252,7 +263,7 @@ const ProductCard = ({
                 alt={`${product.name || "Thiết kế"} - góc nhìn 2`}
                 loading="lazy"
                 onError={() => setHoverIdxError(true)}
-                className="absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                className="absolute inset-0 h-full w-full object-contain object-center opacity-0 transition-opacity duration-500 group-hover:opacity-100"
               />
             )}
           </>

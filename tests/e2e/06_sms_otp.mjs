@@ -151,8 +151,8 @@ export async function testSmsOtp(browser, report) {
     // Verify cooldown is active
     const resendButtonText = await regPage.evaluate(() => {
       const btn = document.querySelector('button[aria-label="Gửi lại mã OTP"]') ||
-                  document.querySelector("button:has(.lucide-refresh-cw)") ||
-                  Array.from(document.querySelectorAll("button")).find(b => b.innerText.includes("Gửi lại sau"));
+        document.querySelector("button:has(.lucide-refresh-cw)") ||
+        Array.from(document.querySelectorAll("button")).find(b => b.innerText.includes("Gửi lại sau"));
       return btn ? btn.innerText : "";
     });
 
@@ -240,7 +240,6 @@ export async function testSmsOtp(browser, report) {
   });
 
   try {
-    await fetch(`${API_URL}/auth/dev/reset-rate-limits`, { method: "POST" }).catch(() => {});
     // 4a. Login with Phone Number + Password
     await loginPage.goto(`${BASE_URL}/login`, { waitUntil: "networkidle", timeout: 15000 });
     await loginPage.fill('input[name="identifier"], input[name="email"]', "0987654321");
@@ -364,16 +363,15 @@ export async function testSmsOtp(browser, report) {
   });
 
   try {
-    await fetch(`${API_URL}/auth/dev/reset-rate-limits`, { method: "POST" }).catch(() => {});
     await resetPage.goto(`${BASE_URL}/reset-password`, { waitUntil: "networkidle", timeout: 15000 });
 
     // Step 1: Input phone
-    await resetPage.fill('#forgot-identifier, input[name="identifier"], input[placeholder*="0912"]', newCustomerPhone);
+    await resetPage.fill('#forgot-identifier, input[name="identifier"], input[placeholder*="0912"]', "0987654321");
     await resetPage.click('button[type="submit"], button:has-text("GỬI MÃ OTP")');
     await resetPage.waitForTimeout(1500);
 
     // Step 2: Fetch OTP and input
-    const resetOtp = await getDevOtp(newCustomerPhone);
+    const resetOtp = await getDevOtp("0987654321");
 
     if (resetOtp && resetOtp.length === 6) {
       for (let i = 0; i < 6; i++) {
@@ -392,7 +390,7 @@ export async function testSmsOtp(browser, report) {
           await confirmInputs[1].fill("BrandNewPassword2026!");
         }
 
-        await resetPage.click('button[type="submit"], button:has-text("LƯU MẬT KHẨU MỚI"), button:has-text("CẬP NHẬT MẬT KHẨU")');
+        await resetPage.click('button:has-text("CẬP NHẬT MẬT KHẨU")');
         await resetPage.waitForTimeout(2000);
 
         const resetSuccess = await resetPage.evaluate(() => {
@@ -406,7 +404,27 @@ export async function testSmsOtp(browser, report) {
           details: `Password reset successfully, redirected to login: ${resetSuccess}`,
         });
 
-        // Reset completed for new customer account
+        // Restore original password for subsequent tests
+        await resetPage.goto(`${BASE_URL}/reset-password`, { waitUntil: "networkidle" });
+        await resetPage.fill('#forgot-identifier, input[name="identifier"], input[placeholder*="0912"]', "0987654321");
+        await resetPage.click('button[type="submit"], button:has-text("GỬI MÃ OTP")');
+        await resetPage.waitForTimeout(1500);
+        const restoreOtp = await getDevOtp("0987654321");
+        if (restoreOtp && restoreOtp.length === 6) {
+          for (let i = 0; i < 6; i++) {
+            const slot = await resetPage.$(`input[data-otp-slot="${i}"]`);
+            if (slot) await slot.type(restoreOtp[i]);
+          }
+          await resetPage.waitForTimeout(1000);
+          const passInp = await resetPage.$('input[placeholder*="Tối thiểu 8 ký tự"]');
+          if (passInp) {
+            await passInp.fill("DevCustomer2026!");
+            const confirmInps = await resetPage.$$('input[type="password"]');
+            if (confirmInps.length > 1) await confirmInps[1].fill("DevCustomer2026!");
+            await resetPage.click('button:has-text("CẬP NHẬT MẬT KHẨU")');
+            await resetPage.waitForTimeout(1500);
+          }
+        }
       }
     } else {
       report.addResult({
@@ -425,4 +443,3 @@ export async function testSmsOtp(browser, report) {
     });
   }
 }
-

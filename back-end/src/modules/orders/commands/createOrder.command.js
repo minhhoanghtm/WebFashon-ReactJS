@@ -1,3 +1,4 @@
+import { isFeatureEnabled } from "../../../common/utils/featureFlags.js";
 import orderRepository from "../order.repository.js";
 import productRepository from "../../products/product.repository.js";
 import productFacade from "../../products/product.facade.js";
@@ -10,9 +11,41 @@ import dotenv from "dotenv";
 import pricingService from "../../campaigns/pricing.service.js";
 import CampaignProduct from "../../campaigns/campaignProduct.model.js";
 import CampaignPurchase from "../../campaigns/campaignPurchase.model.js";
+import inventoryReservationService from "../../inventory/inventoryReservation.service.js";
+import crypto from "crypto";
 dotenv.config();
 
 export const createOrder = async (userId, orderData) => {
+  // Guest orders have no account identity. Generate a high-entropy credential
+  // once and persist only its SHA-256 hash.
+  const guestAccessToken = userId ? null : crypto.randomBytes(32).toString("base64url");
+  const guestAccessTokenHash = guestAccessToken
+    ? crypto.createHash("sha256").update(guestAccessToken).digest("hex")
+    : null;
+  const reservationId = orderData.reservation_id || orderData.reservationId || null;
+  if (reservationId) {
+    const reservation = await inventoryReservationService.getReservation(reservationId);
+    if (!reservation) {
+      throw new AppError("Không tìm thấy thông tin giữ hàng tồn kho", 400);
+    }
+    if (reservation.status === "EXPIRED" || reservation.remainingSeconds <= 0) {
+      throw new AppError("Thời gian giữ hàng (5 phút) đã hết hạn. Vui lòng đặt lại sản phẩm.", 400);
+    }
+    if (reservation.status !== "ACTIVE") {
+      throw new AppError(`Phiên giữ hàng không còn hiệu lực (${reservation.status})`, 400);
+    }
+    if (userId && reservation.userId && String(reservation.userId) !== String(userId)) {
+      throw new AppError("Phiên giữ hàng không thuộc về tài khoản này", 403);
+    }
+  }
+
+  if (!userId) {
+    const guestAllowed = await isFeatureEnabled("allowGuestCheckout");
+    if (!guestAllowed) {
+      throw new AppError("Chức năng mua hàng không cần đăng nhập hiện đang tạm đóng. Vui lòng đăng nhập.", 403, "GUEST_CHECKOUT_DISABLED");
+    }
+  }
+
   const session = await mongoose.startSession();
   try {
     let createdOrder;
@@ -23,7 +56,13 @@ export const createOrder = async (userId, orderData) => {
         orderData.payment_method || orderData.paymentMethod || "cod";
       const rawShippingAddress =
         orderData.shipping_address || orderData.shippingAddress;
-      const voucherCode = orderData.voucher_code || orderData.voucherCode;
+      let voucherCode = orderData.voucher_code || orderData.voucherCode;
+      if (voucherCode) {
+        const voucherAllowed = await isFeatureEnabled("enableVoucher");
+        if (!voucherAllowed) {
+          voucherCode = null;
+        }
+      }
 
       let dbShippingAddress = {};
       if (typeof rawShippingAddress === "string") {
@@ -142,6 +181,12 @@ export const createOrder = async (userId, orderData) => {
           }
 
           const priceToUse = priceInfo.finalPrice;
+          if (priceToUse <= 0) {
+            throw new AppError(
+              `Sản phẩm "${product.name}" chưa xác định được giá hợp lệ từ hệ thống hoặc có giá 0đ`,
+              400
+            );
+          }
           const totalCalculated = priceToUse * item.quantity;
           subtotal += totalCalculated;
 
@@ -203,7 +248,10 @@ export const createOrder = async (userId, orderData) => {
       const orderArray = await orderRepository.create(
         [
           {
-            user_id: userId,
+            user_id: userId || null,
+            is_guest: !userId,
+            guest_email: orderData.email || orderData.guest_email || null,
+            guest_access_token_hash: guestAccessTokenHash,
             total_price: finalTotalPrice,
             original_price: subtotal,
             discount_amount: discountAmount,
@@ -218,6 +266,7 @@ export const createOrder = async (userId, orderData) => {
       );
 
       createdOrder = orderArray[0];
+      if (reservationId) { await inventoryReservationService.commitReservation(reservationId, createdOrder._id); }
 
       // Ghi nhận lượt mua chiến dịch để kiểm soát per_user_limit
       for (const orderItem of orderItems) {
@@ -256,10 +305,11 @@ export const createOrder = async (userId, orderData) => {
           session,
         });
 
-        const userCart = await Cart.findOne({ user_id: userId }).session(
-          session,
-        );
-        if (userCart) {
+        if (userId) {
+          const userCart = await Cart.findOne({ user_id: userId }).session(
+            session,
+          );
+          if (userCart) {
           const productIds = orderItems.map((item) => item.product_id);
           await CartItem.deleteMany({
             cart_id: userCart._id,
@@ -285,6 +335,7 @@ export const createOrder = async (userId, orderData) => {
             },
             { session },
           );
+          }
         }
       }
     });
@@ -336,6 +387,14 @@ export const createOrder = async (userId, orderData) => {
       }
     }
 
+    if (guestAccessToken) {
+      // Keep the raw credential out of persistence/serialization. The controller
+      // returns it exactly once in the create-order response.
+      Object.defineProperty(createdOrder, "guestAccessToken", {
+        value: guestAccessToken,
+        enumerable: false,
+      });
+    }
     return createdOrder;
   } catch (error) {
     if (
@@ -356,13 +415,26 @@ export const createOrder = async (userId, orderData) => {
 };
 
 export const createOrderWithoutTransaction = async (userId, orderData) => {
+  if (!userId) {
+    const guestAllowed = await isFeatureEnabled("allowGuestCheckout");
+    if (!guestAllowed) {
+      throw new AppError("Chức năng mua hàng không cần đăng nhập hiện đang tạm đóng. Vui lòng đăng nhập.", 403, "GUEST_CHECKOUT_DISABLED");
+    }
+  }
+
   console.log("Inside createOrderWithoutTransaction: userId =", userId, "type =", typeof userId);
   const items = orderData.items || [];
   const paymentMethod =
     orderData.payment_method || orderData.paymentMethod || "cod";
   const rawShippingAddress =
     orderData.shipping_address || orderData.shippingAddress;
-  const voucherCode = orderData.voucher_code || orderData.voucherCode;
+  let voucherCode = orderData.voucher_code || orderData.voucherCode;
+  if (voucherCode) {
+    const voucherAllowed = await isFeatureEnabled("enableVoucher");
+    if (!voucherAllowed) {
+      voucherCode = null;
+    }
+  }
 
   let dbShippingAddress = {};
   if (typeof rawShippingAddress === "string") {
@@ -475,6 +547,12 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
       }
 
       const priceToUse = priceInfo.finalPrice;
+      if (priceToUse <= 0) {
+        throw new AppError(
+          `Sản phẩm "${product.name}" chưa xác định được giá hợp lệ từ hệ thống hoặc có giá 0đ`,
+          400
+        );
+      }
       const totalCalculated = priceToUse * item.quantity;
       subtotal += totalCalculated;
 
@@ -531,8 +609,12 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
     await productFacade.deductStock(orderItems);
   }
 
+  if (reservationId) { await inventoryReservationService.commitReservation(reservationId); }
   const order = await orderRepository.create({
-    user_id: userId,
+    user_id: userId || null,
+    is_guest: !userId,
+    guest_email: orderData.email || orderData.guest_email || null,
+    guest_access_token_hash: guestAccessTokenHash,
     total_price: finalTotalPrice,
     original_price: subtotal,
     discount_amount: discountAmount,
@@ -572,8 +654,9 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
     }));
     await orderRepository.insertManyItems(orderItemsToInsert);
 
-    const userCart = await Cart.findOne({ user_id: userId });
-    if (userCart) {
+    if (userId) {
+      const userCart = await Cart.findOne({ user_id: userId });
+      if (userCart) {
       const productIds = orderItems.map((item) => item.product_id);
       await CartItem.deleteMany({
         cart_id: userCart._id,
@@ -593,6 +676,7 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
         total_items: totalItemsCount,
         total_price: totalPrice,
       });
+      }
     }
   }
 
@@ -616,16 +700,23 @@ export const createOrderWithoutTransaction = async (userId, orderData) => {
       .catch((err) => console.warn("[Tracking] Lỗi ghi nhận order_placed:", err.message));
   }
 
+  if (guestAccessToken) {
+    Object.defineProperty(order, "guestAccessToken", {
+      value: guestAccessToken,
+      enumerable: false,
+    });
+  }
   return order;
 };
 
-export const paymentOrder = async (userId, orderId, payment_method) => {
+export const paymentOrder = async (userId, orderId, payment_method, { guestAuthorized = false } = {}) => {
   const order = await orderRepository.findById(orderId);
 
   if (!order) {
     throw new AppError("Đơn hàng không tồn tại", 404);
   }
-  if (order.user_id.toString() !== userId) {
+  const isOwner = userId && order.user_id && String(order.user_id) === String(userId);
+  if (!isOwner && !guestAuthorized) {
     throw new AppError("Bạn không có quyền thanh toán đơn hàng này", 403);
   }
 
@@ -636,11 +727,23 @@ export const paymentOrder = async (userId, orderId, payment_method) => {
     );
   }
 
+  const oldStatus = order.status;
+  const oldPaymentStatus = order.payment_status;
+  const emitChangedOrder = () => {
+    import("../../../sockets/events.js")
+      .then(({ emitOrderStatusChanged, emitPaymentUpdated }) => {
+        if (order.status !== oldStatus) emitOrderStatusChanged(order);
+        if (order.payment_status !== oldPaymentStatus) emitPaymentUpdated(order);
+      })
+      .catch((err) => console.error("Failed to emit order update:", err.message));
+  };
+
   if (payment_method === "cod") {
     order.payment_method = "cod";
     order.payment_status = "pending";
     order.status = "confirmed";
     await order.save();
+    emitChangedOrder();
     return {
       success: true,
       message:
@@ -653,6 +756,7 @@ export const paymentOrder = async (userId, orderId, payment_method) => {
     order.payment_method = "momo";
     order.payment_status = "pending";
     await order.save();
+    emitChangedOrder();
 
     const momoResult = await momoProvider.createMomoPayment(
       order._id,
@@ -670,6 +774,7 @@ export const paymentOrder = async (userId, orderId, payment_method) => {
     order.payment_method = "vnpay";
     order.payment_status = "pending";
     await order.save();
+    emitChangedOrder();
 
     const paymentUrl = `${process.env.CLIENT_URL}/payment-success?orderId=${order._id}&provider=vnpay`;
     return {

@@ -7,4 +7,5 @@ export const paymentApi = {
   createMomoPayment: (orderId) => {
     return axiosClient.post(`/payments/momo/create/${orderId}`);
   },
+  getOrderPayment: (orderId) => axiosClient.get(`/order/${orderId}/payment`),
 };

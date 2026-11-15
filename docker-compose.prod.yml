@@ -1,15 +1,14 @@
-# Production Docker Compose
-# Dùng trên VPS: docker compose -f docker-compose.prod.yml up -d --build
-#
-# Trước khi chạy:
-#   1. cp .env.example back-end/.env.production  → điền giá trị thật
-#   2. Cập nhật DOMAIN trong file này và nginx/nginx.conf
-#   3. Đặt SSL cert vào nginx/ssl/fullchain.pem và nginx/ssl/privkey.pem
+# ==============================================================================
+# REACT-WebFashion — Production Environment Docker Compose
+# Deployment command: docker compose -f docker-compose.prod.yml up -d --build
+# ==============================================================================
+
+name: react-webfashion-prod
 
 services:
-
   nginx:
     image: nginx:stable-alpine
+    container_name: webfashion-nginx-prod
     ports:
       - "80:80"
       - "443:443"
@@ -18,48 +17,114 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - certbot-www:/var/www/certbot:ro
     depends_on:
-      - api
-      - front
+      api:
+        condition: service_healthy
+      front:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - webfashion-prod-net
 
   api:
     build:
       context: ./back-end
       dockerfile: Dockerfile
+    # No container_name: enables `docker compose ... up --scale api=2`.
     env_file:
-      - ./back-end/.env.production
+      - path: ./back-end/.env.production
+        required: false
     environment:
       PORT: 5000
       NODE_ENV: production
+      MONGO_CONNECTIONSTRING: mongodb://${MONGO_USER:?set MONGO_USER}:${MONGO_PASS:?set MONGO_PASS}@mongo:27017/webfashion?authSource=admin
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SOCKET_REDIS_ADAPTER_REQUIRED: "true"
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:?set ACCESS_TOKEN_SECRET}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:?set REFRESH_TOKEN_SECRET}
+      ACTION_SECRET: ${ACTION_SECRET:?set ACTION_SECRET}
+      OTP_SECRET: ${OTP_SECRET:?set OTP_SECRET}
+      CLIENT_URL: https://${DOMAIN:?set DOMAIN}
+      FRONTEND_URL: https://${DOMAIN:?set DOMAIN}
+    volumes:
+      - uploads-data:/app/uploads
     depends_on:
-      - mongo
-      - redis
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
-    # Không expose port ra ngoài — nginx xử lý
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:5000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - webfashion-prod-net
 
   front:
     build:
       context: ./front-end
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: https://${DOMAIN}/api
+        VITE_API_URL: https://${DOMAIN:?set DOMAIN}/api
+    container_name: webfashion-front-prod
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - webfashion-prod-net
 
   mongo:
     image: mongo:7.0
+    container_name: webfashion-mongo-prod
     volumes:
       - mongo-data:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:?set MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS:?set MONGO_PASS}
+      MONGO_INITDB_DATABASE: webfashion
     restart: unless-stopped
-    # Không expose port ra ngoài
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - webfashion-prod-net
 
   redis:
     image: redis:7-alpine
+    container_name: webfashion-redis-prod
+    volumes:
+      - redis-data:/data
     restart: unless-stopped
-    # Không expose port ra ngoài
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - webfashion-prod-net
 
 volumes:
   mongo-data:
+  redis-data:
+  uploads-data:
   certbot-www:
+
+networks:
+  webfashion-prod-net:
+    driver: bridge

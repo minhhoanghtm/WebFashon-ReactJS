@@ -274,7 +274,7 @@ const CatalogManagement = () => {
                       <img
                         src={cat.image || defaultCategoryPlaceholder}
                         alt={cat.name}
-                        className="h-11 w-11 object-cover rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs"
+                        className="h-11 w-11 object-contain rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs p-0.5"
                         onError={(e) => {
                           e.target.src = defaultCategoryPlaceholder;
                         }}
@@ -391,7 +391,7 @@ const CatalogManagement = () => {
               <img
                 src={formImage}
                 alt="Preview"
-                className="h-24 w-24 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs"
+                className="h-24 w-24 object-contain rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-xs p-1"
                 onError={(e) => {
                   e.target.src = defaultCategoryPlaceholder;
                 }}
@@ -460,7 +460,7 @@ const CatalogManagement = () => {
               <img
                 src={formImage}
                 alt="Preview"
-                className="h-24 w-24 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs"
+                className="h-24 w-24 object-contain rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-xs p-1"
                 onError={(e) => {
                   e.target.src = defaultCategoryPlaceholder;
                 }}

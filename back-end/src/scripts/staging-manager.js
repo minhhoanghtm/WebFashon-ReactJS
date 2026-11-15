@@ -3,13 +3,14 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import { requireEnv } from "./require-env.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const STAGING_COMPOSE_FILE = "docker-compose.staging.yml";
-const STAGING_MONGO_LOCAL_URI = "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin";
+const STAGING_MONGO_LOCAL_URI = requireEnv("MONGO_CONNECTIONSTRING");
 
 export async function checkStagingInfrastructure() {
   console.log("=== CHECKING STAGING INFRASTRUCTURE ===");

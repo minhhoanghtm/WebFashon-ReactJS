@@ -1,0 +1,15 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { CheckCircle2, Copy, Clock, CreditCard } from "lucide-react";
+import { paymentApi } from "@/api/payment.api";
+
+const money = (amount) => Number(amount || 0).toLocaleString("vi-VN") + " đ";
+export default function Payment() {
+  const { orderId } = useParams(); const navigate = useNavigate(); const [data, setData] = useState(null); const [error, setError] = useState(""); const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { paymentApi.getOrderPayment(orderId).then((r) => setData(r.data?.data || r.data)).catch((e) => setError(e.response?.data?.message || "Không tải được thông tin thanh toán")); }, [orderId]);
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  if (error) return <main className="mx-auto max-w-xl p-10 text-center">{error}</main>; if (!data) return <main className="p-10 text-center" aria-busy="true">Đang tải thanh toán…</main>;
+  const remaining = Math.max(0, new Date(data.expiresAt).getTime() - now); const copy = async (value) => { await navigator.clipboard?.writeText(value); };
+  if (data.paymentStatus === "paid") return <main className="mx-auto max-w-xl p-8 text-center"><CheckCircle2 className="mx-auto h-14 w-14"/><h1 className="mt-4 text-2xl font-bold">ĐÃ THANH TOÁN</h1><p>Mã đơn {data.orderCode} · {money(data.amount)}</p><button className="mt-6 border px-5 py-3" onClick={() => navigate('/orders')}>Theo dõi đơn hàng</button></main>;
+  return <main className="mx-auto grid max-w-5xl gap-6 p-4 md:grid-cols-2 md:p-8"><section className="border p-5"><p className="text-xs uppercase">Đơn hàng</p><h1 className="text-2xl font-bold">#{data.orderCode}</h1><p className="mt-6 text-xl font-semibold">Tổng cộng: {money(data.amount)}</p><p className="mt-4 flex items-center gap-2 text-sm"><Clock className="h-4 w-4"/> Còn {Math.ceil(remaining / 60000)} phút để thanh toán</p></section><section className="border p-5"><p className="text-xs uppercase">Thanh toán</p><h2 className="mt-2 text-xl font-bold">{data.method === 'bank_transfer' ? 'Chuyển khoản ngân hàng' : data.method.toUpperCase()}</h2>{data.method === 'bank_transfer' && data.bank ? <div className="mt-5 space-y-3 text-sm">{[['Ngân hàng',data.bank.bankName],['Số tài khoản',data.bank.accountNumber],['Chủ tài khoản',data.bank.accountName],['Nội dung',data.bank.transferContent]].map(([k,v]) => <div key={k} className="flex justify-between gap-2 border-b pb-2"><span>{k}</span><button aria-label={`Sao chép ${k}`} onClick={() => copy(v)} className="font-mono">{v} <Copy className="inline h-3 w-3"/></button></div>)}<p className="font-semibold">Số tiền: {money(data.amount)}</p></div> : <p className="mt-5 text-sm">Thông tin cổng thanh toán được tạo khi bạn tiếp tục thanh toán.</p>}<button className="mt-8 flex min-h-11 w-full items-center justify-center gap-2 bg-primary px-4 py-3 text-primary-foreground" onClick={() => navigate('/checkout')}><CreditCard className="h-4 w-4"/> Quay lại thanh toán</button></section></main>;
+}

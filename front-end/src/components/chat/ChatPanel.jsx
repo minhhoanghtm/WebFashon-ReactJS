@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Trash2, Wifi, WifiOff } from "lucide-react";
 import ChatTabs from "./ChatTabs";
 import MessageList from "./MessageList";
@@ -23,6 +23,7 @@ export const ChatPanel = ({
   supportSocketStatus = "disconnected",
   unreadSupportCount = 0,
   onSendSupportMessage,
+  onRetrySupport,
   // Shared
   user = null,
   isAuthenticated = false,
@@ -37,6 +38,15 @@ export const ChatPanel = ({
 }) => {
   const panelRef = useRef(null);
   const inputRef = useRef(null);
+  
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const [isActive, setIsActive] = useState(true);
+
+  // Sync active state on render when isOpen prop toggles (React 19 pattern)
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    setIsActive(isOpen);
+  }
 
   // Esc key listener to close dialog
   useEffect(() => {
@@ -53,14 +63,43 @@ export const ChatPanel = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Autofocus input when opening dialog
+  // Autofocus input when opening dialog -> ensures active header
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, activeTab]);
+
+  // Click / Pointerdown outside panel: mark inactive (WITHOUT closing panel)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerDownOutside = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
+        setIsActive(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDownOutside);
+    return () => document.removeEventListener("pointerdown", handlePointerDownOutside);
+  }, [isOpen]);
+
+  const handleFocus = () => {
+    setIsActive(true);
+  };
+
+  const handleBlur = (e) => {
+    if (!panelRef.current?.contains(e.relatedTarget)) {
+      setIsActive(false);
+    }
+  };
+
+  const handlePointerDownInside = () => {
+    setIsActive(true);
+  };
 
   if (!isOpen) return null;
 
@@ -84,19 +123,63 @@ export const ChatPanel = ({
       aria-modal="true"
       aria-label="Khung trò chuyện trực tuyến"
       ref={panelRef}
-      className="fixed inset-0 z-50 flex flex-col bg-background sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[560px] sm:w-[380px] sm:max-h-[calc(100svh-7rem)] sm:border sm:border-border sm:shadow-2xl font-sans transition-all duration-200 animate-in fade-in zoom-in-95 motion-reduce:animate-none"
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      onPointerDown={handlePointerDownInside}
+      data-chat-panel
+      data-active={isActive ? "true" : "false"}
+      className={`fixed inset-0 z-50 flex flex-col bg-background md:inset-auto md:bottom-6 md:right-[94px] md:h-[560px] md:w-[380px] md:max-w-[calc(100vw-94px-1rem)] md:max-h-[min(560px,calc(100dvh-6rem-env(safe-area-inset-bottom,0px)))] border font-sans rounded-none overflow-hidden box-border max-w-full transition-[border-color,box-shadow,ring-color] duration-200 ease-out motion-reduce:transition-none ${
+        isActive
+          ? "border-foreground ring-1 ring-foreground/40 shadow-2xl md:shadow-[0_20px_50px_rgba(0,0,0,0.35)]"
+          : "border-border shadow-xl md:shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+      }`}
     >
-      {/* Header */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 text-card-foreground">
+      {/* Top 2px active accent line */}
+      <div
+        className={`h-[2px] w-full transition-[background-color] duration-200 ease-out motion-reduce:transition-none ${
+          isActive ? "bg-foreground" : "bg-transparent"
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* Header Bar */}
+      <div
+        data-chat-header
+        data-active={isActive ? "true" : "false"}
+        className={`flex h-14 shrink-0 items-center justify-between border-b px-4 transition-[background-color,color,box-shadow,border-color] duration-200 ease-out motion-reduce:transition-none ${
+          isActive
+            ? "bg-foreground text-background border-foreground shadow-xs"
+            : "bg-card text-card-foreground border-border"
+        }`}
+      >
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-condensed text-base font-bold uppercase tracking-wider text-foreground truncate">
+          <span className="font-condensed text-base font-bold uppercase tracking-wider truncate">
             {siteName} ATELIER
           </span>
 
-          {/* Connection status (Support tab only) */}
+          {/* Active status indicator */}
+          {isActive ? (
+            <span
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono font-medium uppercase tracking-wider bg-background/15 border border-current/25 shrink-0"
+              aria-label="Đang hoạt động"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Đang hoạt động</span>
+            </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground shrink-0"
+              aria-label="Trực tuyến"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60" />
+              <span>Trực tuyến</span>
+            </span>
+          )}
+
+          {/* Realtime indicator (Support tab only) */}
           {activeTab === "support" && isAuthenticated && (
             <span
-              className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground ml-1 shrink-0"
+              className="inline-flex items-center gap-1 text-[10px] font-medium ml-1 shrink-0 opacity-80"
               title={
                 supportSocketStatus === "connected"
                   ? "Đã kết nối máy chủ realtime"
@@ -106,20 +189,9 @@ export const ChatPanel = ({
               }
             >
               {supportSocketStatus === "connected" ? (
-                <>
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span className="text-emerald-600 dark:text-emerald-400">Trực tuyến</span>
-                </>
-              ) : supportSocketStatus === "reconnecting" ? (
-                <>
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-amber-600 dark:text-amber-400">Đang kết nối lại</span>
-                </>
+                <Wifi className="h-3 w-3 text-emerald-400" />
               ) : (
-                <>
-                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                  <span>Ngoại tuyến</span>
-                </>
+                <WifiOff className="h-3 w-3 text-muted-foreground" />
               )}
             </span>
           )}
@@ -133,7 +205,11 @@ export const ChatPanel = ({
               onClick={onClearAiHistory}
               title="Xóa hội thoại"
               aria-label="Xóa hội thoại"
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              className={`p-2 transition-colors rounded-none focus-visible:outline-none focus-visible:ring-2 ${
+                isActive
+                  ? "text-background/80 hover:text-background focus-visible:ring-background"
+                  : "text-muted-foreground hover:text-foreground focus-visible:ring-foreground"
+              }`}
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -142,8 +218,13 @@ export const ChatPanel = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Đóng khung trò chuyện"
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground"
+            data-chat-close-btn
+            aria-label="Đóng cửa sổ trò chuyện"
+            className={`p-2 transition-colors rounded-none focus-visible:outline-none focus-visible:ring-2 ${
+              isActive
+                ? "text-background/80 hover:text-background focus-visible:ring-background"
+                : "text-muted-foreground hover:text-foreground focus-visible:ring-foreground"
+            }`}
           >
             <X className="h-5 w-5" />
           </button>
@@ -175,7 +256,7 @@ export const ChatPanel = ({
         onLoginRedirect={onLoginRedirect}
         onActionConfirm={onActionConfirm}
         onActionCancel={onActionCancel}
-        onRetry={onRetryAi}
+        onRetry={activeTab === "support" ? onRetrySupport : onRetryAi}
         onAskProductDetails={onAskProductDetails}
       />
 

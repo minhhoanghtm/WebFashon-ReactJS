@@ -1,3 +1,4 @@
+import useFeatureFlags from "@/hooks/useFeatureFlags";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AlertCircle, LoaderCircle, Star } from "lucide-react";
@@ -30,6 +31,7 @@ const getProductId = (p) => {
 };
 
 const ProductDetail = () => {
+  const { flags } = useFeatureFlags();
   const { slug } = useParams();
   const [rawProduct, setRawProduct] = useState(null);
   const [variants, setVariants] = useState([]);
@@ -99,6 +101,31 @@ const ProductDetail = () => {
   }, [product, setContext]);
 
   useDocumentTitle(product?.name || "Chi tiết thiết kế");
+
+  useEffect(() => {
+    if (!product) return;
+
+    const setMeta = (selector, attribute, key, value) => {
+      let tag = document.head.querySelector(selector);
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute(attribute, key);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", value);
+    };
+
+    const description = (product.description || `Khám phá ${product.name} tại WebFashion.`)
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 160);
+    setMeta('meta[name="description"]', "name", "description", description);
+    setMeta('meta[property="og:description"]', "property", "og:description", description);
+    setMeta('meta[property="og:title"]', "property", "og:title", product.name);
+    if (product.images?.[0]) {
+      setMeta('meta[property="og:image"]', "property", "og:image", product.images[0]);
+    }
+  }, [product]);
 
   const lastTrackedProductIdRef = useRef(null);
 
@@ -403,8 +430,9 @@ const ProductDetail = () => {
         )}
 
         {/* Real Customer Reviews Section */}
-        <section
-          aria-labelledby="product-reviews-heading"
+        {flags.enableReviews && (
+          <section
+            aria-labelledby="product-reviews-heading"
           className="mt-16 border-t border-border pt-12"
         >
           <div className="mb-8 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
@@ -463,6 +491,7 @@ const ProductDetail = () => {
             </div>
           )}
         </section>
+        )}
 
         {/* Related Products Section */}
         {normalizedRelatedProducts.length > 0 && (

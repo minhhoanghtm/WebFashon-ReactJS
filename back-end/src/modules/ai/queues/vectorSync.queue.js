@@ -71,6 +71,10 @@ export const initVectorSyncWorker = () => {
       logger.warn(`[VectorSync Worker] Job ${job?.id} failed: ${err.message}`);
     });
 
+    vectorSyncWorker.on("error", (err) => {
+      logger.warn(`[VectorSync Worker] Worker warning:`, err.message);
+    });
+
     return vectorSyncWorker;
   } catch (err) {
     logger.warn("[VectorSync Worker] Could not initialize worker:", err.message);

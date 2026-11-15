@@ -44,7 +44,7 @@ export const ParallaxImage = ({
       <MotionImg
         src={src}
         alt={alt}
-        className={`w-full h-full object-cover scale-110 will-change-transform ${className}`}
+        className={`w-full h-full object-cover scale-105 will-change-transform ${className}`}
         style={{ y }}
         {...props}
       />

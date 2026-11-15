@@ -155,12 +155,12 @@ const Review = () => {
         {item ? (
           <div className="border border-[var(--color-border)] p-6 mb-8 bg-[var(--color-surface)]">
             <div className="flex items-start gap-5">
-              <div className="w-20 h-24 border border-[var(--color-border)] bg-[var(--color-bg)] shrink-0 overflow-hidden flex items-center justify-center">
+              <div className="w-20 h-24 border border-[var(--color-border)] bg-[var(--muted)]/40 dark:bg-zinc-900/50 shrink-0 overflow-hidden flex items-center justify-center">
                 {itemImg && !imgFailed ? (
                   <img
                     src={itemImg}
                     alt={item.product_name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain object-center"
                     onError={() => setImgFailed(true)}
                   />
                 ) : (
@@ -266,12 +266,12 @@ const Review = () => {
                   {images.map((img, i) => (
                     <div
                       key={i}
-                      className="relative border border-[var(--color-border)] aspect-square overflow-hidden"
+                      className="relative border border-[var(--color-border)] aspect-square overflow-hidden bg-[var(--muted)]/40 dark:bg-zinc-900/50 flex items-center justify-center"
                     >
                       <img
                         src={img}
                         alt={`Ảnh đánh giá ${i + 1}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain object-center"
                       />
                       <button
                         type="button"
@@ -326,7 +326,7 @@ const Review = () => {
                     >
                       <video
                         src={vid}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain object-center"
                       />
                       <button
                         type="button"

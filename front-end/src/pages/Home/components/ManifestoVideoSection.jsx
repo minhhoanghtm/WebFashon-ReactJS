@@ -66,8 +66,8 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
         );
       }
 
-      // 2. Video container expansion: scales from 0.86 to 1.0 (full-bleed)
-      if (videoWrapperRef.current) {
+      // 2. Video container expansion: scales from 0.86 to 1.0 (full-bleed) - only when real video source exists
+      if (hasRealVideo && videoWrapperRef.current) {
         gsap.fromTo(
           videoWrapperRef.current,
           {
@@ -90,7 +90,7 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, hasRealVideo]);
 
   const togglePlay = () => {
     if (!videoElementRef.current) return;
@@ -105,9 +105,10 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
 
   return (
     <section
+      id="section-manifesto"
       ref={sectionRef}
       aria-label="Tuyên ngôn thương hiệu và phim tư liệu"
-      className="relative z-10 bg-[#050608] text-white py-24 sm:py-36 overflow-hidden"
+      className="relative z-10 bg-[#050608] text-white px-4 pt-20 pb-8 min-h-[100svh] min-h-[100vh] flex flex-col justify-center overflow-hidden"
     >
       <div className="mx-auto max-w-[1600px] px-4 sm:px-8 lg:px-14">
         {/* Slogan Container */}
@@ -141,27 +142,27 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
         </div>
       </div>
 
-      {/* Video / Visual container that expands on scroll */}
-      <div className="mt-16 sm:mt-24 w-full flex justify-center">
-        <div
-          ref={videoWrapperRef}
-          className="relative w-full max-w-[1600px] aspect-[16/9] sm:aspect-[21/9] min-h-[360px] sm:min-h-[500px] overflow-hidden bg-neutral-950 border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] will-change-transform flex items-center justify-center select-none"
-        >
-          {/* Architectural Monochrome Visual Loop Canvas */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-black via-[#0c0d11] to-[#040405]">
-            <div
-              className={`absolute inset-0 opacity-[0.06] transition-opacity duration-700 ${
-                isPlaying ? "opacity-[0.14]" : ""
-              }`}
-              style={{
-                backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4) 1px, transparent 1px)`,
-                backgroundSize: "40px 40px",
-              }}
-            />
-          </div>
+      {/* Video / Visual container that expands on scroll: only rendered when real video/image source exists */}
+      {hasRealVideo && (
+        <div className="mt-16 sm:mt-24 w-full flex justify-center">
+          <div
+            ref={videoWrapperRef}
+            className="relative w-full max-w-[1600px] aspect-[16/9] sm:aspect-[21/9] min-h-[360px] sm:min-h-[500px] overflow-hidden bg-neutral-950 border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] will-change-transform flex items-center justify-center select-none"
+          >
+            {/* Architectural Monochrome Visual Loop Canvas */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-black via-[#0c0d11] to-[#040405]">
+              <div
+                className={`absolute inset-0 opacity-[0.06] transition-opacity duration-700 ${
+                  isPlaying ? "opacity-[0.14]" : ""
+                }`}
+                style={{
+                  backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4) 1px, transparent 1px)`,
+                  backgroundSize: "40px 40px",
+                }}
+              />
+            </div>
 
-          {/* Video element if real video source provided */}
-          {hasRealVideo && (
+            {/* Video element if real video source provided */}
             <video
               ref={videoElementRef}
               src={videoUrl}
@@ -170,55 +171,41 @@ export const ManifestoVideoSection = ({ videoUrl = "" }) => {
               playsInline
               className="absolute inset-0 h-full w-full object-cover"
             />
-          )}
 
-          {/* Central Interactive / Architectural Canvas State */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-center p-6 space-y-4">
-            <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-white/40">
-              {manifesto.videoSubtitle}
-            </span>
+            {/* Central Interactive State */}
+            <div className="relative z-10 flex flex-col items-center justify-center text-center p-6 space-y-4">
+              <span className="font-mono text-[10px] tracking-[0.4em] uppercase text-white/40">
+                {manifesto.videoSubtitle}
+              </span>
 
-            {/* Play button: ONLY shown if real video source exists */}
-            {hasRealVideo ? (
-              <>
-                <button
-                  type="button"
-                  onClick={togglePlay}
-                  aria-label={isPlaying ? "Tạm dừng video" : "Phát video tư liệu Atelier"}
-                  className="group relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full border border-white/40 bg-black/50 backdrop-blur-md text-white transition-all duration-500 hover:scale-110 hover:border-white hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-                >
-                  {isPlaying ? (
-                    <Pause size={24} className="fill-current" />
-                  ) : (
-                    <Play size={24} className="ml-1 fill-current" />
-                  )}
-                </button>
+              <button
+                type="button"
+                onClick={togglePlay}
+                aria-label={isPlaying ? "Tạm dừng video" : "Phát video tư liệu Atelier"}
+                className="group relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full border border-white/40 bg-black/50 backdrop-blur-md text-white transition-all duration-500 hover:scale-110 hover:border-white hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              >
+                {isPlaying ? (
+                  <Pause size={24} className="fill-current" />
+                ) : (
+                  <Play size={24} className="ml-1 fill-current" />
+                )}
+              </button>
 
-                <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-white/60">
-                  {isPlaying ? "ĐANG PHÁT" : "PHÁT PHIM TƯ LIỆU"}
-                </span>
-              </>
-            ) : (
-              <div className="space-y-2 py-4">
-                <span className="font-condensed text-3xl sm:text-5xl font-bold uppercase tracking-widest text-white/20 block select-none">
-                  ATELIER ARCHIVE
-                </span>
-                <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-white/30 block">
-                  MONOCHROME VISUAL RECORD
-                </span>
-              </div>
-            )}
-          </div>
+              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-white/60">
+                {isPlaying ? "ĐANG PHÁT" : "PHÁT PHIM TƯ LIỆU"}
+              </span>
+            </div>
 
-          {/* Bottom Video Metadata */}
-          <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-white/50 font-mono text-[11px] pointer-events-none">
-            <span className="tracking-widest uppercase">
-              CHAPTER 02 / MONOCHROME ARCHITECTURE
-            </span>
-            <span className="tabular-nums uppercase">{settings?.general?.siteName || "404 STUDIO"} · ARCHIVE</span>
+            {/* Bottom Video Metadata */}
+            <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-white/50 font-mono text-[11px] pointer-events-none">
+              <span className="tracking-widest uppercase">
+                CHAPTER 02 / MONOCHROME ARCHITECTURE
+              </span>
+              <span className="tabular-nums uppercase">{settings?.general?.siteName || "404 STUDIO"} · ARCHIVE</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 };

@@ -7,12 +7,12 @@ export const ChatLauncher = forwardRef(
     const location = useLocation();
     const isProductDetail = location.pathname.startsWith("/product/");
 
-    // If a full-screen drawer or menu overlay is open, lower z-index or hide to prevent clash
+    // If a full-screen drawer or menu overlay is open, hide to prevent clash
     if (isOverlayActive) return null;
 
-    // Mobile placement: lift above sticky bottom buy-bar on /product/:slug
+    // Mobile placement: lift above sticky bottom buy-bar on /product/:slug; on desktop (md:) stay at bottom-6 right-6
     const positionClasses = isProductDetail
-      ? "bottom-[calc(5.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-6 right-6"
+      ? "bottom-[calc(5.75rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-6"
       : "bottom-6 right-6";
 
     return (
@@ -40,7 +40,7 @@ export const ChatLauncher = forwardRef(
         {/* Unread badge for Support tab */}
         {!isOpen && unreadCount > 0 && (
           <span
-            className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center bg-destructive px-1 text-[11px] font-bold tabular-nums text-white shadow-md"
+            className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-none bg-destructive px-1 text-[11px] font-bold tabular-nums text-white shadow-md"
             aria-hidden="true"
           >
             {unreadCount > 99 ? "99+" : unreadCount}

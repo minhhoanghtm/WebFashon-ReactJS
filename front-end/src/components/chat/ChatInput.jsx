@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, forwardRef } from "react";
-import { Send, CornerDownLeft } from "lucide-react";
+import { Send } from "lucide-react";
 
 export const ChatInput = forwardRef(
   (
@@ -58,7 +58,7 @@ export const ChatInput = forwardRef(
               placeholder={placeholder}
               disabled={disabled}
               maxLength={maxLength + 10}
-              className="block w-full resize-none border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground disabled:opacity-50"
+              className="block w-full resize-none rounded-none border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground disabled:opacity-50"
             />
             {value.length > maxLength * 0.8 && (
               <span
@@ -75,7 +75,7 @@ export const ChatInput = forwardRef(
             type="submit"
             disabled={!value.trim() || disabled || isExceeded}
             aria-label="Gửi tin nhắn"
-            className="flex h-10 w-10 shrink-0 items-center justify-center bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground"
           >
             <Send className="h-4 w-4" />
           </button>

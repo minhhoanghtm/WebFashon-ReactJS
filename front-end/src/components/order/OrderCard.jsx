@@ -1,3 +1,4 @@
+import useFeatureFlags from "@/hooks/useFeatureFlags";
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import OrderItem from "./OrderItem";
@@ -78,6 +79,7 @@ const OrderCard = ({
   onRebuy,
 }) => {
   const [isPaying, setIsPaying] = useState(false);
+  const { flags } = useFeatureFlags();
 
   const isPendingPayment =
     order.status === "pending" &&
@@ -157,7 +159,7 @@ const OrderCard = ({
         {order.items?.map((item) => (
           <div key={item._id}>
             <OrderItem item={item} />
-            {isDelivered && (
+            {isDelivered && flags.enableReviews && (
               <div className="flex flex-wrap justify-end gap-2 pb-3 pt-1">
                 {reviewedProductIds?.has(item.product_id?.toString()) ? (
                   <Link

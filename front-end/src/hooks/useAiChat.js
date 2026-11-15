@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuthStore } from "@/store/auth.store";
-import { sendCustomerAiMessageService } from "@/services/chat.service";
+import { sendCustomerAiMessageService, confirmCustomerAiActionService, cancelCustomerAiActionService } from "@/services/chat.service";
 import trackingService from "@/services/tracking.service";
 import { toast } from "react-toastify";
 
@@ -173,6 +173,7 @@ export const useAiChat = ({ context, onHandoff } = {}) => {
             metadata: {
               ...(res.aiMessage.metadata || {}),
               sources: res.sources || res.aiMessage.metadata?.sources || [],
+              products: res.products || res.aiMessage.metadata?.products || [],
               pendingAction:
                 res.pendingAction ??
                 res.aiMessage.metadata?.pendingAction ??
@@ -185,16 +186,17 @@ export const useAiChat = ({ context, onHandoff } = {}) => {
           };
 
           // Track recommended products
-          if (enrichedAiMessage?.content) {
-            const { items } = parseInlineProducts(enrichedAiMessage.content);
-            if (Array.isArray(items) && items.length > 0) {
-              items.forEach((item, idx) => {
-                trackingService.trackAIProductRecommended?.(
-                  { id: item.id, _id: item.id, name: item.name },
-                  { position: idx + 1, price: item.price }
-                );
-              });
-            }
+          const recommendedItems = enrichedAiMessage.metadata?.products?.length > 0
+            ? enrichedAiMessage.metadata.products
+            : parseInlineProducts(enrichedAiMessage?.content || "").items;
+
+          if (Array.isArray(recommendedItems) && recommendedItems.length > 0) {
+            recommendedItems.forEach((item, idx) => {
+              trackingService.trackAIProductRecommended?.(
+                { id: item.id || item._id, _id: item.id || item._id, name: item.name },
+                { position: idx + 1, price: item.new_price || item.price }
+              );
+            });
           }
 
           setMessages((prev) => {
@@ -257,6 +259,35 @@ export const useAiChat = ({ context, onHandoff } = {}) => {
     lastFailedMessageRef.current = null;
   }, [storageKey, metadataKey]);
 
+  const resolveAction = useCallback(async (action, operation) => {
+    if (!action?.actionId || !action?.paramsHash || loading) return;
+    setLoading(true);
+    try {
+      const res = operation === "confirm"
+        ? await confirmCustomerAiActionService(action.actionId, action.paramsHash)
+        : await cancelCustomerAiActionService(action.actionId);
+      const actionResult = operation === "confirm" ? res : { ...res, status: res?.status?.toUpperCase() || "CANCELLED" };
+      setMessages((previous) => previous.map((message) =>
+        message.metadata?.pendingAction?.actionId === action.actionId
+          ? { ...message, metadata: { ...message.metadata, pendingAction: { ...message.metadata.pendingAction, status: actionResult?.action?.status || actionResult?.status || "confirmed" }, actionResult } }
+          : message
+      ));
+      if (operation === "confirm" && res?.success && res?.cartSummary?.total_items !== undefined) {
+        window.dispatchEvent(new CustomEvent("cartUpdated", { detail: { totalQuantity: res.cartSummary.total_items } }));
+      }
+      if (operation === "confirm" && res?.success && (action?.actionType === "start_checkout" || action?.actionType === "buy_now" || res?.checkoutUrl)) {
+        const targetUrl = res?.checkoutUrl || action?.checkoutUrl || "/checkout";
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 500);
+      }
+      if (!res?.success) toast.error(res?.message || "Không thể xử lý thao tác");
+      else toast.success(res?.message || (operation === "confirm" ? "Đã xác nhận thao tác" : "Đã hủy thao tác"));
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Không thể xử lý thao tác");
+    } finally { setLoading(false); }
+  }, [loading]);
+
   return {
     messages,
     loading,
@@ -266,6 +297,8 @@ export const useAiChat = ({ context, onHandoff } = {}) => {
     sendMessage,
     retryLastMessage,
     clearHistory,
+    confirmAction: (action) => resolveAction(action, "confirm"),
+    cancelAction: (action) => resolveAction(action, "cancel"),
     updateMetadata,
   };
 };

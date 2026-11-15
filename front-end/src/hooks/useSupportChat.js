@@ -10,6 +10,29 @@ import {
 } from "@/services/chat.service";
 import { toast } from "react-toastify";
 
+const clientMessageIdOf = (message) =>
+  message?.clientMessageId || message?.metadata?.clientMessageId || null;
+
+export const mergeSupportMessages = (current, incoming) => {
+  const next = [...current];
+  for (const message of incoming.filter(Boolean)) {
+    const normalized = message?._id?.startsWith?.("temp_")
+      ? message
+      : { ...message, isFailed: false };
+    const clientMessageId = clientMessageIdOf(normalized);
+    const index = next.findIndex((existing) =>
+      (existing?._id && normalized?._id && String(existing._id) === String(normalized._id)) ||
+      (clientMessageId && clientMessageIdOf(existing) === clientMessageId)
+    );
+    if (index >= 0) next[index] = { ...next[index], ...normalized };
+    else next.push(normalized);
+  }
+  return next.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+};
+
+const createClientMessageId = () =>
+  globalThis.crypto?.randomUUID?.() || `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
 export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
   const { isAuthenticated, user } = useAuthStore();
   const userKey = user?._id || user?.id || "guest";
@@ -30,7 +53,26 @@ export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
 
   const socketRef = useRef(null);
   const convIdRef = useRef(null);
+  const lastMessageAtRef = useRef(null);
   const isTabActiveRef = useRef(isOpen && isSupportTabActive);
+
+  const mergeIncomingMessages = useCallback((incoming) => {
+    setMessages((previous) => {
+      const merged = mergeSupportMessages(previous, Array.isArray(incoming) ? incoming : [incoming]);
+      const last = merged[merged.length - 1];
+      if (last?.createdAt) lastMessageAtRef.current = new Date(last.createdAt).toISOString();
+      return merged;
+    });
+  }, []);
+
+  const syncMissedMessages = useCallback(async () => {
+    const conversationId = convIdRef.current;
+    if (!conversationId) return;
+    const params = { limit: 100 };
+    if (lastMessageAtRef.current) params.cursor = lastMessageAtRef.current;
+    const data = await getCustomerMessagesService(conversationId, params);
+    mergeIncomingMessages(data?.items || []);
+  }, [mergeIncomingMessages]);
 
   useEffect(() => {
     isTabActiveRef.current = isOpen && isSupportTabActive;
@@ -76,11 +118,14 @@ export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
         setConversation(activeSupport);
         convIdRef.current = activeSupport._id;
         const msgRes = await getCustomerMessagesService(activeSupport._id);
-        const msgs = (msgRes?.items || []).slice().reverse();
+        const msgs = msgRes?.items || [];
         setMessages(msgs);
+        const last = msgs[msgs.length - 1];
+        lastMessageAtRef.current = last?.createdAt ? new Date(last.createdAt).toISOString() : null;
       } else {
         setConversation(null);
         convIdRef.current = null;
+        lastMessageAtRef.current = null;
         setMessages([]);
       }
     } catch (err) {
@@ -127,6 +172,7 @@ export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
       if (convIdRef.current) {
         socket.emit("conversation:join", convIdRef.current);
       }
+      syncMissedMessages().catch((error) => console.error("Không thể đồng bộ tin nhắn bị lỡ:", error));
     });
 
     socket.on("disconnect", () => {
@@ -141,25 +187,23 @@ export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
       setSocketStatus("reconnecting");
     });
 
-    socket.on("message:new", (newMsg) => {
+    socket.on("message:new", ({ message: newMsg, conversation: incomingConversation } = {}) => {
       if (!newMsg) return;
       const targetConvId = String(
-        newMsg?.conversationId?._id || newMsg?.conversationId || ""
+        incomingConversation?._id || newMsg?.conversationId?._id || newMsg?.conversationId || ""
       );
 
       // Verify conversation matches or adopt if we didn't have one yet
       if (!convIdRef.current && targetConvId) {
         convIdRef.current = targetConvId;
+        if (incomingConversation?._id) setConversation(incomingConversation);
       }
 
       if (convIdRef.current && targetConvId && targetConvId !== convIdRef.current) {
         return;
       }
 
-      setMessages((prev) => {
-        if (prev.some((m) => m._id === newMsg._id)) return prev;
-        return [...prev, newMsg];
-      });
+      mergeIncomingMessages(newMsg);
 
       // Increment unread count if message came from admin/staff and user is not looking at it
       if (newMsg.senderType === "admin" && !isTabActiveRef.current) {
@@ -174,7 +218,7 @@ export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
       socketRef.current = null;
       setSocketStatus("disconnected");
     };
-  }, [isAuthenticated, socketUrl]);
+  }, [isAuthenticated, mergeIncomingMessages, socketUrl, syncMissedMessages]);
 
   // Join/leave conversation room when conversation changes
   useEffect(() => {
@@ -185,32 +229,44 @@ export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
     if (!socket || !cid || !socket.connected) return;
 
     socket.emit("conversation:join", cid);
+    syncMissedMessages().catch((error) => console.error("Không thể đồng bộ tin nhắn bị lỡ:", error));
 
     return () => {
       socket.emit("conversation:leave", cid);
     };
-  }, [conversation?._id]);
+  }, [conversation?._id, syncMissedMessages]);
 
   // Send message
   const sendMessage = useCallback(
-    async (text) => {
+    async (text, retryMessage = null) => {
       const trimmed = (text || "").trim();
       if (!trimmed || !isAuthenticated) return;
 
       setSending(true);
 
+      const clientMessageId = retryMessage?.clientMessageId || createClientMessageId();
+
       const tempMsg = {
-        _id: `temp_${Date.now()}`,
+        _id: retryMessage?._id || `temp_${clientMessageId}`,
+        clientMessageId,
         senderType: "user",
         content: trimmed,
-        createdAt: new Date().toISOString(),
+        createdAt: retryMessage?.createdAt || new Date().toISOString(),
+        isFailed: false,
       };
-      setMessages((prev) => [...prev, tempMsg]);
+      if (retryMessage) {
+        setMessages((prev) => prev.map((message) =>
+          message._id === retryMessage._id ? tempMsg : message
+        ));
+      } else {
+        mergeIncomingMessages(tempMsg);
+      }
 
       try {
         const payload = {
           content: trimmed,
           conversationId: convIdRef.current || undefined,
+          clientMessageId,
         };
 
         const res = await sendCustomerSupportMessageService(payload);
@@ -225,14 +281,13 @@ export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
         }
 
         if (res?.message) {
-          setMessages((prev) => {
-            const filtered = prev.filter((m) => m._id !== tempMsg._id);
-            return [...filtered, res.message];
-          });
+          mergeIncomingMessages(res.message);
         }
       } catch (err) {
         console.error("Lỗi gửi tin nhắn hỗ trợ:", err);
-        setMessages((prev) => prev.filter((m) => m._id !== tempMsg._id));
+        setMessages((prev) => prev.map((message) =>
+          message._id === tempMsg._id ? { ...message, isFailed: true } : message
+        ));
         toast.error(
           err?.response?.data?.message || "Không thể gửi tin nhắn hỗ trợ."
         );
@@ -240,8 +295,13 @@ export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
         setSending(false);
       }
     },
-    [isAuthenticated, conversation]
+    [isAuthenticated, conversation, mergeIncomingMessages]
   );
+
+  const retryMessage = useCallback((message) => {
+    if (!message?.isFailed) return;
+    return sendMessage(message.content, message);
+  }, [sendMessage]);
 
   const clearUnread = useCallback(() => {
     setUnreadCount(0);
@@ -260,6 +320,7 @@ export const useSupportChat = ({ isOpen, isSupportTabActive } = {}) => {
     socketStatus,
     unreadCount,
     sendMessage,
+    retryMessage,
     loadSupportData,
     clearUnread,
   };

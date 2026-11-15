@@ -12,14 +12,14 @@
 
 const STAGING_URL = "http://localhost:8081";
 const STAGING_API_URL = "http://localhost:8081/api";
-const STAGING_MONGO_URI = "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin";
-const STAGING_REDIS_URL = "redis://127.0.0.1:6381";
+import { requireEnv } from "./require-env.js";
+
+const STAGING_MONGO_URI = requireEnv("MONGO_CONNECTIONSTRING");
+const STAGING_REDIS_URL = requireEnv("REDIS_URL");
 
 process.env.NODE_ENV = "staging";
 process.env.MONGO_CONNECTIONSTRING = STAGING_MONGO_URI;
 process.env.REDIS_URL = STAGING_REDIS_URL;
-process.env.REDIS_HOST = "127.0.0.1";
-process.env.REDIS_PORT = "6381";
 
 import mongoose from "mongoose";
 import crypto from "crypto";

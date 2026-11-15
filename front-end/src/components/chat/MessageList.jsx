@@ -45,7 +45,7 @@ export const MessageList = ({
       ref={containerRef}
       onScroll={handleScroll}
       aria-live="polite"
-      className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 bg-background"
+      className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-4 space-y-4 bg-background w-full max-w-full box-border"
     >
       {/* Product context chip if user is looking at a product */}
       {context?.productName && (
@@ -55,7 +55,7 @@ export const MessageList = ({
               <img
                 src={context.image}
                 alt={context.productName}
-                className="h-7 w-7 shrink-0 object-cover border border-border"
+                className="h-7 w-7 shrink-0 object-contain bg-[var(--muted)]/50 border border-border"
               />
             )}
             <div className="truncate text-left">

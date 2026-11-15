@@ -36,13 +36,13 @@ const OrderItem = ({ item }) => {
       {/* Product Image or Monochrome Placeholder */}
       <Link
         to={href}
-        className="block w-20 h-24 bg-[var(--color-bg)] border border-[var(--color-border)] overflow-hidden shrink-0 flex items-center justify-center"
+        className="block w-20 h-24 bg-[var(--muted)]/40 dark:bg-zinc-900/50 border border-[var(--color-border)] overflow-hidden shrink-0 flex items-center justify-center"
       >
         {activeSrc ? (
           <img
             src={activeSrc}
             alt={item.product_name || "Sản phẩm"}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-contain object-center"
             onError={() => setImgIdx((prev) => prev + 1)}
           />
         ) : (

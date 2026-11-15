@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import orderRepository from "../order.repository.js";
 import { restoreOrderStock } from "./cancelOrder.command.js";
 import { AppError } from "../../../common/exceptions/AppError.js";
+import { emitOrderStatusChanged, emitPaymentUpdated } from "../../../sockets/events.js";
 
 export const updateOrder = async (id, orderBody) => {
   const order = await orderRepository.findById(id);
@@ -51,14 +52,8 @@ export const updateOrder = async (id, orderBody) => {
 
   await order.save();
 
-  // Trigger status change notification
-  import("../../../sockets/events.js")
-    .then(({ emitOrderNotification }) => {
-      emitOrderNotification(order);
-    })
-    .catch((err) =>
-      console.error("Failed to emit order socket notification:", err.message),
-    );
+  if (order.status !== oldStatus) emitOrderStatusChanged(order);
+  if (order.payment_status !== oldPaymentStatus) emitPaymentUpdated(order);
 
   return order;
 };
@@ -70,6 +65,7 @@ export const updateOrderStatus = async (id, status) => {
   }
   
   const oldStatus = order.status;
+  const oldPaymentStatus = order.payment_status;
   order.status = status === "shipped" ? "shipping" : status;
   
   if (order.status === "cancelled" && oldStatus !== "cancelled") {
@@ -90,6 +86,8 @@ export const updateOrderStatus = async (id, status) => {
   }
   
   await order.save();
+  if (order.status !== oldStatus) emitOrderStatusChanged(order);
+  if (order.payment_status !== oldPaymentStatus) emitPaymentUpdated(order);
   return order;
 };
 
@@ -99,6 +97,8 @@ export const paymentCallback = async (orderId, status, transactionId) => {
     throw new AppError("Đơn hàng không tồn tại", 404);
   }
 
+  const oldStatus = order.status;
+  const oldPaymentStatus = order.payment_status;
   if (status === "success") {
     const isFirstTimePaid = order.payment_status !== "paid";
     order.payment_status = "paid";
@@ -118,15 +118,8 @@ export const paymentCallback = async (orderId, status, transactionId) => {
     order.payment_status = "failed";
   }
   await order.save();
-
-  // Trigger payment callback status notification
-  import("../../../sockets/events.js")
-    .then(({ emitOrderNotification }) => {
-      emitOrderNotification(order);
-    })
-    .catch((err) =>
-      console.error("Failed to emit order socket notification:", err.message),
-    );
+  if (order.status !== oldStatus) emitOrderStatusChanged(order);
+  if (order.payment_status !== oldPaymentStatus) emitPaymentUpdated(order);
 
   return order;
 };

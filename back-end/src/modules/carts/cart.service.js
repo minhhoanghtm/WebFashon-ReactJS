@@ -3,6 +3,7 @@ import { Cart, CartItem } from "./cart.model.js";
 import { AppError } from "../../common/exceptions/AppError.js";
 import productRepository from "../products/product.repository.js";
 import pricingService from "../campaigns/pricing.service.js";
+import inventoryReservationService from "../inventory/inventoryReservation.service.js";
 
 class CartService {
   async addCart(cartData) {
@@ -42,6 +43,17 @@ class CartService {
     const product = await productRepository.findById(product_id);
     if (!product) {
       throw new AppError("Sản phẩm không tồn tại", 404);
+    }
+
+    // Check real-time stock taking into account active Redis reservations
+    const availableStock = await inventoryReservationService.getAvailableStock(product_id, variant_id);
+    if (availableStock < Number(quantity)) {
+      throw new AppError(
+        availableStock <= 0
+          ? "Sản phẩm hiện đã hết hàng hoặc đang được giữ bởi khách hàng khác"
+          : `Chỉ còn ${availableStock} sản phẩm khả dụng trong kho (yêu cầu ${quantity})`,
+        400
+      );
     }
 
     const priceInfo = await pricingService.resolvePrice(product, variant_id, new Date(), userId);

@@ -64,7 +64,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "blocked"],
+      enum: ["active", "blocked", "deleted"],
       default: "active",
       index: true,
     },
@@ -79,6 +79,15 @@ const userSchema = new mongoose.Schema(
       default: 'granted',
       index: true,
     },
+    legal_consents: {
+      terms_accepted: { type: Boolean, default: false },
+      privacy_accepted: { type: Boolean, default: false },
+      marketing_accepted: { type: Boolean, default: false },
+      policy_version: { type: String, default: null },
+      recorded_at: { type: Date, default: null },
+    },
+    processing_restricted_at: { type: Date, default: null },
+    personal_data_anonymized_at: { type: Date, default: null },
     addresses: [addressSchema],
   },
   {
@@ -95,5 +104,5 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.default.compare(enteredPassword, this.passWord);
 };
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;

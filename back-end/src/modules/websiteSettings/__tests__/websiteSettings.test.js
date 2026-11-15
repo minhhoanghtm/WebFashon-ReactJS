@@ -30,6 +30,8 @@ jest.unstable_mockModule("../../../middlewares/auth.middleware.js", () => ({
     }
     return next();
   },
+  optionalProtectedRoute: (req, res, next) => next(),
+  noAdmin: (req, res, next) => next(),
 }));
 
 const { default: websiteSettingsRouter } = await import("../websiteSettings.route.js");

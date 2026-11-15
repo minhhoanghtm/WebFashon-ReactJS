@@ -39,7 +39,7 @@ export async function testAuthAndAccount(browser, report) {
     await page.fill('input[type="email"], input[name="email"]', "customer@404studio.vn");
     await page.fill('input[type="password"], input[name="passWord"], input[name="password"]', "DevCustomer2026!");
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3500);
 
     const loginSuccess = await page.evaluate(() => {
       return (

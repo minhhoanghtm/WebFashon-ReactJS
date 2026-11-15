@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { 
@@ -376,7 +376,7 @@ export const SectionBuilder = ({ sections, setSections, selectedProducts, setSel
                         <div className="flex items-center gap-3">
                           <div className="w-16 h-12 border rounded bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
                             {sec.data.coverImage ? (
-                              <img src={sec.data.coverImage} alt="Hero" className="w-full h-full object-cover" />
+                              <img src={sec.data.coverImage} alt="Hero" className="w-full h-full object-contain" />
                             ) : (
                               <span className="text-[8px] text-gray-400">Không ảnh</span>
                             )}
@@ -456,7 +456,7 @@ export const SectionBuilder = ({ sections, setSections, selectedProducts, setSel
                           <div key={imgIdx} className="flex gap-4 items-center bg-slate-50/50 p-3 rounded-xl border border-gray-100 relative">
                             <div className="w-16 h-12 border rounded bg-white flex items-center justify-center overflow-hidden shrink-0">
                               {img.imageUrl ? (
-                                <img src={img.imageUrl} alt="Gallery item" className="w-full h-full object-cover" />
+                                <img src={img.imageUrl} alt="Gallery item" className="w-full h-full object-contain" />
                               ) : (
                                 <span className="text-[8px] text-gray-400">Trống</span>
                               )}
@@ -583,7 +583,7 @@ export const SectionBuilder = ({ sections, setSections, selectedProducts, setSel
                         <div className="flex items-center gap-3">
                           <div className="w-16 h-12 border rounded bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
                             {sec.data.image ? (
-                              <img src={sec.data.image} alt="Text position" className="w-full h-full object-cover" />
+                              <img src={sec.data.image} alt="Text position" className="w-full h-full object-contain" />
                             ) : (
                               <span className="text-[8px] text-gray-400">Không ảnh</span>
                             )}
@@ -649,7 +649,7 @@ export const SectionBuilder = ({ sections, setSections, selectedProducts, setSel
                                   >
                                     <div className="w-8 h-8 rounded border bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
                                       {prod.thumbnail_url || prod.images?.[0] ? (
-                                        <img src={prod.thumbnail_url || prod.images[0]} alt={prod.name} className="w-full h-full object-cover" />
+                                        <img src={prod.thumbnail_url || prod.images[0]} alt={prod.name} className="w-full h-full object-contain" />
                                       ) : (
                                         <span className="text-[6px] text-gray-400">Trống</span>
                                       )}
@@ -744,7 +744,7 @@ export const SectionBuilder = ({ sections, setSections, selectedProducts, setSel
                         <div className="flex items-center gap-3">
                           <div className="w-16 h-12 border rounded bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
                             {sec.data.image ? (
-                              <img src={sec.data.image} alt="Banner" className="w-full h-full object-cover" />
+                              <img src={sec.data.image} alt="Banner" className="w-full h-full object-contain" />
                             ) : (
                               <span className="text-[8px] text-gray-400">Không ảnh</span>
                             )}

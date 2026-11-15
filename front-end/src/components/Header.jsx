@@ -462,12 +462,12 @@ const Header = ({ searchTerm, onSearchTermChange }) => {
                                   onClick={() => setShowSuggest(false)}
                                   className="flex items-center gap-3 py-2 transition-colors hover:bg-secondary/60"
                                 >
-                                  <div className="h-11 w-9 shrink-0 overflow-hidden bg-secondary">
+                                  <div className="h-11 w-9 shrink-0 overflow-hidden bg-[var(--muted)]/40 dark:bg-zinc-900/50 flex items-center justify-center">
                                     {thumb ? (
                                       <img
                                         src={thumb}
                                         alt={prod.name || "Sản phẩm"}
-                                        className="h-full w-full object-cover"
+                                        className="h-full w-full object-contain object-center"
                                       />
                                     ) : null}
                                   </div>

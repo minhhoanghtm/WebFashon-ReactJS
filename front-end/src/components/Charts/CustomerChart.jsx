@@ -1,25 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import ReactECharts from "echarts-for-react";
 const CustomerChart = () => {
   const [selectedChart, setSelectedChart] = useState("ratio");
-  const [ratioCustomers, setRatioCustomers] = useState([]);
-  const [topCustomers, setTopCustomers] = useState([]);
-
-  useEffect(() => {
-    setRatioCustomers([
-      { month: "Tháng 1", new: 120, returning: 80 },
-      { month: "Tháng 2", new: 150, returning: 100 },
-      { month: "Tháng 3", new: 180, returning: 120 },
-    ]);
-  }, []);
-
-  useEffect(() => {
-    setTopCustomers([
-      { name: "Nguyễn Văn A", value: 500 },
-      { name: "Trần Thị B", value: 300 },
-      { name: "Lê Văn C", value: 200 },
-    ]);
-  }, []);
+  const ratioCustomers = [
+    { month: "Tháng 1", new: 120, returning: 80 },
+    { month: "Tháng 2", new: 150, returning: 100 },
+    { month: "Tháng 3", new: 180, returning: 120 },
+  ];
+  const topCustomers = [
+    { name: "Nguyễn Văn A", value: 500 },
+    { name: "Trần Thị B", value: 300 },
+    { name: "Lê Văn C", value: 200 },
+  ];
 
   const renderChart = {
     title: {

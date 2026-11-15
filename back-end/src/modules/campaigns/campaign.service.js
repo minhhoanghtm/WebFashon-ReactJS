@@ -4,6 +4,10 @@ import CampaignProduct from "./campaignProduct.model.js";
 import CampaignPurchase from "./campaignPurchase.model.js";
 import { OrderItem } from "../orders/order.model.js";
 import Product from "../products/product.model.js";
+import "../users/user.model.js";
+import "../categories/category.model.js";
+import "../banners/banner.model.js";
+import "../websiteSettings/page.model.js";
 import pricingService from "./pricing.service.js";
 import { AppError } from "../../common/exceptions/AppError.js";
 
@@ -247,8 +251,8 @@ class CampaignService {
         .sort({ priority: -1, createdAt: -1 })
         .skip(skip)
         .limit(limitNum)
-        .populate("createdBy", "name email")
-        .populate("updatedBy", "name email")
+        .populate("createdBy", "fullName name email")
+        .populate("updatedBy", "fullName name email")
         .lean(),
       Campaign.countDocuments(filter),
     ]);

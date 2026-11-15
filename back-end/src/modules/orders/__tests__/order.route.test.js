@@ -24,10 +24,21 @@ const orderFacadeMock = {
 const authState = {
   authenticated: true,
   role: "user",
+  userId: "user-1",
+};
+
+const orderModelMock = {
+  findById: jest.fn(),
 };
 
 jest.unstable_mockModule("../order.facade.js", () => ({
   default: orderFacadeMock,
+}));
+
+jest.unstable_mockModule("../order.model.js", () => ({
+  Order: orderModelMock,
+  OrderItem: { find: jest.fn() },
+  default: orderModelMock,
 }));
 
 jest.unstable_mockModule("../../../middlewares/auth.middleware.js", () => ({
@@ -36,7 +47,7 @@ jest.unstable_mockModule("../../../middlewares/auth.middleware.js", () => ({
       return res.status(401).json({ success: false, message: "Khong tim thay access token" });
     }
 
-    req.user = { userId: "user-1", role: authState.role };
+    req.user = { userId: authState.userId, role: authState.role };
     return next();
   },
   adminOnly: (req, res, next) => {
@@ -51,7 +62,7 @@ jest.unstable_mockModule("../../../middlewares/auth.middleware.js", () => ({
       return res.status(401).json({ success: false, message: "Khong tim thay access token" });
     }
 
-    req.user = { userId: "user-1", role: authState.role };
+    req.user = { userId: authState.userId, role: authState.role };
     if (authState.role === "admin") {
       return res.status(403).json({ success: false, message: "Quan tri vien khong duoc phep" });
     }
@@ -61,13 +72,12 @@ jest.unstable_mockModule("../../../middlewares/auth.middleware.js", () => ({
 }));
 
 const { orderRouter } = await import("../order.route.js");
-const { protectedRoute } = await import("../../../middlewares/auth.middleware.js");
 const { default: errorHandler } = await import("../../../middlewares/error.middleware.js");
 
 const createTestApp = () => {
   const app = express();
   app.use(express.json());
-  app.use("/api/order", protectedRoute, orderRouter);
+  app.use("/api/order", orderRouter);
   app.use(errorHandler);
   return app;
 };
@@ -79,6 +89,8 @@ describe("Order routes", () => {
     app = createTestApp();
     authState.authenticated = true;
     authState.role = "user";
+    authState.userId = "user-1";
+    jest.clearAllMocks();
   });
 
   test("GET /api/order requires authentication", async () => {
@@ -154,5 +166,111 @@ describe("Order routes", () => {
     expect(response.body.success).toBe(true);
     expect(response.body.data).toEqual(updatedOrder);
     expect(orderFacadeMock.updateOrderStatus).toHaveBeenCalledWith("order-1", "confirmed");
+  });
+
+  test("user A cannot update or delete an order owned by user B", async () => {
+    authState.userId = "user-a";
+    orderModelMock.findById.mockResolvedValue({ _id: "order-b", user_id: "user-b" });
+
+    const updateResponse = await request(app)
+      .put("/api/order/order-b")
+      .send({ note: "change" });
+    const deleteResponse = await request(app).delete("/api/order/order-b");
+
+    expect(updateResponse.status).toBe(403);
+    expect(deleteResponse.status).toBe(403);
+    expect(orderFacadeMock.updateOrder).not.toHaveBeenCalled();
+    expect(orderFacadeMock.deleteOrder).not.toHaveBeenCalled();
+  });
+
+  test("guest order update is rejected without its access token", async () => {
+    const response = await request(app)
+      .put("/api/order/guest/guest-order")
+      .send({ note: "change" });
+
+    expect(response.status).toBe(401);
+    expect(orderFacadeMock.updateOrder).not.toHaveBeenCalled();
+  });
+
+  test("account payment requires authentication", async () => {
+    authState.authenticated = false;
+
+    const response = await request(app)
+      .post("/api/order/payment")
+      .send({ orderId: "order-1", payment_method: "cod" });
+
+    expect(response.status).toBe(401);
+    expect(orderFacadeMock.paymentOrder).not.toHaveBeenCalled();
+  });
+
+  test("guest order update and delete require a matching access token", async () => {
+    const token = "guest-secret-token";
+    const tokenHash = (await import("crypto"))
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+    const select = jest.fn().mockResolvedValue({
+      _id: "guest-order",
+      user_id: null,
+      is_guest: true,
+      guest_access_token_hash: tokenHash,
+    });
+    orderModelMock.findById.mockReturnValue({ select });
+    orderFacadeMock.updateOrder.mockResolvedValue({ _id: "guest-order" });
+    orderFacadeMock.deleteOrder.mockResolvedValue({ _id: "guest-order" });
+
+    const updateResponse = await request(app)
+      .put("/api/order/guest/guest-order")
+      .set("x-guest-order-token", token)
+      .send({ note: "change" });
+    const deleteResponse = await request(app)
+      .delete("/api/order/guest/guest-order")
+      .set("x-guest-order-token", token);
+
+    expect(updateResponse.status).toBe(200);
+    expect(deleteResponse.status).toBe(200);
+    expect(orderFacadeMock.updateOrder).toHaveBeenCalledWith("guest-order", { note: "change" });
+    expect(orderFacadeMock.deleteOrder).toHaveBeenCalledWith("guest-order");
+  });
+
+  test("guest payment succeeds only with a matching access token", async () => {
+    const token = "guest-payment-token";
+    const tokenHash = (await import("crypto"))
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+    orderModelMock.findById.mockReturnValue({
+      select: jest.fn().mockResolvedValue({
+        _id: "guest-order",
+        user_id: null,
+        is_guest: true,
+        guest_access_token_hash: tokenHash,
+      }),
+    });
+    orderFacadeMock.paymentOrder.mockResolvedValue({ success: true, message: "OK", order: { _id: "guest-order" } });
+
+    const response = await request(app)
+      .post("/api/order/guest/guest-order/payment")
+      .set("x-guest-order-token", token)
+      .send({ payment_method: "cod" });
+
+    expect(response.status).toBe(200);
+    expect(orderFacadeMock.paymentOrder).toHaveBeenCalledWith(
+      null,
+      "guest-order",
+      "cod",
+      { guestAuthorized: true },
+    );
+  });
+
+  test("a null user_id is never treated as ownership of a signed-in user", async () => {
+    orderModelMock.findById.mockResolvedValue({ _id: "guest-order", user_id: null, is_guest: true });
+
+    const response = await request(app)
+      .put("/api/order/guest-order")
+      .send({ note: "change" });
+
+    expect(response.status).toBe(403);
+    expect(orderFacadeMock.updateOrder).not.toHaveBeenCalled();
   });
 });

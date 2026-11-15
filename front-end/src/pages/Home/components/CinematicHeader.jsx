@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
+import useFeatureFlags from "@/hooks/useFeatureFlags";
 import { useAuthStore } from "@/store/auth.store";
 import { useCartStore } from "@/store/cart.store";
 import { useFavoriteStore } from "@/store/favorite.store";
@@ -111,24 +112,29 @@ const MENU_ITEMS = [
     label: "KHO ƯU ĐÃI VOUCHER",
     path: "/vouchers",
     desc: "Đặc quyền mua sắm & mã giảm giá may đo",
+    featureFlag: "enableVoucher",
   },
   {
     num: "05",
     label: "VÍ VOUCHER CỦA TÔI",
     path: "/my-coupons",
     desc: "Quản lý và kích hoạt voucher cá nhân",
+    requireAuth: true,
+    featureFlag: "enableVoucher",
   },
   {
     num: "06",
     label: "LỊCH SỬ ĐƠN HÀNG",
     path: "/orders",
     desc: "Theo dõi tiến độ chế tác và vận chuyển",
+    requireAuth: true,
   },
   {
     num: "07",
     label: "HỒ SƠ TÀI KHOẢN",
     path: "/profile",
     desc: "Quản lý thông tin cá nhân và sổ địa chỉ",
+    requireAuth: true,
   },
   {
     num: "08",
@@ -146,7 +152,19 @@ export const CinematicHeader = ({
   const navigate = useNavigate();
   const { settings, loading } = useWebsiteSettings();
   const contactEmail = settings?.general?.email || "";
+  const { isFeatureEnabled } = useFeatureFlags();
   const { isAuthenticated: isLoggedIn, user, logout } = useAuthStore();
+
+  const filteredMenuItems = useMemo(() => {
+    return MENU_ITEMS.filter((item) => {
+      if (item.requireAuth && !isLoggedIn) return false;
+      if (item.featureFlag && !isFeatureEnabled(item.featureFlag)) return false;
+      return true;
+    }).map((item, idx) => ({
+      ...item,
+      num: String(idx + 1).padStart(2, "0"),
+    }));
+  }, [isLoggedIn, isFeatureEnabled]);
   const displayName =
     user?.fullName ||
     user?.data?.fullName ||
@@ -190,6 +208,13 @@ export const CinematicHeader = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [activeMenuIndex, setActiveMenuIndex] = useState(0);
+
+  // Keep activeMenuIndex within bounds when filteredMenuItems changes
+  useEffect(() => {
+    if (activeMenuIndex >= filteredMenuItems.length) {
+      setActiveMenuIndex(0);
+    }
+  }, [filteredMenuItems.length, activeMenuIndex]);
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [updatingItemId, setUpdatingItemId] = useState(null);
 
@@ -228,17 +253,26 @@ export const CinematicHeader = ({
   const logoUrl =
     !loading && settings?.general?.logoUrl ? settings.general.logoUrl : null;
 
-  // Track scroll position to adjust header appearance on homepage
+  // Track scroll position to adjust header appearance on homepage and inner pages
   useEffect(() => {
-    if (!isHomePage) return undefined;
     const handleScroll = () => {
-      const heroHeight = window.innerHeight * 0.85;
-      setScrolledPastHero(window.scrollY > heroHeight);
+      // Keep state frozen when fullscreen menu or cart drawer is open to prevent flicker
+      if (isMenuOpen || isCartOpen) return;
+
+      if (isHomePage) {
+        // Threshold: cuộn qua ~80% chiều cao hero (hero ~90svh -> threshold = innerHeight * 0.72)
+        const heroThreshold = window.innerHeight * 0.72;
+        setScrolledPastHero(window.scrollY > heroThreshold);
+      } else {
+        // Trên trang không có hero: cuộn qua 24px
+        setScrolledPastHero(window.scrollY > 24);
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHomePage]);
+  }, [isHomePage, isMenuOpen, isCartOpen]);
 
   // Keyboard accessibility: ESC closes overlay & drawer
   const handleKeyDown = useCallback(
@@ -395,7 +429,8 @@ export const CinematicHeader = ({
     }
   };
 
-  // Determine header background & color based on page type & scroll
+  // Determine header solid vs transparent state
+  const isSolid = !isHomePage || scrolledPastHero;
   const isTransparent = isHomePage && !scrolledPastHero;
 
   return (
@@ -403,10 +438,10 @@ export const CinematicHeader = ({
       {/* 1. Main Navigation Bar */}
       <header
         role="banner"
-        className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ease-out flex items-center ${
+        className={`fixed top-0 left-0 right-0 z-50 h-20 transition-[background-color,color,box-shadow,border-color,transform] duration-200 ease-out motion-reduce:transition-none flex items-center ${
           isTransparent
-            ? "bg-transparent text-white"
-            : "bg-background/95 text-foreground border-b border-border shadow-xs backdrop-blur-md"
+            ? "bg-gradient-to-b from-black/85 via-black/40 to-transparent text-white border-b border-transparent shadow-none"
+            : "bg-[#0C0C0E] text-[#F5F4F0] border-b border-white/15 shadow-[0_1px_0_rgba(255,255,255,0.06),0_8px_24px_rgba(0,0,0,0.22)]"
         }`}
       >
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 sm:px-8 lg:px-12">
@@ -416,28 +451,30 @@ export const CinematicHeader = ({
             onClick={() => setIsMenuOpen(true)}
             aria-label="Mở menu điều hướng toàn màn hình"
             aria-expanded={isMenuOpen}
-            className={`group flex min-h-[44px] min-w-[44px] items-center gap-2.5 text-xs font-semibold tracking-[0.26em] uppercase transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
-              isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
-            }`}
+            className="group flex min-h-[44px] min-w-[44px] items-center gap-2.5 text-xs font-semibold tracking-[0.26em] uppercase transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
           >
             <span className="relative flex h-3.5 w-4 flex-col justify-between overflow-hidden">
               <span
                 className={`h-[1.5px] w-full transition-transform duration-300 group-hover:translate-x-0.5 ${
-                  isTransparent ? "bg-white" : "bg-foreground"
+                  isTransparent ? "bg-white" : "bg-[#F5F4F0]"
                 }`}
               />
               <span
                 className={`h-[1.5px] w-3/4 transition-transform duration-300 group-hover:w-full ${
-                  isTransparent ? "bg-white" : "bg-foreground"
+                  isTransparent ? "bg-white" : "bg-[#F5F4F0]"
                 }`}
               />
               <span
                 className={`h-[1.5px] w-full transition-transform duration-300 group-hover:translate-x-0.5 ${
-                  isTransparent ? "bg-white" : "bg-foreground"
+                  isTransparent ? "bg-white" : "bg-[#F5F4F0]"
                 }`}
               />
             </span>
-            <span className="font-condensed text-sm tracking-[0.2em] sm:inline">
+            <span
+              className={`font-condensed text-sm tracking-[0.2em] sm:inline ${
+                isTransparent ? "text-white" : "text-[#F5F4F0]"
+              }`}
+            >
               MENU
             </span>
           </button>
@@ -445,9 +482,7 @@ export const CinematicHeader = ({
           {/* Center: Brand Logo */}
           <Link
             to="/"
-            className={`flex items-center gap-2 text-center group focus-visible:outline focus-visible:outline-2 ${
-              isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
-            }`}
+            className="flex items-center gap-2 text-center group focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
             aria-label={`${brandName} - Trang chủ`}
           >
             {logoUrl ? (
@@ -461,12 +496,16 @@ export const CinematicHeader = ({
               />
             ) : null}
             <div className="flex flex-col items-center">
-              <span className="font-condensed text-2xl font-bold tracking-[0.16em] uppercase sm:text-3xl">
+              <span
+                className={`font-condensed text-2xl font-bold tracking-[0.16em] uppercase sm:text-3xl ${
+                  isTransparent ? "text-white" : "text-[#F5F4F0]"
+                }`}
+              >
                 {brandName}
               </span>
               <span
                 className={`text-[9px] font-medium tracking-[0.4em] uppercase ${
-                  isTransparent ? "text-white/50" : "text-muted-foreground"
+                  isTransparent ? "text-white/60" : "text-[#9E9EA8]"
                 }`}
               >
                 ATELIER
@@ -482,8 +521,8 @@ export const CinematicHeader = ({
               onClick={() => setIsSearchOpen((isOpen) => !isOpen)}
               aria-label="Mở tìm kiếm sản phẩm"
               aria-expanded={isSearchOpen}
-              className={`flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
-                isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+              className={`flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 ${
+                isTransparent ? "text-white" : "text-[#F5F4F0]"
               }`}
             >
               <Search size={18} strokeWidth={1.5} />
@@ -493,13 +532,13 @@ export const CinematicHeader = ({
             <Link
               to="/favorites"
               aria-label={`Danh sách yêu thích, ${favoriteCount} thiết kế`}
-              className={`relative flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
-                isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+              className={`relative flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 ${
+                isTransparent ? "text-white" : "text-[#F5F4F0]"
               }`}
             >
               <Heart size={18} strokeWidth={1.5} />
               {favoriteCount > 0 && (
-                <span className="absolute top-2 right-1.5 flex h-4 min-w-[16px] items-center justify-center border border-current bg-background px-1 text-[9px] font-mono font-bold leading-none">
+                <span className="absolute top-2 right-1 flex h-4 min-w-[16px] items-center justify-center border border-[#0C0C0E] bg-[#F5F4F0] px-1 text-[9px] font-mono font-bold leading-none text-[#0C0C0E]">
                   {favoriteCount}
                 </span>
               )}
@@ -510,8 +549,8 @@ export const CinematicHeader = ({
               type="button"
               onClick={toggleTheme}
               aria-label={isDark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
-              className={`flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
-                isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+              className={`flex min-h-[44px] min-w-[44px] items-center justify-center transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 ${
+                isTransparent ? "text-white" : "text-[#F5F4F0]"
               }`}
             >
               {isDark ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
@@ -523,18 +562,18 @@ export const CinematicHeader = ({
               onClick={() => setIsCartOpen(true)}
               aria-label={`Mở giỏ hàng, hiện có ${cartCount} sản phẩm`}
               aria-expanded={isCartOpen}
-              className={`group flex min-h-[44px] min-w-[44px] items-center justify-end gap-2 text-xs font-semibold tracking-[0.22em] uppercase transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 ${
-                isTransparent ? "text-white focus-visible:outline-white" : "text-foreground focus-visible:outline-foreground"
+              className={`group flex min-h-[44px] min-w-[44px] items-center justify-end gap-2 text-xs font-semibold tracking-[0.22em] uppercase transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2 ${
+                isTransparent ? "text-white" : "text-[#F5F4F0]"
               }`}
             >
               <span className="hidden font-condensed text-sm tracking-[0.2em] sm:inline">
                 GIỎ HÀNG
               </span>
               <span
-                className={`inline-flex h-5 min-w-[20px] items-center justify-center border px-1 text-[11px] font-mono tabular-nums ${
+                className={`inline-flex h-5 min-w-[20px] items-center justify-center border px-1.5 text-[11px] font-mono font-bold tabular-nums transition-colors ${
                   isTransparent
-                    ? "border-white/40 text-white group-hover:border-white"
-                    : "border-border text-foreground group-hover:border-foreground"
+                    ? "border-white/50 text-white bg-black/40 group-hover:border-white"
+                    : "border-white/20 text-[#0C0C0E] bg-[#F5F4F0] group-hover:bg-white"
                 }`}
               >
                 {cartCount}
@@ -545,9 +584,9 @@ export const CinematicHeader = ({
 
         {/* Live Search Dropdown */}
         {isSearchOpen && (
-          <div className="absolute right-4 top-full mt-2 w-[calc(100%-2rem)] max-w-md border border-border bg-popover/95 p-3 shadow-2xl backdrop-blur-md sm:right-8 sm:w-96 lg:right-12">
+          <div className="absolute right-4 top-full mt-2 w-[calc(100%-2rem)] max-w-md border border-white/20 bg-[#0C0C0E] p-3.5 shadow-[0_16px_40px_rgba(0,0,0,0.65)] sm:right-8 sm:w-96 lg:right-12">
             <form role="search" onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-              <Search size={17} className="shrink-0 text-muted-foreground" aria-hidden="true" />
+              <Search size={17} className="shrink-0 text-[#9E9EA8]" aria-hidden="true" />
               <input
                 type="search"
                 value={searchTerm}
@@ -555,20 +594,20 @@ export const CinematicHeader = ({
                 autoFocus
                 placeholder="Tìm kiếm thiết kế Atelier..."
                 aria-label="Tìm kiếm sản phẩm"
-                className="min-w-0 flex-1 bg-transparent py-2 text-xs text-popover-foreground outline-none placeholder:text-muted-foreground font-sans"
+                className="min-w-0 flex-1 bg-white/[0.06] border border-white/15 px-3 py-2 text-xs text-[#F5F4F0] placeholder:text-[#9E9EA8] focus:border-white/40 outline-none font-sans rounded-none"
               />
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(false)}
                 aria-label="Đóng tìm kiếm"
-                className="p-2 text-muted-foreground transition-colors hover:text-popover-foreground"
+                className="p-2 text-[#9E9EA8] transition-colors hover:text-[#F5F4F0]"
               >
                 <X size={17} />
               </button>
             </form>
 
             {suggestions.length > 0 && (
-              <ul className="mt-2 divide-y divide-border border-t border-border">
+              <ul className="mt-3 divide-y divide-white/10 border-t border-white/10">
                 {suggestions.map((product) => {
                   const id = product._id || product.id || product.slug;
                   const thumbnail =
@@ -578,16 +617,23 @@ export const CinematicHeader = ({
                       <button
                         type="button"
                         onClick={() => handleSuggestionSelect(product)}
-                        className="flex w-full items-center gap-3 py-2 text-left transition-colors hover:bg-muted/50"
+                        className="flex w-full items-center gap-3 py-2 text-left transition-colors hover:bg-white/[0.08] px-1.5"
                       >
-                        <div className="h-10 w-8 shrink-0 overflow-hidden bg-muted">
+                        <div className="h-10 w-8 shrink-0 overflow-hidden bg-black/40 border border-white/10 flex items-center justify-center">
                           {thumbnail && (
-                            <img src={thumbnail} alt="" className="h-full w-full object-cover" />
+                            <img src={thumbnail} alt="" className="h-full w-full object-contain object-center" />
                           )}
                         </div>
-                        <span className="truncate text-xs tracking-wide text-foreground font-sans">
-                          {product.name || "Sản phẩm"}
-                        </span>
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span className="truncate text-xs tracking-wide text-[#F5F4F0] font-sans">
+                            {product.name || "Sản phẩm"}
+                          </span>
+                          {(product.new_price || product.price) && (
+                            <span className="text-[10px] text-[#9E9EA8] font-mono">
+                              {formatCurrency(product.new_price || product.price)}
+                            </span>
+                          )}
+                        </div>
                       </button>
                     </li>
                   );
@@ -635,7 +681,7 @@ export const CinematicHeader = ({
               aria-label="Các trang chính"
               className="flex flex-col space-y-1 sm:space-y-1.5 lg:space-y-1.5 lg:col-span-7"
             >
-              {MENU_ITEMS.map((item, idx) => (
+              {filteredMenuItems.map((item, idx) => (
                 <Link
                   key={item.path}
                   to={item.path}
@@ -672,11 +718,11 @@ export const CinematicHeader = ({
                     ATELIER ARCHIVE · 2026
                   </p>
                   <h3 className="font-condensed text-2xl xl:text-3xl font-bold tracking-wider text-white uppercase">
-                    {MENU_ITEMS[activeMenuIndex]?.label}
+                    {filteredMenuItems[activeMenuIndex]?.label}
                   </h3>
                   <div className="mx-auto h-[1px] w-10 bg-white/30" />
                   <p className="text-xs text-white/60 leading-relaxed max-w-[200px] mx-auto font-sans">
-                    {MENU_ITEMS[activeMenuIndex]?.desc}
+                    {filteredMenuItems[activeMenuIndex]?.desc}
                   </p>
                 </div>
               </div>
@@ -811,7 +857,7 @@ export const CinematicHeader = ({
                             <img
                               src={itemImg}
                               alt={item.name}
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-contain object-center"
                             />
                           ) : (
                             <div className="h-full w-full bg-neutral-800 flex items-center justify-center text-[9px] text-white/40 font-mono">

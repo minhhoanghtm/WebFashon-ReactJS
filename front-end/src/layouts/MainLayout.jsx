@@ -9,9 +9,17 @@ import CinematicHeader from "@/pages/Home/components/CinematicHeader";
 import Footer from "@/components/Footer";
 import CustomerChatWidget from "@/components/CustomerChatWidget";
 import useTracking from "@/hooks/useTracking";
+import useFeatureFlags from "@/hooks/useFeatureFlags";
+import { useAuthStore } from "@/store/auth.store";
+import MaintenancePage from "@/pages/Maintenance";
+import MaintenanceAdminBanner from "@/components/admin/MaintenanceAdminBanner";
 
 const MainLayout = () => {
   useTracking({ autoTrackPageView: true });
+  const { flags } = useFeatureFlags();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === "admin";
+
   const [searchParams] = useSearchParams();
   const [homeSearchTerm, setHomeSearchTerm] = useState(
     () => searchParams.get("search") || ""
@@ -31,8 +39,23 @@ const MainLayout = () => {
     }
   }, [location.pathname, navType]);
 
+  // If maintenance mode is active:
+  // - Non-admin visitors see the full takeover MaintenancePage (no header, footer, chat)
+  // - Admin users see storefront normally with a top warning banner
+  if (flags.maintenanceMode && !isAdmin) {
+    return (
+      <MaintenancePage
+        message={flags.maintenanceMessage}
+        until={flags.maintenanceUntil}
+      />
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground font-sans selection:bg-foreground selection:text-background">
+      {/* Sticky Admin reminder banner when maintenance mode is active */}
+      {flags.maintenanceMode && isAdmin && <MaintenanceAdminBanner />}
+
       {/* WCAG 2.2 AA Skip Navigation Link */}
       <a
         href="#main-content"
@@ -64,7 +87,7 @@ const MainLayout = () => {
         {currentOutlet}
       </main>
 
-      {!isHomePage && <Footer />}
+      <Footer />
 
       <CustomerChatWidget />
     </div>

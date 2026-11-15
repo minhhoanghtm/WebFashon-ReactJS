@@ -11,21 +11,9 @@ const iconMap = {
   avgOrder: <FaCreditCard />,
   soldProducts: <AiFillProduct />,
 };
-const adminData = [
-  { key: "revenue", label: "Tổng doanh thu", value: 1000000 },
-  { key: "orders", label: "Tổng đơn hàng", value: 200 },
-  { key: "customers", label: "Tổng khách hàng", value: 150 },
-  { key: "avgOrder", label: "Giá trị trung bình đơn hàng", value: 50000 },
-  { key: "soldProducts", label: "Sản phẩm đã bán", value: 800 },
-];
-const userData = [
-  { key: "orders", label: "Đơn hàng của tôi", value: 12 },
-  { key: "total", label: "Tổng số sản phẩm", value: 120 },
-  { key: "revenue", label: "Tổng chi tiêu", value: 2500000 },
-];
 // Tổng quan kinh doanh
 // Đơn hàng của tôi
-const KPIChart = ({ title , data  }) => {
+const KPIChart = ({ title, data }) => {
   const safeData = Array.isArray(data) ? data : [];
 
   return (

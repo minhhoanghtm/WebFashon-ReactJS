@@ -1,13 +1,15 @@
 const STAGING_URL = "http://localhost:8081";
 const STAGING_API_URL = "http://localhost:8081/api";
-const STAGING_MONGO_URI = "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin";
-const STAGING_REDIS_URL = "redis://127.0.0.1:6381";
+import { requireEnv } from "./require-env.js";
+
+const STAGING_MONGO_URI = requireEnv("MONGO_CONNECTIONSTRING");
+const STAGING_REDIS_URL = requireEnv("REDIS_URL");
+const customerPassword = requireEnv("STAGING_CUSTOMER_PASSWORD");
+const adminPassword = requireEnv("STAGING_ADMIN_PASSWORD");
 
 process.env.NODE_ENV = "staging";
 process.env.MONGO_CONNECTIONSTRING = STAGING_MONGO_URI;
 process.env.REDIS_URL = STAGING_REDIS_URL;
-process.env.REDIS_HOST = "127.0.0.1";
-process.env.REDIS_PORT = "6381";
 process.env.ACTIVE_REC_EXPERIMENT_ID = "AA_Recommendation_Validation";
 
 import { chromium } from "playwright";
@@ -248,7 +250,7 @@ async function runStagingFullStackE2E() {
     const loginRes = await fetch(`${STAGING_API_URL}/auth/signIn`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "customer@404studio.vn", passWord: "StagingPass123!" }),
+      body: JSON.stringify({ email: "customer@404studio.vn", passWord: customerPassword }),
     });
     const loginJson = await loginRes.json();
     const customerToken = loginJson.data?.accessToken;
@@ -525,7 +527,7 @@ async function runStagingFullStackE2E() {
     const refreshLoginRes = await fetch(`${STAGING_API_URL}/auth/signIn`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "customer@404studio.vn", passWord: "StagingPass123!" }),
+      body: JSON.stringify({ email: "customer@404studio.vn", passWord: customerPassword }),
     });
     const freshCustomerToken = (await refreshLoginRes.json()).data?.accessToken;
 
@@ -601,7 +603,7 @@ async function runStagingFullStackE2E() {
     const adminLoginRes = await fetch(`${STAGING_API_URL}/auth/signIn`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "admin@404studio.vn", passWord: "StagingAdmin123!" }),
+      body: JSON.stringify({ email: "admin@404studio.vn", passWord: adminPassword }),
     });
     const adminLoginJson = await adminLoginRes.json();
     const adminToken = adminLoginJson.data?.accessToken;

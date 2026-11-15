@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  guestOrderLookup,
   createOrder,
   getOrdersByUser,
   updateOrder,
@@ -17,18 +18,28 @@ import {
   updateOrderItem,
   getAdminOrders,
   updateOrderStatus,
+  getOrderPayment,
+  updateGuestOrder,
+  deleteGuestOrder,
+  payGuestOrder,
 } from "./order.controller.js";
 import { protectedRoute, adminOnly, noAdmin } from "../../middlewares/auth.middleware.js";
 import { validateUpdateOrderStatus } from "./order.validator.js";
 
 const orderRouter = express.Router();
 
-orderRouter.get("/", noAdmin, getOrdersByUser);
+orderRouter.get("/guest-lookup", guestOrderLookup);
+orderRouter.post("/guest-lookup", guestOrderLookup);
+orderRouter.get("/", protectedRoute, noAdmin, getOrdersByUser);
 orderRouter.post("/", noAdmin, createOrder);
-orderRouter.put("/:id", noAdmin, updateOrder);
-orderRouter.delete("/:id", noAdmin, deleteOrder);
-orderRouter.post("/payment", noAdmin, paymentOrder);
+orderRouter.put("/guest/:id", updateGuestOrder);
+orderRouter.delete("/guest/:id", deleteGuestOrder);
+orderRouter.post("/guest/:id/payment", payGuestOrder);
+orderRouter.put("/:id", protectedRoute, noAdmin, updateOrder);
+orderRouter.delete("/:id", protectedRoute, noAdmin, deleteOrder);
+orderRouter.post("/payment", protectedRoute, noAdmin, paymentOrder);
 orderRouter.get("/payment/callback", noAdmin, paymentCallback);
+orderRouter.get("/:id/payment", protectedRoute, noAdmin, getOrderPayment);
 
 // Admin reports
 orderRouter.get("/admin/kpi", protectedRoute, adminOnly, kpi);

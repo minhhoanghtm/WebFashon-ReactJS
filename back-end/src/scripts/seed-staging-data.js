@@ -18,8 +18,11 @@ import Experiment from "../modules/recommendations/experiments/experiment.model.
 import User from "../modules/users/user.model.js";
 import vectorIndexService from "../modules/ai/services/vectorIndex.service.js";
 import { AA_EXPERIMENT_ID } from "../modules/recommendations/experiments/experiment.service.js";
+import { requireEnv } from "./require-env.js";
 
-const STAGING_URI = "mongodb://staging_admin:staging_secret@127.0.0.1:27018/webfashion_staging?authSource=admin";
+const STAGING_URI = requireEnv("MONGO_CONNECTIONSTRING");
+const customerPassword = requireEnv("STAGING_CUSTOMER_PASSWORD");
+const adminPassword = requireEnv("STAGING_ADMIN_PASSWORD");
 
 async function seedStaging() {
   console.log("=== SEEDING ISOLATED STAGING DATABASE ===");
@@ -30,7 +33,7 @@ async function seedStaging() {
   console.log(" Connected to Staging MongoDB successfully.");
 
   // 0. Seed Users (Admin & Customer)
-  const hashedCustomerPassword = await bcrypt.hash("StagingPass123!", 10);
+  const hashedCustomerPassword = await bcrypt.hash(customerPassword, 10);
   await User.findOneAndUpdate(
     { email: "customer@404studio.vn" },
     {
@@ -55,9 +58,9 @@ async function seedStaging() {
     },
     { upsert: true, new: true }
   );
-  console.log("  + Seeded test customer user: customer@404studio.vn / StagingPass123!");
+  console.log("  + Seeded test customer user from STAGING_CUSTOMER_PASSWORD.");
 
-  const hashedAdminPassword = await bcrypt.hash("StagingAdmin123!", 10);
+  const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
   await User.findOneAndUpdate(
     { email: "admin@404studio.vn" },
     {
@@ -71,7 +74,7 @@ async function seedStaging() {
     },
     { upsert: true, new: true }
   );
-  console.log("  + Seeded test admin user: admin@404studio.vn / StagingAdmin123!");
+  console.log("  + Seeded test admin user from STAGING_ADMIN_PASSWORD.");
 
   // 1. Seed Categories
   const existingCat = await Category.findOne({ slug: "ao-nam" });

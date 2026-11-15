@@ -84,7 +84,7 @@ const pageSchema = new mongoose.Schema(
   }
 );
 
-const Page = mongoose.model("Page", pageSchema, "pages");
+const Page = mongoose.models.Page || mongoose.model("Page", pageSchema, "pages");
 
 export { Page };
 export default Page;

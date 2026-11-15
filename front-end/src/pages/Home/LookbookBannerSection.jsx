@@ -73,7 +73,7 @@ const LookbookBannerSection = () => {
             <img
               src={banner.imageUrl}
               alt={banner.title}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.01] transition duration-700 pointer-events-none"
+              className="absolute inset-0 w-full h-full object-cover object-[50%_25%] group-hover:scale-[1.01] transition duration-700 pointer-events-none"
             />
             
             {/* Elegant Vignette Overlay */}

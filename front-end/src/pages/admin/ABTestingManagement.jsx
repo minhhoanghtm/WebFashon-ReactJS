@@ -120,7 +120,6 @@ export default function ABTestingManagement() {
   const mde = analytics?.mdeAnalysis || {};
 
   const isRunning = exp.status === "running";
-  const isDraft = exp.status === "draft";
 
   return (
     <div className="space-y-6 p-6">
