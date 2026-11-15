@@ -80,8 +80,10 @@ export function SignalFabricCanvas({ className = "" }) {
       container.addEventListener("mousemove", handleMouseMove);
 
       let clock = new THREE.Clock();
+      let isVisible = true;
 
       const animate = () => {
+        if (!isVisible) return;
         animationFrameId = requestAnimationFrame(animate);
         const elapsedTime = clock.getElapsedTime();
 
@@ -106,10 +108,29 @@ export function SignalFabricCanvas({ className = "" }) {
         renderer.render(scene, camera);
       };
 
+      // Pause rendering when offscreen to save battery and GPU cycles
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          const wasVisible = isVisible;
+          isVisible = entry.isIntersecting;
+          if (isVisible && !wasVisible) {
+            clock.start();
+            animate();
+          } else if (!isVisible && animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+            clock.stop();
+          }
+        },
+        { threshold: 0.05 }
+      );
+      observer.observe(container);
+
       animate();
 
       return () => {
-        cancelAnimationFrame(animationFrameId);
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        observer.disconnect();
         window.removeEventListener("resize", handleResize);
         container.removeEventListener("mousemove", handleMouseMove);
         if (renderer?.domElement && container.contains(renderer.domElement)) {
