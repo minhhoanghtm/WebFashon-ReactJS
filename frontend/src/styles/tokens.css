@@ -1,29 +1,91 @@
-/* Hallmark Stamp: 2026-11-16 WebFashion Atelier V2 Tokens */
-:root {
+/* Hallmark Stamp: 2026-11-16 WebFashion Atelier Phase 21 Light & Dark Design Tokens */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Typography */
   --font-display: 'Oswald Variable', 'Oswald', 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  --color-bg-primary: #0c0c0e;
-  --color-bg-surface: #161619;
-  --color-bg-elevated: #1e1e23;
-  --color-bg-subtle: #25252b;
+  /* Light Mode Color Palette (Warm Minimalist Luxury) */
+  --color-bg-primary: #FAF9F6;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-elevated: #F3F0EB;
+  --color-bg-subtle: #EEE8DF;
+  --color-bg-card: #FFFFFF;
 
-  --color-text-primary: #f4f0e8;
-  --color-text-secondary: #9a989f;
-  --color-text-muted: #6b6973;
+  /* Accents */
+  --color-accent-rose: #D99A96;
+  --color-accent-champagne: #D8B98A;
+  --color-accent-signal: #E65100;
+  --color-accent-signal-hover: #FF6D00;
+  --color-accent-cobalt: #2563EB;
+  --color-accent-lime: #16A34A;
 
-  --color-accent-signal: #e65100;
-  --color-accent-signal-hover: #ff6d00;
-  --color-accent-cobalt: #2563eb;
-  --color-accent-lime: #84cc16;
+  /* Typography Colors */
+  --color-text-primary: #242424;
+  --color-text-secondary: #66615D;
+  --color-text-muted: #8A8580;
 
-  --color-border: rgba(244, 240, 232, 0.12);
-  --color-border-subtle: rgba(244, 240, 232, 0.06);
-  --color-border-active: rgba(230, 81, 0, 0.6);
+  /* Borders */
+  --color-border: #E6E1DA;
+  --color-border-subtle: #EFEBE5;
+  --color-border-active: #E65100;
 
+  /* Buttons */
+  --color-btn-primary-bg: #34302D;
+  --color-btn-primary-text: #FFFFFF;
+  --color-btn-secondary-bg: #F3F0EB;
+  --color-btn-secondary-text: #242424;
+
+  /* Shadows */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-signal: 0 0 20px rgba(230, 81, 0, 0.2);
+
+  --max-content-width: 1440px;
+}
+
+[data-theme="dark"],
+.dark {
+  color-scheme: dark;
+
+  /* Dark Mode Color Palette (Soft Premium Charcoal, No Pitch Black) */
+  --color-bg-primary: #171717;
+  --color-bg-secondary: #202020;
+  --color-bg-surface: #202020;
+  --color-bg-elevated: #292827;
+  --color-bg-subtle: #34312F;
+  --color-bg-card: #202020;
+
+  /* Accents */
+  --color-accent-rose: #E1AAA5;
+  --color-accent-champagne: #DDC398;
+  --color-accent-signal: #E65100;
+  --color-accent-signal-hover: #FF6D00;
+  --color-accent-cobalt: #3B82F6;
+  --color-accent-lime: #22C55E;
+
+  /* Typography Colors */
+  --color-text-primary: #F5F3EF;
+  --color-text-secondary: #BDB7B1;
+  --color-text-muted: #8E8A85;
+
+  /* Borders */
+  --color-border: #3C3935;
+  --color-border-subtle: rgba(245, 243, 239, 0.08);
+  --color-border-active: #E65100;
+
+  /* Buttons */
+  --color-btn-primary-bg: #E8DFD3;
+  --color-btn-primary-text: #201D1B;
+  --color-btn-secondary-bg: #292827;
+  --color-btn-secondary-text: #F5F3EF;
+
+  /* Shadows */
   --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.6);
   --shadow-signal: 0 0 24px rgba(230, 81, 0, 0.25);
-
-  --max-content-width: 1440px;
 }

@@ -1,8 +1,31 @@
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { useThemeStore } from "../../stores/themeStore";
 
 export function SignalFabricCanvas({ className = "" }) {
   const mountRef = useRef(null);
+  const theme = useThemeStore((state) => state.theme);
+  const sceneRefs = useRef(null);
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains("dark") || 
+      document.documentElement.getAttribute("data-theme") === "dark";
+
+    if (sceneRefs.current) {
+      const { material, dirLight, ambientLight } = sceneRefs.current;
+      if (isDark) {
+        material.color.setHex(0x1a1a20);
+        dirLight.color.setHex(0xf4f0e8);
+        ambientLight.color.setHex(0x0c0c0e);
+        ambientLight.intensity = 1.2;
+      } else {
+        material.color.setHex(0xd6cfc4);
+        dirLight.color.setHex(0xffffff);
+        ambientLight.color.setHex(0xf3f0eb);
+        ambientLight.intensity = 1.8;
+      }
+    }
+  }, [theme]);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -37,9 +60,12 @@ export function SignalFabricCanvas({ className = "" }) {
       container.appendChild(renderer.domElement);
 
       // Create silk plane
+      const isInitiallyDark = document.documentElement.classList.contains("dark") || 
+        document.documentElement.getAttribute("data-theme") === "dark";
+
       const geometry = new THREE.PlaneGeometry(3.6, 2.4, 48, 36);
       const material = new THREE.MeshStandardMaterial({
-        color: 0x1a1a20,
+        color: isInitiallyDark ? 0x1a1a20 : 0xd6cfc4,
         roughness: 0.35,
         metalness: 0.65,
         wireframe: false,
@@ -50,16 +76,18 @@ export function SignalFabricCanvas({ className = "" }) {
       scene.add(mesh);
 
       // Light setup: high contrast key light + orange signal rim light
-      const dirLight = new THREE.DirectionalLight(0xf4f0e8, 2.5);
+      const dirLight = new THREE.DirectionalLight(isInitiallyDark ? 0xf4f0e8 : 0xffffff, isInitiallyDark ? 2.5 : 2.2);
       dirLight.position.set(2, 4, 3);
       scene.add(dirLight);
 
-      const signalLight = new THREE.PointLight(0xe65100, 4.0, 8);
+      const signalLight = new THREE.PointLight(0xe65100, isInitiallyDark ? 4.0 : 3.0, 8);
       signalLight.position.set(-2, 1, 1.5);
       scene.add(signalLight);
 
-      const ambientLight = new THREE.AmbientLight(0x0c0c0e, 1.2);
+      const ambientLight = new THREE.AmbientLight(isInitiallyDark ? 0x0c0c0e : 0xf3f0eb, isInitiallyDark ? 1.2 : 1.8);
       scene.add(ambientLight);
+
+      sceneRefs.current = { material, dirLight, ambientLight, signalLight };
 
       const handleMouseMove = (e) => {
         const rect = container.getBoundingClientRect();
@@ -129,6 +157,7 @@ export function SignalFabricCanvas({ className = "" }) {
       animate();
 
       return () => {
+        sceneRefs.current = null;
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         observer.disconnect();
         window.removeEventListener("resize", handleResize);
@@ -152,7 +181,7 @@ export function SignalFabricCanvas({ className = "" }) {
       aria-hidden="true"
     >
       {/* Fallback subtle geometric mesh background if WebGL is disabled */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#121215] via-[#1a1a20]/40 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-stone-200/40 dark:from-[#121215] via-stone-300/20 dark:via-[#1a1a20]/40 to-transparent pointer-events-none" />
     </div>
   );
 }

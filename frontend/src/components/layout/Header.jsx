@@ -6,6 +6,7 @@ import { useCartStore } from "../../stores/cartStore";
 import { useUiStore } from "../../stores/uiStore";
 import { usePersonaStore } from "../../stores/personaStore";
 import { NotificationCenter } from "../shared/NotificationCenter";
+import { ThemeSwitcher } from "../ui/ThemeSwitcher";
 
 export function Header() {
   const navigate = useNavigate();
@@ -104,6 +105,9 @@ export function Header() {
 
           {/* In-App Notification Center */}
           <NotificationCenter />
+
+          {/* Theme Switcher (Light / Dark / System) */}
+          <ThemeSwitcher />
 
           {/* Account Link or Menu */}
           {user ? (
@@ -243,6 +247,12 @@ export function Header() {
                 Đăng Nhập / Đăng Ký
               </Link>
             )}
+
+            {/* Mobile Theme Switcher Bar */}
+            <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+              <span className="text-xs font-mono uppercase text-[#9a989f]">Giao Diện:</span>
+              <ThemeSwitcher />
+            </div>
           </div>
         </div>
       )}

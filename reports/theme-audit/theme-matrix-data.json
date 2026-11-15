@@ -1,0 +1,360 @@
+{
+  "testedAt": "2026-11-15T21:25:49.938Z",
+  "defaultThemeTest": {
+    "pass": true,
+    "dataTheme": "light",
+    "hasDarkClass": false,
+    "localStorageValue": null,
+    "metaThemeColor": "#FAF9F6"
+  },
+  "themeSwitchTests": [
+    {
+      "target": "dark",
+      "pass": true,
+      "dataTheme": "dark",
+      "hasDarkClass": true,
+      "localStorageValue": "dark",
+      "metaThemeColor": "#171717"
+    },
+    {
+      "target": "system",
+      "pass": true,
+      "dataTheme": "light",
+      "localStorageValue": "system"
+    },
+    {
+      "target": "light",
+      "pass": true,
+      "dataTheme": "light",
+      "hasDarkClass": false,
+      "localStorageValue": "light",
+      "metaThemeColor": "#FAF9F6"
+    }
+  ],
+  "persistenceTest": {
+    "pass": true,
+    "dataTheme": "dark",
+    "hasDarkClass": true,
+    "localStorageValue": "dark"
+  },
+  "contrastAudit": {
+    "light": [
+      {
+        "route": "/",
+        "metrics": {
+          "theme": "light",
+          "bodyBg": "rgb(250, 249, 246)",
+          "bodyColor": "rgb(36, 36, 36)",
+          "hColor": "rgb(36, 36, 36)",
+          "pColor": "rgb(102, 97, 93)",
+          "btnBg": "rgb(255, 255, 255)",
+          "btnColor": "rgb(36, 36, 36)",
+          "cardBg": "rgb(250, 249, 246)"
+        },
+        "textContrast": 5.81,
+        "hContrast": 14.74,
+        "passAA": true,
+        "passAAA": false
+      },
+      {
+        "route": "/products",
+        "metrics": {
+          "theme": "light",
+          "bodyBg": "rgb(250, 249, 246)",
+          "bodyColor": "rgb(36, 36, 36)",
+          "hColor": "rgb(36, 36, 36)",
+          "pColor": "rgb(102, 97, 93)",
+          "btnBg": "rgb(255, 255, 255)",
+          "btnColor": "rgb(36, 36, 36)",
+          "cardBg": "rgb(250, 249, 246)"
+        },
+        "textContrast": 5.81,
+        "hContrast": 14.74,
+        "passAA": true,
+        "passAAA": false
+      }
+    ],
+    "dark": [
+      {
+        "route": "/",
+        "metrics": {
+          "theme": "dark",
+          "bodyBg": "rgb(23, 23, 23)",
+          "bodyColor": "rgb(245, 243, 239)",
+          "hColor": "rgb(245, 243, 239)",
+          "pColor": "rgb(189, 183, 177)",
+          "btnBg": "rgb(32, 32, 32)",
+          "btnColor": "rgb(245, 243, 239)",
+          "cardBg": "rgb(23, 23, 23)"
+        },
+        "textContrast": 9.03,
+        "hContrast": 16.18,
+        "passAA": true,
+        "passAAA": true
+      },
+      {
+        "route": "/products",
+        "metrics": {
+          "theme": "dark",
+          "bodyBg": "rgb(23, 23, 23)",
+          "bodyColor": "rgb(245, 243, 239)",
+          "hColor": "rgb(245, 243, 239)",
+          "pColor": "rgb(189, 183, 177)",
+          "btnBg": "rgb(32, 32, 32)",
+          "btnColor": "rgb(245, 243, 239)",
+          "cardBg": "rgb(23, 23, 23)"
+        },
+        "textContrast": 9.03,
+        "hContrast": 16.18,
+        "passAA": true,
+        "passAAA": true
+      }
+    ]
+  },
+  "screenshots": {
+    "light": [
+      {
+        "route": "/",
+        "viewport": "desktop",
+        "file": "home_desktop.png"
+      },
+      {
+        "route": "/products",
+        "viewport": "desktop",
+        "file": "products_desktop.png"
+      },
+      {
+        "route": "/cart",
+        "viewport": "desktop",
+        "file": "cart_desktop.png"
+      },
+      {
+        "route": "/checkout",
+        "viewport": "desktop",
+        "file": "checkout_desktop.png"
+      },
+      {
+        "route": "/login",
+        "viewport": "desktop",
+        "file": "login_desktop.png"
+      },
+      {
+        "route": "/vouchers",
+        "viewport": "desktop",
+        "file": "vouchers_desktop.png"
+      },
+      {
+        "route": "/about",
+        "viewport": "desktop",
+        "file": "about_desktop.png"
+      },
+      {
+        "route": "/admin",
+        "viewport": "desktop",
+        "file": "admin_dashboard_desktop.png"
+      },
+      {
+        "route": "/",
+        "viewport": "tablet",
+        "file": "home_tablet.png"
+      },
+      {
+        "route": "/products",
+        "viewport": "tablet",
+        "file": "products_tablet.png"
+      },
+      {
+        "route": "/cart",
+        "viewport": "tablet",
+        "file": "cart_tablet.png"
+      },
+      {
+        "route": "/checkout",
+        "viewport": "tablet",
+        "file": "checkout_tablet.png"
+      },
+      {
+        "route": "/login",
+        "viewport": "tablet",
+        "file": "login_tablet.png"
+      },
+      {
+        "route": "/vouchers",
+        "viewport": "tablet",
+        "file": "vouchers_tablet.png"
+      },
+      {
+        "route": "/about",
+        "viewport": "tablet",
+        "file": "about_tablet.png"
+      },
+      {
+        "route": "/admin",
+        "viewport": "tablet",
+        "file": "admin_dashboard_tablet.png"
+      },
+      {
+        "route": "/",
+        "viewport": "mobile",
+        "file": "home_mobile.png"
+      },
+      {
+        "route": "/products",
+        "viewport": "mobile",
+        "file": "products_mobile.png"
+      },
+      {
+        "route": "/cart",
+        "viewport": "mobile",
+        "file": "cart_mobile.png"
+      },
+      {
+        "route": "/checkout",
+        "viewport": "mobile",
+        "file": "checkout_mobile.png"
+      },
+      {
+        "route": "/login",
+        "viewport": "mobile",
+        "file": "login_mobile.png"
+      },
+      {
+        "route": "/vouchers",
+        "viewport": "mobile",
+        "file": "vouchers_mobile.png"
+      },
+      {
+        "route": "/about",
+        "viewport": "mobile",
+        "file": "about_mobile.png"
+      },
+      {
+        "route": "/admin",
+        "viewport": "mobile",
+        "file": "admin_dashboard_mobile.png"
+      }
+    ],
+    "dark": [
+      {
+        "route": "/",
+        "viewport": "desktop",
+        "file": "home_desktop.png"
+      },
+      {
+        "route": "/products",
+        "viewport": "desktop",
+        "file": "products_desktop.png"
+      },
+      {
+        "route": "/cart",
+        "viewport": "desktop",
+        "file": "cart_desktop.png"
+      },
+      {
+        "route": "/checkout",
+        "viewport": "desktop",
+        "file": "checkout_desktop.png"
+      },
+      {
+        "route": "/login",
+        "viewport": "desktop",
+        "file": "login_desktop.png"
+      },
+      {
+        "route": "/vouchers",
+        "viewport": "desktop",
+        "file": "vouchers_desktop.png"
+      },
+      {
+        "route": "/about",
+        "viewport": "desktop",
+        "file": "about_desktop.png"
+      },
+      {
+        "route": "/admin",
+        "viewport": "desktop",
+        "file": "admin_dashboard_desktop.png"
+      },
+      {
+        "route": "/",
+        "viewport": "tablet",
+        "file": "home_tablet.png"
+      },
+      {
+        "route": "/products",
+        "viewport": "tablet",
+        "file": "products_tablet.png"
+      },
+      {
+        "route": "/cart",
+        "viewport": "tablet",
+        "file": "cart_tablet.png"
+      },
+      {
+        "route": "/checkout",
+        "viewport": "tablet",
+        "file": "checkout_tablet.png"
+      },
+      {
+        "route": "/login",
+        "viewport": "tablet",
+        "file": "login_tablet.png"
+      },
+      {
+        "route": "/vouchers",
+        "viewport": "tablet",
+        "file": "vouchers_tablet.png"
+      },
+      {
+        "route": "/about",
+        "viewport": "tablet",
+        "file": "about_tablet.png"
+      },
+      {
+        "route": "/admin",
+        "viewport": "tablet",
+        "file": "admin_dashboard_tablet.png"
+      },
+      {
+        "route": "/",
+        "viewport": "mobile",
+        "file": "home_mobile.png"
+      },
+      {
+        "route": "/products",
+        "viewport": "mobile",
+        "file": "products_mobile.png"
+      },
+      {
+        "route": "/cart",
+        "viewport": "mobile",
+        "file": "cart_mobile.png"
+      },
+      {
+        "route": "/checkout",
+        "viewport": "mobile",
+        "file": "checkout_mobile.png"
+      },
+      {
+        "route": "/login",
+        "viewport": "mobile",
+        "file": "login_mobile.png"
+      },
+      {
+        "route": "/vouchers",
+        "viewport": "mobile",
+        "file": "vouchers_mobile.png"
+      },
+      {
+        "route": "/about",
+        "viewport": "mobile",
+        "file": "about_mobile.png"
+      },
+      {
+        "route": "/admin",
+        "viewport": "mobile",
+        "file": "admin_dashboard_mobile.png"
+      }
+    ]
+  }
+}

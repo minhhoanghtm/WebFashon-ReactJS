@@ -18,8 +18,29 @@ const ALL_ROUTES = [
     name: "Home",
     role: "Public",
     testId: "TC-ROUTE-01",
-    desc: "Trang chủ Atelier (Silk 3D Hero, Collections Bento, Flash Deals, AI Assistant, Notification Center, AI Style Quiz)",
+    desc: "Trang chủ Atelier (Theme Switcher Light/Dark, Silk 3D Hero, Collections Bento, Flash Deals, AI Assistant, Notification Center, AI Style Quiz)",
     interactions: async (page) => {
+      // 0. Theme Switcher Demonstration (Phase 21: Light -> Dark -> Light)
+      try {
+        const themeBtn = page.locator('[data-testid="theme-switcher-trigger"]').first();
+        if (await themeBtn.isVisible({ timeout: 1500 })) {
+          await themeBtn.click();
+          await page.waitForTimeout(600);
+          const darkOpt = page.locator('[data-testid="theme-option-dark"]').first();
+          if (await darkOpt.isVisible({ timeout: 1000 })) {
+            await darkOpt.click();
+            await page.waitForTimeout(1000); // Visual pause showing dark luxury styling
+          }
+          await themeBtn.click();
+          await page.waitForTimeout(500);
+          const lightOpt = page.locator('[data-testid="theme-option-light"]').first();
+          if (await lightOpt.isVisible({ timeout: 1000 })) {
+            await lightOpt.click();
+            await page.waitForTimeout(800); // Visual pause returning to warm minimalist light
+          }
+        }
+      } catch (e) {}
+
       // 1. Notification Center Flow
       try {
         const notifBtn = page.locator('[data-testid="notif-bell-btn"]').first();

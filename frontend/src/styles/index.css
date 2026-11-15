@@ -12,6 +12,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    transition: background-color 0.2s ease, color 0.15s ease;
   }
 
   h1, h2, h3, h4, .font-display {
@@ -42,20 +43,162 @@
   }
 }
 
-/* Custom scrollbar for dense tables */
+/* ==========================================================================
+   THEME OVERRIDES FOR SEAMLESS 100% LIGHT / DARK COMPATIBILITY
+   ========================================================================== */
+
+/* 1. LIGHT MODE SPECIFIC OVERRIDES */
+[data-theme="light"] {
+  /* Primary background containers */
+  .bg-\[\#0c0c0e\],
+  .bg-\[\#08080a\] {
+    background-color: var(--color-bg-primary) !important;
+  }
+
+  /* Elevated / Section surfaces */
+  .bg-\[\#0e0e11\],
+  .bg-\[\#121215\] {
+    background-color: var(--color-bg-elevated) !important;
+  }
+
+  /* Cards / Modals / Inputs / Inner Surfaces */
+  .bg-\[\#161619\],
+  .bg-\[\#1c1d22\],
+  .bg-\[\#1e1e23\],
+  .bg-\[\#202025\],
+  .bg-\[\#222228\] {
+    background-color: var(--color-bg-surface) !important;
+    box-shadow: var(--shadow-subtle);
+  }
+
+  /* Text colors */
+  .text-\[\#f4f0e8\],
+  .text-white {
+    color: var(--color-text-primary) !important;
+  }
+  .text-\[\#9a989f\] {
+    color: var(--color-text-secondary) !important;
+  }
+  .text-\[\#6b6973\] {
+    color: var(--color-text-muted) !important;
+  }
+
+  /* Borders */
+  .border-\[rgba\(244\,240\,232\,0\.1\)\],
+  .border-\[rgba\(244\,240\,232\,0\.12\)\],
+  .border-\[rgba\(244\,240\,232\,0\.15\)\],
+  .border-\[rgba\(244\,240\,232\,0\.2\)\],
+  .border-white\/5,
+  .border-white\/10,
+  .border-white\/15,
+  .border-white\/20,
+  .border-white\/30,
+  .border-white\/40 {
+    border-color: var(--color-border) !important;
+  }
+
+  /* Translucent overlays & subtle badges */
+  .bg-white\/5,
+  .bg-white\/10 {
+    background-color: rgba(36, 36, 36, 0.05) !important;
+    color: var(--color-text-primary) !important;
+  }
+  .bg-white\/15,
+  .bg-white\/20 {
+    background-color: rgba(36, 36, 36, 0.08) !important;
+  }
+  .bg-\[\#0c0c0e\]\/80,
+  .bg-\[\#0c0c0e\]\/85,
+  .bg-\[\#0c0c0e\]\/90,
+  .bg-\[\#0c0c0e\]\/95 {
+    background-color: rgba(250, 249, 246, 0.92) !important;
+  }
+  .bg-\[\#121215\]\/90,
+  .bg-\[\#121215\]\/95 {
+    background-color: rgba(243, 240, 235, 0.95) !important;
+  }
+  .bg-\[\#161619\]\/80 {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /* Gradients */
+  .from-\[\#161619\] {
+    --tw-gradient-from: var(--color-bg-elevated) var(--tw-gradient-from-position) !important;
+  }
+  .via-\[\#1c1d22\] {
+    --tw-gradient-via: var(--color-bg-subtle) var(--tw-gradient-via-position) !important;
+  }
+  .to-\[\#161619\] {
+    --tw-gradient-to: var(--color-bg-elevated) var(--tw-gradient-to-position) !important;
+  }
+  .from-\[\#121215\] {
+    --tw-gradient-from: var(--color-bg-elevated) var(--tw-gradient-from-position) !important;
+  }
+  .to-\[\#0c0c0e\] {
+    --tw-gradient-to: var(--color-bg-primary) var(--tw-gradient-to-position) !important;
+  }
+
+  /* Backdrop blur modals */
+  .bg-black\/80 {
+    background-color: rgba(36, 36, 36, 0.5) !important;
+  }
+
+  /* Retain signal button texts in white */
+  button.bg-\[\#e65100\],
+  a.bg-\[\#e65100\],
+  .bg-\[\#e65100\] {
+    color: #ffffff !important;
+  }
+  button.bg-\[\#e65100\] span,
+  a.bg-\[\#e65100\] span {
+    color: #ffffff !important;
+  }
+}
+
+/* 2. DARK MODE SPECIFIC OVERRIDES */
+[data-theme="dark"],
+.dark {
+  .bg-\[\#0c0c0e\],
+  .bg-\[\#08080a\] {
+    background-color: var(--color-bg-primary) !important;
+  }
+  .bg-\[\#0e0e11\],
+  .bg-\[\#121215\] {
+    background-color: var(--color-bg-elevated) !important;
+  }
+  .bg-\[\#161619\],
+  .bg-\[\#1c1d22\],
+  .bg-\[\#1e1e23\],
+  .bg-\[\#202025\] {
+    background-color: var(--color-bg-surface) !important;
+  }
+  .text-\[\#f4f0e8\] {
+    color: var(--color-text-primary) !important;
+  }
+  .text-\[\#9a989f\] {
+    color: var(--color-text-secondary) !important;
+  }
+  .border-\[rgba\(244\,240\,232\,0\.1\)\],
+  .border-\[rgba\(244\,240\,232\,0\.12\)\],
+  .border-\[rgba\(244\,240\,232\,0\.15\)\] {
+    border-color: var(--color-border) !important;
+  }
+}
+
+/* Custom scrollbar matching active theme */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0c0c0e;
+  background: var(--color-bg-primary);
 }
 ::-webkit-scrollbar-thumb {
-  background: #25252b;
+  background: var(--color-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3e3e46;
+  background: var(--color-accent-signal);
 }
 
 /* Utility animations */

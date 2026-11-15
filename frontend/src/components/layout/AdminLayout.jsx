@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
+import { ThemeSwitcher } from "../ui/ThemeSwitcher";
 
 const ADMIN_NAV = [
   { path: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -145,6 +146,7 @@ export function AdminLayout() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <ThemeSwitcher />
             <Link
               to="/"
               target="_blank"
