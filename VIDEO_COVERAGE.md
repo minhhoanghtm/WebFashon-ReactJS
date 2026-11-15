@@ -3,13 +3,14 @@
 Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (End-to-End) cho tất cả **48 / 48 tuyến đường** được quy định trong `ROUTES.md`, ghi hình thành **MỘT VIDEO TỔNG HỢP DUY NHẤT** tại độ phân giải tiêu chuẩn **1920 × 1080**:
 
 - **Đường dẫn file video:** `D:\Project\REACT-WebFashion\videos\FULL_WEBSITE_E2E_TEST.webm`
-- **Kích thước file:** 39.00 MB (40,889,571 bytes)
+- **Kích thước file:** 48.47 MB (50,826,223 bytes)
 - **Độ phân giải:** 1920 × 1080 (Full HD)
 - **Chuẩn nén video:** VP9
-- **Thời lượng:** 253.76 giây (04 phút 13.76 giây)
-- **Tốc độ bit (Bitrate):** 1,289,078 bps (~1.29 Mbps)
+- **Thời lượng:** 288.40 giây (04 phút 48.40 giây)
+- **Tốc độ bit (Bitrate):** ~1.41 Mbps
 - **Số lượng tuyến đường ghi hình:** 48 / 48 (Độ phủ: **100%**)
 - **Tỷ lệ kiểm thử thành công:** **48 / 48 PASS (100%)**
+- **Tính năng đổi mới tích hợp:** Notification Center, AI Fashion Style Quiz, Product Comparison Matrix, Smart Size AI Assistant, Complete The Look Outfit Bundler, Shoppable Lookbook Hotspots, Cart Free Shipping Progress Bar.
 
 ---
 
@@ -17,10 +18,10 @@ Báo cáo kiểm thử tự động toàn diện và độ phủ ghi hình E2E (
 
 | Route | Đã truy cập | Đã tương tác | Có trong video | Kết quả | Mô tả & Thao tác kiểm thử |
 |---|---|---|---|---|---|
-| `/` | YES | YES | YES | PASS | Trang chủ Atelier: Cuộn Silk 3D Hero, Collections Bento, mở & đóng AI Shopping Assistant Modal |
-| `/products` | YES | YES | YES | PASS | Danh mục sản phẩm: Nhập từ khóa tìm kiếm "Áo khoác", lọc tab danh mục |
-| `/product/ao-khoac-bomber-unisex` | YES | YES | YES | PASS | Chi tiết sản phẩm: Chọn kích thước L, bấm nút "Thêm Vào Giỏ Hàng" |
-| `/cart` | YES | YES | YES | PASS | Giỏ hàng: Bấm tăng số lượng `+`, nhập mã ưu đãi "ATELIER10" |
+| `/` | YES | YES | YES | PASS | Trang chủ Atelier: Cuộn Silk 3D Hero, Collections Bento, mở & đóng Notification Center, hoàn tất AI Style Quiz, mở AI Shopping Assistant Modal |
+| `/products` | YES | YES | YES | PASS | Danh mục sản phẩm: Nhập từ khóa tìm kiếm "Áo khoác", chọn 2 sản phẩm vào so sánh, mở xem bảng so sánh chi tiết |
+| `/product/ao-hoodie-ni-bong-unisex` | YES | YES | YES | PASS | Chi tiết sản phẩm: Tư vấn size AI (Smart Size Assistant), thêm trọn bộ phối đồ Complete The Look (giảm 10%) |
+| `/cart` | YES | YES | YES | PASS | Giỏ hàng: Bấm tăng số lượng `+`, nhập mã ưu đãi "ATELIER10", xem thanh tiến trình miễn phí vận chuyển FREESHIP |
 | `/checkout` | YES | YES | YES | PASS | Cổng thanh toán: Điền thông tin giao hàng, chuyển đổi cổng COD / MoMo / VNPay |
 | `/payment-result` | YES | YES | YES | PASS | Biên lai giao dịch: Hiển thị kết quả thanh toán điện tử và mã đối soát |
 | `/order-lookup` | YES | YES | YES | PASS | Tra cứu đơn hàng: Nhập mã đơn "ORD-89241" và SĐT để tra cứu tiến độ |

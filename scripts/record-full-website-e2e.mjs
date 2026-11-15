@@ -18,9 +18,59 @@ const ALL_ROUTES = [
     name: "Home",
     role: "Public",
     testId: "TC-ROUTE-01",
-    desc: "Trang chủ Atelier (Silk 3D Hero, Collections Bento, Flash Deals, AI Assistant)",
+    desc: "Trang chủ Atelier (Silk 3D Hero, Collections Bento, Flash Deals, AI Assistant, Notification Center, AI Style Quiz)",
     interactions: async (page) => {
-      // Open AI Assistant
+      // 1. Notification Center Flow
+      try {
+        const notifBtn = page.locator('[data-testid="notif-bell-btn"]').first();
+        if (await notifBtn.isVisible({ timeout: 1500 })) {
+          await notifBtn.click();
+          await page.waitForTimeout(1000);
+          const markReadBtn = page.locator('[data-testid="notif-mark-all-read"]').first();
+          if (await markReadBtn.isVisible({ timeout: 800 })) {
+            await markReadBtn.click();
+            await page.waitForTimeout(600);
+          }
+          await notifBtn.click();
+          await page.waitForTimeout(500);
+        }
+      } catch (e) {}
+
+      // 2. AI Style Quiz & Fashion Persona Flow
+      try {
+        const quizBtn = page.locator('[data-testid="header-style-quiz-btn"]').first();
+        if (await quizBtn.isVisible({ timeout: 1500 })) {
+          await quizBtn.click();
+          await page.waitForTimeout(800);
+          // Step 1
+          const opt1 = page.locator('[data-testid="quiz-opt-office"]');
+          if (await opt1.isVisible({ timeout: 800 })) {
+            await opt1.click();
+            await page.locator('[data-testid="quiz-next-btn-1"]').click();
+            await page.waitForTimeout(400);
+            // Step 2
+            await page.locator('[data-testid="quiz-opt-monochrome"]').click();
+            await page.locator('[data-testid="quiz-next-btn-2"]').click();
+            await page.waitForTimeout(400);
+            // Step 3
+            await page.locator('[data-testid="quiz-opt-tailored"]').click();
+            await page.locator('[data-testid="quiz-next-btn-3"]').click();
+            await page.waitForTimeout(400);
+            // Step 4
+            await page.locator('[data-testid="quiz-opt-signature"]').click();
+            await page.locator('[data-testid="quiz-submit-btn"]').click();
+            await page.waitForTimeout(1200);
+            // Close persona modal
+            const closeQuizBtn = page.locator('[data-testid="quiz-finish-close-btn"]').first();
+            if (await closeQuizBtn.isVisible({ timeout: 1000 })) {
+              await closeQuizBtn.click();
+              await page.waitForTimeout(500);
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 3. Open AI Assistant
       try {
         const aiBtn = await page.locator("button:has-text('Trò chuyện với AI'), button[title*='AI']").first();
         if (await aiBtn.isVisible({ timeout: 1500 })) {
@@ -44,38 +94,71 @@ const ALL_ROUTES = [
     name: "Products",
     role: "Public",
     testId: "TC-ROUTE-02",
-    desc: "Danh mục sản phẩm & Bộ lọc tìm kiếm",
+    desc: "Danh mục sản phẩm, Bộ lọc tìm kiếm & So sánh sản phẩm song song",
     interactions: async (page) => {
       try {
         const searchInput = await page.locator("input[placeholder*='Tìm kiếm']").first();
         if (await searchInput.isVisible({ timeout: 1500 })) {
           await searchInput.fill("Áo khoác");
-          await page.waitForTimeout(800);
+          await page.waitForTimeout(600);
         }
-        const catTab = await page.locator("button:has-text('Áo Khoác'), button:has-text('Tất Cả')").first();
-        if (await catTab.isVisible({ timeout: 1000 })) {
-          await catTab.click();
+        // Product Comparison Flow
+        const compareBtns = page.locator('[data-testid="product-compare-btn"]');
+        if (await compareBtns.count() >= 2) {
+          await compareBtns.nth(0).click();
+          await page.waitForTimeout(500);
+          await compareBtns.nth(1).click();
+          await page.waitForTimeout(800);
+          // Open comparison modal
+          const viewModalBtn = page.locator('[data-testid="compare-view-modal-btn"]').first();
+          if (await viewModalBtn.isVisible({ timeout: 1000 })) {
+            await viewModalBtn.click();
+            await page.waitForTimeout(1500);
+            const closeMatrixBtn = page.locator('[data-testid="compare-close-modal-btn"]').first();
+            if (await closeMatrixBtn.isVisible({ timeout: 1000 })) {
+              await closeMatrixBtn.click();
+              await page.waitForTimeout(500);
+            }
+          }
         }
       } catch (e) {}
     },
   },
   {
-    path: "/product/ao-khoac-bomber-unisex",
+    path: "/product/ao-hoodie-ni-bong-unisex",
     name: "ProductDetail",
     role: "Public",
     testId: "TC-ROUTE-03",
-    desc: "Chi tiết sản phẩm may đo (Gallery, Chọn Size, Thêm Giỏ Hàng)",
+    desc: "Chi tiết sản phẩm may đo (Gallery, Tư vấn size AI, Complete The Look, Thêm Giỏ Hàng)",
     interactions: async (page) => {
       try {
-        const sizeBtn = await page.locator("button:has-text('L'), button:has-text('M')").first();
-        if (await sizeBtn.isVisible({ timeout: 1500 })) {
-          await sizeBtn.click();
-          await page.waitForTimeout(400);
-        }
-        const addCartBtn = await page.locator("button:has-text('Thêm Vào Giỏ Hàng')").first();
-        if (await addCartBtn.isVisible({ timeout: 1500 })) {
-          await addCartBtn.click();
+        // 1. AI Smart Size Assistant
+        const sizeAiBtn = page.locator('button:has-text("Tư Vấn Size AI")').first();
+        if (await sizeAiBtn.isVisible({ timeout: 1500 })) {
+          await sizeAiBtn.click();
           await page.waitForTimeout(800);
+          const calcBtn = page.locator('[data-testid="size-calc-btn"]').first();
+          if (await calcBtn.isVisible({ timeout: 1000 })) {
+            await calcBtn.click();
+            await page.waitForTimeout(800);
+            const applySizeBtn = page.locator('[data-testid="size-apply-btn"]').first();
+            if (await applySizeBtn.isVisible({ timeout: 1000 })) {
+              await applySizeBtn.click();
+              await page.waitForTimeout(500);
+            }
+          }
+        }
+
+        // 2. Complete The Look Bundle Buy
+        const bundleSection = page.locator('[data-testid="complete-the-look"]').first();
+        if (await bundleSection.isVisible({ timeout: 1500 })) {
+          await bundleSection.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(800);
+          const addBundleBtn = page.locator('[data-testid="bundle-add-btn"]').first();
+          if (await addBundleBtn.isVisible({ timeout: 1000 })) {
+            await addBundleBtn.click();
+            await page.waitForTimeout(1000);
+          }
         }
       } catch (e) {}
     },
@@ -178,7 +261,21 @@ const ALL_ROUTES = [
     name: "Lookbooks",
     role: "Public",
     testId: "TC-ROUTE-10",
-    desc: "Bộ sưu tập Lookbook thời trang may đo cao cấp",
+    desc: "Bộ sưu tập Lookbook thời trang may đo cao cấp & Điểm chạm mua sắm trực quan (Shoppable Hotspots)",
+    interactions: async (page) => {
+      try {
+        const hotspot = page.locator('.animate-ping').first();
+        if (await hotspot.isVisible({ timeout: 1500 })) {
+          await hotspot.click();
+          await page.waitForTimeout(1000);
+          const buyBtn = page.locator('button:has-text("Mua Nhanh")').first();
+          if (await buyBtn.isVisible({ timeout: 1000 })) {
+            await buyBtn.click();
+            await page.waitForTimeout(800);
+          }
+        }
+      } catch (e) {}
+    },
   },
 
   // 2. Static Content Slugs (12 routes)
