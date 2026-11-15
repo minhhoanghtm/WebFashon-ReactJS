@@ -83,7 +83,7 @@ export function Header() {
           <button
             onClick={openQuiz}
             aria-label="Khám phá phong cách thời trang AI"
-            className="min-h-[40px] px-2.5 bg-[#161619] hover:bg-[#202025] border border-[rgba(244,240,232,0.15)] hover:border-[#e65100] text-[#f4f0e8] text-xs font-display tracking-wider uppercase flex items-center gap-1.5 transition-colors"
+            className="min-h-[44px] px-2.5 bg-[#161619] hover:bg-[#202025] border border-[rgba(244,240,232,0.15)] hover:border-[#e65100] text-[#f4f0e8] text-xs font-display tracking-wider uppercase flex items-center gap-1.5 transition-colors btn-tactile"
             title={persona ? `Phong cách của bạn: ${persona.title}` : "Khám phá phong cách thời trang AI"}
           >
             <Compass size={14} className="text-[#e65100]" />
@@ -96,7 +96,7 @@ export function Header() {
           <button
             onClick={openAiModal}
             aria-label="Mở trợ lý mua sắm AI"
-            className="min-h-[40px] px-3 bg-[rgba(230,81,0,0.1)] hover:bg-[rgba(230,81,0,0.2)] border border-[#e65100]/40 text-[#ff6d00] text-xs font-display tracking-wider uppercase flex items-center gap-1.5 transition-colors"
+            className="min-h-[44px] px-3 bg-[rgba(230,81,0,0.1)] hover:bg-[rgba(230,81,0,0.2)] border border-[#e65100]/40 text-[#ff6d00] text-xs font-display tracking-wider uppercase flex items-center gap-1.5 transition-colors btn-tactile"
             title="Trợ lý mua sắm AI"
           >
             <Sparkles size={14} />
@@ -114,7 +114,7 @@ export function Header() {
             <div className="relative group">
               <Link
                 to={user.role === "admin" ? "/admin" : "/profile"}
-                className="min-h-[40px] px-2.5 text-xs text-[#f4f0e8] flex items-center gap-1.5 border border-transparent hover:border-[rgba(244,240,232,0.2)] py-1"
+                className="min-h-[44px] px-2.5 text-xs text-[#f4f0e8] flex items-center gap-1.5 border border-transparent hover:border-[rgba(244,240,232,0.2)] py-1"
               >
                 <User size={16} className="text-[#9a989f]" />
                 <span className="hidden sm:inline font-mono text-[11px] max-w-[100px] truncate">
@@ -150,7 +150,7 @@ export function Header() {
           ) : (
             <Link
               to="/login"
-              className="min-h-[40px] px-3 text-xs font-display tracking-wider text-[#f4f0e8] hover:text-[#e65100] flex items-center gap-1.5 uppercase"
+              className="min-h-[44px] px-3 text-xs font-display tracking-wider text-[#f4f0e8] hover:text-[#e65100] flex items-center gap-1.5 uppercase btn-tactile"
             >
               <User size={16} />
               <span className="hidden sm:inline">Đăng Nhập</span>
@@ -161,7 +161,7 @@ export function Header() {
           <Link
             to="/favorites"
             aria-label="Xem danh sách yêu thích"
-            className="min-h-[40px] px-2.5 bg-[#161619] border border-[rgba(244,240,232,0.15)] hover:border-[#e65100] text-[#9a989f] hover:text-[#f4f0e8] flex items-center justify-center transition-colors"
+            className="min-h-[44px] min-w-[44px] px-2.5 bg-[#161619] border border-[rgba(244,240,232,0.15)] hover:border-[#e65100] text-[#9a989f] hover:text-[#f4f0e8] flex items-center justify-center transition-colors btn-tactile"
             title="Sản phẩm yêu thích"
           >
             <Heart size={16} />

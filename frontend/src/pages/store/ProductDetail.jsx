@@ -206,16 +206,16 @@ export function ProductDetail() {
         <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
           <div className="space-y-5">
             <div>
-              <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase block mb-1">
-                {product.category?.name || "HAUTE COLLECTION"}
-              </span>
               <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#f4f0e8]">
                 {product.name}
               </h1>
+              <span className="text-[11px] font-mono uppercase tracking-wider text-[#9a989f] block mt-1">
+                {product.category?.name || "Atelier Collection"}
+              </span>
             </div>
 
             {/* Price Box & Stock Indicator */}
-            <div className="flex flex-wrap items-baseline justify-between gap-3 pb-4 border-b border-[rgba(244,240,232,0.1)]">
+            <div className="flex flex-wrap items-baseline justify-between gap-3 pb-4 border-b border-[rgba(244,240,232,0.1)] tabular-nums">
               <div className="flex items-baseline gap-3">
                 <span className="font-display text-3xl font-bold text-[#f4f0e8]">
                   {price.toLocaleString("vi-VN")} ₫
@@ -235,7 +235,7 @@ export function ProductDetail() {
             </div>
 
             {/* Description */}
-            <p className="text-xs sm:text-sm text-[#9a989f] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#9a989f] measure-prose leading-relaxed">
               {product.description ||
                 "Thiết kế may đo phá cách kết hợp cùng nghệ thuật may thủ công truyền thống. Từng đường cắt và mũi chỉ là sự tuyên ngôn của bản sắc cá nhân."}
             </p>
@@ -399,9 +399,6 @@ export function ProductDetail() {
         <section className="mt-20 pt-12 border-t border-[rgba(244,240,232,0.12)]">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
             <div>
-              <span className="text-xs font-mono uppercase tracking-widest text-[#e65100] block mb-1">
-                GỢI Ý TỪ ATELIER
-              </span>
               <h2 className="font-display text-2xl font-bold uppercase text-[#f4f0e8]">
                 CÁC THIẾT KẾ CÙNG BỘ SƯU TẬP
               </h2>
@@ -495,6 +492,34 @@ export function ProductDetail() {
           }
         }}
       />
+
+      {/* 7. MOBILE STICKY BUY DOCK (Ergonomics for screens < 1024px) */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-[#121215]/95 backdrop-blur-md border-t border-[rgba(244,240,232,0.15)] p-3 px-4 flex items-center justify-between gap-3 lg:hidden">
+        <div className="flex flex-col tabular-nums">
+          <span className="text-[10px] font-mono text-[#9a989f] uppercase">Giá Trọn Gói</span>
+          <span className="font-display text-base font-bold text-[#f4f0e8]">
+            {price.toLocaleString("vi-VN")} ₫
+          </span>
+        </div>
+        <Button
+          variant={isAdded ? "primary" : "signal"}
+          size="sm"
+          className="flex-1 max-w-[200px] gap-1.5 py-2.5 text-xs font-semibold"
+          onClick={handleAddToCart}
+        >
+          {isAdded ? (
+            <>
+              <Check size={14} className="text-emerald-500" />
+              <span>Đã Thêm!</span>
+            </>
+          ) : (
+            <>
+              <ShoppingBag size={14} />
+              <span>Thêm Giỏ Hàng</span>
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

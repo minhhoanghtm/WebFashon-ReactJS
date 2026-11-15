@@ -15,6 +15,11 @@
     transition: background-color 0.2s ease, color 0.15s ease;
   }
 
+  ::selection {
+    background-color: var(--color-selection-bg);
+    color: var(--color-selection-text);
+  }
+
   h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
     text-transform: uppercase;
@@ -28,9 +33,25 @@
     font-family: inherit;
   }
 
+  input, textarea {
+    caret-color: var(--color-caret);
+  }
+
+  .tabular-nums, table td, .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .measure-prose {
+    max-width: var(--measure-prose);
+  }
+
+  .measure-compact {
+    max-width: var(--measure-compact);
+  }
+
   *:focus-visible {
-    outline: 2px solid var(--color-accent-signal) !important;
-    outline-offset: 2px !important;
+    outline: 2px solid var(--focus-ring-color) !important;
+    outline-offset: var(--focus-ring-offset) !important;
   }
 }
 

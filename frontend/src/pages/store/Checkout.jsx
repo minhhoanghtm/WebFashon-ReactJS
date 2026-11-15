@@ -99,9 +99,6 @@ export function Checkout() {
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
       <div className="pb-6 border-b border-[rgba(244,240,232,0.1)] mb-8">
-        <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase block mb-1">
-          BƯỚC CUỐI CÙNG
-        </span>
         <h1 className="font-display text-3xl font-bold tracking-tight text-[#f4f0e8]">
           XÁC NHẬN THANH TOÁN & ĐẶT HÀNG
         </h1>

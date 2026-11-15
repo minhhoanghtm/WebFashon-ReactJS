@@ -32,7 +32,6 @@ export function Profile() {
     <div className="max-w-[1000px] mx-auto px-4 py-10 w-full space-y-8 animate-fade-in">
       <div className="pb-4 border-b border-white/10 flex items-center justify-between">
         <div>
-          <span className="text-xs font-mono uppercase text-[#e65100]">TÀI KHOẢN CÁ NHÂN</span>
           <h1 className="font-display text-3xl font-bold uppercase text-[#f4f0e8]">
             Hồ Sơ Của Bạn
           </h1>
@@ -253,7 +252,6 @@ export function DataRequests() {
   return (
     <div className="max-w-[800px] mx-auto px-4 py-10 w-full space-y-8 animate-fade-in">
       <div className="pb-4 border-b border-white/10">
-        <span className="text-xs font-mono uppercase text-[#e65100]">QUYỀN RIÊNG TƯ & GDPR</span>
         <h1 className="font-display text-3xl font-bold uppercase text-[#f4f0e8]">
           Quản Lý Yêu Cầu Dữ Liệu
         </h1>
@@ -301,7 +299,6 @@ export function UserDashboard() {
     <div className="max-w-[1200px] mx-auto px-4 py-10 w-full space-y-8 animate-fade-in">
       <div className="pb-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <span className="text-xs font-mono uppercase text-[#e65100]">TỔNG QUAN THÀNH VIÊN ATELIER</span>
           <h1 className="font-display text-3xl font-bold uppercase text-[#f4f0e8]">
             Bảng Điều Khiển: {user?.fullName || "Quý Khách"}
           </h1>
@@ -315,14 +312,11 @@ export function UserDashboard() {
       <div className="p-6 bg-[#121215] border border-[rgba(244,240,232,0.15)] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono tracking-widest text-[#e65100] uppercase block">
-              ĐẶC QUYỀN HỘI VIÊN
-            </span>
             <h3 className="font-display text-xl font-bold text-[#f4f0e8] uppercase">
               Hạng Thẻ: DIAMOND ATELIER (Chiết khấu 5% mọi đơn)
             </h3>
           </div>
-          <span className="text-xs font-mono text-[#ff6d00] font-bold">
+          <span className="text-xs font-mono text-[#ff6d00] font-bold tabular-nums">
             {currentSpend.toLocaleString("vi-VN")} ₫ / {targetSpend.toLocaleString("vi-VN")} ₫
           </span>
         </div>

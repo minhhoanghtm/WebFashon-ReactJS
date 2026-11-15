@@ -30,9 +30,6 @@ export function Favorites() {
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
       <div className="pb-6 border-b border-[rgba(244,240,232,0.1)] mb-8 flex justify-between items-end">
         <div>
-          <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase block mb-1">
-            DANH SÁCH YÊU THÍCH
-          </span>
           <h1 className="font-display text-3xl font-bold tracking-tight text-[#f4f0e8]">
             THIẾT KẾ ĐÃ LƯU ({favorites.length})
           </h1>
@@ -128,9 +125,6 @@ export function Vouchers() {
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-8">
       <div className="pb-6 border-b border-[rgba(244,240,232,0.1)] flex justify-between items-end">
         <div>
-          <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase block mb-1">
-            ƯU ĐÃI ĐẶC QUYỀN
-          </span>
           <h1 className="font-display text-3xl font-bold tracking-tight text-[#f4f0e8]">
             VOUCHER & MÃ GIẢM GIÁ
           </h1>
@@ -276,12 +270,6 @@ export function Lookbooks() {
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-16">
       <div className="text-center space-y-3 pb-8 border-b border-white/10">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <Sparkles size={16} className="text-[#e65100]" />
-          <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase">
-            INTERACTIVE SHOPPABLE LOOKBOOK
-          </span>
-        </div>
         <h1 className="font-display text-4xl sm:text-5xl font-bold uppercase text-[#f4f0e8]">
           LOOKBOOKS THEO MÙA
         </h1>

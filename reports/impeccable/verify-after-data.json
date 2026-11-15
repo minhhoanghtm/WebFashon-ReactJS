@@ -1,0 +1,762 @@
+{
+  "verifiedAt": "2026-11-15T22:22:00.259Z",
+  "routesAudited": 12,
+  "viewportsTested": 5,
+  "themesTested": 2,
+  "functionalChecks": [
+    {
+      "name": "Theme Switcher to Dark",
+      "status": "PASS"
+    },
+    {
+      "name": "Theme Switcher to Light",
+      "status": "PASS"
+    }
+  ],
+  "responsiveChecks": [
+    {
+      "viewport": "320x568",
+      "route": "/",
+      "horizontalOverflow": "PASS (No Overflow)"
+    },
+    {
+      "viewport": "320x568",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "horizontalOverflow": "PASS (No Overflow)"
+    }
+  ],
+  "browserSurfacesChecks": [
+    {
+      "status": "PASS",
+      "tokens": {
+        "measureProse": "68ch",
+        "inputHeight": "48px",
+        "touchTargetMin": "44px",
+        "colorCaret": "#e65100",
+        "colorSelectionBg": "rgba(230, 81, 0, 0.18)"
+      }
+    }
+  ],
+  "screenshotsCaptured": [
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/",
+      "file": "screenshots/after/light/320x568/home.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/products",
+      "file": "screenshots/after/light/320x568/products.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/light/320x568/product_detail.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/cart",
+      "file": "screenshots/after/light/320x568/cart.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/checkout",
+      "file": "screenshots/after/light/320x568/checkout.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/lookbooks",
+      "file": "screenshots/after/light/320x568/lookbooks.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/light/320x568/user_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/orders",
+      "file": "screenshots/after/light/320x568/orders.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/admin",
+      "file": "screenshots/after/light/320x568/admin_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/about",
+      "file": "screenshots/after/light/320x568/about.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/faq",
+      "file": "screenshots/after/light/320x568/faq.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "320x568",
+      "route": "/login",
+      "file": "screenshots/after/light/320x568/login.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/",
+      "file": "screenshots/after/light/390x844/home.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/products",
+      "file": "screenshots/after/light/390x844/products.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/light/390x844/product_detail.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/cart",
+      "file": "screenshots/after/light/390x844/cart.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/checkout",
+      "file": "screenshots/after/light/390x844/checkout.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/lookbooks",
+      "file": "screenshots/after/light/390x844/lookbooks.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/light/390x844/user_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/orders",
+      "file": "screenshots/after/light/390x844/orders.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/admin",
+      "file": "screenshots/after/light/390x844/admin_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/about",
+      "file": "screenshots/after/light/390x844/about.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/faq",
+      "file": "screenshots/after/light/390x844/faq.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "390x844",
+      "route": "/login",
+      "file": "screenshots/after/light/390x844/login.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/",
+      "file": "screenshots/after/light/768x1024/home.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/products",
+      "file": "screenshots/after/light/768x1024/products.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/light/768x1024/product_detail.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/cart",
+      "file": "screenshots/after/light/768x1024/cart.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/checkout",
+      "file": "screenshots/after/light/768x1024/checkout.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/lookbooks",
+      "file": "screenshots/after/light/768x1024/lookbooks.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/light/768x1024/user_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/orders",
+      "file": "screenshots/after/light/768x1024/orders.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/admin",
+      "file": "screenshots/after/light/768x1024/admin_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/about",
+      "file": "screenshots/after/light/768x1024/about.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/faq",
+      "file": "screenshots/after/light/768x1024/faq.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "768x1024",
+      "route": "/login",
+      "file": "screenshots/after/light/768x1024/login.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/",
+      "file": "screenshots/after/light/1366x768/home.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/products",
+      "file": "screenshots/after/light/1366x768/products.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/light/1366x768/product_detail.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/cart",
+      "file": "screenshots/after/light/1366x768/cart.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/checkout",
+      "file": "screenshots/after/light/1366x768/checkout.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/lookbooks",
+      "file": "screenshots/after/light/1366x768/lookbooks.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/light/1366x768/user_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/orders",
+      "file": "screenshots/after/light/1366x768/orders.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/admin",
+      "file": "screenshots/after/light/1366x768/admin_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/about",
+      "file": "screenshots/after/light/1366x768/about.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/faq",
+      "file": "screenshots/after/light/1366x768/faq.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1366x768",
+      "route": "/login",
+      "file": "screenshots/after/light/1366x768/login.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/",
+      "file": "screenshots/after/light/1920x1080/home.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/products",
+      "file": "screenshots/after/light/1920x1080/products.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/light/1920x1080/product_detail.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/cart",
+      "file": "screenshots/after/light/1920x1080/cart.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/checkout",
+      "file": "screenshots/after/light/1920x1080/checkout.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/lookbooks",
+      "file": "screenshots/after/light/1920x1080/lookbooks.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/light/1920x1080/user_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/orders",
+      "file": "screenshots/after/light/1920x1080/orders.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/admin",
+      "file": "screenshots/after/light/1920x1080/admin_dashboard.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/about",
+      "file": "screenshots/after/light/1920x1080/about.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/faq",
+      "file": "screenshots/after/light/1920x1080/faq.png"
+    },
+    {
+      "theme": "light",
+      "viewport": "1920x1080",
+      "route": "/login",
+      "file": "screenshots/after/light/1920x1080/login.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/",
+      "file": "screenshots/after/dark/320x568/home.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/products",
+      "file": "screenshots/after/dark/320x568/products.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/dark/320x568/product_detail.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/cart",
+      "file": "screenshots/after/dark/320x568/cart.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/checkout",
+      "file": "screenshots/after/dark/320x568/checkout.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/lookbooks",
+      "file": "screenshots/after/dark/320x568/lookbooks.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/dark/320x568/user_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/orders",
+      "file": "screenshots/after/dark/320x568/orders.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/admin",
+      "file": "screenshots/after/dark/320x568/admin_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/about",
+      "file": "screenshots/after/dark/320x568/about.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/faq",
+      "file": "screenshots/after/dark/320x568/faq.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "320x568",
+      "route": "/login",
+      "file": "screenshots/after/dark/320x568/login.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/",
+      "file": "screenshots/after/dark/390x844/home.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/products",
+      "file": "screenshots/after/dark/390x844/products.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/dark/390x844/product_detail.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/cart",
+      "file": "screenshots/after/dark/390x844/cart.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/checkout",
+      "file": "screenshots/after/dark/390x844/checkout.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/lookbooks",
+      "file": "screenshots/after/dark/390x844/lookbooks.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/dark/390x844/user_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/orders",
+      "file": "screenshots/after/dark/390x844/orders.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/admin",
+      "file": "screenshots/after/dark/390x844/admin_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/about",
+      "file": "screenshots/after/dark/390x844/about.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/faq",
+      "file": "screenshots/after/dark/390x844/faq.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "390x844",
+      "route": "/login",
+      "file": "screenshots/after/dark/390x844/login.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/",
+      "file": "screenshots/after/dark/768x1024/home.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/products",
+      "file": "screenshots/after/dark/768x1024/products.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/dark/768x1024/product_detail.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/cart",
+      "file": "screenshots/after/dark/768x1024/cart.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/checkout",
+      "file": "screenshots/after/dark/768x1024/checkout.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/lookbooks",
+      "file": "screenshots/after/dark/768x1024/lookbooks.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/dark/768x1024/user_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/orders",
+      "file": "screenshots/after/dark/768x1024/orders.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/admin",
+      "file": "screenshots/after/dark/768x1024/admin_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/about",
+      "file": "screenshots/after/dark/768x1024/about.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/faq",
+      "file": "screenshots/after/dark/768x1024/faq.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "768x1024",
+      "route": "/login",
+      "file": "screenshots/after/dark/768x1024/login.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/",
+      "file": "screenshots/after/dark/1366x768/home.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/products",
+      "file": "screenshots/after/dark/1366x768/products.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/dark/1366x768/product_detail.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/cart",
+      "file": "screenshots/after/dark/1366x768/cart.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/checkout",
+      "file": "screenshots/after/dark/1366x768/checkout.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/lookbooks",
+      "file": "screenshots/after/dark/1366x768/lookbooks.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/dark/1366x768/user_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/orders",
+      "file": "screenshots/after/dark/1366x768/orders.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/admin",
+      "file": "screenshots/after/dark/1366x768/admin_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/about",
+      "file": "screenshots/after/dark/1366x768/about.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/faq",
+      "file": "screenshots/after/dark/1366x768/faq.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1366x768",
+      "route": "/login",
+      "file": "screenshots/after/dark/1366x768/login.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/",
+      "file": "screenshots/after/dark/1920x1080/home.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/products",
+      "file": "screenshots/after/dark/1920x1080/products.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/product/ao-hoodie-ni-bong-unisex",
+      "file": "screenshots/after/dark/1920x1080/product_detail.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/cart",
+      "file": "screenshots/after/dark/1920x1080/cart.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/checkout",
+      "file": "screenshots/after/dark/1920x1080/checkout.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/lookbooks",
+      "file": "screenshots/after/dark/1920x1080/lookbooks.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/user/dashboard",
+      "file": "screenshots/after/dark/1920x1080/user_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/orders",
+      "file": "screenshots/after/dark/1920x1080/orders.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/admin",
+      "file": "screenshots/after/dark/1920x1080/admin_dashboard.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/about",
+      "file": "screenshots/after/dark/1920x1080/about.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/faq",
+      "file": "screenshots/after/dark/1920x1080/faq.png"
+    },
+    {
+      "theme": "dark",
+      "viewport": "1920x1080",
+      "route": "/login",
+      "file": "screenshots/after/dark/1920x1080/login.png"
+    }
+  ]
+}

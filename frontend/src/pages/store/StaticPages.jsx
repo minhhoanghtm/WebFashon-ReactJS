@@ -177,22 +177,19 @@ export function StaticPages() {
   const content = data?.content || fallback.content;
 
   return (
-    <div className="max-w-[960px] mx-auto px-4 sm:px-6 py-12 sm:py-16 w-full space-y-8 animate-fade-in">
+    <div className="max-w-[68ch] mx-auto px-4 sm:px-6 py-12 sm:py-16 w-full space-y-8 animate-fade-in">
       <div className="space-y-3 pb-6 border-b border-[rgba(244,240,232,0.1)]">
-        <span className="text-xs font-mono uppercase tracking-widest text-[#e65100]">
-          THÔNG TIN CHÍNH THỨC
-        </span>
         <h1 className="font-display text-3xl sm:text-4xl font-bold uppercase text-[#f4f0e8]">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-sm text-[#9a989f] leading-relaxed">
+          <p className="text-sm text-[#9a989f] leading-relaxed measure-compact">
             {subtitle}
           </p>
         )}
       </div>
 
-      <div className="bg-[#121215] border border-[rgba(244,240,232,0.12)] p-6 sm:p-10 text-sm text-[#f4f0e8]/90 leading-relaxed whitespace-pre-line space-y-4 font-sans">
+      <div className="bg-[#121215] border border-[rgba(244,240,232,0.12)] p-6 sm:p-10 text-[15px] text-[#f4f0e8]/90 leading-[1.75] whitespace-pre-line space-y-4 font-sans measure-prose">
         {content}
       </div>
 

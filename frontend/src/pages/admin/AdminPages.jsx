@@ -33,7 +33,6 @@ export function AdminDashboard() {
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
         <div>
-          <span className="text-xs font-mono uppercase text-[#e65100]">TỔNG QUAN QUẢN TRỊ</span>
           <h1 className="font-display text-2xl sm:text-3xl font-bold uppercase text-[#f4f0e8]">
             Bảng Điều Khiển Hệ Thống
           </h1>
@@ -42,7 +41,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 tabular-nums">
         <div className="p-5 bg-[#121215] border border-white/10 space-y-2">
           <span className="text-xs font-mono uppercase text-[#9a989f]">Tổng Doanh Thu</span>
           <div className="font-display text-2xl font-bold text-[#f4f0e8]">

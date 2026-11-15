@@ -75,7 +75,7 @@ export function Input({
       <input
         id={inputId}
         type={type}
-        className={`w-full min-h-[44px] px-3.5 py-2.5 bg-[#161619] border ${
+        className={`w-full min-h-[48px] px-3.5 py-2.5 bg-[#161619] border ${
           error ? "border-red-500 focus:border-red-500" : "border-[rgba(244,240,232,0.15)] focus:border-[#e65100]"
         } text-[#f4f0e8] placeholder-[#6b6973] text-sm rounded-none transition-colors duration-150 ${className}`}
         {...props}
@@ -97,7 +97,7 @@ export function Badge({ children, variant = "default", className = "" }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 text-xs font-mono tracking-wider uppercase ${variants[variant] || variants.default} ${className}`}
+      className={`inline-flex items-center px-2 py-0.5 text-xs font-mono tracking-wider uppercase tabular-nums ${variants[variant] || variants.default} ${className}`}
     >
       {children}
     </span>

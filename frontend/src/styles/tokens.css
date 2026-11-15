@@ -64,6 +64,20 @@
   --distance-md: 18px;
   --distance-lg: 32px;
   --stagger-step: 45ms;
+
+  /* Impeccable Craft Floor & Measure Tokens */
+  --measure-prose: 68ch;
+  --measure-compact: 48ch;
+  --input-height: 48px;
+  --input-height-sm: 40px;
+  --touch-target-min: 44px;
+
+  /* Browser Surfaces */
+  --color-selection-bg: rgba(230, 81, 0, 0.18);
+  --color-selection-text: inherit;
+  --color-caret: #e65100;
+  --focus-ring-color: #e65100;
+  --focus-ring-offset: 2px;
 }
 
 [data-theme="dark"],
@@ -106,4 +120,8 @@
   --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.6);
   --shadow-signal: 0 0 24px rgba(230, 81, 0, 0.25);
+
+  /* Browser Surfaces Dark */
+  --color-selection-bg: rgba(230, 81, 0, 0.35);
+  --color-selection-text: #FFFFFF;
 }

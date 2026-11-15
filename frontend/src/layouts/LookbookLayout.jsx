@@ -15,10 +15,6 @@ export function LookbookLayout() {
       <section className="bg-[#121215] border-b border-[rgba(244,240,232,0.1)] py-4 px-4 sm:px-6 lg:px-8">
         <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono text-[#ff6d00] uppercase tracking-widest mb-1">
-              <Sparkles size={13} />
-              <span>ATELIER EDITORIAL ARCHIVE • SEASON 2026</span>
-            </div>
             <h1 className="font-display text-xl sm:text-2xl font-bold tracking-wider text-[#f4f0e8] uppercase">
               LOOKBOOK & BỘ SƯU TẬP THEO MÙA
             </h1>

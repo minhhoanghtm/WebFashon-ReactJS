@@ -167,10 +167,6 @@ export function Products() {
       {/* 2. Editorial Category Hero Banner */}
       <div className="relative mb-10 p-8 sm:p-12 bg-gradient-to-r from-[#121215] via-[#161619] to-[#121215] border border-[rgba(244,240,232,0.12)] overflow-hidden">
         <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center gap-2 text-[10px] font-mono tracking-widest text-[#e65100] uppercase">
-            <Sparkles size={12} />
-            <span>CATALOGUE MAY ĐO 2026/27</span>
-          </div>
           <h1 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-[#f4f0e8]">
             {selectedCategoryObj
               ? selectedCategoryObj.name.toUpperCase()
@@ -178,7 +174,7 @@ export function Products() {
               ? `TÌM KIẾM: "${searchQuery}"`
               : "TẤT CẢ THIẾT KẾ ATELIER"}
           </h1>
-          <p className="text-xs sm:text-sm text-[#9a989f] leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#9a989f] leading-relaxed measure-prose">
             {selectedCategoryObj?.description ||
               "Khám phá các dòng sản phẩm thời trang may đo đơn sắc, sử dụng chất liệu vải len Ý, lụa tự nhiên và bông Ai Cập được cắt may tỉ mỉ."}
           </p>

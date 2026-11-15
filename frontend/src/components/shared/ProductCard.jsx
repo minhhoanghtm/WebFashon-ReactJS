@@ -79,10 +79,10 @@ export function ProductCard({ product }) {
             type="button"
             onClick={handleToggleWishlist}
             data-testid="product-wishlist-btn"
-            className={`min-h-[32px] min-w-[32px] p-1.5 flex items-center justify-center transition-all btn-tactile ${
+            className={`min-h-[36px] min-w-[36px] p-2 flex items-center justify-center transition-all btn-tactile ${
               isWishlisted
                 ? "bg-[#e65100] text-white border border-[#e65100] animate-wishlist-pop"
-                : "bg-[#0c0c0e]/80 text-[#9a989f] hover:text-[#e65100] border border-white/20 backdrop-blur-sm opacity-90 hover:opacity-100"
+                : "bg-[#0c0c0e]/85 text-[#9a989f] hover:text-[#e65100] border border-white/20 backdrop-blur-sm opacity-90 hover:opacity-100"
             }`}
             title={isWishlisted ? "Đã lưu vào danh sách yêu thích" : "Thêm vào yêu thích"}
             aria-label="Lưu vào danh sách yêu thích"
@@ -94,10 +94,10 @@ export function ProductCard({ product }) {
             type="button"
             onClick={handleToggleCompare}
             data-testid="product-compare-btn"
-            className={`min-h-[32px] min-w-[32px] p-1.5 flex items-center justify-center transition-all btn-tactile ${
+            className={`min-h-[36px] min-w-[36px] p-2 flex items-center justify-center transition-all btn-tactile ${
               isInCompare
                 ? "bg-[#e65100] text-white border border-[#e65100] opacity-100"
-                : "bg-[#0c0c0e]/80 text-[#9a989f] hover:text-white border border-white/20 backdrop-blur-sm opacity-90 hover:opacity-100"
+                : "bg-[#0c0c0e]/85 text-[#9a989f] hover:text-white border border-white/20 backdrop-blur-sm opacity-90 hover:opacity-100"
             }`}
             title={isInCompare ? "Đang trong danh sách so sánh" : "Thêm vào so sánh"}
             aria-label="So sánh sản phẩm"
@@ -150,7 +150,7 @@ export function ProductCard({ product }) {
           </Link>
         </div>
 
-        <div className="flex items-baseline gap-2 pt-1 border-t border-[rgba(244,240,232,0.06)]">
+        <div className="flex items-baseline gap-2 pt-1 border-t border-[rgba(244,240,232,0.06)] tabular-nums">
           <span className="text-sm font-semibold text-[#f4f0e8]">
             {price.toLocaleString("vi-VN")} ₫
           </span>

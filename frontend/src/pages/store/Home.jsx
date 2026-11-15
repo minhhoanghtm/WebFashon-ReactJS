@@ -88,17 +88,12 @@ export function Home() {
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center py-12">
           {/* Left Hero Typography */}
           <div className="lg:col-span-7 flex flex-col justify-center space-y-6 z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[rgba(230,81,0,0.12)] border border-[rgba(230,81,0,0.3)] text-[#ff6d00] text-xs font-mono tracking-widest uppercase w-fit">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ff6d00] animate-ping" />
-              <span>BỘ SƯU TẬP MAY ĐO MÙA MỚI — 2026/27</span>
-            </div>
-
             <h1 className="font-display text-4xl sm:text-6xl xl:text-7xl font-bold tracking-tight text-[#f4f0e8] leading-[1.05]">
               CẤU TRÚC ĐƯƠNG ĐẠI <br />
               <span className="text-[#e65100]">TỐI GIẢN ĐƠN SẮC</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-[#9a989f] max-w-lg leading-relaxed">
+            <p className="text-sm sm:text-base text-[#9a989f] measure-compact leading-relaxed">
               Thiết kế may đo phá cách kết hợp cùng nghệ thuật may thủ công truyền thống. Từng đường cắt và mũi chỉ là sự tuyên ngôn của bản sắc cá nhân.
             </p>
 
@@ -170,9 +165,6 @@ export function Home() {
       <section className="py-16 sm:py-24 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full border-b border-[rgba(244,240,232,0.1)]">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-[rgba(244,240,232,0.1)]">
           <div>
-            <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase block mb-1">
-              TUYỂN TẬP MỚI PHÁT HÀNH
-            </span>
             <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-[#f4f0e8]">
               NEW ARRIVALS 2026/27
             </h2>

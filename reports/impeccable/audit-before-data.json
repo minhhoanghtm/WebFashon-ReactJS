@@ -1,0 +1,122 @@
+[
+  {
+    "route": "/",
+    "name": "Editorial Homepage",
+    "analysis": {
+      "hasEyebrow": true,
+      "buttonCount": 73,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/products",
+    "name": "Product Discovery",
+    "analysis": {
+      "hasEyebrow": true,
+      "buttonCount": 124,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/product/ao-hoodie-ni-bong-unisex",
+    "name": "Product Detail Experience",
+    "analysis": {
+      "hasEyebrow": false,
+      "buttonCount": 8,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/cart",
+    "name": "Minimal Cart View",
+    "analysis": {
+      "hasEyebrow": false,
+      "buttonCount": 2,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/checkout",
+    "name": "Distraction-Free Checkout",
+    "analysis": {
+      "hasEyebrow": true,
+      "buttonCount": 2,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/lookbooks",
+    "name": "Editorial Lookbook",
+    "analysis": {
+      "hasEyebrow": true,
+      "buttonCount": 15,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/user/dashboard",
+    "name": "Personal Account Workspace",
+    "analysis": {
+      "hasEyebrow": true,
+      "buttonCount": 6,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/orders",
+    "name": "Order History",
+    "analysis": {
+      "hasEyebrow": true,
+      "buttonCount": 6,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/admin",
+    "name": "Admin Portal",
+    "analysis": {
+      "hasEyebrow": false,
+      "buttonCount": 4,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/about",
+    "name": "Editorial Manifesto",
+    "analysis": {
+      "hasEyebrow": true,
+      "buttonCount": 7,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/faq",
+    "name": "FAQ Accordion",
+    "analysis": {
+      "hasEyebrow": true,
+      "buttonCount": 7,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  },
+  {
+    "route": "/login",
+    "name": "Authentication Portal",
+    "analysis": {
+      "hasEyebrow": false,
+      "buttonCount": 2,
+      "hasOverflow": false,
+      "title": "WebFashion — Haute Atelier E-Commerce"
+    }
+  }
+]
