@@ -1,9 +1,19 @@
 import React from "react";
 import { createBrowserRouter } from "react-router-dom";
 
-// Layouts
-import { StoreLayout, AuthLayout } from "./components/layout/StoreLayout";
-import { AdminLayout } from "./components/layout/AdminLayout";
+// Hallmark Specialized Layout Framework
+import {
+  EditorialLayout,
+  CommerceLayout,
+  ProductDetailLayout,
+  CheckoutLayout,
+  AccountLayout,
+  LookbookLayout,
+  ContentLayout,
+  SystemLayout,
+  AuthLayout,
+  AdminLayout,
+} from "./layouts";
 
 // Store Pages
 import { Home } from "./pages/store/Home";
@@ -12,6 +22,7 @@ import { ProductDetail } from "./pages/store/ProductDetail";
 import { Cart } from "./pages/store/Cart";
 import { Checkout } from "./pages/store/Checkout";
 import { PaymentResult, OrderLookup } from "./pages/store/PaymentResult";
+
 // Secondary Store Pages (Lazy)
 const Favorites = React.lazy(() => import("./pages/store/Favorites").then((m) => ({ default: m.Favorites })));
 const Vouchers = React.lazy(() => import("./pages/store/Favorites").then((m) => ({ default: m.Vouchers })));
@@ -52,24 +63,69 @@ const AdminSettings = React.lazy(() => import("./pages/admin/AdminPages").then((
 import { NotFound } from "./pages/system/NotFound";
 
 export const router = createBrowserRouter([
-  // 1. Storefront Routes
+  // 1. Template A — Editorial Homepage
   {
     path: "/",
-    element: <StoreLayout />,
+    element: <EditorialLayout />,
     children: [
       { index: true, element: <Home /> },
+    ],
+  },
+
+  // 2. Template B — Product Discovery
+  {
+    element: <CommerceLayout />,
+    children: [
       { path: "products", element: <Products /> },
+      { path: "favorites", element: <Favorites /> },
+      { path: "vouchers", element: <Vouchers /> },
+    ],
+  },
+
+  // 3. Template C — Product Detail Experience
+  {
+    element: <ProductDetailLayout />,
+    children: [
       { path: "product/:slug", element: <ProductDetail /> },
+    ],
+  },
+
+  // 4. Template D — Minimal Checkout Flow
+  {
+    element: <CheckoutLayout />,
+    children: [
       { path: "cart", element: <Cart /> },
       { path: "checkout", element: <Checkout /> },
       { path: "payment-result", element: <PaymentResult /> },
       { path: "payment/:orderId", element: <PaymentResult /> },
-      { path: "order-lookup", element: <OrderLookup /> },
-      { path: "favorites", element: <Favorites /> },
-      { path: "vouchers", element: <Vouchers /> },
-      { path: "lookbooks", element: <Lookbooks /> },
+    ],
+  },
 
-      // Static Content Pages
+  // 5. Template E — Personal Account Workspace
+  {
+    element: <AccountLayout />,
+    children: [
+      { path: "user/dashboard", element: <UserDashboard /> },
+      { path: "profile", element: <Profile /> },
+      { path: "profile/data-requests", element: <DataRequests /> },
+      { path: "orders", element: <Orders /> },
+      { path: "my-coupons", element: <MyCoupons /> },
+      { path: "reviews/create", element: <CreateReview /> },
+    ],
+  },
+
+  // 6. Template G — Editorial Lookbook
+  {
+    element: <LookbookLayout />,
+    children: [
+      { path: "lookbooks", element: <Lookbooks /> },
+    ],
+  },
+
+  // 7. Template J — Support & Content Hub (Reading-focused)
+  {
+    element: <ContentLayout />,
+    children: [
       { path: "policy", element: <StaticPages /> },
       { path: "privacy", element: <StaticPages /> },
       { path: "terms", element: <StaticPages /> },
@@ -82,22 +138,10 @@ export const router = createBrowserRouter([
       { path: "guide", element: <StaticPages /> },
       { path: "about", element: <StaticPages /> },
       { path: "blog", element: <StaticPages /> },
-
-      // Customer Protected Pages
-      { path: "my-coupons", element: <MyCoupons /> },
-      { path: "profile", element: <Profile /> },
-      { path: "profile/data-requests", element: <DataRequests /> },
-      { path: "user/dashboard", element: <UserDashboard /> },
-      { path: "orders", element: <Orders /> },
-      { path: "reviews/create", element: <CreateReview /> },
-
-      // 404 test route
-      { path: "non-existent-route-404-test", element: <NotFound /> },
-      { path: "*", element: <NotFound /> },
     ],
   },
 
-  // 2. Authentication Routes
+  // 8. Template I — Authentication
   {
     element: <AuthLayout />,
     children: [
@@ -108,7 +152,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // 3. Admin Routes
+  // 9. Template H — Admin Operations
   {
     path: "admin",
     element: <AdminLayout />,
@@ -127,6 +171,16 @@ export const router = createBrowserRouter([
       { path: "ab-testing", element: <AdminAbTesting /> },
       { path: "pages", element: <AdminPages /> },
       { path: "settings", element: <AdminSettings /> },
+    ],
+  },
+
+  // 10. Template K — System & Error
+  {
+    element: <SystemLayout />,
+    children: [
+      { path: "order-lookup", element: <OrderLookup /> },
+      { path: "non-existent-route-404-test", element: <NotFound /> },
+      { path: "*", element: <NotFound /> },
     ],
   },
 ]);
