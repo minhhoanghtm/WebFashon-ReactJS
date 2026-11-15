@@ -1,0 +1,899 @@
+{
+  "desktop": [
+    {
+      "route": "/",
+      "desc": "Trang chủ Atelier",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/01-home.png"
+    },
+    {
+      "route": "/products",
+      "desc": "Bộ sưu tập & Tìm kiếm",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "searchProductsService error: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async Uo (http://localhost:5173/assets/index-CzekSjM0.js:2:115777)\n    at async queryFn (http://localhost:5173/assets/index-CzekSjM0.js:69:46657)"
+      ],
+      "screenshot": "./screenshots/desktop/02-products.png"
+    },
+    {
+      "route": "/product/ao-blazer-atelier",
+      "desc": "Chi tiết sản phẩm",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/03-product-detail.png"
+    },
+    {
+      "route": "/cart",
+      "desc": "Giỏ hàng",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/04-cart.png"
+    },
+    {
+      "route": "/checkout",
+      "desc": "Thanh toán & Đặt hàng",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/05-checkout.png"
+    },
+    {
+      "route": "/payment-result",
+      "desc": "Kết quả giao dịch",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/06-payment-result.png"
+    },
+    {
+      "route": "/order-lookup",
+      "desc": "Tra cứu đơn hàng",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/07-order-lookup.png"
+    },
+    {
+      "route": "/favorites",
+      "desc": "Danh sách yêu thích",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/08-favorites.png"
+    },
+    {
+      "route": "/vouchers",
+      "desc": "Săn mã giảm giá",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải Promotion Banner: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async uf (http://localhost:5173/assets/index-CzekSjM0.js:67:132673)\n    at async http://localhost:5173/assets/index-CzekSjM0.js:136:161129"
+      ],
+      "screenshot": "./screenshots/desktop/09-vouchers.png"
+    },
+    {
+      "route": "/lookbooks",
+      "desc": "Lookbook thời trang",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi tải danh sách Lookbook: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async xf (http://localhost:5173/assets/index-CzekSjM0.js:69:8894)\n    at async http://localhost:5173/assets/index-CzekSjM0.js:146:4165"
+      ],
+      "screenshot": "./screenshots/desktop/10-lookbooks.png"
+    },
+    {
+      "route": "/policy",
+      "desc": "Chính sách thương hiệu",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/11-policy.png"
+    },
+    {
+      "route": "/privacy",
+      "desc": "Chính sách bảo mật dữ liệu",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/12-privacy.png"
+    },
+    {
+      "route": "/terms",
+      "desc": "Điều khoản dịch vụ",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/13-terms.png"
+    },
+    {
+      "route": "/shipping",
+      "desc": "Chính sách vận chuyển",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/14-shipping.png"
+    },
+    {
+      "route": "/returns-refunds",
+      "desc": "Chính sách đổi trả",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/15-returns-refunds.png"
+    },
+    {
+      "route": "/payment-policy",
+      "desc": "Chính sách thanh toán",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/16-payment-policy.png"
+    },
+    {
+      "route": "/cookies",
+      "desc": "Chính sách Cookies",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/17-cookies.png"
+    },
+    {
+      "route": "/contact-legal",
+      "desc": "Thông tin pháp lý",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/18-contact-legal.png"
+    },
+    {
+      "route": "/faq",
+      "desc": "Câu hỏi thường gặp",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/19-faq.png"
+    },
+    {
+      "route": "/guide",
+      "desc": "Hướng dẫn chọn size",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/20-guide.png"
+    },
+    {
+      "route": "/about",
+      "desc": "Về thương hiệu Atelier",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/21-about.png"
+    },
+    {
+      "route": "/blog",
+      "desc": "Tạp chí phong cách",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi tải danh sách Lookbook: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async xf (http://localhost:5173/assets/index-CzekSjM0.js:69:8894)\n    at async http://localhost:5173/assets/index-CzekSjM0.js:146:4165"
+      ],
+      "screenshot": "./screenshots/desktop/22-blog.png"
+    },
+    {
+      "route": "/my-coupons",
+      "desc": "Ví voucher của tôi",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Access to XMLHttpRequest at 'http://localhost:5000/api/auth/refreshToken' from origin 'http://localhost:5173' has been blocked by CORS policy: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.",
+        "AxiosError: Network Error\n    at h.onerror (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:6457)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async http://localhost:5173/assets/axiosClient-BMsHf9s-.js:10:24505\n    at async http://localhost:5173/assets/axiosClient-BMsHf9s-.js:10:27682\n    at async M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:1942)\n    at async http://localhost:5173/assets/index-CzekSjM0.js:136:90324",
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "screenshot": "./screenshots/desktop/23-my-coupons.png"
+    },
+    {
+      "route": "/profile",
+      "desc": "Hồ sơ cá nhân",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Access to XMLHttpRequest at 'http://localhost:5000/api/auth/refreshToken' from origin 'http://localhost:5173' has been blocked by CORS policy: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.",
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "screenshot": "./screenshots/desktop/24-profile.png"
+    },
+    {
+      "route": "/profile/data-requests",
+      "desc": "Quản lý dữ liệu GDPR",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/25-data-requests.png"
+    },
+    {
+      "route": "/user/dashboard",
+      "desc": "Bảng điều khiển cá nhân",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Access to XMLHttpRequest at 'http://localhost:5000/api/auth/refreshToken' from origin 'http://localhost:5173' has been blocked by CORS policy: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.",
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "screenshot": "./screenshots/desktop/26-user-dashboard.png"
+    },
+    {
+      "route": "/orders",
+      "desc": "Lịch sử đơn hàng",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to fetch orders: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async yh (http://localhost:5173/assets/index-CzekSjM0.js:136:59568)\n    at async http://localhost:5173/assets/index-CzekSjM0.js:136:83303"
+      ],
+      "screenshot": "./screenshots/desktop/27-orders.png"
+    },
+    {
+      "route": "/reviews/create",
+      "desc": "Viết đánh giá sản phẩm",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)"
+      ],
+      "screenshot": "./screenshots/desktop/28-reviews-create.png"
+    },
+    {
+      "route": "/non-existent-route-404-test",
+      "desc": "Trang 404 Không tìm thấy",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/29-not-found.png"
+    },
+    {
+      "route": "/login",
+      "desc": "Đăng nhập tài khoản",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/30-login.png"
+    },
+    {
+      "route": "/register",
+      "desc": "Đăng ký tài khoản",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/31-register.png"
+    },
+    {
+      "route": "/verify-otp",
+      "desc": "Xác thực mã OTP",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)"
+      ],
+      "screenshot": "./screenshots/desktop/32-verify-otp.png"
+    },
+    {
+      "route": "/reset-password",
+      "desc": "Đặt lại mật khẩu",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/33-reset-password.png"
+    },
+    {
+      "route": "/admin",
+      "desc": "Admin: Dashboard tổng quan",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/34-admin-dashboard.png"
+    },
+    {
+      "route": "/admin/categories",
+      "desc": "Admin: Quản lý danh mục",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Fetch categories error: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async Md (http://localhost:5173/assets/index-CzekSjM0.js:67:101714)\n    at async Promise.all (index 0)\n    at async K (http://localhost:5173/assets/CatalogManagement-D26IwzcU.js:1:1194)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/35-admin-categories.png"
+    },
+    {
+      "route": "/admin/products",
+      "desc": "Admin: Quản lý sản phẩm",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Fetch products error: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async Lo (http://localhost:5173/assets/index-CzekSjM0.js:2:115350)\n    at async Promise.all (index 0)\n    at async Z (http://localhost:5173/assets/ProductManagement-Twkm7mnw.js:1:2019)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/36-admin-products.png"
+    },
+    {
+      "route": "/admin/orders",
+      "desc": "Admin: Quản lý đơn hàng",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Fetch orders error: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async xh (http://localhost:5173/assets/index-CzekSjM0.js:136:59672)\n    at async J (http://localhost:5173/assets/OrderManagement-kGQwDgew.js:1:1702)"
+      ],
+      "screenshot": "./screenshots/desktop/37-admin-orders.png"
+    },
+    {
+      "route": "/admin/chats",
+      "desc": "Admin: Trung tâm tin nhắn",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Fetch admin conversations error: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async lu (http://localhost:5173/assets/index-CzekSjM0.js:67:3891)\n    at async X (http://localhost:5173/assets/AdminChatManagement-DGuJBn2W.js:1:2069)"
+      ],
+      "screenshot": "./screenshots/desktop/38-admin-chats.png"
+    },
+    {
+      "route": "/admin/customers",
+      "desc": "Admin: Quản lý khách hàng",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "adminUserApi error object: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async O (http://localhost:5173/assets/UserManagement-BW09IXFU.js:1:2317)\n    at async K (http://localhost:5173/assets/UserManagement-BW09IXFU.js:1:3056)"
+      ],
+      "screenshot": "./screenshots/desktop/39-admin-customers.png"
+    },
+    {
+      "route": "/admin/coupons",
+      "desc": "Admin: Quản lý mã giảm giá",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/40-admin-coupons.png"
+    },
+    {
+      "route": "/admin/campaigns",
+      "desc": "Admin: Quản lý chiến dịch",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/41-admin-campaigns.png"
+    },
+    {
+      "route": "/admin/banners",
+      "desc": "Admin: Quản lý banner",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/42-admin-banners.png"
+    },
+    {
+      "route": "/admin/lookbooks",
+      "desc": "Admin: Quản lý lookbooks",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/43-admin-lookbooks.png"
+    },
+    {
+      "route": "/admin/ab-testing",
+      "desc": "Admin: Thử nghiệm A/B",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải dữ liệu A/B Testing: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)"
+      ],
+      "screenshot": "./screenshots/desktop/44-admin-ab-testing.png"
+    },
+    {
+      "route": "/admin/user-activity",
+      "desc": "Admin: Giám sát hành vi",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to decode JWT token: TypeError: Cannot read properties of undefined (reading 'replace')\n    at Object.decodeToken (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:10:5851)\n    at http://localhost:5173/assets/axiosClient-BMsHf9s-.js:10:25460\n    at async M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:1942)\n    at async http://localhost:5173/assets/UserActivityMonitoring-BdsBDGJj.js:1:34747",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/45-admin-user-activity.png"
+    },
+    {
+      "route": "/admin/pages",
+      "desc": "Admin: Quản lý trang tĩnh",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "./screenshots/desktop/46-admin-pages.png"
+    },
+    {
+      "route": "/admin/settings",
+      "desc": "Admin: Cài đặt website",
+      "status": "PASS",
+      "overflow": false,
+      "errors": [
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Lỗi khi tải cài đặt website: AxiosError: Request failed with status code 404\n    at jt (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:1067)\n    at XMLHttpRequest.g (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:4:5998)\n    at M.request (http://localhost:5173/assets/axiosClient-BMsHf9s-.js:6:2038)\n    at async r (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:182)\n    at async fetchSettings (http://localhost:5173/assets/websiteSettings.store-BYBy4Mqe.js:1:689)"
+      ],
+      "screenshot": "./screenshots/desktop/47-admin-settings.png"
+    }
+  ],
+  "mobile": [
+    {
+      "route": "/",
+      "desc": "Trang chủ Atelier",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/01-home.png"
+    },
+    {
+      "route": "/products",
+      "desc": "Bộ sưu tập & Tìm kiếm",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/02-products.png"
+    },
+    {
+      "route": "/product/ao-blazer-atelier",
+      "desc": "Chi tiết sản phẩm",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/03-product-detail.png"
+    },
+    {
+      "route": "/cart",
+      "desc": "Giỏ hàng",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/04-cart.png"
+    },
+    {
+      "route": "/checkout",
+      "desc": "Thanh toán & Đặt hàng",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/05-checkout.png"
+    },
+    {
+      "route": "/payment-result",
+      "desc": "Kết quả giao dịch",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/06-payment-result.png"
+    },
+    {
+      "route": "/order-lookup",
+      "desc": "Tra cứu đơn hàng",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/07-order-lookup.png"
+    },
+    {
+      "route": "/favorites",
+      "desc": "Danh sách yêu thích",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/08-favorites.png"
+    },
+    {
+      "route": "/vouchers",
+      "desc": "Săn mã giảm giá",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/09-vouchers.png"
+    },
+    {
+      "route": "/lookbooks",
+      "desc": "Lookbook thời trang",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/10-lookbooks.png"
+    },
+    {
+      "route": "/policy",
+      "desc": "Chính sách thương hiệu",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/11-policy.png"
+    },
+    {
+      "route": "/privacy",
+      "desc": "Chính sách bảo mật dữ liệu",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/12-privacy.png"
+    },
+    {
+      "route": "/terms",
+      "desc": "Điều khoản dịch vụ",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/13-terms.png"
+    },
+    {
+      "route": "/shipping",
+      "desc": "Chính sách vận chuyển",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/14-shipping.png"
+    },
+    {
+      "route": "/returns-refunds",
+      "desc": "Chính sách đổi trả",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/15-returns-refunds.png"
+    },
+    {
+      "route": "/payment-policy",
+      "desc": "Chính sách thanh toán",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/16-payment-policy.png"
+    },
+    {
+      "route": "/cookies",
+      "desc": "Chính sách Cookies",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/17-cookies.png"
+    },
+    {
+      "route": "/contact-legal",
+      "desc": "Thông tin pháp lý",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/18-contact-legal.png"
+    },
+    {
+      "route": "/faq",
+      "desc": "Câu hỏi thường gặp",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/19-faq.png"
+    },
+    {
+      "route": "/guide",
+      "desc": "Hướng dẫn chọn size",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/20-guide.png"
+    },
+    {
+      "route": "/about",
+      "desc": "Về thương hiệu Atelier",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/21-about.png"
+    },
+    {
+      "route": "/blog",
+      "desc": "Tạp chí phong cách",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/22-blog.png"
+    },
+    {
+      "route": "/my-coupons",
+      "desc": "Ví voucher của tôi",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/23-my-coupons.png"
+    },
+    {
+      "route": "/profile",
+      "desc": "Hồ sơ cá nhân",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/24-profile.png"
+    },
+    {
+      "route": "/profile/data-requests",
+      "desc": "Quản lý dữ liệu GDPR",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/25-data-requests.png"
+    },
+    {
+      "route": "/user/dashboard",
+      "desc": "Bảng điều khiển cá nhân",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/26-user-dashboard.png"
+    },
+    {
+      "route": "/orders",
+      "desc": "Lịch sử đơn hàng",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/27-orders.png"
+    },
+    {
+      "route": "/reviews/create",
+      "desc": "Viết đánh giá sản phẩm",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/28-reviews-create.png"
+    },
+    {
+      "route": "/non-existent-route-404-test",
+      "desc": "Trang 404 Không tìm thấy",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/29-not-found.png"
+    },
+    {
+      "route": "/login",
+      "desc": "Đăng nhập tài khoản",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/30-login.png"
+    },
+    {
+      "route": "/register",
+      "desc": "Đăng ký tài khoản",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/31-register.png"
+    },
+    {
+      "route": "/verify-otp",
+      "desc": "Xác thực mã OTP",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/32-verify-otp.png"
+    },
+    {
+      "route": "/reset-password",
+      "desc": "Đặt lại mật khẩu",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/33-reset-password.png"
+    },
+    {
+      "route": "/admin",
+      "desc": "Admin: Dashboard tổng quan",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/34-admin-dashboard.png"
+    },
+    {
+      "route": "/admin/categories",
+      "desc": "Admin: Quản lý danh mục",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/35-admin-categories.png"
+    },
+    {
+      "route": "/admin/products",
+      "desc": "Admin: Quản lý sản phẩm",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/36-admin-products.png"
+    },
+    {
+      "route": "/admin/orders",
+      "desc": "Admin: Quản lý đơn hàng",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/37-admin-orders.png"
+    },
+    {
+      "route": "/admin/chats",
+      "desc": "Admin: Trung tâm tin nhắn",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/38-admin-chats.png"
+    },
+    {
+      "route": "/admin/customers",
+      "desc": "Admin: Quản lý khách hàng",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/39-admin-customers.png"
+    },
+    {
+      "route": "/admin/coupons",
+      "desc": "Admin: Quản lý mã giảm giá",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/40-admin-coupons.png"
+    },
+    {
+      "route": "/admin/campaigns",
+      "desc": "Admin: Quản lý chiến dịch",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/41-admin-campaigns.png"
+    },
+    {
+      "route": "/admin/banners",
+      "desc": "Admin: Quản lý banner",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/42-admin-banners.png"
+    },
+    {
+      "route": "/admin/lookbooks",
+      "desc": "Admin: Quản lý lookbooks",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/43-admin-lookbooks.png"
+    },
+    {
+      "route": "/admin/ab-testing",
+      "desc": "Admin: Thử nghiệm A/B",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/44-admin-ab-testing.png"
+    },
+    {
+      "route": "/admin/user-activity",
+      "desc": "Admin: Giám sát hành vi",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/45-admin-user-activity.png"
+    },
+    {
+      "route": "/admin/pages",
+      "desc": "Admin: Quản lý trang tĩnh",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/46-admin-pages.png"
+    },
+    {
+      "route": "/admin/settings",
+      "desc": "Admin: Cài đặt website",
+      "status": "PASS",
+      "overflow": false,
+      "screenshot": "./screenshots/mobile/47-admin-settings.png"
+    }
+  ]
+}
