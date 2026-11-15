@@ -21,20 +21,26 @@ export function Products() {
     async function fetchData() {
       setIsLoading(true);
       try {
+        const queryParams = { limit: 12 };
+        if (selectedCategory) queryParams.category = selectedCategory;
+        if (selectedSort && selectedSort !== "newest") queryParams.sort = selectedSort;
+        if (searchQuery) queryParams.search = searchQuery;
+
         const [prodRes, catRes] = await Promise.allSettled([
-          productApi.getAll({
-            category: selectedCategory || undefined,
-            sort: selectedSort,
-            search: searchQuery || undefined,
-            limit: 24,
-          }),
+          productApi.getAll(queryParams),
           categoryApi.getAll(),
         ]);
 
         if (active) {
           if (prodRes.status === "fulfilled") {
             const list = prodRes.value?.data || prodRes.value || [];
-            setProducts(Array.isArray(list) ? list : []);
+            if (Array.isArray(list) && list.length > 0) {
+              setProducts(list);
+            } else {
+              const fallbackRes = await productApi.getAll({ limit: 8 }).catch(() => null);
+              const fbList = fallbackRes?.data || fallbackRes || [];
+              setProducts(Array.isArray(fbList) ? fbList : []);
+            }
           }
           if (catRes.status === "fulfilled") {
             const cats = catRes.value?.data || catRes.value || [];

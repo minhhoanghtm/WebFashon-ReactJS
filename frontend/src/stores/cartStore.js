@@ -59,6 +59,13 @@ export const useCartStore = create((set, get) => ({
     set({ items: current });
   },
 
+  addMultipleItems: async (itemsList) => {
+    if (!Array.isArray(itemsList) || itemsList.length === 0) return;
+    for (const it of itemsList) {
+      await get().addItem(it);
+    }
+  },
+
   updateQuantity: async (itemId, quantity) => {
     if (quantity <= 0) {
       return get().removeItem(itemId);

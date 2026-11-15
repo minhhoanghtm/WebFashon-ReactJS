@@ -4,6 +4,8 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { CookieConsentBanner } from "../shared/CookieConsentBanner";
 import { AiAssistantModal } from "../shared/AiAssistantModal";
+import { AiStyleQuizModal } from "../shared/AiStyleQuizModal";
+import { ProductComparisonDrawer } from "../shared/ProductComparisonDrawer";
 
 export function StoreLayout() {
   return (
@@ -15,6 +17,8 @@ export function StoreLayout() {
       <Footer />
       <CookieConsentBanner />
       <AiAssistantModal />
+      <AiStyleQuizModal />
+      <ProductComparisonDrawer />
     </div>
   );
 }

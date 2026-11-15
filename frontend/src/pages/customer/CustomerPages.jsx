@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { User, Package, Ticket, Shield, Plus, Star, MapPin } from "lucide-react";
+import { User, Package, Ticket, Shield, Plus, Star, MapPin, Sparkles } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
+import { usePersonaStore } from "../../stores/personaStore";
 import { authApi, orderApi, voucherApi } from "../../api/endpoints";
 import { Button, Input, Badge } from "../../components/ui/Button";
 
 export function Profile() {
   const user = useAuthStore((state) => state.user);
   const fetchMe = useAuthStore((state) => state.fetchMe);
+  const persona = usePersonaStore((state) => state.persona);
+  const openQuiz = usePersonaStore((state) => state.openQuiz);
   const [fullName, setFullName] = useState(user?.fullName || "Khách Hàng Thân Thiết");
   const [phone, setPhone] = useState(user?.phone || "+84900000002");
   const [isSaved, setIsSaved] = useState(false);
@@ -51,6 +54,38 @@ export function Profile() {
             <p className="text-xs text-[#9a989f] font-mono">{user?.email || "customer@404studio.vn"}</p>
           </div>
           <Badge variant="signal">Thành Viên Kim Cương</Badge>
+          
+          <div className="pt-3 border-t border-white/10 text-left space-y-2">
+            <span className="text-[10px] font-mono uppercase text-[#e65100] tracking-wider block">
+              FASHION PERSONA
+            </span>
+            {persona ? (
+              <div className="p-2.5 bg-[#161619] border border-[#e65100]/30 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-display font-bold text-[#f4f0e8] uppercase">
+                  <Sparkles size={12} className="text-[#e65100]" />
+                  <span>{persona.title}</span>
+                </div>
+                <p className="text-[10px] text-[#9a989f] line-clamp-2 leading-relaxed">
+                  {persona.tagline}
+                </p>
+                <button
+                  type="button"
+                  onClick={openQuiz}
+                  className="text-[10px] font-mono text-[#ff6d00] hover:text-white pt-1 block"
+                >
+                  Làm lại trắc nghiệm &rarr;
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={openQuiz}
+                className="w-full py-2 px-3 bg-[#161619] hover:bg-white/5 border border-dashed border-white/20 text-xs font-mono text-[#f4f0e8] text-center"
+              >
+                + Khám phá Style Persona
+              </button>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleUpdate} className="md:col-span-2 bg-[#121215] border border-white/10 p-6 space-y-4">

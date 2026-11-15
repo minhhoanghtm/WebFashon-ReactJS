@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ShoppingBag, Check, ShieldCheck, Truck, RefreshCw, Scissors, ChevronRight } from "lucide-react";
+import { ShoppingBag, Check, ShieldCheck, Truck, RefreshCw, Scissors, ChevronRight, Sparkles } from "lucide-react";
 import { productApi } from "../../api/endpoints";
 import { useCartStore } from "../../stores/cartStore";
 import { Button } from "../../components/ui/Button";
+import { CompleteTheLook } from "../../components/shared/CompleteTheLook";
+import { SmartSizeAssistantModal } from "../../components/shared/SmartSizeAssistantModal";
 
 export function ProductDetail() {
   const { slug } = useParams();
@@ -15,6 +17,7 @@ export function ProductDetail() {
   const [availability, setAvailability] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdded, setIsAdded] = useState(false);
+  const [isSizeModalOpen, setIsSizeModalOpen] = useState(false);
 
   const addItem = useCartStore((state) => state.addItem);
 
@@ -188,9 +191,18 @@ export function ProductDetail() {
             {/* Variants Selector */}
             {variants.length > 0 && (
               <div className="space-y-3 pt-2">
-                <span className="text-xs font-mono uppercase tracking-wider text-[#9a989f] block">
-                  Chọn Biến Thể (Size / Màu)
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#9a989f] block">
+                    Chọn Biến Thể (Size / Màu)
+                  </span>
+                  <button
+                    onClick={() => setIsSizeModalOpen(true)}
+                    className="text-[11px] font-mono text-[#ff6d00] hover:text-white flex items-center gap-1 transition-colors"
+                  >
+                    <Scissors size={12} />
+                    <span>Tư Vấn Size AI</span>
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {variants.map((v) => (
                     <button
@@ -276,6 +288,23 @@ export function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* COMPLETE THE LOOK SECTION */}
+      <CompleteTheLook currentProduct={product} />
+
+      {/* SMART SIZE ASSISTANT MODAL */}
+      <SmartSizeAssistantModal
+        isOpen={isSizeModalOpen}
+        onClose={() => setIsSizeModalOpen(false)}
+        onSelectSize={(recommendedSize) => {
+          const match = variants.find(
+            (v) => v.size && v.size.trim().toUpperCase() === recommendedSize.toUpperCase()
+          );
+          if (match) {
+            setSelectedVariant(match);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -5,12 +5,15 @@ import { SignalFabricCanvas } from "../../components/shared/SignalFabricCanvas";
 import { ProductCard } from "../../components/shared/ProductCard";
 import { productApi, categoryApi, contentApi } from "../../api/endpoints";
 import { Button } from "../../components/ui/Button";
+import { usePersonaStore } from "../../stores/personaStore";
 
 export function Home() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [banners, setBanners] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const openQuiz = usePersonaStore((state) => state.openQuiz);
 
   useEffect(() => {
     let isMounted = true;
@@ -184,8 +187,33 @@ export function Home() {
         </div>
       </section>
 
-      {/* 4. EDITORIAL MANIFESTO CALLOUT */}
-      <section className="bg-[#121215] border-y border-[rgba(244,240,232,0.1)] py-16 sm:py-24">
+      {/* 4. AI FASHION STYLE PERSONA BANNER */}
+      <section className="bg-gradient-to-r from-[#161619] via-[#1c1d22] to-[#161619] border-y border-[rgba(244,240,232,0.12)] py-12 px-4 sm:px-8">
+        <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 text-xs font-mono uppercase tracking-widest text-[#e65100]">
+              <Sparkles size={14} />
+              <span>CÁ NHÂN HÓA PHONG CÁCH CỦA BẠN</span>
+            </div>
+            <h3 className="font-display text-2xl sm:text-3xl font-bold uppercase text-[#f4f0e8]">
+              AI FASHION STYLE QUIZ & PERSONA
+            </h3>
+            <p className="text-xs text-[#9a989f] max-w-lg">
+              Chỉ 60 giây trắc nghiệm để nhận diện phong cách độc bản (Archival Minimalist, Sartorialist hay Quiet Luxury) và mở khóa gợi ý trang phục may đo tương thích.
+            </p>
+          </div>
+          <button
+            onClick={openQuiz}
+            className="min-h-[46px] px-6 bg-[#e65100] hover:bg-[#ff6d00] text-white font-display text-xs tracking-widest uppercase flex items-center gap-2 transition-all shadow-lg shrink-0"
+          >
+            <Compass size={16} />
+            <span>Khám Phá Phong Cách Ngay</span>
+          </button>
+        </div>
+      </section>
+
+      {/* 5. EDITORIAL MANIFESTO CALLOUT */}
+      <section className="bg-[#121215] border-b border-[rgba(244,240,232,0.1)] py-16 sm:py-24">
         <div className="max-w-[1000px] mx-auto px-4 text-center space-y-6">
           <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase">
             TRIẾT LÝ ATELIER

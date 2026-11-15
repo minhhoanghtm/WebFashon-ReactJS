@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingBag, Search, Sparkles, User, Menu, X, Shield, LogOut } from "lucide-react";
+import { ShoppingBag, Search, Sparkles, User, Menu, X, Shield, LogOut, Compass } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { useCartStore } from "../../stores/cartStore";
 import { useUiStore } from "../../stores/uiStore";
+import { usePersonaStore } from "../../stores/personaStore";
+import { NotificationCenter } from "../shared/NotificationCenter";
 
 export function Header() {
   const navigate = useNavigate();
@@ -14,6 +16,9 @@ export function Header() {
   const isMobileMenuOpen = useUiStore((state) => state.isMobileMenuOpen);
   const toggleMobileMenu = useUiStore((state) => state.toggleMobileMenu);
   const closeMobileMenu = useUiStore((state) => state.closeMobileMenu);
+
+  const persona = usePersonaStore((state) => state.persona);
+  const openQuiz = usePersonaStore((state) => state.openQuiz);
 
   const [searchVal, setSearchVal] = useState("");
 
@@ -59,7 +64,7 @@ export function Header() {
         </div>
 
         {/* Right Action Icons & Search */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           {/* Quick Search Input */}
           <form onSubmit={handleSearchSubmit} className="hidden lg:flex items-center relative">
             <input
@@ -67,10 +72,22 @@ export function Header() {
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
               placeholder="Tìm kiếm thiết kế..."
-              className="w-48 xl:w-64 min-h-[38px] pl-8 pr-3 bg-[#161619] border border-[rgba(244,240,232,0.12)] text-xs text-[#f4f0e8] placeholder-[#6b6973] focus:border-[#e65100] transition-all"
+              className="w-44 xl:w-56 min-h-[38px] pl-8 pr-3 bg-[#161619] border border-[rgba(244,240,232,0.12)] text-xs text-[#f4f0e8] placeholder-[#6b6973] focus:border-[#e65100] transition-all"
             />
             <Search className="absolute left-2.5 text-[#6b6973] pointer-events-none" size={14} />
           </form>
+
+          {/* AI Style Persona Button / Badge */}
+          <button
+            onClick={openQuiz}
+            className="min-h-[40px] px-2.5 bg-[#161619] hover:bg-[#202025] border border-[rgba(244,240,232,0.15)] hover:border-[#e65100] text-[#f4f0e8] text-xs font-display tracking-wider uppercase flex items-center gap-1.5 transition-colors"
+            title={persona ? `Phong cách của bạn: ${persona.title}` : "Khám phá phong cách thời trang AI"}
+          >
+            <Compass size={14} className="text-[#e65100]" />
+            <span className="hidden xl:inline">
+              {persona ? persona.title.split(" ")[0] : "Style Quiz"}
+            </span>
+          </button>
 
           {/* AI Shopping Assistant Button */}
           <button
@@ -81,6 +98,9 @@ export function Header() {
             <Sparkles size={14} />
             <span className="hidden sm:inline">Trợ lý AI</span>
           </button>
+
+          {/* In-App Notification Center */}
+          <NotificationCenter />
 
           {/* Account Link or Menu */}
           {user ? (
@@ -165,6 +185,16 @@ export function Header() {
             <Search className="absolute left-3 text-[#6b6973]" size={16} />
           </form>
           <div className="flex flex-col space-y-3 font-display uppercase tracking-wider text-sm">
+            <button
+              onClick={() => {
+                closeMobileMenu();
+                openQuiz();
+              }}
+              className="py-2 text-left border-b border-white/5 text-[#e65100] flex items-center gap-2"
+            >
+              <Compass size={16} />
+              <span>AI Fashion Style Quiz</span>
+            </button>
             <Link to="/products" onClick={closeMobileMenu} className="py-2 border-b border-white/5 text-[#f4f0e8]">
               Bộ Sưu Tập
             </Link>

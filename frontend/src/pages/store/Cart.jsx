@@ -62,13 +62,31 @@ export function Cart() {
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-      <div className="pb-6 border-b border-[rgba(244,240,232,0.1)] mb-8">
+      <div className="pb-6 border-b border-[rgba(244,240,232,0.1)] mb-6">
         <span className="text-xs font-mono tracking-widest text-[#e65100] uppercase block mb-1">
           QUẢN LÝ ĐƠN HÀNG
         </span>
         <h1 className="font-display text-3xl font-bold tracking-tight text-[#f4f0e8]">
           GIỎ HÀNG MAY ĐO ({items.length})
         </h1>
+      </div>
+
+      {/* Free Shipping Progress Indicator */}
+      <div className="mb-8 p-4 bg-[#161619] border border-white/10">
+        <div className="flex items-center justify-between text-xs mb-2">
+          <span className="font-display uppercase text-[#f4f0e8] font-semibold">
+            {subtotal >= 1000000 ? "✦ Bạn được MIỄN PHÍ VẬN CHUYỂN TOÀN QUỐC" : `Mua thêm ${(1000000 - subtotal).toLocaleString("vi-VN")} ₫ để được FREESHIP`}
+          </span>
+          <span className="font-mono text-[#e65100] font-bold">
+            {Math.min(100, Math.round((subtotal / 1000000) * 100))}%
+          </span>
+        </div>
+        <div className="w-full h-1.5 bg-[#0c0c0e] overflow-hidden">
+          <div
+            className="h-full bg-[#e65100] transition-all duration-500"
+            style={{ width: `${Math.min(100, (subtotal / 1000000) * 100)}%` }}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
