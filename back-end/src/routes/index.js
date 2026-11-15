@@ -11,6 +11,7 @@ import uploadRouter from "../modules/uploads/upload.route.js";
 import voucherRouter from "../modules/vouchers/voucher.route.js";
 import websiteSettingsRouter from "../modules/websiteSettings/websiteSettings.route.js";
 import bannerRouter from "../modules/banners/banner.route.js";
+import { campaignRouter, adminCampaignRouter } from "../modules/campaigns/campaign.route.js";
 import favoriteRouter from "../modules/favorites/favorite.route.js";
 import { pageRouter, adminPageRouter, lookbookRouter } from "../modules/pages/page.route.js";
 import { pageSectionRouter, adminPageSectionRouter } from "../modules/pageSections/pageSection.routes.js";
@@ -18,15 +19,56 @@ import {
   adminCommunicationRouter,
   customerCommunicationRouter,
 } from "../modules/communication/communication.route.js";
-import { protectedRoute, adminOnly, noAdmin } from "../middlewares/auth.middleware.js";
+import { protectedRoute, optionalProtectedRoute, adminOnly, noAdmin } from "../middlewares/auth.middleware.js";
 import { authGlobalLimiter } from "../middlewares/rateLimiter.middleware.js";
 import shippingRouter from "../modules/shipping/shipping.routes.js";
+import trackingRouter from "../modules/tracking/tracking.route.js";
+import privacyRouter from "../modules/tracking/privacy.route.js";
+import searchHistoryRouter from "../modules/tracking/searchHistory.route.js";
+import recommendationRouter from "../modules/recommendations/recommendation.route.js";
+import experimentRouter from "../modules/recommendations/experiments/experiment.route.js";
+import aiRouter from "../modules/ai/ai.route.js";
+import inventoryRouter, { checkoutReservationRouter } from "../modules/inventory/inventory.route.js";
 import mongoose from "mongoose";
 import { getRedisConnection } from "../configs/redis.js";
 
 const rootRouter = express.Router();
 
-// Health check endpoint
+// Health check endpoints (Liveness & Readiness Probes)
+rootRouter.get("/health/liveness", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    uptime: process.uptime(),
+    timestamp: new Date()
+  });
+});
+
+rootRouter.get("/health/readiness", async (req, res) => {
+  try {
+    const mongoStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+    let redisStatus = "disconnected";
+    try {
+      const redisClient = getRedisConnection();
+      redisStatus = redisClient.status === "ready" || redisClient.status === "connect" ? "connected" : "disconnected";
+    } catch (redisErr) {
+      // Ignore redis retrieval errors
+    }
+    
+    // Core readiness requires MongoDB
+    const isReady = mongoStatus === "connected";
+    res.status(isReady ? 200 : 503).json({
+      status: isReady ? "READY" : "NOT_READY",
+      services: {
+        mongodb: mongoStatus,
+        redis: redisStatus
+      },
+      timestamp: new Date()
+    });
+  } catch (error) {
+    res.status(503).json({ status: "NOT_READY", message: error.message });
+  }
+});
+
 rootRouter.get("/health", async (req, res) => {
   try {
     const mongoStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
@@ -38,9 +80,9 @@ rootRouter.get("/health", async (req, res) => {
       // Ignore redis retrieval errors
     }
     
-    const isHealthy = mongoStatus === "connected" && redisStatus === "connected";
+    const isHealthy = mongoStatus === "connected";
     res.status(isHealthy ? 200 : 500).json({
-      status: isHealthy ? "OK" : "ERROR",
+      status: isHealthy ? "OK" : "DEGRADED",
       services: {
         mongodb: mongoStatus,
         redis: redisStatus
@@ -61,18 +103,31 @@ rootRouter.use("/reviews", reviewRouter);
 rootRouter.use("/upload", uploadRouter);
 rootRouter.use("/settings", websiteSettingsRouter);
 rootRouter.use("/banners", bannerRouter);
+rootRouter.use("/campaigns", campaignRouter);
 rootRouter.use("/pages", pageRouter);
 rootRouter.use("/lookbooks", lookbookRouter);
 rootRouter.use("/page-sections", pageSectionRouter);
 rootRouter.use("/admin/pages", protectedRoute, adminOnly, adminPageRouter);
 rootRouter.use("/admin/page-sections", protectedRoute, adminOnly, adminPageSectionRouter);
+rootRouter.use("/admin/campaigns", protectedRoute, adminOnly, adminCampaignRouter);
+
+// Tracking, Recommendations & Vector AI routes
+rootRouter.use("/events", trackingRouter);
+rootRouter.use("/tracking", trackingRouter); // Backward-compatible alias
+rootRouter.use("/privacy", privacyRouter);
+rootRouter.use("/search", searchHistoryRouter);
+rootRouter.use("/recommendations", recommendationRouter);
+rootRouter.use("/experiments", experimentRouter);
+rootRouter.use("/ai", aiRouter);
+rootRouter.use("/inventory", inventoryRouter);
+rootRouter.use("/checkout", checkoutReservationRouter);
 
 // Private routes
 rootRouter.use("/user", protectedRoute, userRouter);
 rootRouter.use("/cart", protectedRoute, noAdmin, cartRouter);
 rootRouter.use("/cart_items", protectedRoute, noAdmin, cartItemRouter);
 rootRouter.use("/favorites", protectedRoute, favoriteRouter);
-rootRouter.use("/order", protectedRoute, orderRouter);
+rootRouter.use("/order", optionalProtectedRoute, orderRouter);
 rootRouter.use("/order_items", protectedRoute, orderItemRouter);
 rootRouter.use("/payments", paymentRouter);
 rootRouter.use("/vouchers", voucherRouter);
@@ -81,9 +136,7 @@ rootRouter.use("/vouchers", voucherRouter);
 rootRouter.use("/admin", adminCommunicationRouter);
 rootRouter.use("/chat", customerCommunicationRouter);
 
-
-//Shipping domain routes
+// Shipping domain routes
 rootRouter.use("/shipping", shippingRouter);
-
 
 export default rootRouter;

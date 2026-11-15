@@ -1,6 +1,11 @@
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 .env
 .env.*
+!.env.example
+!.env.production.example
 load-tests/
 seed/
 backups/
@@ -14,3 +19,7 @@ check_redis.js
 ssh_deploy*.js
 src/scratch/
 jest.config.js
+.git
+.github
+.vscode
+coverage

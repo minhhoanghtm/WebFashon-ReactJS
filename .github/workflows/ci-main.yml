@@ -1,9 +1,10 @@
-name: CI - Main
+name: CI - Main Pipeline
 
 on:
   push:
     branches:
       - main
+      - redesign-v2
   pull_request:
     branches:
       - main
@@ -18,7 +19,7 @@ permissions:
 
 jobs:
   backend-ci:
-    name: ⚙️ Backend CI (Lint, Test, Health Check)
+    name: ⚙️ Backend CI (Lint, Test, Probes)
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -69,42 +70,22 @@ jobs:
           cache: npm
           cache-dependency-path: back-end/package-lock.json
 
-      - name: Show Node and npm versions
-        run: |
-          node -v
-          npm -v
-
       - name: Install backend dependencies
         working-directory: ./back-end
         run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
-
-      - name: Create .env for test
-        working-directory: ./back-end
-        run: |
-          cat > .env << 'EOF'
-          NODE_ENV=test
-          PORT=5000
-          MONGO_CONNECTIONSTRING=mongodb://127.0.0.1:27017/webfashion_test
-          MONGODB_URI=mongodb://127.0.0.1:27017/webfashion_test
-          REDIS_URL=redis://127.0.0.1:6379
-          JWT_SECRET=test_jwt_secret_minimum_32_characters_123456
-          JWT_REFRESH_SECRET=test_jwt_refresh_secret_minimum_32_characters_123456
-          REFRESH_TOKEN_SECRET=test_refresh_token_secret_minimum_32_characters_123456
-          OTP_SECRET=test_otp_secret_key_minimum_32_characters_123456
-          ACTION_SECRET=test_action_secret_key_minimum_32_characters_123456
-          ACCESS_TOKEN_SECRET=test_access_token_secret_minimum_32_characters_123456
-          EOF
 
       - name: Run Backend Lint
         working-directory: ./back-end
         run: npm run lint --if-present
 
-      - name: Start Backend Server & Verify Healthcheck
+      - name: Start Backend Server & Verify Health Probes
         working-directory: ./back-end
         run: |
           npm start > server.log 2>&1 &
           npx wait-on http://localhost:5000/api/health --timeout 60000 || (cat server.log && exit 1)
-          echo "Backend server is healthy!"
+          curl -f http://localhost:5000/api/health/liveness
+          curl -f http://localhost:5000/api/health/readiness
+          echo "All backend probes verified successfully!"
 
       - name: Run Backend Unit & Integration Tests
         working-directory: ./back-end
@@ -113,10 +94,6 @@ jobs:
       - name: Run API Smoke Test
         working-directory: ./back-end
         run: timeout 30s node test-api.js || true
-
-      - name: Run Backend Build
-        working-directory: ./back-end
-        run: npm run build --if-present
 
       - name: Upload server logs on failure
         if: failure()
@@ -146,10 +123,9 @@ jobs:
             echo "Legacy front-end directory detected: front-end"
           else
             echo "dir=none" >> $GITHUB_OUTPUT
-            echo "No frontend directory found on this branch."
           fi
 
-      - name: Setup Node.js 22 (when frontend exists)
+      - name: Setup Node.js 22
         if: steps.detect.outputs.dir != 'none'
         uses: actions/setup-node@v4
         with:
@@ -171,18 +147,12 @@ jobs:
         if: steps.detect.outputs.dir == 'front-end'
         working-directory: ./front-end
         run: |
-          echo "Attempting legacy front-end build check..."
           npm install --legacy-peer-deps --no-audit --no-fund || true
           npm run build || echo "Notice: Legacy front-end build encountered known issues; new frontend resides on redesign-v2."
 
-      - name: Notice when Frontend is not on current branch
-        if: steps.detect.outputs.dir == 'none'
-        run: |
-          echo "✅ Skipping frontend CI step: New frontend lives on redesign-v2 branch."
-
   docker-ci:
-    name: 🐳 Docker Container Build Check
-    needs: [backend-ci]
+    name: 🐳 Docker Multi-Stage Container Build Check
+    needs: [backend-ci, frontend-ci]
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -197,11 +167,19 @@ jobs:
         run: |
           docker build -t webfashion-api:latest ./back-end
 
+      - name: Build Worker Docker Image
+        run: |
+          docker build -t webfashion-worker:latest -f ./back-end/Dockerfile.worker ./back-end
+
       - name: Build Frontend Docker Image (if available)
         run: |
           if [ -d "frontend" ] && [ -f "frontend/Dockerfile" ]; then
             echo "Building new frontend Docker image..."
-            docker build -t webfashion-front:latest ./frontend
+            docker build -t webfashion-frontend:latest ./frontend
           else
-            echo "Frontend Dockerfile not present on this branch. API image build verified successfully."
+            echo "Frontend Dockerfile not present on this branch."
           fi
+
+      - name: Validate Docker Compose Production Syntax
+        run: |
+          docker compose -f docker-compose.production.yml config || docker compose -f docker-compose.prod.yml config

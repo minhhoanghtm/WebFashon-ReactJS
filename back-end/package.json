@@ -6,18 +6,27 @@
   "type": "module",
   "scripts": {
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "lint": "eslint src",
     "dev": "nodemon src/server.js",
     "start": "node  src/server.js",
+    "worker": "node src/worker.js",
     "seed:pages": "node seed/pages.js",
+    "seed:demo": "node seed/seed-demo-catalog.js",
+    "ai:sync": "node src/scripts/sync-vectors.js",
+    "ai:reindex": "node src/scripts/sync-vectors.js",
+    "ai:audit:staging": "node src/scripts/audit-ai-real-staging.mjs",
     "k6:all": "powershell -ExecutionPolicy Bypass -File load-tests/run-all.ps1",
     "k6:run": "powershell -ExecutionPolicy Bypass -Command \"$n=$env:TEST; k6 run load-tests/$n.js; $t=Get-Date -Format 'yyyy-MM-dd_HH-mm'; Copy-Item load-tests/results/TEMPLATE.md load-tests/results/${n}_${t}.md; Write-Host 'Report: load-tests/results/${n}_${t}.md'\"",
-    "wait": "wait-on http://localhost:5000/api/health"
-    
+    "wait": "wait-on http://localhost:5000/api/health",
+    "seed:complete": "node src/scripts/seed-complete-dev-data.js",
+    "migrate:drop-legacy-sessions": "node src/scripts/drop-legacy-sessions-collection.js",
+    "test:e2e": "node ../tests/e2e/runner.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "axios": "^1.18.0",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.78.0",
@@ -39,14 +48,17 @@
     "nodemailer": "^8.0.5",
     "qs": "^6.15.2",
     "remove-accents": "^0.5.0",
+    "sharp": "^0.34.5",
     "slugify": "^1.6.8",
     "socket.io": "^4.8.3",
     "winston": "^3.19.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "eslint": "^9.39.4",
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
+    "playwright": "^1.64.1",
     "supertest": "^7.2.2",
     "wait-on": "^9.0.10"
   }
