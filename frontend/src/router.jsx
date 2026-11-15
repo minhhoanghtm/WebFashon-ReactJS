@@ -12,39 +12,41 @@ import { ProductDetail } from "./pages/store/ProductDetail";
 import { Cart } from "./pages/store/Cart";
 import { Checkout } from "./pages/store/Checkout";
 import { PaymentResult, OrderLookup } from "./pages/store/PaymentResult";
-import { Favorites, Vouchers, Lookbooks } from "./pages/store/Favorites";
-import { StaticPages } from "./pages/store/StaticPages";
+// Secondary Store Pages (Lazy)
+const Favorites = React.lazy(() => import("./pages/store/Favorites").then((m) => ({ default: m.Favorites })));
+const Vouchers = React.lazy(() => import("./pages/store/Favorites").then((m) => ({ default: m.Vouchers })));
+const Lookbooks = React.lazy(() => import("./pages/store/Favorites").then((m) => ({ default: m.Lookbooks })));
+const StaticPages = React.lazy(() => import("./pages/store/StaticPages").then((m) => ({ default: m.StaticPages })));
 
-// Auth Pages
-import { Login, Register, VerifyOtp, ResetPassword } from "./pages/auth/AuthPages";
+// Auth Pages (Lazy)
+const Login = React.lazy(() => import("./pages/auth/AuthPages").then((m) => ({ default: m.Login })));
+const Register = React.lazy(() => import("./pages/auth/AuthPages").then((m) => ({ default: m.Register })));
+const VerifyOtp = React.lazy(() => import("./pages/auth/AuthPages").then((m) => ({ default: m.VerifyOtp })));
+const ResetPassword = React.lazy(() => import("./pages/auth/AuthPages").then((m) => ({ default: m.ResetPassword })));
 
-// Customer Pages
-import {
-  Profile,
-  Orders,
-  MyCoupons,
-  DataRequests,
-  UserDashboard,
-  CreateReview,
-} from "./pages/customer/CustomerPages";
+// Customer Pages (Lazy)
+const Profile = React.lazy(() => import("./pages/customer/CustomerPages").then((m) => ({ default: m.Profile })));
+const Orders = React.lazy(() => import("./pages/customer/CustomerPages").then((m) => ({ default: m.Orders })));
+const MyCoupons = React.lazy(() => import("./pages/customer/CustomerPages").then((m) => ({ default: m.MyCoupons })));
+const DataRequests = React.lazy(() => import("./pages/customer/CustomerPages").then((m) => ({ default: m.DataRequests })));
+const UserDashboard = React.lazy(() => import("./pages/customer/CustomerPages").then((m) => ({ default: m.UserDashboard })));
+const CreateReview = React.lazy(() => import("./pages/customer/CustomerPages").then((m) => ({ default: m.CreateReview })));
 
-// Admin Pages
-import {
-  AdminDashboard,
-  AdminCategories,
-  AdminProducts,
-  AdminOrders,
-  AdminCustomers,
-  AdminCoupons,
-  AdminCampaigns,
-  AdminBanners,
-  AdminLookbooks,
-  AdminChats,
-  AdminUserActivity,
-  AdminAbTesting,
-  AdminPages,
-  AdminSettings,
-} from "./pages/admin/AdminPages";
+// Admin Pages (Lazy)
+const AdminDashboard = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminDashboard })));
+const AdminCategories = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminCategories })));
+const AdminProducts = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminProducts })));
+const AdminOrders = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminOrders })));
+const AdminCustomers = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminCustomers })));
+const AdminCoupons = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminCoupons })));
+const AdminCampaigns = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminCampaigns })));
+const AdminBanners = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminBanners })));
+const AdminLookbooks = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminLookbooks })));
+const AdminChats = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminChats })));
+const AdminUserActivity = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminUserActivity })));
+const AdminAbTesting = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminAbTesting })));
+const AdminPages = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminPages })));
+const AdminSettings = React.lazy(() => import("./pages/admin/AdminPages").then((m) => ({ default: m.AdminSettings })));
 
 // System Pages
 import { NotFound } from "./pages/system/NotFound";

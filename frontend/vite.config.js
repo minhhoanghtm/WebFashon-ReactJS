@@ -29,6 +29,33 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    chunkSizeWarningLimit: 1200,
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("three")) {
+              return "vendor-three";
+            }
+            if (id.includes("gsap") || id.includes("@gsap")) {
+              return "vendor-animation";
+            }
+            if (id.includes("lucide-react")) {
+              return "vendor-icons";
+            }
+            if (id.includes("@tanstack/react-query") || id.includes("axios")) {
+              return "vendor-query";
+            }
+            if (id.includes("react") || id.includes("react-dom") || id.includes("react-router-dom")) {
+              return "vendor-react";
+            }
+            if (id.includes("zustand")) {
+              return "vendor-state";
+            }
+          }
+        },
+      },
+    },
   },
 });
