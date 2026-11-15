@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 import { getPageBySlugService } from "@/services/page.service";
 import { ChevronDown, Search, Sparkles, HelpCircle, Package, RefreshCw, ShieldCheck, PhoneCall } from "lucide-react";
-import { AnimatePresence } from "motion/react";
 
 import HeroSection from "@/components/page-sections/HeroSection";
 import StorySection from "@/components/page-sections/StorySection";
@@ -22,11 +22,11 @@ const defaultFaqCategories = [
     items: [
       {
         q: "Thời gian xử lý và giao hàng tiêu chuẩn là bao lâu?",
-        a: "Với các đơn hàng nội thành Hà Nội và TP. Hồ Chí Minh, thời gian nhận hàng từ 1-2 ngày làm việc. Các tỉnh thành khác từ 2-4 ngày làm việc. Quý khách có thể theo dõi tiến trình đơn qua mã vận đơn trong trang 'Đơn hàng của tôi'.",
+        a: "Với các đơn hàng nội thành Hà Nội và TP. Hồ Chí Minh, thời gian nhận hàng từ 1-2 ngày làm việc. Các tỉnh thành khác từ 2-4 ngày làm việc. Quý khách có thể theo dõi tiến trình đơn qua mã vận đơn trong trang 'Tra cứu đơn hàng'.",
       },
       {
         q: "Tôi có được kiểm tra sản phẩm trước khi thanh toán không?",
-        a: "Có. 404Studio hỗ trợ hình thức đồng kiểm khi nhận hàng. Quý khách có thể kiểm tra phom dáng, màu sắc và chất liệu sản phẩm trước khi thanh toán cho nhân viên giao hàng.",
+        a: "Có. Atelier hỗ trợ hình thức đồng kiểm khi nhận hàng. Quý khách có thể kiểm tra phom dáng, màu sắc và chất liệu sản phẩm trước khi thanh toán cho nhân viên giao hàng.",
       },
       {
         q: "Chính sách miễn phí vận chuyển áp dụng như thế nào?",
@@ -41,11 +41,11 @@ const defaultFaqCategories = [
     items: [
       {
         q: "Quy định đổi trả hàng trong bao nhiêu ngày?",
-        a: "Quý khách được đổi sản phẩm trong vòng 7 ngày kể từ ngày nhận hàng thành công đối với trường hợp chọn nhầm size, đổi màu hoặc sản phẩm có lỗi kỹ thuật từ nhà sản xuất. Sản phẩm cần còn nguyên tem mác, chưa qua giặt ủi.",
+        a: "Quý khách được đổi sản phẩm trong vòng 30 ngày kể từ ngày nhận hàng thành công đối với trường hợp chọn nhầm size, đổi màu hoặc sản phẩm có lỗi kỹ thuật từ nhà sản xuất. Sản phẩm cần còn nguyên tem mác, chưa qua giặt ủi.",
       },
       {
         q: "Quy trình hoàn tiền cho đơn thanh toán online?",
-        a: "Đối với các đơn thanh toán qua VNPay hoặc thẻ ngân hàng, số tiền hoàn trả sẽ được chuyển trực tiếp vào tài khoản ngân hàng của quý khách trong vòng 3-5 ngày làm việc sau khi xưởng tiếp nhận sản phẩm đổi trả.",
+        a: "Đối với các đơn thanh toán qua VNPay hoặc thẻ ngân hàng, số tiền hoàn trả sẽ được chuyển trực tiếp vào tài khoản ngân hàng của quý khách trong vòng 3-5 ngày làm việc sau khi Atelier tiếp nhận sản phẩm đổi trả.",
       },
     ],
   },
@@ -56,18 +56,21 @@ const defaultFaqCategories = [
     items: [
       {
         q: "Cách giặt ủi trang phục vải Linen và Blazer may đo?",
-        a: "Trang phục chất liệu Linen nên được giặt tay hoặc giặt máy ở chế độ nhẹ nhàng với nước lạnh. Tuyệt đối không vắt xoắn mạnh. Áo blazer may đo cấu trúc nên được giặt khô (dry clean) định kỳ để giữ phom dáng ve áo sắc nét.",
+        a: "Trang phục chất liệu Linen nên được giặt tay hoặc giặt máy ở chế độ nhẹ nhàng với nước lạnh. Tuyệt đối không vắt xoắn mạnh. Áo blazer may đo cấu trúc nên được giặt khô định kỳ để giữ phom dáng ve áo sắc nét.",
       },
       {
         q: "Làm thế nào để chọn đúng size chuẩn cơ thể?",
-        a: "Quý khách vui lòng tham khảo trang 'Hướng dẫn chọn size' với các số đo chi tiết về vòng ngực, vòng eo và chiều dài áo. Nếu cần tư vấn thêm, đội ngũ stylist của chúng tôi luôn sẵn sàng hỗ trợ qua khung chat trực tuyến.",
+        a: "Quý khách vui lòng tham khảo trang 'Hướng dẫn chọn size' với các số đo chi tiết về vòng ngực, vòng eo và chiều dài áo. Nếu cần tư vấn thêm, đội ngũ chuyên viên luôn sẵn sàng hỗ trợ qua khung chat trực tuyến.",
       },
     ],
   },
 ];
 
 export const FAQ = () => {
-  useDocumentTitle("Câu hỏi thường gặp — 404STUDIO");
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "ATELIER ÉTOILE";
+  useDocumentTitle(`Câu hỏi thường gặp — ${siteName}`);
+
   const [pageSections, setPageSections] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeAccordion, setActiveAccordion] = useState({});
@@ -76,7 +79,6 @@ export const FAQ = () => {
     const fetchFAQ = async () => {
       try {
         const data = await getPageBySlugService("faq").catch(() => null);
-        const page = data?.page || data;
         const sections = data?.sections || data?.page?.sections || [];
         if (sections && sections.length > 0) setPageSections(sections);
       } catch (err) {
@@ -104,32 +106,32 @@ export const FAQ = () => {
   })).filter((cat) => cat.items.length > 0);
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] text-[#05251C] py-12 sm:py-20 select-none">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-foreground py-12 sm:py-20">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         {/* Header Breadcrumb & Eyebrow */}
         <div className="text-center mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-bold tracking-[0.25em] text-[#05251C] uppercase mb-4">
-            <Sparkles size={12} className="text-[#05251C]" />
-            <span>CENTRAL HELP DESK & SUPPORT</span>
+          <div className="inline-flex items-center gap-2 border border-border px-3.5 py-1 text-[11px] font-semibold tracking-[0.24em] text-muted-foreground uppercase mb-4">
+            <HelpCircle size={13} strokeWidth={1.5} />
+            <span>Trung tâm giải đáp thắc mắc</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-bold text-[#05251C] uppercase font-display leading-[1.2] tracking-tighter">
-            CÂU HỎI THƯỜNG GẶP.
+          <h1 className="font-condensed text-4xl sm:text-6xl font-bold uppercase tracking-tight text-foreground">
+            Câu Hỏi Thường Gặp
           </h1>
 
-          <p className="mt-4 text-xs sm:text-sm text-[#6B716E] max-w-lg mx-auto leading-relaxed">
-            Mọi thông tin cần thiết về đơn hàng, vận chuyển, đổi trả và bảo quản sản phẩm tại xưởng may 404Studio.
+          <p className="mt-4 text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+            Mọi thông tin cần thiết về đơn hàng, vận chuyển, đổi trả và bảo quản sản phẩm tại {siteName}.
           </p>
 
           {/* Search Bar */}
           <div className="mt-8 max-w-md mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B716E]" size={16} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm kiếm câu hỏi (giao hàng, đổi size, hoàn tiền...)"
-              className="w-full pl-11 pr-4 py-3 rounded-full bg-white border border-[#05251C]/15 text-xs text-[#05251C] placeholder:text-[#6B716E]/50 outline-none focus:border-[#05251C] shadow-xs transition-colors"
+              className="w-full pl-11 pr-4 py-3 bg-card border border-border text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-foreground transition-colors"
             />
           </div>
         </div>
@@ -156,16 +158,16 @@ export const FAQ = () => {
         )}
 
         {/* Accordions Category Group */}
-        <div className="space-y-10">
+        <div className="space-y-8 max-w-4xl mx-auto">
           {filteredCategories.map((cat) => {
             const Icon = cat.icon;
             return (
-              <div key={cat.id} className="bg-white rounded-3xl border border-[#05251C]/10 p-6 sm:p-8 shadow-xs">
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#05251C]/10">
-                  <div className="w-9 h-9 rounded-xl bg-[#05251C] text-[#F5DD20] flex items-center justify-center">
-                    <Icon size={18} />
+              <div key={cat.id} className="border border-border bg-card p-6 sm:p-8">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
+                  <div className="w-8 h-8 bg-foreground text-background flex items-center justify-center">
+                    <Icon size={16} />
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-bold font-display text-[#05251C] uppercase tracking-tight">
+                  <h2 className="font-condensed text-xl sm:text-2xl font-bold text-foreground uppercase tracking-wide">
                     {cat.title}
                   </h2>
                 </div>
@@ -176,39 +178,27 @@ export const FAQ = () => {
                     return (
                       <div
                         key={idx}
-                        className="rounded-2xl border border-[#05251C]/10 overflow-hidden bg-white/80 transition-colors shadow-2xs"
+                        className="border border-border/80 overflow-hidden bg-background/50 transition-colors"
                       >
                         <button
                           type="button"
                           onClick={() => toggleItem(cat.id, idx)}
-                          className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-neutral-100/80 transition-colors"
+                          aria-expanded={isOpen}
+                          className="w-full flex items-center justify-between p-4 text-left text-xs sm:text-sm font-semibold text-foreground transition-colors hover:text-muted-foreground cursor-pointer"
                         >
-                          <span className="text-xs sm:text-sm font-bold text-[#05251C] leading-snug">
-                            {item.q}
-                          </span>
+                          <span>{item.q}</span>
                           <ChevronDown
-                            size={18}
-                            className={`text-[#05251C] shrink-0 transition-transform duration-300 ${
-                              isOpen ? "rotate-180 text-[#05251C]" : ""
+                            size={16}
+                            className={`shrink-0 transition-transform duration-200 text-muted-foreground ${
+                              isOpen ? "rotate-180 text-foreground" : ""
                             }`}
                           />
                         </button>
-
-                        <AnimatePresence>
-                          {isOpen && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                              className="overflow-hidden"
-                            >
-                              <div className="px-4 sm:px-5 pb-5 text-xs sm:text-sm text-[#6B716E] leading-relaxed border-t border-[#05251C]/5 pt-3">
-                                {item.a}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        {isOpen && (
+                          <div className="px-4 pb-4 pt-1 text-xs leading-relaxed text-muted-foreground border-t border-border/40 font-sans">
+                            {item.a}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -216,25 +206,6 @@ export const FAQ = () => {
               </div>
             );
           })}
-        </div>
-
-        {/* Support Help Banner */}
-        <div className="mt-14 rounded-3xl bg-[#05251C] text-white p-8 text-center sm:flex sm:items-center sm:justify-between sm:text-left gap-6">
-          <div>
-            <h3 className="text-xl font-bold font-display text-[#F1D8CA] uppercase">
-              VẪN CẦN THÊM SỰ HỖ TRỢ?
-            </h3>
-            <p className="text-xs text-[#D1D9CF] mt-1 max-w-md">
-              Đội ngũ tư vấn viên của chúng tôi luôn trực tuyến để giải đáp mọi thắc mắc của bạn từ 8:00 đến 22:00 mỗi ngày.
-            </p>
-          </div>
-          <Link
-            to="/orders"
-            className="mt-4 sm:mt-0 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#F5DD20] text-[#05251C] font-display text-xs font-bold uppercase tracking-wider hover:bg-white transition-all shadow-md active:scale-95 shrink-0"
-          >
-            <PhoneCall size={14} />
-            <span>Liên hệ chuyên viên</span>
-          </Link>
         </div>
       </div>
     </div>

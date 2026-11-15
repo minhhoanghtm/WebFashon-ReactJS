@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 import { getPageBySlugService } from "@/services/page.service";
 import { Sparkles, ShieldCheck, RefreshCw, Truck, Lock, CheckCircle2 } from "lucide-react";
 
@@ -15,61 +16,63 @@ import CTASection from "@/components/page-sections/CTASection";
 const policiesData = [
   {
     id: "return",
-    title: "1. CHÍNH SÁCH ĐỔI TRẢ TRONG 07 NGÀY",
+    title: "1. Chính sách đổi trả linh hoạt 30 ngày",
     icon: RefreshCw,
     points: [
-      "Áp dụng đổi hàng miễn phí trong vòng 7 ngày kể từ thời điểm nhận hàng thành công.",
+      "Áp dụng đổi hàng miễn phí trong vòng 30 ngày kể từ thời điểm nhận hàng thành công.",
       "Sản phẩm đổi phải còn nguyên tag giá, nhãn mác thương hiệu, chưa qua sử dụng, giặt ủi hay dính mùi lạ.",
       "Hỗ trợ đổi size, đổi màu hoặc đổi sang bất kỳ mẫu sản phẩm nào có giá trị tương đương hoặc cao hơn.",
-      "Nếu lỗi phát sinh từ khâu sản xuất hoặc vận chuyển hư hại, 404Studio chịu 100% phí vận chuyển 2 chiều.",
+      "Nếu lỗi phát sinh từ khâu sản xuất hoặc vận chuyển hư hại, Atelier chịu 100% chi phí vận chuyển 2 chiều.",
     ],
   },
   {
     id: "shipping",
-    title: "2. CHÍNH SÁCH VẬN CHUYỂN & GIAO NHẬN",
+    title: "2. Chính sách vận chuyển & Giao nhận đồng kiểm",
     icon: Truck,
     points: [
-      "Miễn phí vận chuyển toàn quốc cho đơn hàng từ 500.000₫.",
+      "Miễn phí vận chuyển tiêu chuẩn toàn quốc cho đơn hàng từ 500.000₫.",
       "Nội thành Hà Nội & TP. Hồ Chí Minh: Giao hàng hỏa tốc trong 24h - 48h làm việc.",
       "Các tỉnh thành khác: Giao hàng tiêu chuẩn từ 2 - 4 ngày làm việc qua đối tác vận chuyển chuyên nghiệp.",
-      "Được quyền mở hộp đồng kiểm chất lượng trước khi thanh toán tiền mặt cho bưu tá.",
+      "Được quyền mở hộp đồng kiểm chất lượng trước khi thanh toán cho nhân viên bưu tá.",
     ],
   },
   {
     id: "security",
-    title: "3. BẢO MẬT THÔNG TIN & AN TOÀN THANH TOÁN",
+    title: "3. Bảo mật thông tin & An toàn thanh toán",
     icon: Lock,
     points: [
-      "Bảo mật tuyệt đối thông tin thanh toán qua các cổng chuẩn quốc tế PCI-DSS (VNPay, MoMo).",
+      "Bảo mật tuyệt đối thông tin thanh toán qua các cổng chuẩn quốc tế PCI-DSS (VNPay, ZaloPay).",
       "Dữ liệu cá nhân (tên, số điện thoại, địa chỉ nhận hàng) chỉ sử dụng duy nhất cho mục đích xử lý đơn hàng và chăm sóc hậu mãi.",
       "Cam kết không chia sẻ hoặc thương mại hóa thông tin của quý khách cho bất kỳ bên thứ ba nào.",
     ],
   },
   {
     id: "guarantee",
-    title: "4. CAM KẾT CHẤT LƯỢNG MAY ĐO",
+    title: "4. Cam kết chất lượng may đo chuẩn mực",
     icon: ShieldCheck,
     points: [
       "100% hình ảnh sản phẩm được chụp thực tế tại studio của thương hiệu, đúng màu sắc và phom dáng.",
-      "Chất liệu vải cao cấp được tuyển chọn tỉ mỉ: French Flax Linen, Cotton chải kỹ, Wool Twill.",
-      "Hỗ trợ chỉnh sửa đường may, khuy cúc trọn đời tại hệ thống cửa hàng của chúng tôi.",
+      "Chất liệu vải cao cấp được tuyển chọn tỉ mỉ: French Flax Linen, Cotton chải kỹ, Wool Twill, Lụa Mulberry.",
+      "Hỗ trợ chỉnh sửa đường may, khuy cúc trọn đời tại hệ thống Atelier.",
     ],
   },
   {
     id: "cookie-policy",
-    title: "5. CHÍNH SÁCH QUYỀN RIÊNG TƯ & COOKIE",
+    title: "5. Quyền riêng tư dữ liệu & Cookie Consent",
     icon: Lock,
     points: [
-      "Cookie cần thiết (Strictly Necessary): Luôn hoạt động để duy trì phiên đăng nhập an toàn, giỏ hàng, đặt hàng, giữ hàng tồn kho chính xác 300s (Redis Reservation) và phòng chống tấn công CSRF.",
-      "Phân tích hành vi (Analytics): Chỉ kích hoạt khi bạn đồng ý. Thu thập dữ liệu ẩn danh về lượt xem trang, tương tác và hiệu năng để cải thiện trải nghiệm mua sắm.",
-      "Cá nhân hóa (Personalization): Chỉ hoạt động khi có sự đồng thuận để gợi ý thiết kế phù hợp qua hệ thống đề xuất AI Recommendation.",
-      "Quyền kiểm soát & Rút lại đồng ý: Bạn có toàn quyền bật/tắt từng nhóm mục đích hoặc rút lại toàn bộ sự đồng ý bất kỳ lúc nào thông qua liên kết 'Quyền riêng tư & Cookie' tại chân trang.",
+      "Cookie cần thiết (Strictly Necessary): Duy trì phiên đăng nhập an toàn, giỏ hàng, giữ hàng tồn kho chính xác (Redis Reservation).",
+      "Phân tích hành vi (Analytics): Chỉ kích hoạt khi bạn đồng ý, thu thập dữ liệu ẩn danh để cải thiện trải nghiệm mua sắm.",
+      "Cá nhân hóa (Personalization): Gợi ý thiết kế phù hợp dựa trên AI Recommendation khi có sự cho phép.",
+      "Quyền kiểm soát: Bạn có toàn quyền tùy chỉnh hoặc rút lại sự đồng ý bất cứ lúc nào tại liên kết 'Quyền riêng tư & Cookie'.",
     ],
   },
 ];
 
 export const Policy = () => {
-  useDocumentTitle("Chính sách & Điều khoản — 404STUDIO");
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "ATELIER ÉTOILE";
+  useDocumentTitle(`Chính sách & Cam kết — ${siteName}`);
   const [pageSections, setPageSections] = useState([]);
 
   useEffect(() => {
@@ -78,7 +81,6 @@ export const Policy = () => {
         const data = await getPageBySlugService("chinh-sach").catch(() =>
           getPageBySlugService("policy").catch(() => null)
         );
-        const page = data?.page || data;
         const sections = data?.sections || data?.page?.sections || [];
         if (sections && sections.length > 0) setPageSections(sections);
       } catch (err) {
@@ -89,21 +91,21 @@ export const Policy = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] text-[#05251C] py-12 sm:py-20 select-none">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-foreground py-12 sm:py-20">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-bold tracking-[0.25em] text-[#05251C] uppercase mb-4">
-            <Sparkles size={12} className="text-[#05251C]" />
-            <span>TRANSPARENCY & TRUST</span>
+          <div className="inline-flex items-center gap-2 border border-border px-3.5 py-1 text-[11px] font-semibold tracking-[0.24em] text-muted-foreground uppercase mb-4">
+            <Sparkles size={13} strokeWidth={1.5} />
+            <span>Cam kết minh bạch & Quyền lợi khách hàng</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-bold text-[#05251C] uppercase font-display leading-[1.2] tracking-tighter">
-            CHÍNH SÁCH ATELIER.
+          <h1 className="font-condensed text-4xl sm:text-6xl font-bold uppercase tracking-tight text-foreground">
+            Chính Sách Atelier
           </h1>
 
-          <p className="mt-4 text-xs sm:text-sm text-[#6B716E] max-w-lg mx-auto leading-relaxed">
-            Cam kết minh bạch và quyền lợi khách hàng chuẩn mực cao cấp tại thương hiệu 404Studio.
+          <p className="mt-4 text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+            Quy chuẩn dịch vụ hậu mãi và bảo hộ trải nghiệm khách hàng tối ưu tại {siteName}.
           </p>
         </div>
 
@@ -129,27 +131,27 @@ export const Policy = () => {
         )}
 
         {/* Policies Grid */}
-        <div className="space-y-8">
+        <div className="space-y-6 max-w-4xl mx-auto">
           {policiesData.map((pol) => {
             const Icon = pol.icon;
             return (
               <div
                 key={pol.id}
-                className="bg-white rounded-3xl border border-[#05251C]/10 p-6 sm:p-10 shadow-xs hover:border-[#05251C]/30 transition-colors"
+                className="border border-border bg-card p-6 sm:p-8 transition-colors hover:border-foreground/30"
               >
-                <div className="flex items-center gap-3.5 mb-6 pb-4 border-b border-[#05251C]/10">
-                  <div className="w-10 h-10 rounded-xl bg-[#05251C] text-[#F5DD20] flex items-center justify-center shrink-0">
-                    <Icon size={20} />
+                <div className="flex items-center gap-3.5 mb-5 pb-4 border-b border-border">
+                  <div className="w-8 h-8 bg-foreground text-background flex items-center justify-center shrink-0">
+                    <Icon size={16} />
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-bold font-display text-[#05251C] uppercase tracking-tight">
+                  <h2 className="font-condensed text-lg sm:text-xl font-bold text-foreground uppercase tracking-wide">
                     {pol.title}
                   </h2>
                 </div>
 
-                <ul className="space-y-3.5">
+                <ul className="space-y-3" role="list">
                   {pol.points.map((pt, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-xs sm:text-sm text-[#6B716E] leading-relaxed">
-                      <CheckCircle2 size={16} className="text-[#05251C] shrink-0 mt-0.5" />
+                    <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-muted-foreground leading-relaxed font-sans">
+                      <CheckCircle2 size={15} className="text-foreground shrink-0 mt-0.5" />
                       <span>{pt}</span>
                     </li>
                   ))}

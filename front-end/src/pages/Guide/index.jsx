@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { Sparkles, Ruler, Check, Info } from "lucide-react";
+import { Sparkles, Ruler, Check, Info, Shield } from "lucide-react";
+import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 
 const sizeCategories = [
   {
@@ -27,7 +28,7 @@ const sizeCategories = [
   },
   {
     id: "trousers",
-    name: "Quần Trousers & Jeans",
+    name: "Quần Trousers & Tapered Pants",
     headers: ["Size", "Vòng bụng (cm)", "Mông (cm)", "Dài quần (cm)", "Ống quần (cm)", "Cân nặng (kg)"],
     rows: [
       ["29", "76", "96", "98", "21", "53 - 60 kg"],
@@ -39,94 +40,113 @@ const sizeCategories = [
 ];
 
 export const Guide = () => {
-  useDocumentTitle("Hướng dẫn chọn size — 404STUDIO");
+  const { settings } = useWebsiteSettings();
+  const siteName = settings?.general?.siteName || "ATELIER ÉTOILE";
+  useDocumentTitle(`Hướng dẫn chọn size — ${siteName}`);
   const [activeTab, setActiveTab] = useState("blazer");
 
   const currentCategory = sizeCategories.find((c) => c.id === activeTab) || sizeCategories[0];
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] text-[#05251C] py-12 sm:py-20 select-none">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-foreground py-12 sm:py-20">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         {/* Header */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#05251C]/5 border border-[#05251C]/10 text-[10px] font-bold tracking-[0.25em] text-[#05251C] uppercase mb-4">
-            <Sparkles size={12} className="text-[#05251C]" />
-            <span>ACCURATE FIT & SIZING ARCHITECTURE</span>
+          <div className="inline-flex items-center gap-2 border border-border px-3.5 py-1 text-[11px] font-semibold tracking-[0.24em] text-muted-foreground uppercase mb-4">
+            <Ruler size={13} strokeWidth={1.5} />
+            <span>Quy chuẩn kích cỡ may đo chuẩn quốc tế</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-bold text-[#05251C] uppercase font-display leading-[1.2] tracking-tighter">
-            BẢNG CHỌN SIZE.
+          <h1 className="font-condensed text-4xl sm:text-6xl font-bold uppercase tracking-tight text-foreground">
+            Bảng Quy Đổi Size Chuẩn
           </h1>
 
-          <p className="mt-4 text-xs sm:text-sm text-[#6B716E] max-w-lg mx-auto leading-relaxed">
-            Mọi thiết kế của 404Studio được may đo theo hệ kích thước tiêu chuẩn phom dáng người Việt với tỷ lệ thư giãn tự nhiên.
+          <p className="mt-4 max-w-xl mx-auto text-xs sm:text-sm text-muted-foreground font-sans leading-relaxed">
+            Mỗi thiết kế tại {siteName} được dựng phom theo cấu trúc may đo đương đại.
+            Vui lòng đối chiếu số đo cơ thể để lựa chọn kích thước hoàn hảo nhất.
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center justify-center gap-3 mb-10 overflow-x-auto hide-scrollbar pb-2">
-          {sizeCategories.map((cat) => {
-            const isActive = activeTab === cat.id;
-            return (
+        {/* Tab selection */}
+        <div className="flex justify-center border-b border-border mb-8">
+          <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-px">
+            {sizeCategories.map((cat) => (
               <button
                 key={cat.id}
-                type="button"
                 onClick={() => setActiveTab(cat.id)}
-                className={`px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${
-                  isActive
-                    ? "bg-[#05251C] text-[#F5DD20] shadow-md scale-105"
-                    : "bg-white text-[#6B716E] hover:text-[#05251C] border border-[#05251C]/10"
+                className={`py-3 px-4 sm:px-6 text-xs sm:text-sm font-semibold tracking-wider uppercase transition-all border-b-2 cursor-pointer ${
+                  activeTab === cat.id
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {cat.name}
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
 
         {/* Size Table Card */}
-        <div className="bg-white rounded-3xl border border-[#05251C]/10 p-6 sm:p-10 shadow-xs overflow-hidden">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#05251C]/10">
-            <div className="flex items-center gap-2.5">
-              <Ruler size={20} className="text-[#05251C]" />
-              <h2 className="text-xl sm:text-2xl font-bold font-display text-[#05251C] uppercase tracking-tight">
-                {currentCategory.name}
-              </h2>
-            </div>
-            <span className="micro-label text-[#6B716E]">ĐƠN VỊ TÍNH: CENTIMETER (CM)</span>
+        <div className="border border-border bg-card p-6 sm:p-10 mb-12 overflow-x-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-condensed text-xl font-bold uppercase tracking-wide text-foreground">
+              Thông số chi tiết: {currentCategory.name}
+            </h2>
+            <span className="text-[11px] text-muted-foreground tracking-wider uppercase">
+              Đơn vị đo: Centimet (cm)
+            </span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm border-collapse">
-              <thead>
-                <tr className="border-b border-[#05251C]/15 bg-[#FBF9F5]">
-                  {currentCategory.headers.map((h, idx) => (
-                    <th key={idx} className="p-4 font-bold uppercase tracking-wider text-[#05251C]">
-                      {h}
-                    </th>
+          <table className="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead>
+              <tr className="border-b border-border bg-muted/40">
+                {currentCategory.headers.map((h, i) => (
+                  <th key={i} className="py-3 px-4 font-semibold text-foreground tracking-wider uppercase">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {currentCategory.rows.map((row, i) => (
+                <tr key={i} className="hover:bg-muted/20 transition-colors">
+                  {row.map((cell, j) => (
+                    <td key={j} className={`py-3.5 px-4 tabular-nums ${j === 0 ? "font-bold text-foreground" : "text-muted-foreground"}`}>
+                      {cell}
+                    </td>
                   ))}
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-[#05251C]/10">
-                {currentCategory.rows.map((row, rIdx) => (
-                  <tr key={rIdx} className="hover:bg-[#FBF9F5] transition-colors">
-                    {row.map((cell, cIdx) => (
-                      <td key={cIdx} className={`p-4 ${cIdx === 0 ? "font-bold text-[#05251C]" : "text-[#6B716E]"}`}>
-                        {cell}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Measurement instructions & Care Guide */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="border border-border bg-card p-6 sm:p-8 space-y-4">
+            <div className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-foreground">
+              <Check size={16} />
+              <span>Cách đo kích thước cơ thể chính xác</span>
+            </div>
+            <ul className="space-y-3 text-xs sm:text-sm text-muted-foreground leading-relaxed" role="list">
+              <li><strong>Rộng vai:</strong> Đo từ điểm nối giữa vai và cánh tay trái sang điểm nối vai phải.</li>
+              <li><strong>Vòng ngực:</strong> Quấn thước dây ngang qua điểm nhô cao nhất của ngực.</li>
+              <li><strong>Vòng bụng:</strong> Đo quanh phần eo tự nhiên nhỏ nhất, giữ thước dây vừa vặn không thắt chặt.</li>
+              <li><strong>Dài tay:</strong> Đo từ đỉnh vai xuống đến mắt cá cổ tay khi thả lỏng tự nhiên.</li>
+            </ul>
           </div>
 
-          {/* Sizing Tips */}
-          <div className="mt-8 p-4 rounded-2xl bg-[#05251C]/5 border border-[#05251C]/10 flex items-start gap-3 text-xs text-[#6B716E] leading-relaxed">
-            <Info size={18} className="text-[#05251C] shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-[#05251C]">Lưu ý phom dáng:</strong> Nếu số đo của bạn nằm giữa hai size, hãy chọn size lớn hơn nếu bạn thích mặc kiểu Regular / Oversize thoải mái, hoặc chọn size nhỏ hơn nếu thích mặc kiểu Tailored ôm dáng gọn gàng.
+          <div className="border border-border bg-card p-6 sm:p-8 space-y-4">
+            <div className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-foreground">
+              <Shield size={16} />
+              <span>Chăm sóc trang phục cao cấp</span>
             </div>
+            <ul className="space-y-3 text-xs sm:text-sm text-muted-foreground leading-relaxed" role="list">
+              <li><strong>Blazer & Wool Coats:</strong> Luôn giặt khô định kỳ tại cơ sở uy tín để bảo vệ phom ve áo.</li>
+              <li><strong>Silk & Lụa tơ tằm:</strong> Giặt tay với dầu gội dịu nhẹ, phơi phẳng nơi râm mát.</li>
+              <li><strong>Linen:</strong> Giặt máy chế độ nhẹ, là ủi khi trang phục còn hơi ẩm để giữ nếp mềm tự nhiên.</li>
+              <li><strong>Treo giữ:</strong> Luôn sử dụng móc gỗ bản to để giữ phom cấu trúc vai áo.</li>
+            </ul>
           </div>
         </div>
       </div>
