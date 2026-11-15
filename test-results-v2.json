@@ -1,0 +1,866 @@
+[
+  {
+    "testId": "TC-DESK-01",
+    "route": "/",
+    "name": "home",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-home.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-02",
+    "route": "/products",
+    "name": "products",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-products.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-03",
+    "route": "/product/ao-khoac-bomber-unisex",
+    "name": "product-detail",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-product-detail.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-04",
+    "route": "/cart",
+    "name": "cart",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-cart.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-05",
+    "route": "/checkout",
+    "name": "checkout",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-checkout.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-06",
+    "route": "/payment-result",
+    "name": "payment-result",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-payment-result.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-07",
+    "route": "/payment/ORD-DEMO",
+    "name": "payment-order-id",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-payment-order-id.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-08",
+    "route": "/order-lookup",
+    "name": "order-lookup",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-order-lookup.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-09",
+    "route": "/favorites",
+    "name": "favorites",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-favorites.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-10",
+    "route": "/vouchers",
+    "name": "vouchers",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-vouchers.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-11",
+    "route": "/lookbooks",
+    "name": "lookbooks",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-lookbooks.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-12",
+    "route": "/policy",
+    "name": "policy",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-policy.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-13",
+    "route": "/privacy",
+    "name": "privacy",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-privacy.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-14",
+    "route": "/terms",
+    "name": "terms",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-terms.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-15",
+    "route": "/shipping",
+    "name": "shipping",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-shipping.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-16",
+    "route": "/returns-refunds",
+    "name": "returns-refunds",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-returns-refunds.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-17",
+    "route": "/payment-policy",
+    "name": "payment-policy",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-payment-policy.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-18",
+    "route": "/cookies",
+    "name": "cookies",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-cookies.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-19",
+    "route": "/contact-legal",
+    "name": "contact-legal",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-contact-legal.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-20",
+    "route": "/faq",
+    "name": "faq",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-faq.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-21",
+    "route": "/guide",
+    "name": "guide",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-guide.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-22",
+    "route": "/about",
+    "name": "about",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-about.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-23",
+    "route": "/blog",
+    "name": "blog",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-blog.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-24",
+    "route": "/my-coupons",
+    "name": "my-coupons",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-my-coupons.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-25",
+    "route": "/profile",
+    "name": "profile",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-profile.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-26",
+    "route": "/profile/data-requests",
+    "name": "data-requests",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-data-requests.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-27",
+    "route": "/user/dashboard",
+    "name": "user-dashboard",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-user-dashboard.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-28",
+    "route": "/orders",
+    "name": "orders",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-orders.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-29",
+    "route": "/reviews/create",
+    "name": "reviews-create",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-reviews-create.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-30",
+    "route": "/login",
+    "name": "login",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-login.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-31",
+    "route": "/register",
+    "name": "register",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-register.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-32",
+    "route": "/verify-otp",
+    "name": "verify-otp",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-verify-otp.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-33",
+    "route": "/reset-password",
+    "name": "reset-password",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-reset-password.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-34",
+    "route": "/admin",
+    "name": "admin-dashboard",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-dashboard.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-35",
+    "route": "/admin/categories",
+    "name": "admin-categories",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-categories.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-36",
+    "route": "/admin/products",
+    "name": "admin-products",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-products.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-37",
+    "route": "/admin/orders",
+    "name": "admin-orders",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-orders.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-38",
+    "route": "/admin/chats",
+    "name": "admin-chats",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-chats.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-39",
+    "route": "/admin/customers",
+    "name": "admin-customers",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-customers.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-40",
+    "route": "/admin/coupons",
+    "name": "admin-coupons",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-coupons.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-41",
+    "route": "/admin/campaigns",
+    "name": "admin-campaigns",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-campaigns.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-42",
+    "route": "/admin/banners",
+    "name": "admin-banners",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-banners.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-43",
+    "route": "/admin/lookbooks",
+    "name": "admin-lookbooks",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-lookbooks.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-44",
+    "route": "/admin/ab-testing",
+    "name": "admin-ab-testing",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-ab-testing.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-45",
+    "route": "/admin/user-activity",
+    "name": "admin-user-activity",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-user-activity.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-46",
+    "route": "/admin/pages",
+    "name": "admin-pages",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-pages.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-47",
+    "route": "/admin/settings",
+    "name": "admin-settings",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-admin-settings.png",
+    "error": null
+  },
+  {
+    "testId": "TC-DESK-48",
+    "route": "/non-existent-route-404-test",
+    "name": "not-found",
+    "device": "desktop",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/desktop/desktop-not-found.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-01",
+    "route": "/",
+    "name": "home",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-home.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-02",
+    "route": "/products",
+    "name": "products",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-products.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-03",
+    "route": "/product/ao-khoac-bomber-unisex",
+    "name": "product-detail",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-product-detail.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-04",
+    "route": "/cart",
+    "name": "cart",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-cart.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-05",
+    "route": "/checkout",
+    "name": "checkout",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-checkout.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-06",
+    "route": "/payment-result",
+    "name": "payment-result",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-payment-result.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-07",
+    "route": "/payment/ORD-DEMO",
+    "name": "payment-order-id",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-payment-order-id.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-08",
+    "route": "/order-lookup",
+    "name": "order-lookup",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-order-lookup.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-09",
+    "route": "/favorites",
+    "name": "favorites",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-favorites.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-10",
+    "route": "/vouchers",
+    "name": "vouchers",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-vouchers.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-11",
+    "route": "/lookbooks",
+    "name": "lookbooks",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-lookbooks.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-12",
+    "route": "/policy",
+    "name": "policy",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-policy.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-13",
+    "route": "/privacy",
+    "name": "privacy",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-privacy.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-14",
+    "route": "/terms",
+    "name": "terms",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-terms.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-15",
+    "route": "/shipping",
+    "name": "shipping",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-shipping.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-16",
+    "route": "/returns-refunds",
+    "name": "returns-refunds",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-returns-refunds.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-17",
+    "route": "/payment-policy",
+    "name": "payment-policy",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-payment-policy.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-18",
+    "route": "/cookies",
+    "name": "cookies",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-cookies.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-19",
+    "route": "/contact-legal",
+    "name": "contact-legal",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-contact-legal.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-20",
+    "route": "/faq",
+    "name": "faq",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-faq.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-21",
+    "route": "/guide",
+    "name": "guide",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-guide.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-22",
+    "route": "/about",
+    "name": "about",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-about.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-23",
+    "route": "/blog",
+    "name": "blog",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-blog.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-24",
+    "route": "/my-coupons",
+    "name": "my-coupons",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-my-coupons.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-25",
+    "route": "/profile",
+    "name": "profile",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-profile.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-26",
+    "route": "/profile/data-requests",
+    "name": "data-requests",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-data-requests.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-27",
+    "route": "/user/dashboard",
+    "name": "user-dashboard",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-user-dashboard.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-28",
+    "route": "/orders",
+    "name": "orders",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-orders.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-29",
+    "route": "/reviews/create",
+    "name": "reviews-create",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-reviews-create.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-30",
+    "route": "/login",
+    "name": "login",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-login.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-31",
+    "route": "/register",
+    "name": "register",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-register.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-32",
+    "route": "/verify-otp",
+    "name": "verify-otp",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-verify-otp.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-33",
+    "route": "/reset-password",
+    "name": "reset-password",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-reset-password.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-34",
+    "route": "/admin",
+    "name": "admin-dashboard",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-dashboard.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-35",
+    "route": "/admin/categories",
+    "name": "admin-categories",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-categories.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-36",
+    "route": "/admin/products",
+    "name": "admin-products",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-products.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-37",
+    "route": "/admin/orders",
+    "name": "admin-orders",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-orders.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-38",
+    "route": "/admin/chats",
+    "name": "admin-chats",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-chats.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-39",
+    "route": "/admin/customers",
+    "name": "admin-customers",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-customers.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-40",
+    "route": "/admin/coupons",
+    "name": "admin-coupons",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-coupons.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-41",
+    "route": "/admin/campaigns",
+    "name": "admin-campaigns",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-campaigns.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-42",
+    "route": "/admin/banners",
+    "name": "admin-banners",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-banners.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-43",
+    "route": "/admin/lookbooks",
+    "name": "admin-lookbooks",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-lookbooks.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-44",
+    "route": "/admin/ab-testing",
+    "name": "admin-ab-testing",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-ab-testing.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-45",
+    "route": "/admin/user-activity",
+    "name": "admin-user-activity",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-user-activity.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-46",
+    "route": "/admin/pages",
+    "name": "admin-pages",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-pages.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-47",
+    "route": "/admin/settings",
+    "name": "admin-settings",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-admin-settings.png",
+    "error": null
+  },
+  {
+    "testId": "TC-MOB-48",
+    "route": "/non-existent-route-404-test",
+    "name": "not-found",
+    "device": "mobile",
+    "status": "PASS",
+    "evidence": "./reports/screenshots/mobile/mobile-not-found.png",
+    "error": null
+  }
+]
