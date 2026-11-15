@@ -136,6 +136,7 @@
   }
 
   html {
+    overflow-x: clip;
     font-family: var(--font-sans);
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
     text-rendering: optimizeLegibility;
@@ -143,6 +144,7 @@
   }
 
   body {
+    overflow-x: clip;
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);

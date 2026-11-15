@@ -10,6 +10,7 @@ import {
 import { useWebsiteSettings } from "@/hooks/useWebsiteSettings";
 import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
 import { scrollToLenis } from "@/hooks/useLenis";
+import AtelierSilkCanvas from "@/components/3d/AtelierSilkCanvas";
 
 export const CinematicHero = ({ onExploreClick }) => {
   const navigate = useNavigate();
@@ -321,6 +322,11 @@ export const CinematicHero = ({ onExploreClick }) => {
       >
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/65 to-black/70" />
         <div className="absolute inset-0 bg-black/25 backdrop-brightness-95" />
+      </div>
+
+      {/* 3D Tactile Silk Cloth Canvas (Three.js) */}
+      <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden opacity-50 mix-blend-screen">
+        <AtelierSilkCanvas />
       </div>
 
       {/* Header clearance -> centered narrative -> bottom controls */}
