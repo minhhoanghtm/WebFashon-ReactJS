@@ -4,9 +4,9 @@
   "private": true,
   "description": "REACT-WebFashion Root Orchestration",
   "scripts": {
-    "install:frontend": "cd front-end && npm install --no-audit --no-fund",
-    "build:frontend": "cd front-end && npm run build",
-    "build": "cd front-end && npm run build",
+    "install:frontend": "if [ -d 'front-end' ]; then (cd front-end && npm install --no-audit --no-fund); elif [ -d 'frontend' ]; then (cd frontend && npm install --no-audit --no-fund); else npm install --no-audit --no-fund; fi",
+    "build:frontend": "if [ -d 'front-end' ]; then (cd front-end && npm run build) && rm -rf dist && cp -r front-end/dist dist; elif [ -d 'frontend' ]; then (cd frontend && npm run build) && rm -rf dist && cp -r frontend/dist dist; else npm run build; fi",
+    "build": "if [ -d 'front-end' ]; then (cd front-end && npm run build) && rm -rf dist && cp -r front-end/dist dist; elif [ -d 'frontend' ]; then (cd frontend && npm run build) && rm -rf dist && cp -r frontend/dist dist; else npm run build; fi",
     "start": "cd back-end && npm start"
   }
 }
