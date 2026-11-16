@@ -4,9 +4,9 @@
   "private": true,
   "description": "REACT-WebFashion Root Orchestration",
   "scripts": {
-    "install:frontend": "bash vercel-install.sh",
-    "build:frontend": "bash vercel-build.sh",
-    "build": "bash vercel-build.sh",
+    "install:frontend": "npm --prefix frontend install || npm --prefix front-end install || npm install",
+    "build:frontend": "npm --prefix frontend run build || npm --prefix front-end run build || npm run build",
+    "build": "npm --prefix frontend run build || npm --prefix front-end run build || npm run build",
     "start": "cd back-end && npm start"
   }
 }
