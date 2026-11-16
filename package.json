@@ -4,9 +4,9 @@
   "private": true,
   "description": "REACT-WebFashion Root Orchestration",
   "scripts": {
-    "install:frontend": "if [ -d 'front-end' ]; then (cd front-end && npm install --no-audit --no-fund); elif [ -d 'frontend' ]; then (cd frontend && npm install --no-audit --no-fund); else npm install --no-audit --no-fund; fi",
-    "build:frontend": "if [ -d 'front-end' ]; then (cd front-end && npm run build) && rm -rf dist && cp -r front-end/dist dist; elif [ -d 'frontend' ]; then (cd frontend && npm run build) && rm -rf dist && cp -r frontend/dist dist; else npm run build; fi",
-    "build": "if [ -d 'front-end' ]; then (cd front-end && npm run build) && rm -rf dist && cp -r front-end/dist dist; elif [ -d 'frontend' ]; then (cd frontend && npm run build) && rm -rf dist && cp -r frontend/dist dist; else npm run build; fi",
+    "install:frontend": "bash vercel-install.sh",
+    "build:frontend": "bash vercel-build.sh",
+    "build": "bash vercel-build.sh",
     "start": "cd back-end && npm start"
   }
 }
