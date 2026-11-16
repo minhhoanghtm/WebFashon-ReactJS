@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "installCommand": "bash vercel-install.sh",
-  "buildCommand": "bash vercel-build.sh",
+  "installCommand": "node -e \"const fs = require('fs'), cp = require('child_process'); console.log('Vercel CWD:', process.cwd()); const dir = fs.existsSync('frontend/package.json') ? 'frontend' : (fs.existsSync('front-end/package.json') ? 'front-end' : (fs.existsSync('package.json') ? '.' : (fs.existsSync('../package.json') ? '..' : ''))); console.log('Target directory:', dir); if (dir) { cp.execSync(dir === '.' ? 'npm install --legacy-peer-deps --no-audit --no-fund' : ('cd ' + dir + ' && npm install --legacy-peer-deps --no-audit --no-fund'), { stdio: 'inherit' }); }\"",
+  "buildCommand": "node -e \"const fs = require('fs'), cp = require('child_process'); console.log('Vercel CWD:', process.cwd()); const dir = fs.existsSync('frontend/package.json') ? 'frontend' : (fs.existsSync('front-end/package.json') ? 'front-end' : (fs.existsSync('package.json') ? '.' : (fs.existsSync('../package.json') ? '..' : ''))); console.log('Build target:', dir); if (dir) { cp.execSync(dir === '.' ? 'npm run build' : ('cd ' + dir + ' && npm run build'), { stdio: 'inherit' }); const out = dir === '.' ? 'dist' : (dir + '/dist'); if (fs.existsSync(out) && out !== 'dist') { fs.cpSync(out, 'dist', { recursive: true }); } console.log('Build artifact mirrored successfully.'); }\"",
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://webfashon-reactjs.onrender.com/api/$1" },
